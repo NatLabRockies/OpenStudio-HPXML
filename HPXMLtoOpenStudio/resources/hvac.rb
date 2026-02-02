@@ -4724,23 +4724,12 @@ module HVAC
     )
 
     # Sensors
-    tout_db_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{clg_coil.name} tout s",
-      output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-      key_name: 'Environment'
-    )
-
+    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHPOATSensor }
     htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHeatingAvailabilitySensor }
     clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeCoolingAvailabilitySensor }
 
     if not htg_coil.nil?
-      htg_coil_rtf_sensor = Model.add_ems_sensor(
-        model,
-        name: "#{htg_coil.name} rtf s",
-        output_var_or_meter_name: 'Heating Coil Runtime Fraction',
-        key_name: htg_coil.name
-      )
+      htg_coil_rtf_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHPHeatingRTFSensor }
     end
 
     # EMS program
@@ -4924,6 +4913,7 @@ module HVAC
       output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
       key_name: 'Environment'
     )
+    tout_db_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeHPOATSensor)
 
     htg_coil_rtf_sensor = Model.add_ems_sensor(
       model,
@@ -4931,6 +4921,7 @@ module HVAC
       output_var_or_meter_name: 'Heating Coil Runtime Fraction',
       key_name: htg_coil.name
     )
+    htg_coil_rtf_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeHPHeatingRTFSensor)
 
     htg_coil_htg_rate_sensor = Model.add_ems_sensor(
       model,
