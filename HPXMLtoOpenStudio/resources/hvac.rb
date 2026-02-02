@@ -503,7 +503,7 @@ module HVAC
         ems_program = apply_defrost_ems_program(model, htg_coil, control_zone.spaces[0], cooling_system, hpxml_bldg.building_construction.number_of_units)
         apply_pan_heater_ems_program(model, ems_program, htg_coil, control_zone.spaces[0], cooling_system, htg_ap.hp_min_temp)
       end
-      apply_crankcase_heater_ems_program(model, htg_coil, clg_coil, control_zone.spaces[0], cooling_system)
+      apply_crankcase_heater_ems_program(model, htg_coil, clg_coil, control_zone.spaces[0], cooling_system, air_loop_unitary)
     end
     return air_loop
   end
@@ -4701,8 +4701,9 @@ module HVAC
   # @param clg_coil [OpenStudio::Model::CoilCoolingDXSingleSpeed or OpenStudio::Model::CoilCoolingDXMultiSpeed] OpenStudio Cooling Coil object
   # @param conditioned_space [OpenStudio::Model::Space] OpenStudio Space object for conditioned zone
   # @param heat_pump [HPXML::HeatPump] The HPXML heat pump of interest
+  # @param unitary_system [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
   # @return [nil]
-  def self.apply_crankcase_heater_ems_program(model, htg_coil, clg_coil, conditioned_space, heat_pump)
+  def self.apply_crankcase_heater_ems_program(model, htg_coil, clg_coil, conditioned_space, heat_pump, unitary_system)
     return unless heat_pump.crankcase_heater_watts.to_f > 0
 
     coil_name = clg_coil.name.to_s
@@ -4743,8 +4744,16 @@ module HVAC
     tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHPOATSensor }
     htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHeatingAvailabilitySensor }
     clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeCoolingAvailabilitySensor }
+
     if not htg_coil.nil?
       htg_coil_rtf_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHPHeatingRTFSensor }
+
+      unitary_sys_cyc_ratio_sensor = Model.add_ems_sensor(
+        model,
+        name: "#{unitary_system.name} dx coil cycling ratio",
+        output_var_or_meter_name: 'Unitary System DX Coil Cycling Ratio',
+        key_name: unitary_system.name
+      )
     end
 
     # EMS program
@@ -4924,6 +4933,7 @@ module HVAC
     # Sensors
     tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHPOATSensor }
     htg_coil_rtf_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHPHeatingRTFSensor }
+
     htg_coil_htg_rate_sensor = Model.add_ems_sensor(
       model,
       name: "#{htg_coil.name} deliverd htg",
