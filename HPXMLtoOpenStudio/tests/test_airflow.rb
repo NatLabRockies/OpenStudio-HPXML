@@ -627,13 +627,18 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     # Get HPXML values
     supply_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeSupply }
     return_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeReturn }
-    supply_leakage_cfm25 = supply_leakage.duct_leakage_value
-    return_leakage_cfm25 = return_leakage.duct_leakage_value
+    heating_airflow_cfm_per_ton = 240 # furnace
+    cooling_airflow_cfm_per_ton = 360 # central AC
+    heating_airflow_cfm = UnitConversions.convert(hpxml_bldg.heating_systems[0].heating_capacity, 'Btu/hr', 'ton') * heating_airflow_cfm_per_ton
+    cooling_airflow_cfm = UnitConversions.convert(hpxml_bldg.cooling_systems[0].cooling_capacity, 'Btu/hr', 'ton') * cooling_airflow_cfm_per_ton
+    max_airflow_cfm = [heating_airflow_cfm, cooling_airflow_cfm].max
+    supply_leakage_frac = supply_leakage.duct_leakage_value / max_airflow_cfm
+    return_leakage_frac = return_leakage.duct_leakage_value / max_airflow_cfm
 
     # Check ducts program
     program_values = get_ems_values(model.getEnergyManagementSystemSubroutines, 'duct subroutine')
-    assert_in_epsilon(supply_leakage_cfm25, UnitConversions.convert(program_values['f_sup'].sum, 'm^3/s', 'cfm'), 0.01)
-    assert_in_epsilon(return_leakage_cfm25, UnitConversions.convert(program_values['f_ret'].sum, 'm^3/s', 'cfm'), 0.01)
+    assert_in_epsilon(supply_leakage_frac, program_values['f_sup'].sum, 0.01)
+    assert_in_epsilon(return_leakage_frac, program_values['f_ret'].sum, 0.01)
   end
 
   def test_ducts_leakage_cfm50
@@ -644,13 +649,18 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     # Get HPXML values
     supply_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeSupply }
     return_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeReturn }
-    supply_leakage_cfm50 = supply_leakage.duct_leakage_value
-    return_leakage_cfm50 = return_leakage.duct_leakage_value
+    heating_airflow_cfm_per_ton = 240 # furnace
+    cooling_airflow_cfm_per_ton = 360 # central AC
+    heating_airflow_cfm = UnitConversions.convert(hpxml_bldg.heating_systems[0].heating_capacity, 'Btu/hr', 'ton') * heating_airflow_cfm_per_ton
+    cooling_airflow_cfm = UnitConversions.convert(hpxml_bldg.cooling_systems[0].cooling_capacity, 'Btu/hr', 'ton') * cooling_airflow_cfm_per_ton
+    max_airflow_cfm = [heating_airflow_cfm, cooling_airflow_cfm].max
+    supply_leakage_frac = supply_leakage.duct_leakage_value * (25.0 / 50.0)**0.65 / max_airflow_cfm
+    return_leakage_frac = return_leakage.duct_leakage_value * (25.0 / 50.0)**0.65 / max_airflow_cfm
 
     # Check ducts program
     program_values = get_ems_values(model.getEnergyManagementSystemSubroutines, 'duct subroutine')
-    assert_in_epsilon(supply_leakage_cfm50 * (25.0 / 50.0)**0.65, UnitConversions.convert(program_values['f_sup'].sum, 'm^3/s', 'cfm'), 0.01)
-    assert_in_epsilon(return_leakage_cfm50 * (25.0 / 50.0)**0.65, UnitConversions.convert(program_values['f_ret'].sum, 'm^3/s', 'cfm'), 0.01)
+    assert_in_epsilon(supply_leakage_frac, program_values['f_sup'].sum, 0.01)
+    assert_in_epsilon(return_leakage_frac, program_values['f_ret'].sum, 0.01)
   end
 
   def test_ducts_leakage_percent
