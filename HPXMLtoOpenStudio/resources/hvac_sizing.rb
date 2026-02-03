@@ -494,6 +494,8 @@ module HVACSizing
           end # vented/unvented
         end # each roof surface
 
+        fail 'Unexpected case.' if cool_temp == 0
+
         cool_temp /= tot_roof_area
 
         # Adjust base CLTD for different CTD or DR
