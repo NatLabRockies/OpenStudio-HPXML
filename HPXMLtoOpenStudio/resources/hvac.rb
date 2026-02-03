@@ -4749,15 +4749,24 @@ module HVAC
 
     if not htg_coil.nil?
       htg_coil_rtf_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHPHeatingRTFSensor }
+    end
 
-      if htg_coil.is_a? OpenStudio::Model::CoilHeatingDXMultiSpeed
-        unitary_sys_cyc_ratio_sensor = Model.add_ems_sensor(
-          model,
-          name: "#{unitary_system.name} cycling ratio s",
-          output_var_or_meter_name: 'Unitary System DX Coil Cycling Ratio',
-          key_name: unitary_system.name
-        )
-      end
+    if (heat_pump.is_a? HPXML::CoolingSystem) || ((heat_pump.is_a? HPXML::HeatPump) && (heat_pump.fraction_cool_load_served > 0))
+      clg_coil_rtf_sensor = Model.add_ems_sensor(
+        model,
+        name: "#{clg_coil.name} rtf s",
+        output_var_or_meter_name: 'Cooling Coil Runtime Fraction',
+        key_name: clg_coil.name
+      )
+    end
+
+    if (htg_coil.is_a? OpenStudio::Model::CoilHeatingDXMultiSpeed) || (clg_coil.is_a? OpenStudio::Model::CoilCoolingDXMultiSpeed)
+      unitary_sys_cyc_ratio_sensor = Model.add_ems_sensor(
+        model,
+        name: "#{unitary_system.name} cycling ratio s",
+        output_var_or_meter_name: 'Unitary System DX Coil Cycling Ratio',
+        key_name: unitary_system.name
+      )
     end
 
     # EMS program
@@ -4776,6 +4785,11 @@ module HVAC
     else
       program.addLine('Set frac_htg = 0.0')
     end
+    if not clg_coil_rtf_sensor.nil?
+      program.addLine("Set frac_clg = #{clg_coil_rtf_sensor.name}")
+    else
+      program.addLine('Set frac_clg = 0.0')
+    end
     if not unitary_sys_cyc_ratio_sensor.nil?
       program.addLine("Set cyc_ratio = #{unitary_sys_cyc_ratio_sensor.name}")
     else
@@ -4793,7 +4807,8 @@ module HVAC
       end
     end
     program.addLine(temp_criteria)
-    program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{heat_pump.crankcase_heater_watts} * (1 - frac_htg)")
+    program.addLine('  Set frac_htg_clg = @Max frac_htg frac_clg')
+    program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{heat_pump.crankcase_heater_watts} * (1 - frac_htg_clg)")
     if not htg_coil.nil?
       min_oat_compressor = htg_coil.minimumOutdoorDryBulbTemperatureforCompressorOperation
       program.addLine("ElseIf T_out < #{min_oat_compressor}")
