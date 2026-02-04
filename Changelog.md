@@ -8,6 +8,9 @@ __Bugfixes__
 - Fixes a misleading warning about adjusting inverted setpoints when heating setpoint is greater than cooling setpoint during non-overlapping heating/cooling seasons.
 - Fixes possible incorrect unmet hours outputs for unavailable periods with no space heating only (or no space cooling only).
 - Fixes PanHeaterControlType="heat pump mode" incorrectly disallowed for mini-split heat pumps.
+- Fixes the design cooling temperature calculations for some vented attic roof types (shingles, plastic/rubber/synthetic sheeting, concrete, cool roof, expanded polystyrene sheathing)
+- Fixes unit multiplier ignored for EV charging using `Vehicles`.
+- Fixes handling of battery losses in the battery resilience output.
 
 ## OpenStudio-HPXML v1.11.0
 
@@ -65,7 +68,6 @@ __Bugfixes__
 - Fixes possible ground-source heat pump sizing error if the heating or cooling design temperature differences are zero.
 - Fixes EMS discharge power program and assignment of default discharging schedule for detailed electric vehicles.
 - Avoids thin interior/exterior roof construction layers to help prevent attic temperature out of bounds errors.
-- Fixes several issues related to using unit multipliers with batteries and vehicles.
 
 ## OpenStudio-HPXML v1.10.0
 
