@@ -97,6 +97,8 @@ Annual energy outputs are listed below.
   Energy Use: Net (MBtu)                Total energy consumption minus power produced by PV
   ====================================  ===========================
 
+For whole SFA/MF building simulations, annual energy outputs are also reported by dwelling unit (e.g., "Energy Use: <BuildingID>: Total (MBtu)").
+
 Annual Energy by Fuel Use
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -114,6 +116,8 @@ Fuel uses are listed below.
   Fuel Use: Wood Pellets: Total (MBtu)
   Fuel Use: Coal: Total (MBtu)          Includes "coal", "anthracite coal", "bituminous coal", and "coke"
   ====================================  ===========================
+
+For whole SFA/MF building simulations, fuel uses are also reported by dwelling unit (e.g., "Fuel Use: <BuildingID>: Natural Gas: Total (MBtu)").
 
 .. _annualenduses:
 
@@ -626,12 +630,6 @@ Outputs for individual geothermal loops can be found in the ``in.xml`` file.
   HVAC Geothermal Loop: Borehole/Trench Length (ft)                      Length (i.e., average depth) of each borehole
   =====================================================================  ====================
 
-By Dwelling Unit
-~~~~~~~~~~~~~~~~
-
-Annual energy (i.e., Energy Use) and fuel uses (i.e., Fuel Use) are reported by dwelling unit for whole SFA/MF building simulations.
-Outputs are organized by ``BuildingID``, e.g., "Energy Use: <BuildingID>: Total (MBtu)" or "Fuel Use: <BuildingID>: Natural Gas: Total (MBtu)".
-
 .. _timeseries_outputs:
 
 Timeseries Outputs
@@ -665,8 +663,8 @@ Depending on the outputs requested, the file may include:
   Airflows                            ``airflows``         Airflow rates (in cfm) for infiltration, mechanical ventilation (including clothes dryer exhaust), natural ventilation, whole house fans.
   Weather                             ``weather``          Weather file data including outdoor temperatures, relative humidity, wind speed, and solar.
   Resilience                          ``resilience``       Resilience outputs (currently only average resilience hours for battery storage).
+  Dwelling Units                      ``dwellingunits``    Total and Fuel Consumptions for individual dwelling units.
   EnergyPlus Output Variables/Meters                       Any user-specified EnergyPlus output variables/meters (e.g., 'Zone People Occupant Count', 'MainsWater:Facility').
-  By Dwelling Unit                    ``dwellingunits``    Total and Fuel Consumptions for individual dwelling units.
   ==================================  ===================  ==================================================================================================================================
 
   .. [#] This is the argument provided to ``run_simulation.rb`` as described in the :ref:`basic_run` usage instructions.
