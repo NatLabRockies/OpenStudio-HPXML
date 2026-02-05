@@ -1839,7 +1839,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     timestamps3 = args[:add_timeseries_utc_column] ? [['TimeUTC', nil] + @timestamps_utc] : []
 
     # Gather timeseries outputs
-    total_energy_data, fuel_data, end_use_data, system_use_data = [], [], [], [], []
+    total_energy_data, fuel_data, end_use_data, system_use_data = [], [], [], []
     emissions_data, emission_fuel_data, emission_end_use_data = [], [], []
     hot_water_use_data, total_loads_data, comp_loads_data, unmet_hours_data = [], [], [], []
     zone_temps_data, zone_conds_data, airflows_data, weather_data, resilience_data = [], [], [], [], []
@@ -2380,17 +2380,17 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
   # @param obj [EndUse or Load] The output object of interest
   # @param sync_objs [Fuel or Load] Additional outputs that need to be kept in sync
   # @param sys_id [String] The related HPXML object's System Identifier
-  # @param unit_id [TODO] TODO
+  # @param building_id [String or nil] HPXML Building ID
   # @param mult [Double] The multiplier value to apply
   # @return [nil]
-  def apply_multiplier_to_output(obj, sync_objs, sys_id, unit_id, mult)
+  def apply_multiplier_to_output(obj, sync_objs, sys_id, building_id, mult)
     # Annual
     orig_value = obj.annual_output_by_system[sys_id]
     obj.annual_output_by_system[sys_id] = orig_value * mult
     sync_objs.each do |sync_obj|
       sync_obj.annual_output += (orig_value * mult - orig_value)
-      if (not unit_id.nil?) && sync_obj.annual_output_by_unit.keys.include?(unit_id)
-        sync_obj.annual_output_by_unit[unit_id] += (orig_value * mult - orig_value) unless unit_id.nil?
+      if (not building_id.nil?) && sync_obj.annual_output_by_unit.keys.include?(building_id)
+        sync_obj.annual_output_by_unit[building_id] += (orig_value * mult - orig_value) unless building_id.nil?
       end
     end
 
