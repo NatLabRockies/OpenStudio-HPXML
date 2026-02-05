@@ -397,9 +397,6 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     end
     if has_electricity_storage
       Model.add_output_meter(model, meter_name: 'ElectricStorage:ElectricityProduced', reporting_frequency: 'runperiod') # Used for error checking
-      if args[:include_timeseries_fuel_consumptions]
-        Model.add_output_meter(model, meter_name: 'ElectricStorage:ElectricityProduced', reporting_frequency: args[:timeseries_frequency])
-      end
 
       # Resilience
       if args[:include_annual_resilience] || args[:include_timeseries_resilience]
@@ -1466,19 +1463,6 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
   def check_for_errors(runner)
     tol = 0.1 # 0.1%
 
-    # ElectricityProduced:Facility contains:
-    # - Generator Produced DC Electricity Energy
-    # - Inverter Conversion Loss Decrement Energy
-    # - Electric Storage Production Decrement Energy
-    # - Electric Storage Discharge Energy
-    # - Converter Electricity Loss Decrement Energy (should always be zero since efficiency=1.0)
-    # ElectricStorage:ElectricityProduced contains:
-    # - Electric Storage Production Decrement Energy
-    # - Electric Storage Discharge Energy
-    # So, we need to subtract ElectricStorage:ElectricityProduced from ElectricityProduced:Facility
-    meter_elec_produced = -1 * get_report_meter_data_annual(['ElectricityProduced:Facility'])
-    meter_elec_produced += get_report_meter_data_annual(['ElectricStorage:ElectricityProduced'])
-
     # Check if simulation successful
     all_total = @fuels.values.map { |x| x.annual_output.to_f }.sum(0.0)
     total_fraction_cool_load_served = @hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.total_fraction_cool_load_served }.sum(0.0)
@@ -1492,7 +1476,9 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     end
 
     # Check sum of electricity produced end use outputs match total output from meter
-    sum_elec_prod_annual = @end_uses.select { |k, eu| k[0] == FT::Elec && eu.is_negative }.map { |_k, eu| eu.annual_output.to_f }.sum(0.0) # Negative value
+    meter_elec_produced = get_report_meter_data_annual(['ElectricityProduced:Facility'])
+    meter_elec_produced -= get_report_meter_data_annual(['ElectricStorage:ElectricityProduced']) # ElectricityProduced:Facility contains ElectricStorage:ElectricityProduced, so we have to subtract it
+    sum_elec_prod_annual = @end_uses.select { |k, eu| k[0] == FT::Elec && eu.is_negative }.map { |_k, eu| eu.annual_output.to_f }.sum(0.0).abs # Positive value
     avg_value = (sum_elec_prod_annual + meter_elec_produced) / 2.0
     if (sum_elec_prod_annual - meter_elec_produced).abs / avg_value > tol
       runner.registerError("#{FT::Elec} produced category end uses (#{sum_elec_prod_annual.round(3)}) do not sum to total (#{meter_elec_produced.round(3)}).")

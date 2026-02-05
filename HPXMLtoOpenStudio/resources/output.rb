@@ -1493,7 +1493,7 @@ module Outputs
       end
     end
 
-    # Create Total/Net meters
+    # Create Total/Net/Critical meters
     { MeterCustomElectricityTotal => total_key_vars,
       MeterCustomElectricityNet => net_key_vars,
       MeterCustomElectricityCritical => pv_key_vars + gen_key_vars }.each do |meter_name, key_vars|
