@@ -836,6 +836,26 @@ Additional inputs for ACCA Manual J design loads, used for sizing HVAC equipment
   .. [#] If InfiltrationMethod not provided, defaults based on the current inputs in HPXML.
          If :ref:`infil_leakiness_description` is the only air leakage type specified, defaults to "default infiltration table"; otherwise defaults to "blower door".
 
+.. _natvent_control:
+
+HPXML Natural Ventilation Control
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If operable windows are defined, the availability of natural ventilation is entered in ``/HPXML/Building/BuildingDetails/BuildingSummary/extension/NaturalVentilationControl``.
+
+  =================================  ========  =========  ===========  ========  ==========  ========================================================
+  Element                            Type      Units      Constraints  Required  Default     Notes
+  =================================  ========  =========  ===========  ========  ==========  ========================================================
+  ``Seasons``                        string               See [#]_     No        year-round  When during the year occupants open windows
+  ``DaysperWeek``                    integer   days/week  >= 0, <= 7   No        7           How many days/week occupants open windows
+  ``OpenFractionofOperableArea``     double    frac       >= 0, <= 1   No        0.1         Fraction of operable window area that is open during ventilation [#]_
+  =================================  ========  =========  ===========  ========  ==========  ========================================================
+
+  .. [#] Seasons choices are "year-round", "cooling", or "heating".
+         The cooling/heating seasons are determined by the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_
+         Natural ventilation will be available when the outdoor humidity ratio is less than 0.0115 and either A) outdoor temperature is below the indoor temperature and the indoor temperature is above the average of the heating and cooling setpoints, or B) outdoor temperature is above the indoor temperature and the indoor temperature is below the average of the heating and cooling setpoints, per ANSI/RESNET/ICC 301-2025.
+  .. [#] OpenFractionofOperableArea defaults to 10% per ANSI/RESNET/ICC 301-2025, which is based on the assumption that 50% of the area of operable windows can be open and that 20% of that openable area is actually opened by occupants.
+
 .. _shadingcontrol:
 
 HPXML Shading Control
@@ -1598,8 +1618,7 @@ Each window or glass door area is entered as a ``/HPXML/Building/BuildingDetails
   .. [#] FractionOperable reflects whether the windows are operable (can be opened), not how they are used by the occupants.
          If a ``Window`` represents a single window, the value should be 0 or 1.
          If a ``Window`` represents multiple windows, the value is calculated as the total window area for any operable windows divided by the total window area.
-         The total open window area for natural ventilation is calculated using A) the operable fraction, B) the assumption that 50% of the area of operable windows can be open, and C) the assumption that 20% of that openable area is actually opened by occupants.
-         See additional inputs in :ref:`natural_ventilation`.
+         The total open window area for natural ventilation is the operable fraction multiplied by the ``OpenFractionofOperableArea`` specified in :ref:`natvent_control`.
   .. [#] AttachedToWall must reference a ``Wall`` or ``FoundationWall``.
 
 .. _window_lookup:
@@ -1847,24 +1866,6 @@ If overhangs are specified, additional information is entered in ``Overhangs``.
 
   .. [#] The difference between DistanceToBottomOfWindow and DistanceToTopOfWindow defines the height of the window.
   .. [#] When Depth is non-zero, DistanceToBottomOfWindow must be greater than DistanceToTopOfWindow.
-
-.. _natural_ventilation:
-
-Natural Ventilation
-~~~~~~~~~~~~~~~~~~~
-
-If operable windows are defined, the availability of natural ventilation is entered in ``/HPXML/Building/BuildingDetails/BuildingSummary/extension/NaturalVentilationControl``.
-
-  =================================  ========  =========  ===========  ========  ==========  ========================================================
-  Element                            Type      Units      Constraints  Required  Default     Notes
-  =================================  ========  =========  ===========  ========  ==========  ========================================================
-  ``Seasons``                        string               See [#]_     No        year-round  When during the year occupants open windows
-  ``DaysperWeek``                    integer   days/week  >= 0, <= 7   No        7           How many days/week occupants open windows
-  =================================  ========  =========  ===========  ========  ==========  ========================================================
-
-  .. [#] Seasons choices are "year-round", "cooling", or "heating".
-         The cooling/heating seasons are determined by the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_
-         Natural ventilation will be available when the outdoor humidity ratio is less than 0.0115 and either A) outdoor temperature is below the indoor temperature and the indoor temperature is above the average of the heating and cooling setpoints, or B) outdoor temperature is above the indoor temperature and the indoor temperature is below the average of the heating and cooling setpoints, per ANSI/RESNET/ICC 301-2025.
 
 HPXML Skylights
 ***************

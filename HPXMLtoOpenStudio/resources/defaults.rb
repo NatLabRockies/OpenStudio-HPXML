@@ -409,6 +409,11 @@ module Defaults
       hpxml_bldg.header.natvent_days_per_week_isdefaulted = true
     end
 
+    if hpxml_bldg.header.natvent_open_frac_of_operable_area.nil?
+      hpxml_bldg.header.natvent_open_frac_of_operable_area = 0.1
+      hpxml_bldg.header.natvent_open_frac_of_operable_area_isdefaulted = true
+    end
+
     if hpxml_bldg.header.heat_pump_sizing_methodology.nil? && (hpxml_bldg.heat_pumps.size > 0)
       hpxml_bldg.header.heat_pump_sizing_methodology = HPXML::HeatPumpSizingHERS
       hpxml_bldg.header.heat_pump_sizing_methodology_isdefaulted = true

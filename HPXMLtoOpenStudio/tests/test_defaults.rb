@@ -254,6 +254,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.longitude = -34
     hpxml_bldg.header.natvent_seasons = HPXML::NatVentSeasonsHeating
     hpxml_bldg.header.natvent_days_per_week = 3
+    hpxml_bldg.header.natvent_open_frac_of_operable_area = 0.2
     hpxml_bldg.header.heat_pump_sizing_methodology = HPXML::HeatPumpSizingMaxLoad
     hpxml_bldg.header.heat_pump_backup_sizing_methodology = HPXML::HeatPumpBackupSizingSupplemental
     hpxml_bldg.header.allow_increased_fixed_capacities = true
@@ -275,7 +276,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.header.manualj_infiltration_shielding_class = 1
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_building_values(default_hpxml_bldg, false, nil, nil, nil, nil, 'CA', 'CityName', -8, -1234, 12, -34, HPXML::NatVentSeasonsHeating, 3, HPXML::HeatPumpSizingMaxLoad, true,
+    _test_default_building_values(default_hpxml_bldg, false, nil, nil, nil, nil, 'CA', 'CityName', -8, -1234, 12, -34, HPXML::NatVentSeasonsHeating, 3, 0.2, HPXML::HeatPumpSizingMaxLoad, true,
                                   2, 3, 4, 5, 0.0, 100.0, HPXML::ManualJDailyTempRangeLow, 68.0, 78.0, 0.33, 50.0, 1600.0, 60.0, 8, HPXML::HeatPumpBackupSizingSupplemental, HPXML::ManualJInfiltrationMethodBlowerDoor, 1)
 
     # Test defaults - DST not in weather file
@@ -292,6 +293,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.longitude = nil
     hpxml_bldg.header.natvent_seasons = nil
     hpxml_bldg.header.natvent_days_per_week = nil
+    hpxml_bldg.header.natvent_open_frac_of_operable_area = nil
     hpxml_bldg.header.heat_pump_sizing_methodology = nil
     hpxml_bldg.header.heat_pump_backup_sizing_methodology = nil
     hpxml_bldg.header.allow_increased_fixed_capacities = nil
@@ -313,7 +315,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.header.manualj_infiltration_shielding_class = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_building_values(default_hpxml_bldg, true, 3, 12, 11, 5, 'CO', 'Denver Intl Ap', -7, 5413.4, 39.83, -104.65, HPXML::NatVentSeasonsYearRound, 7, HPXML::HeatPumpSizingHERS, false,
+    _test_default_building_values(default_hpxml_bldg, true, 3, 12, 11, 5, 'CO', 'Denver Intl Ap', -7, 5413.4, 39.83, -104.65, HPXML::NatVentSeasonsYearRound, 7, 0.1, HPXML::HeatPumpSizingHERS, false,
                                   5, 1, 10, 31, 6.8, 91.76, HPXML::ManualJDailyTempRangeHigh, 70.0, 75.0, 0.45, -28.8, 2400.0, 0.0, 4, HPXML::HeatPumpBackupSizingEmergency, HPXML::ManualJInfiltrationMethodBlowerDoor, 4)
 
     # Test defaults w/ StateCode (defaulted based on EPW)
@@ -364,7 +366,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.longitude = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_building_values(default_hpxml_bldg, true, 3, 11, 11, 4, 'CO', 'Boulder', -7, 5300.2, 40.13, -105.22, HPXML::NatVentSeasonsYearRound, 7, nil, false,
+    _test_default_building_values(default_hpxml_bldg, true, 3, 11, 11, 4, 'CO', 'Boulder', -7, 5300.2, 40.13, -105.22, HPXML::NatVentSeasonsYearRound, 7, 0.1, nil, false,
                                   5, 1, 9, 30, 10.22, 91.4, HPXML::ManualJDailyTempRangeHigh, 70.0, 75.0, 0.45, -38.5, 2400.0, 0.0, 4, nil, HPXML::ManualJInfiltrationMethodBlowerDoor, 4)
 
     # Test defaults - southern hemisphere, invalid state code
@@ -382,7 +384,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.longitude = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_building_values(default_hpxml_bldg, true, 3, 12, 11, 5, '-', 'CAPE TOWN', 2, 137.8, -33.98, 18.6, HPXML::NatVentSeasonsYearRound, 7, nil, false,
+    _test_default_building_values(default_hpxml_bldg, true, 3, 12, 11, 5, '-', 'CAPE TOWN', 2, 137.8, -33.98, 18.6, HPXML::NatVentSeasonsYearRound, 7, 0.1, nil, false,
                                   12, 1, 4, 30, 41.0, 84.38, HPXML::ManualJDailyTempRangeMedium, 70.0, 75.0, 0.5, 1.6, 2400.0, 0.0, 4, nil, HPXML::ManualJInfiltrationMethodBlowerDoor, 4)
 
     # Test defaults - leakiness description default to HPXML::ManualJInfiltrationMethodDefaultTable
@@ -390,7 +392,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.header.manualj_infiltration_method = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_building_values(default_hpxml_bldg, true, 3, 12, 11, 5, 'CO', 'Denver Intl Ap', -7, 5413.4, 39.83, -104.65, HPXML::NatVentSeasonsYearRound, 7, nil, false,
+    _test_default_building_values(default_hpxml_bldg, true, 3, 12, 11, 5, 'CO', 'Denver Intl Ap', -7, 5413.4, 39.83, -104.65, HPXML::NatVentSeasonsYearRound, 7, 0.1, nil, false,
                                   5, 1, 10, 31, 6.8, 91.76, HPXML::ManualJDailyTempRangeHigh, 70.0, 75.0, 0.45, -28.8, 2400.0, 0.0, 4, nil, HPXML::ManualJInfiltrationMethodDefaultTable, 4)
   end
 
@@ -5340,8 +5342,8 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
   end
 
   def _test_default_building_values(hpxml_bldg, dst_observed, dst_begin_month, dst_begin_day, dst_end_month, dst_end_day, state_code, city, time_zone_utc_offset,
-                                    elevation, latitude, longitude, natvent_seasons, natvent_days_per_week, heat_pump_sizing_methodology, allow_increased_fixed_capacities,
-                                    shading_summer_begin_month, shading_summer_begin_day, shading_summer_end_month, shading_summer_end_day,
+                                    elevation, latitude, longitude, natvent_seasons, natvent_days_per_week, natvent_open_frac_of_operable_area, heat_pump_sizing_methodology,
+                                    allow_increased_fixed_capacities, shading_summer_begin_month, shading_summer_begin_day, shading_summer_end_month, shading_summer_end_day,
                                     manualj_heating_design_temp, manualj_cooling_design_temp, manualj_daily_temp_range, manualj_heating_setpoint, manualj_cooling_setpoint,
                                     manualj_humidity_setpoint, manualj_humidity_difference, manualj_internal_loads_sensible, manualj_internal_loads_latent, manualj_num_occupants,
                                     heat_pump_backup_sizing_methodology, manualj_infiltration_method, manualj_infiltration_shielding_class)
@@ -5382,6 +5384,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     assert_equal(longitude, hpxml_bldg.longitude)
     assert_equal(natvent_seasons, hpxml_bldg.header.natvent_seasons)
     assert_equal(natvent_days_per_week, hpxml_bldg.header.natvent_days_per_week)
+    assert_equal(natvent_open_frac_of_operable_area, hpxml_bldg.header.natvent_open_frac_of_operable_area)
     if heat_pump_sizing_methodology.nil?
       assert_nil(hpxml_bldg.header.heat_pump_sizing_methodology)
     else

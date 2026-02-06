@@ -422,6 +422,9 @@
       <sch:assert role='ERROR' test='count(h:DaysperWeek) &lt;= 1'>Expected 0 or 1 element(s) for xpath: DaysperWeek</sch:assert>
       <sch:assert role='ERROR' test='number(h:DaysperWeek) &gt;= 0 or not(h:DaysperWeek)'>Expected DaysperWeek to be greater than or equal to 0</sch:assert>
       <sch:assert role='ERROR' test='number(h:DaysperWeek) &lt;= 7 or not(h:DaysperWeek)'>Expected DaysperWeek to be less than or equal to 7</sch:assert>
+      <sch:assert role='ERROR' test='count(h:OpenFractionofOperableArea) &lt;= 1'>Expected 0 or 1 element(s) for xpath: OpenFractionofOperableArea</sch:assert>
+      <sch:assert role='ERROR' test='number(h:OpenFractionofOperableArea) &gt;= 0 or not(h:OpenFractionofOperableArea)'>Expected OpenFractionofOperableArea to be greater than or equal to 0</sch:assert>
+      <sch:assert role='ERROR' test='number(h:OpenFractionofOperableArea) &lt;= 1 or not(h:OpenFractionofOperableArea)'>Expected OpenFractionofOperableArea to be less than or equal to 1</sch:assert>
     </sch:rule>
   </sch:pattern>
 

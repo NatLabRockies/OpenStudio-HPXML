@@ -513,9 +513,8 @@ module Airflow
       )
     end
 
-    # Assume A) 50% of the area of an operable window can be open, and B) 20% of openable window area is actually open
     window_area = hpxml_bldg.windows.map { |w| w.area }.sum(0.0)
-    open_window_area = window_area * hpxml_bldg.additional_properties.initial_frac_windows_operable * 0.5 * 0.2
+    open_window_area = window_area * hpxml_bldg.additional_properties.initial_frac_windows_operable * hpxml_bldg.header.natvent_open_frac_of_operable_area
 
     area = 0.6 * open_window_area # ft^2, for Sherman-Grimsrud (ASHRAE Basic Model)
     max_rate = 20.0 # Air Changes per hour

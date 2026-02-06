@@ -2544,6 +2544,7 @@ class HPXML < Object
              :manualj_infiltration_method,          # [String] HVACSizingControl/ManualJInputs/InfiltrationMethod (HPXML::ManualJInfiltrationMethodXXX)
              :natvent_seasons,                      # [String] NaturalVentilationControl/Seasons
              :natvent_days_per_week,                # [Integer] NaturalVentilationControl/DaysperWeek
+             :natvent_open_frac_of_operable_area,   # [Double] NaturalVentilationControl/OpenFractionofOperableArea
              :schedules_filepaths,                  # [Array<String>] SchedulesFilePath
              :shading_summer_begin_month,           # [Integer] ShadingControl/SummerBeginMonth
              :shading_summer_begin_day,             # [Integer] ShadingControl/SummerBeginDayOfMonth
@@ -2591,10 +2592,11 @@ class HPXML < Object
         XMLHelper.add_element(manualj_inputs, 'InfiltrationShieldingClass', @manualj_infiltration_shielding_class, :integer, @manualj_infiltration_shielding_class_isdefaulted) unless @manualj_infiltration_shielding_class.nil?
         XMLHelper.add_element(manualj_inputs, 'InfiltrationMethod', @manualj_infiltration_method, :string, @manualj_infiltration_method_isdefaulted) unless @manualj_infiltration_method.nil?
       end
-      if (not @natvent_seasons.nil?) || (not @natvent_days_per_week.nil?)
+      if (not @natvent_seasons.nil?) || (not @natvent_days_per_week.nil?) || (not @natvent_open_frac_of_operable_area.nil?)
         natvent_control = XMLHelper.create_elements_as_needed(building_summary, ['extension', 'NaturalVentilationControl'])
         XMLHelper.add_element(natvent_control, 'Seasons', @natvent_seasons, :string, @natvent_seasons_isdefaulted) unless @natvent_seasons.nil?
         XMLHelper.add_element(natvent_control, 'DaysperWeek', @natvent_days_per_week, :integer, @natvent_days_per_week_isdefaulted) unless @natvent_days_per_week.nil?
+        XMLHelper.add_element(natvent_control, 'OpenFractionofOperableArea', @natvent_open_frac_of_operable_area, :float, @natvent_open_frac_of_operable_area_isdefaulted) unless @natvent_open_frac_of_operable_area.nil?
       end
       if (not @schedules_filepaths.nil?) && (not @schedules_filepaths.empty?)
         @schedules_filepaths.each do |schedules_filepath|
@@ -2632,6 +2634,7 @@ class HPXML < Object
       @schedules_filepaths = XMLHelper.get_values(building_summary, 'extension/SchedulesFilePath', :string)
       @natvent_seasons = XMLHelper.get_value(building_summary, 'extension/NaturalVentilationControl/Seasons', :string)
       @natvent_days_per_week = XMLHelper.get_value(building_summary, 'extension/NaturalVentilationControl/DaysperWeek', :integer)
+      @natvent_open_frac_of_operable_area = XMLHelper.get_value(building_summary, 'extension/NaturalVentilationControl/OpenFractionofOperableArea', :float)
       @shading_summer_begin_month = XMLHelper.get_value(building_summary, 'extension/ShadingControl/SummerBeginMonth', :integer)
       @shading_summer_begin_day = XMLHelper.get_value(building_summary, 'extension/ShadingControl/SummerBeginDayOfMonth', :integer)
       @shading_summer_end_month = XMLHelper.get_value(building_summary, 'extension/ShadingControl/SummerEndMonth', :integer)

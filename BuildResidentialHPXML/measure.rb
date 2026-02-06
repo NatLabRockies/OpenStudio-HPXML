@@ -1571,6 +1571,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     hpxml_bldg.header.heat_pump_backup_sizing_methodology = args[:hvac_heat_pump_backup_capacity_autosizing_methodology]
     hpxml_bldg.header.natvent_seasons = args[:enclosure_window_natural_ventilation_seasons]
     hpxml_bldg.header.natvent_days_per_week = args[:enclosure_window_natural_ventilation_availability]
+    hpxml_bldg.header.natvent_open_frac_of_operable_area = args[:enclosure_window_natural_ventilation_open_fraction]
 
     hvac_incr = args[:advanced_feature_hvac_allow_increased_fixed_capacities]
     hvac_incr = args[:advanced_feature_2_hvac_allow_increased_fixed_capacities] if hvac_incr.nil?

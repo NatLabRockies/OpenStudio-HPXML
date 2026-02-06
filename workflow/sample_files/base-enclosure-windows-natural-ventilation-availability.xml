@@ -51,6 +51,7 @@
           <NaturalVentilationControl>
             <Seasons>cooling</Seasons>
             <DaysperWeek>3</DaysperWeek>
+            <OpenFractionofOperableArea>0.05</OpenFractionofOperableArea>
           </NaturalVentilationControl>
         </extension>
       </BuildingSummary>

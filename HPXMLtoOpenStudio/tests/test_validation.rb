@@ -221,6 +221,8 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                            'Expected 1 element(s) for xpath: ../LightingGroup[LightingType[CompactFluorescent] and Location="garage"]/FractionofUnitsInLocation | Load[Units="kWh/year"]/Value'],
                             'invalid-natvent-daysperweek' => ['Expected DaysperWeek to be less than or equal to 7'],
                             'invalid-natvent-daysperweek2' => ['Expected DaysperWeek to be greater than or equal to 0'],
+                            'invalid-natvent-openfrac' => ['Expected OpenFractionofOperableArea to be greater than or equal to 0'],
+                            'invalid-natvent-openfrac2' => ['Expected OpenFractionofOperableArea to be less than or equal to 1'],
                             'invalid-natvent-seasons' => ["Expected Seasons to be 'year-round' or 'cooling' or 'heating'"],
                             'invalid-number-of-bedrooms-served-pv' => ['Expected extension/NumberofBedroomsServed to be greater than ../../../BuildingSummary/BuildingConstruction/NumberofBedrooms [context: /HPXML/Building/BuildingDetails/Systems/Photovoltaics/PVSystem[IsSharedSystem="true"], id: "PVSystem1"]'],
                             'invalid-number-of-bedrooms-served-recirc' => ['Expected NumberofBedroomsServed to be greater than ../../../../../BuildingSummary/BuildingConstruction/NumberofBedrooms [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/HotWaterDistribution/extension/SharedRecirculation, id: "HotWaterDistribution1"]'],
@@ -746,6 +748,12 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
       when 'invalid-natvent-daysperweek2'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.header.natvent_days_per_week = -1
+      when 'invalid-natvent-openfrac'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.header.natvent_open_frac_of_operable_area = -1
+      when 'invalid-natvent-openfrac2'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.header.natvent_open_frac_of_operable_area = 10
       when 'invalid-natvent-seasons'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.header.natvent_seasons = 'foo'
