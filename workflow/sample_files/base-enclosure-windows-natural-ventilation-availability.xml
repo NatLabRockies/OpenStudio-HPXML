@@ -47,6 +47,12 @@
           <ConditionedFloorArea>2700.0</ConditionedFloorArea>
           <ConditionedBuildingVolume>21600.0</ConditionedBuildingVolume>
         </BuildingConstruction>
+        <extension>
+          <NaturalVentilationControl>
+            <Seasons>cooling</Seasons>
+            <DaysperWeek>3</DaysperWeek>
+          </NaturalVentilationControl>
+        </extension>
       </BuildingSummary>
       <ClimateandRiskZones>
         <ClimateZoneIECC>
