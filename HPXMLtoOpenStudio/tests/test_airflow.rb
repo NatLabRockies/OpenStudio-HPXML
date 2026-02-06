@@ -658,7 +658,6 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     return_leakage_frac = return_leakage.duct_leakage_value / max_airflow_cfm
 
     # Check ducts program
-    puts "supply_leakage_frac=#{supply_leakage_frac}, return_leakage_frac=#{return_leakage_frac}"
     program_values = get_ems_values(model.getEnergyManagementSystemSubroutines, 'duct subroutine')
     assert_in_epsilon(supply_leakage_frac, program_values['f_sup'].sum, 0.01)
     assert_in_epsilon(return_leakage_frac, program_values['f_ret'].sum, 0.01)
