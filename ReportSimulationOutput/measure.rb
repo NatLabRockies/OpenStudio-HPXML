@@ -397,9 +397,6 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     end
     if has_electricity_storage
       Model.add_output_meter(model, meter_name: 'ElectricStorage:ElectricityProduced', reporting_frequency: 'runperiod') # Used for error checking
-      if args[:include_timeseries_fuel_consumptions]
-        Model.add_output_meter(model, meter_name: 'ElectricStorage:ElectricityProduced', reporting_frequency: args[:timeseries_frequency])
-      end
 
       # Resilience
       if args[:include_annual_resilience] || args[:include_timeseries_resilience]
@@ -407,9 +404,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         if args[:timeseries_frequency] != EPlus::TimeseriesFrequencyTimestep
           resilience_frequency = EPlus::TimeseriesFrequencyHourly
         end
-        Model.add_output_meter(model, meter_name: 'Electricity:Facility', reporting_frequency: resilience_frequency)
-        Model.add_output_meter(model, meter_name: 'ElectricityProduced:Facility', reporting_frequency: resilience_frequency)
-        Model.add_output_meter(model, meter_name: 'ElectricStorage:ElectricityProduced', reporting_frequency: resilience_frequency)
+        Model.add_output_meter(model, meter_name: Outputs::MeterCustomElectricityCritical, reporting_frequency: resilience_frequency)
         @resilience.values.each do |resilience|
           resilience.variables.each do |_sys_id, varkey, var|
             Model.add_output_variable(model, key_value: varkey, variable_name: var, reporting_frequency: resilience_frequency)
@@ -1075,21 +1070,14 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       keys = resilience.variables.select { |v| v[2] == vars[0] }.map { |v| v[1] }
       batt_soc = get_report_variable_data_timeseries(keys, vars, 1, 0, resilience_frequency)
 
-      vars = ['Other Equipment Electricity Energy']
-      keys = resilience.variables.select { |v| v[2] == vars[0] }.map { |v| v[1] }
-      batt_loss = get_report_variable_data_timeseries(keys, vars, UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
-
       min_soc = elcd.minimumStorageStateofChargeFraction
       batt_kw = elcd.designStorageControlDischargePower.get / 1000.0
       batt_roundtrip_eff = elcs.dctoDCChargingEfficiency
       batt_kwh = elcs.additionalProperties.getFeatureAsDouble('UsableCapacity_kWh').get
 
       batt_soc_kwh = batt_soc.map { |soc| soc - min_soc }.map { |soc| soc * batt_kwh }
-      elec_prod = get_report_meter_data_timeseries(['ElectricityProduced:Facility'], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
-      elec_stor = get_report_meter_data_timeseries(['ElectricStorage:ElectricityProduced'], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
-      elec_prod = elec_prod.zip(elec_stor).map { |x, y| -1 * (x - y) }
-      elec = get_report_meter_data_timeseries(['Electricity:Facility'], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
-      crit_load = elec.zip(elec_prod, batt_loss).map { |x, y, z| x + y + z }
+
+      crit_load = get_report_meter_data_timeseries([Outputs::MeterCustomElectricityCritical.upcase], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
 
       resilience_timeseries = []
       n_timesteps = crit_load.size
@@ -1475,19 +1463,6 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
   def check_for_errors(runner)
     tol = 0.1 # 0.1%
 
-    # ElectricityProduced:Facility contains:
-    # - Generator Produced DC Electricity Energy
-    # - Inverter Conversion Loss Decrement Energy
-    # - Electric Storage Production Decrement Energy
-    # - Electric Storage Discharge Energy
-    # - Converter Electricity Loss Decrement Energy (should always be zero since efficiency=1.0)
-    # ElectricStorage:ElectricityProduced contains:
-    # - Electric Storage Production Decrement Energy
-    # - Electric Storage Discharge Energy
-    # So, we need to subtract ElectricStorage:ElectricityProduced from ElectricityProduced:Facility
-    meter_elec_produced = -1 * get_report_meter_data_annual(['ElectricityProduced:Facility'])
-    meter_elec_produced += get_report_meter_data_annual(['ElectricStorage:ElectricityProduced'])
-
     # Check if simulation successful
     all_total = @fuels.values.map { |x| x.annual_output.to_f }.sum(0.0)
     total_fraction_cool_load_served = @hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.total_fraction_cool_load_served }.sum(0.0)
@@ -1501,7 +1476,9 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     end
 
     # Check sum of electricity produced end use outputs match total output from meter
-    sum_elec_prod_annual = @end_uses.select { |k, eu| k[0] == FT::Elec && eu.is_negative }.map { |_k, eu| eu.annual_output.to_f }.sum(0.0) # Negative value
+    meter_elec_produced = get_report_meter_data_annual(['ElectricityProduced:Facility'])
+    meter_elec_produced -= get_report_meter_data_annual(['ElectricStorage:ElectricityProduced']) # ElectricityProduced:Facility contains ElectricStorage:ElectricityProduced, so we have to subtract it
+    sum_elec_prod_annual = @end_uses.select { |k, eu| k[0] == FT::Elec && eu.is_negative }.map { |_k, eu| eu.annual_output.to_f }.sum(0.0).abs # Positive value
     avg_value = (sum_elec_prod_annual + meter_elec_produced) / 2.0
     if (sum_elec_prod_annual - meter_elec_produced).abs / avg_value > tol
       runner.registerError("#{FT::Elec} produced category end uses (#{sum_elec_prod_annual.round(3)}) do not sum to total (#{meter_elec_produced.round(3)}).")
@@ -2058,7 +2035,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       load_kw = crit_load[t]
 
       # even if load_kw is negative, we return if batt_soc_kwh isn't charged at all
-      return i / Float(ts_per_hr) if batt_soc_kwh <= 0
+      return i / Float(ts_per_hr) if batt_soc_kwh <= Constants::Small
 
       if load_kw < 0 # load is met with PV
         if batt_soc_kwh < batt_kwh # charge battery if there's room in the battery
@@ -3232,11 +3209,6 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       if object.to_ElectricLoadCenterStorageLiIonNMCBattery.is_initialized
         if object.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeBattery
           return { RT::Battery => ['Electric Storage Charge Fraction'] }
-        end
-
-      elsif object.to_OtherEquipment.is_initialized
-        if object_type == Constants::ObjectTypeBatteryLossesAdjustment
-          return { RT::Battery => ['Other Equipment Electricity Energy'] }
         end
 
       end
