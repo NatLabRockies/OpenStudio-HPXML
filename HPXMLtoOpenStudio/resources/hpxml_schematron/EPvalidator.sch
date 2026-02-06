@@ -25,7 +25,7 @@
       <sch:assert role='ERROR' test='count(h:extension/h:SchedulesFilePath) = 0'>extension/SchedulesFilePath has been replaced by /HPXML/Building/BuildingDetails/BuildingSummary/extension/SchedulesFilePath</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:HVACSizingControl) = 0'>extension/HVACSizingControl has been replaced by /HPXML/Building/BuildingDetails/BuildingSummary/extension/HVACSizingControl</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:ShadingControl) = 0'>extension/ShadingControl has been replaced by /HPXML/Building/BuildingDetails/BuildingSummary/extension/ShadingControl</sch:assert>
-      <sch:assert role='ERROR' test='count(h:extension/h:NaturalVentilationAvailabilityDaysperWeek) = 0'>extension/NaturalVentilationAvailabilityDaysperWeek has been replaced by /HPXML/Building/BuildingDetails/BuildingSummary/extension/NaturalVentilationAvailabilityDaysperWeek</sch:assert>
+      <sch:assert role='ERROR' test='count(h:extension/h:NaturalVentilationAvailabilityDaysperWeek) = 0'>extension/NaturalVentilationAvailabilityDaysperWeek has been replaced by /HPXML/Building/BuildingDetails/BuildingSummary/extension/NaturalVentilationControl/DaysperWeek</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -348,13 +348,11 @@
       <sch:assert role='ERROR' test='count(h:extension/h:SchedulesFilePath) &gt;= 0'>Expected 0 or more element(s) for xpath: extension/SchedulesFilePath</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:HVACSizingControl) &lt;= 1'>Expected 0 or 1 element(s) for xpath: extension/HVACSizingControl</sch:assert> <!-- See [HVACSizingControl] -->
       <sch:assert role='ERROR' test='count(h:extension/h:ShadingControl) &lt;= 1'>Expected 0 or 1 element(s) for xpath: extension/ShadingControl</sch:assert> <!-- See [ShadingControl] -->
-      <sch:assert role='ERROR' test='count(h:extension/h:NaturalVentilationAvailabilitySeasons) &lt;= 1'>Expected 0 or 1 element(s) for xpath: extension/NaturalVentilationAvailabilitySeasons</sch:assert>
-      <sch:assert role='ERROR' test='h:extension/h:NaturalVentilationAvailabilitySeasons[text()="year-round" or text()="cooling" or text()="heating"] or not(h:extension/h:NaturalVentilationAvailabilitySeasons)'>Expected extension/NaturalVentilationAvailabilitySeasons to be 'year-round' or 'cooling' or 'heating'</sch:assert>
-      <sch:assert role='ERROR' test='count(h:extension/h:NaturalVentilationAvailabilityDaysperWeek) &lt;= 1'>Expected 0 or 1 element(s) for xpath: extension/NaturalVentilationAvailabilityDaysperWeek</sch:assert>
-      <sch:assert role='ERROR' test='number(h:extension/h:NaturalVentilationAvailabilityDaysperWeek) &gt;= 0 or not(h:extension/h:NaturalVentilationAvailabilityDaysperWeek)'>Expected extension/NaturalVentilationAvailabilityDaysperWeek to be greater than or equal to 0</sch:assert>
-      <sch:assert role='ERROR' test='number(h:extension/h:NaturalVentilationAvailabilityDaysperWeek) &lt;= 7 or not(h:extension/h:NaturalVentilationAvailabilityDaysperWeek)'>Expected extension/NaturalVentilationAvailabilityDaysperWeek to be less than or equal to 7</sch:assert>
+      <sch:assert role='ERROR' test='count(h:extension/h:NaturalVentilationControl) &lt;= 1'>Expected 0 or 1 element(s) for xpath: extension/NaturalVentilationControl</sch:assert> <!-- See [NaturalVentilationControl] -->
       <sch:assert role='ERROR' test='count(h:extension/h:ElectricPanelBaselinePeakPower) &lt;= 1'>Expected 0 or 1 element(s) for xpath: extension/ElectricPanelBaselinePeakPower</sch:assert>
       <sch:assert role='ERROR' test='number(h:extension/h:ElectricPanelBaselinePeakPower) &gt; 0 or not(h:extension/h:ElectricPanelBaselinePeakPower)'>Expected extension/ElectricPanelBaselinePeakPower to be greater than 0</sch:assert>
+      <!-- Moved Natural Ventilation inputs to NaturalVentilationControl; see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2152 -->
+      <sch:assert role='ERROR' test='count(h:extension/h:NaturalVentilationAvailabilityDaysperWeek) = 0'>extension/NaturalVentilationAvailabilityDaysperWeek has been replaced by extension/NaturalVentilationControl/DaysperWeek</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -413,6 +411,17 @@
       <sch:assert role='ERROR' test='count(h:SummerBeginDayOfMonth) = 1'>Expected 1 element(s) for xpath: SummerBeginDayOfMonth</sch:assert>
       <sch:assert role='ERROR' test='count(h:SummerEndMonth) = 1'>Expected 1 element(s) for xpath: SummerEndMonth</sch:assert>
       <sch:assert role='ERROR' test='count(h:SummerEndDayOfMonth) = 1'>Expected 1 element(s) for xpath: SummerEndDayOfMonth</sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <sch:pattern>
+    <sch:title>[NaturalVentilationControl]</sch:title>
+    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:BuildingSummary/h:extension/h:NaturalVentilationControl'>
+      <sch:assert role='ERROR' test='count(h:Seasons) &lt;= 1'>Expected 0 or 1 element(s) for xpath: Seasons</sch:assert>
+      <sch:assert role='ERROR' test='h:Seasons[text()="year-round" or text()="cooling" or text()="heating"] or not(h:Seasons)'>Expected Seasons to be 'year-round' or 'cooling' or 'heating'</sch:assert>
+      <sch:assert role='ERROR' test='count(h:DaysperWeek) &lt;= 1'>Expected 0 or 1 element(s) for xpath: DaysperWeek</sch:assert>
+      <sch:assert role='ERROR' test='number(h:DaysperWeek) &gt;= 0 or not(h:DaysperWeek)'>Expected DaysperWeek to be greater than or equal to 0</sch:assert>
+      <sch:assert role='ERROR' test='number(h:DaysperWeek) &lt;= 7 or not(h:DaysperWeek)'>Expected DaysperWeek to be less than or equal to 7</sch:assert>
     </sch:rule>
   </sch:pattern>
 

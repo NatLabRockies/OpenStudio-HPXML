@@ -1,6 +1,10 @@
 ## OpenStudio-HPXML v1.12.0
 
 __New Features__
+- Natural ventilation updates:
+  - **Breaking change**: Replaces `extension/NaturalVentilationAvailabilityDaysperWeek` with `extension/NaturalVentilationControl/DaysperWeek`.
+  - Adds `extension/NaturalVentilationControl/Seasons` (year-round, cooling, or heating) to control seasonal natural ventilation availability; now defaults to year-round.
+  - Updates the default days/week assumption from 3 to 7 to align with ANSI 301.
 - Output updates:
   - **Breaking change**: Replaces "UnitX" prefixes with Building IDs in whole SFA/MF building timeseries outputs.
 

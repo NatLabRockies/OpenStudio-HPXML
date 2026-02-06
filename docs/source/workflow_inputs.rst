@@ -1853,16 +1853,16 @@ If overhangs are specified, additional information is entered in ``Overhangs``.
 Natural Ventilation
 ~~~~~~~~~~~~~~~~~~~
 
-If operable windows are defined, the availability of natural ventilation is entered in ``/HPXML/Building/BuildingDetails/BuildingSummary/extension``.
+If operable windows are defined, the availability of natural ventilation is entered in ``/HPXML/Building/BuildingDetails/BuildingSummary/extension/NaturalVentilationControl``.
 
-  =============================================  ========  =========  ===========  ========  ==========  ========================================================
-  Element                                        Type      Units      Constraints  Required  Default     Notes
-  =============================================  ========  =========  ===========  ========  ==========  ========================================================
-  ``NaturalVentilationAvailabilitySeasons``      string               See [#]_     No        year-round  When during the year occupants open windows
-  ``NaturalVentilationAvailabilityDaysperWeek``  integer   days/week  >= 0, <= 7   No        7           How many days/week occupants open windows
-  =============================================  ========  =========  ===========  ========  ==========  ========================================================
+  =================================  ========  =========  ===========  ========  ==========  ========================================================
+  Element                            Type      Units      Constraints  Required  Default     Notes
+  =================================  ========  =========  ===========  ========  ==========  ========================================================
+  ``Seasons``                        string               See [#]_     No        year-round  When during the year occupants open windows
+  ``DaysperWeek``                    integer   days/week  >= 0, <= 7   No        7           How many days/week occupants open windows
+  =================================  ========  =========  ===========  ========  ==========  ========================================================
 
-  .. [#] NaturalVentilationAvailabilitySeasons choices are "year-round", "cooling", or "heating".
+  .. [#] Seasons choices are "year-round", "cooling", or "heating".
          The cooling/heating seasons are determined by the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_
          Natural ventilation will be available when the outdoor humidity ratio is less than 0.0115 and either A) outdoor temperature is below the indoor temperature and the indoor temperature is above the average of the heating and cooling setpoints, or B) outdoor temperature is above the indoor temperature and the indoor temperature is below the average of the heating and cooling setpoints, per ANSI/RESNET/ICC 301-2025.
 
