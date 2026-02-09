@@ -1,7 +1,9 @@
 ## OpenStudio-HPXML v1.12.0
 
 __New Features__
-- Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
+- HVAC updates:
+  - Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
+  - Improves handling of duct leakage specified using cfm25/cfm50.
 - Output updates:
   - **Breaking change**: Replaces "UnitX" prefixes with Building IDs in whole SFA/MF building timeseries outputs.
 
