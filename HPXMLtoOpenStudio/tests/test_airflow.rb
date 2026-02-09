@@ -620,6 +620,14 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
   end
 
   def test_ducts_leakage_cfm25
+    def get_dx_max_capacity(detailed_perf_data, odb)
+      capacities = detailed_perf_data.select { |dp| dp.outdoor_temperature == odb }.map { |dp| dp.capacity }
+      return UnitConversions.convert(capacities.max, 'Btu/hr', 'ton')
+    end
+
+    furnance_cfm_per_ton = 240
+    dx_cfm_per_ton = 360
+
     # Central AC (1-speed) plus furnace
     args_hash = {}
     args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base.xml'))
@@ -628,11 +636,9 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     # Get HPXML values
     supply_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeSupply }
     return_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeReturn }
-    heating_airflow_cfm_per_ton = 240 # furnace
-    cooling_airflow_cfm_per_ton = 360 # central AC
-    heating_airflow_cfm = UnitConversions.convert(hpxml_bldg.heating_systems[0].heating_capacity, 'Btu/hr', 'ton') * heating_airflow_cfm_per_ton
-    cooling_airflow_cfm = UnitConversions.convert(hpxml_bldg.cooling_systems[0].cooling_capacity, 'Btu/hr', 'ton') * cooling_airflow_cfm_per_ton
-    max_airflow_cfm = [heating_airflow_cfm, cooling_airflow_cfm].max
+    max_heating_capacity = UnitConversions.convert(hpxml_bldg.heating_systems[0].heating_capacity, 'Btu/hr', 'ton')
+    max_cooling_capacity = get_dx_max_capacity(hpxml_bldg.cooling_systems[0].cooling_detailed_performance_data, HVAC::AirSourceCoolRatedODB)
+    max_airflow_cfm = [max_heating_capacity * furnance_cfm_per_ton, max_cooling_capacity * dx_cfm_per_ton].max
     supply_leakage_frac = supply_leakage.duct_leakage_value / max_airflow_cfm
     return_leakage_frac = return_leakage.duct_leakage_value / max_airflow_cfm
 
@@ -649,11 +655,9 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     # Get HPXML values
     supply_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeSupply }
     return_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeReturn }
-    heating_airflow_cfm_per_ton = 360 # central HP
-    cooling_airflow_cfm_per_ton = 360 # central HP
-    heating_airflow_cfm = UnitConversions.convert(hpxml_bldg.heat_pumps[0].heating_capacity, 'Btu/hr', 'ton') * heating_airflow_cfm_per_ton
-    cooling_airflow_cfm = UnitConversions.convert(hpxml_bldg.heat_pumps[0].cooling_capacity, 'Btu/hr', 'ton') * cooling_airflow_cfm_per_ton
-    max_airflow_cfm = [heating_airflow_cfm, cooling_airflow_cfm].max
+    max_heating_capacity = get_dx_max_capacity(hpxml_bldg.heat_pumps[0].heating_detailed_performance_data, HVAC::AirSourceHeatRatedODB)
+    max_cooling_capacity = get_dx_max_capacity(hpxml_bldg.heat_pumps[0].cooling_detailed_performance_data, HVAC::AirSourceCoolRatedODB)
+    max_airflow_cfm = [max_heating_capacity * dx_cfm_per_ton, max_cooling_capacity * dx_cfm_per_ton].max
     supply_leakage_frac = supply_leakage.duct_leakage_value / max_airflow_cfm
     return_leakage_frac = return_leakage.duct_leakage_value / max_airflow_cfm
 
@@ -670,15 +674,9 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     # Get HPXML values
     supply_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeSupply }
     return_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeReturn }
-    heating_airflow_cfm_per_ton = 360 # central HP
-    cooling_airflow_cfm_per_ton = 360 # central HP
-    heating_perf_data = hpxml_bldg.heat_pumps[0].heating_detailed_performance_data
-    cooling_perf_data = hpxml_bldg.heat_pumps[0].cooling_detailed_performance_data
-    max_to_nom_heating_capacity_ratio = heating_perf_data.find { |dp| dp.outdoor_temperature == HVAC::AirSourceHeatRatedODB && dp.capacity_description == HPXML::CapacityDescriptionMaximum }.capacity / heating_perf_data.find { |dp| dp.outdoor_temperature == HVAC::AirSourceHeatRatedODB && dp.capacity_description == HPXML::CapacityDescriptionNominal }.capacity
-    max_to_nom_cooling_capacity_ratio = cooling_perf_data.find { |dp| dp.outdoor_temperature == HVAC::AirSourceCoolRatedODB && dp.capacity_description == HPXML::CapacityDescriptionMaximum }.capacity / cooling_perf_data.find { |dp| dp.outdoor_temperature == HVAC::AirSourceCoolRatedODB && dp.capacity_description == HPXML::CapacityDescriptionNominal }.capacity
-    heating_airflow_cfm = max_to_nom_heating_capacity_ratio * UnitConversions.convert(hpxml_bldg.heat_pumps[0].heating_capacity, 'Btu/hr', 'ton') * heating_airflow_cfm_per_ton
-    cooling_airflow_cfm = max_to_nom_cooling_capacity_ratio * UnitConversions.convert(hpxml_bldg.heat_pumps[0].cooling_capacity, 'Btu/hr', 'ton') * cooling_airflow_cfm_per_ton
-    max_airflow_cfm = [heating_airflow_cfm, cooling_airflow_cfm].max
+    max_heating_capacity = get_dx_max_capacity(hpxml_bldg.heat_pumps[0].heating_detailed_performance_data, HVAC::AirSourceHeatRatedODB)
+    max_cooling_capacity = get_dx_max_capacity(hpxml_bldg.heat_pumps[0].cooling_detailed_performance_data, HVAC::AirSourceCoolRatedODB)
+    max_airflow_cfm = [max_heating_capacity * dx_cfm_per_ton, max_cooling_capacity * dx_cfm_per_ton].max
     supply_leakage_frac = supply_leakage.duct_leakage_value / max_airflow_cfm
     return_leakage_frac = return_leakage.duct_leakage_value / max_airflow_cfm
 
