@@ -642,7 +642,7 @@ The amount of natural ventilation from occupants opening operable windows when o
 
 - **Required:** ``false``
 
-- **Choices:** <br/>  - `None`<br/>  - `33% Operable Windows`<br/>  - `50% Operable Windows`<br/>  - `67% Operable Windows`<br/>  - `100% Operable Windows`<br/>  - `Detailed Example: 67% Operable Windows, 5% Open, 3 Days/Week, Cooling Only`
+- **Choices:** <br/>  - `None`<br/>  - `33% Operable Windows`<br/>  - `50% Operable Windows`<br/>  - `67% Operable Windows`<br/>  - `100% Operable Windows`<br/>  - `Detailed Example: 67% Operable Windows, 20% Open, 3 Days/Week, Cooling Only`
 
 
 - **Default:** `67% Operable Windows`

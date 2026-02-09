@@ -1206,7 +1206,7 @@
   },
   "sample_files/base-enclosure-windows-natural-ventilation-availability.xml": {
     "parent_hpxml": "sample_files/base.xml",
-    "enclosure_window_natural_ventilation": "Detailed Example: 67% Operable Windows, 5% Open, 3 Days/Week, Cooling Only"
+    "enclosure_window_natural_ventilation": "Detailed Example: 67% Operable Windows, 20% Open, 3 Days/Week, Cooling Only"
   },
   "sample_files/base-enclosure-windows-none.xml": {
     "parent_hpxml": "sample_files/base.xml",
