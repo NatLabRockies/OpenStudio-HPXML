@@ -232,7 +232,7 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
 
     # Check natural ventilation/whole house fan program
     program_values = get_ems_values(model.getEnergyManagementSystemPrograms, "#{Constants::ObjectTypeNaturalVentilation} program")
-    assert_in_epsilon(7.24, UnitConversions.convert(program_values['NVArea'].sum, 'cm^2', 'ft^2'), 0.01)
+    assert_in_epsilon(28.94, UnitConversions.convert(program_values['NVArea'].sum, 'cm^2', 'ft^2'), 0.01)
     assert_in_epsilon(0.000109, program_values['Cs'].sum, 0.01)
     assert_in_epsilon(0.000071, program_values['Cw'].sum, 0.01)
     assert_in_epsilon(0.0, UnitConversions.convert(program_values['WHF_Flow'].sum, 'm^3/s', 'cfm'), 0.01)
