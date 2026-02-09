@@ -1,6 +1,7 @@
 ## OpenStudio-HPXML v1.12.0
 
 __New Features__
+- Improves handling of duct leakage specified using cfm25/cfm50.
 - Output updates:
   - **Breaking change**: Replaces "UnitX" prefixes with Building IDs in whole SFA/MF building timeseries outputs.
 
