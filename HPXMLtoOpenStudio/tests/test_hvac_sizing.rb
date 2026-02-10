@@ -1023,6 +1023,34 @@ class HPXMLtoOpenStudioHVACSizingTest < Minitest::Test
     assert_operator(hpxml_bldg1.heat_pumps[0].heating_capacity, :>, hpxml_bldg2.heat_pumps[0].heating_capacity)
   end
 
+  def test_heat_pump_dual_fuel_switchover_temperature
+    # Test that dual-fuel HP capacity is not changed when the compressor lockout
+    # exceeds 25F; see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2161
+    args_hash = {}
+    args_hash['hpxml_path'] = File.absolute_path(@tmp_hpxml_path)
+
+    hpxml, hpxml_bldg = _create_hpxml('base-hvac-dual-fuel-mini-split-heat-pump-ducted.xml')
+    _remove_hardsized_capacities(hpxml_bldg)
+
+    # Switchover temp = 0F
+    hpxml_bldg.heat_pumps[0].backup_heating_switchover_temp = 0
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _model, _hpxml, hpxml_bldg1 = _test_measure(args_hash)
+
+    # Switchover temp = 25F
+    hpxml_bldg.heat_pumps[0].backup_heating_switchover_temp = 25
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _model, _hpxml, hpxml_bldg2 = _test_measure(args_hash)
+
+    # Switchover temp = 40F
+    hpxml_bldg.heat_pumps[0].backup_heating_switchover_temp = 40
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _model, _hpxml, hpxml_bldg3 = _test_measure(args_hash)
+
+    assert_operator(hpxml_bldg1.heat_pumps[0].heating_capacity, :>, hpxml_bldg2.heat_pumps[0].heating_capacity)
+    assert_equal(hpxml_bldg2.heat_pumps[0].heating_capacity, hpxml_bldg3.heat_pumps[0].heating_capacity)
+  end
+
   def test_allow_increased_fixed_capacities
     for allow_increased_fixed_capacities in [true, false]
       # Test hard-sized capacities are increased (or not) for various equipment types
