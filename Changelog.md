@@ -6,6 +6,7 @@ __New Features__
   - Improves handling of duct leakage specified using cfm25/cfm50.
 - Output updates:
   - **Breaking change**: Replaces "UnitX" prefixes with Building IDs in whole SFA/MF building timeseries outputs.
+- Adds a `run_simulation.rb --ems-debug` argument to generate the EnergyPlus EDD file for debugging EMS programs.
 
 __Bugfixes__
 - Fixes a misleading warning about adjusting inverted setpoints when heating setpoint is greater than cooling setpoint during non-overlapping heating/cooling seasons.

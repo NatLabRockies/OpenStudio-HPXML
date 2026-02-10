@@ -18,7 +18,7 @@ $timeseries_types = ['ALL', 'total', 'fuels', 'enduses', 'systemuses', 'emission
 def run_workflow(basedir, rundir, hpxml, debug, skip_validation, add_comp_loads,
                  output_format, building_id, ep_input_format, stochastic_schedules,
                  hourly_outputs, daily_outputs, monthly_outputs, timestep_outputs,
-                 skip_simulation, master_seed)
+                 skip_simulation, master_seed, ems_debug)
 
   measures_dir = File.join(basedir, '..')
   measures = {}
@@ -46,6 +46,7 @@ def run_workflow(basedir, rundir, hpxml, debug, skip_validation, add_comp_loads,
   args['skip_validation'] = skip_validation
   args['building_id'] = building_id
   args['debug'] = debug
+  args['ems_debug'] = ems_debug
   measures[measure_subdir] = [args]
 
   if not skip_simulation
@@ -198,6 +199,11 @@ OptionParser.new do |opts|
     options[:debug] = true
   end
 
+  options[:ems_debug] = false
+  opts.on('-e', '--ems-debug', 'Generate EnergyPlus EDD file for EMS debugging; can be VERY large') do |_t|
+    options[:ems_debug] = true
+  end
+
   opts.on_tail('-h', '--help', 'Display help') do
     puts opts
     exit!
@@ -243,7 +249,7 @@ else
   success = run_workflow(basedir, rundir, options[:hpxml], options[:debug], options[:skip_validation], options[:add_comp_loads],
                          options[:output_format], options[:building_id], options[:ep_input_format], options[:stochastic_schedules],
                          options[:hourly_outputs], options[:daily_outputs], options[:monthly_outputs], options[:timestep_outputs],
-                         options[:skip_simulation], options[:master_seed])
+                         options[:skip_simulation], options[:master_seed], options[:ems_debug])
 
   if not success
     exit! 1
