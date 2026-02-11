@@ -1076,10 +1076,10 @@ class ReportSimulationOutputTest < Minitest::Test
     expected_timeseries_cols << "Fuel Use: #{FT::Elec}: #{TE::Total}"
     expected_timeseries_cols << "Fuel Use: #{FT::Elec}: #{TE::Net}"
     whole_building_unit_ids.each do |unit_id|
-      expected_timeseries_cols << "Energy Use: #{unit_id}: #{TE::Total}"
-      expected_timeseries_cols << "Energy Use: #{unit_id}: #{TE::Net}"
-      expected_timeseries_cols << "Fuel Use: #{unit_id}: #{FT::Elec}: #{TE::Total}"
-      expected_timeseries_cols << "Fuel Use: #{unit_id}: #{FT::Elec}: #{TE::Net}"
+      expected_timeseries_cols << "Dwelling Unit Energy Use: #{unit_id}: #{TE::Total}"
+      expected_timeseries_cols << "Dwelling Unit Energy Use: #{unit_id}: #{TE::Net}"
+      expected_timeseries_cols << "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Elec}: #{TE::Total}"
+      expected_timeseries_cols << "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Elec}: #{TE::Net}"
       # No other fuels because this is an all-electric building.
     end
     assert_equal(expected_timeseries_cols.sort, actual_timeseries_cols.sort)
