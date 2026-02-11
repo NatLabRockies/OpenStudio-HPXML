@@ -1449,7 +1449,7 @@ module Outputs
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param custom_unit_meter [OpenStudio::Model::MeterCustom] optional OpenStudio custom meter object
   # @return [nil]
-  def self.create_custom_meters(model, custom_unit_meter = nil)
+  def self.create_custom_electricity_meters(model, custom_unit_meter = nil)
     # Create custom meters:
     # - Total Electricity (Electricity:Facility plus EV charging, batteries, generators)
     # - Net Electricity (above plus PV)
@@ -1628,9 +1628,9 @@ module Outputs
       )
 
       # We're in the fuel types loop so that we can pass in custom_unit_meter from above.
-      # But we don't want to call create_custom_meters multiple times.
+      # But we don't want to call create_custom_electricity_meters multiple times.
       if fuel_type == EPlus::FuelTypeElectricity
-        create_custom_meters(model, custom_unit_meter)
+        create_custom_electricity_meters(model, custom_unit_meter)
       end
     end
   end
