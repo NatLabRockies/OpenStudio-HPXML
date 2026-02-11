@@ -1,6 +1,9 @@
 ## OpenStudio-HPXML v1.12.0
 
 __New Features__
+- HVAC updates:
+  - Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
+  - Improves handling of duct leakage specified using cfm25/cfm50.
 - Natural ventilation updates:
   - **Breaking change**: Replaces `NaturalVentilationAvailabilityDaysperWeek` with `NaturalVentilationControl/DaysperWeek`.
   - Adds `NaturalVentilationControl/Seasons` ("year-round", "cooling", or "heating") to control seasonal natural ventilation availability; now defaults to year-round instead of cooling.

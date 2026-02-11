@@ -50,12 +50,12 @@ module Airflow
 
     # Initialization
     cfis_data = initialize_cfis(model, vent_fans, airloop_map, hpxml_header.unavailable_periods)
-    fan_data = { rtf_var: {}, mfr_max_var: {}, rtf_sensor: {} }
+    fan_data = { rtf_var: {}, max_airflow_m3s: {}, rtf_sensor: {} }
     model.getAirLoopHVACs.each do |air_loop|
-      initialize_fan_objects(model, air_loop, fan_data)
+      initialize_fan(model, air_loop, fan_data)
     end
     model.getZoneHVACFourPipeFanCoils.each do |fan_coil|
-      initialize_fan_objects(model, fan_coil, fan_data)
+      initialize_fan(model, fan_coil, fan_data)
     end
 
     # Apply ducts
@@ -805,14 +805,14 @@ module Airflow
     return cfis_data
   end
 
-  # Updates the fan_data hash with various EMS objects associated with the given AirLoopHVAC (or
+  # Updates the fan_data hash with various properties associated with the given AirLoopHVAC (or
   # ZoneHVACFourPipeFanCoil) object.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param object [OpenStudio::Model::XXX] OpenStudio AirLoopHVAC (or ZoneHVACFourPipeFanCoil) object
+  # @param object [OpenStudio::Model::AirLoopHVAC or OpenStudio::Model::ZoneHVACFourPipeFanCoil] HVAC object
   # @param fan_data [Hash] Map of HVAC blower fan properties => values
   # @return [nil]
-  def self.initialize_fan_objects(model, object, fan_data)
+  def self.initialize_fan(model, object, fan_data)
     # Get the supply fan
     if object.is_a? OpenStudio::Model::ZoneHVACFourPipeFanCoil
       supply_fan = object.supplyAirFan
@@ -838,13 +838,9 @@ module Airflow
       var_name: "#{object.name} Fan RTF"
     )
 
-    # Supply fan maximum mass flow rate
-    fan_data[:mfr_max_var][object] = Model.add_ems_internal_var(
-      model,
-      name: "#{object.name} max sup fan mfr",
-      model_object: supply_fan,
-      type: EPlus::EMSIntVarFanMFR
-    )
+    # Supply fan maximum airflow rate
+    supply_fan = supply_fan.to_FanSystemModel.get
+    fan_data[:max_airflow_m3s][object] = supply_fan.designMaximumAirFlowRate.get
 
     if supply_fan.to_FanSystemModel.is_initialized
       fan_data[:rtf_sensor][object] = []
@@ -1433,19 +1429,19 @@ module Airflow
 
     # Obtain aggregate values for all ducts in the current duct location
     leakage_fracs = { HPXML::DuctTypeSupply => nil, HPXML::DuctTypeReturn => nil }
-    leakage_cfm25s = { HPXML::DuctTypeSupply => nil, HPXML::DuctTypeReturn => nil }
     ua_values = { HPXML::DuctTypeSupply => 0, HPXML::DuctTypeReturn => 0 }
     duct_infos.each do |duct_info|
       side = duct_info[:side]
+      leakage_fracs[side] = 0 if leakage_fracs[side].nil?
       if not duct_info[:leakage_frac].nil?
-        leakage_fracs[side] = 0 if leakage_fracs[side].nil?
         leakage_fracs[side] += duct_info[:leakage_frac]
-      elsif not duct_info[:leakage_cfm25].nil?
-        leakage_cfm25s[side] = 0 if leakage_cfm25s[side].nil?
-        leakage_cfm25s[side] += duct_info[:leakage_cfm25]
-      elsif not duct_info[:leakage_cfm50].nil?
-        leakage_cfm25s[side] = 0 if leakage_cfm25s[side].nil?
-        leakage_cfm25s[side] += calc_infiltration_at_diff_pressure(duct_info[:leakage_cfm50], 50.0, 25.0)
+      elsif (not duct_info[:leakage_cfm25].nil?) || (not duct_info[:leakage_cfm50].nil?)
+        if not duct_info[:leakage_cfm25].nil?
+          cfm25_leakage = duct_info[:leakage_cfm25]
+        elsif not duct_info[:leakage_cfm50].nil?
+          cfm25_leakage = calc_infiltration_at_diff_pressure(duct_info[:leakage_cfm50], 50.0, 25.0)
+        end
+        leakage_fracs[side] += UnitConversions.convert(cfm25_leakage, 'cfm', 'm^3/s') / (fan_data[:max_airflow_m3s][object] / unit_multiplier)
       end
       ua_values[side] += duct_info[:area] / duct_info[:effective_rvalue]
     end
@@ -1487,15 +1483,11 @@ module Airflow
 
     if not leakage_fracs[HPXML::DuctTypeSupply].nil?
       duct_subroutine.addLine("  Set f_sup = #{leakage_fracs[HPXML::DuctTypeSupply]}") # frac
-    elsif not leakage_cfm25s[HPXML::DuctTypeSupply].nil?
-      duct_subroutine.addLine("  Set f_sup = #{UnitConversions.convert(leakage_cfm25s[HPXML::DuctTypeSupply], 'cfm', 'm^3/s').round(6)} / (#{fan_data[:mfr_max_var][object].name}/#{unit_multiplier} * 1.0135)") # frac
     else
       duct_subroutine.addLine('  Set f_sup = 0.0') # frac
     end
     if not leakage_fracs[HPXML::DuctTypeReturn].nil?
       duct_subroutine.addLine("  Set f_ret = #{leakage_fracs[HPXML::DuctTypeReturn]}") # frac
-    elsif not leakage_cfm25s[HPXML::DuctTypeReturn].nil?
-      duct_subroutine.addLine("  Set f_ret = #{UnitConversions.convert(leakage_cfm25s[HPXML::DuctTypeReturn], 'cfm', 'm^3/s').round(6)} / (#{fan_data[:mfr_max_var][object].name}/#{unit_multiplier} * 1.0135)") # frac
     else
       duct_subroutine.addLine('  Set f_ret = 0.0') # frac
     end
@@ -1534,8 +1526,8 @@ module Airflow
     duct_subroutine.addLine('  Set SupSensLkToDZ = SupTotLkToDZ-SupLatLkToDZ') # W
 
     # Handle duct leakage imbalance induced infiltration (ANSI/RESNET/ICC 301-2022 Addendum C Table 4.2.2(1c)
-    leakage_supply = leakage_fracs[HPXML::DuctTypeSupply].to_f + leakage_cfm25s[HPXML::DuctTypeSupply].to_f
-    leakage_return = leakage_fracs[HPXML::DuctTypeReturn].to_f + leakage_cfm25s[HPXML::DuctTypeReturn].to_f
+    leakage_supply = leakage_fracs[HPXML::DuctTypeSupply].to_f
+    leakage_return = leakage_fracs[HPXML::DuctTypeReturn].to_f
     if leakage_supply == leakage_return
       duct_subroutine.addLine('  Set FracOutsideToCond = 0.0')
       duct_subroutine.addLine('  Set FracOutsideToDZ = 0.0')
@@ -1667,7 +1659,7 @@ module Airflow
         f_vent_only_mode_var = cfis_data[:f_vent_only_mode_var][cfis_id]
 
         duct_program.addLine("If #{f_vent_only_mode_var.name} > 0")
-        duct_program.addLine("  Set cfis_m3s = (#{fan_data[:mfr_max_var][object].name} * #{cfis_fan.cfis_vent_mode_airflow_fraction} / 1.16097654)") # Density of 1.16097654 was back calculated using E+ results
+        duct_program.addLine("  Set cfis_m3s = #{fan_data[:max_airflow_m3s][object]} * #{cfis_fan.cfis_vent_mode_airflow_fraction}")
         duct_program.addLine("  Set #{fan_data[:rtf_var][object].name} = #{f_vent_only_mode_var.name}") # Need to use global vars to sync duct_program and infiltration program of different calling points
         duct_program.addLine("  Set #{ah_vfr_var.name} = #{fan_data[:rtf_var][object].name}*cfis_m3s")
         duct_program.addLine("  Set rho_in = (@RhoAirFnPbTdbW #{sensors[:pbar].name} #{sensors[:t_in].name} #{sensors[:w_in].name})")
