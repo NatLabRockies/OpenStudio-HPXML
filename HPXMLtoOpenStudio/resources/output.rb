@@ -996,6 +996,7 @@ module Outputs
     additionalProperties = model.getBuilding.additionalProperties
     additionalProperties.setFeature('hpxml_path', hpxml_path)
     additionalProperties.setFeature('hpxml_defaults_path', hpxml_defaults_path)
+    additionalProperties.setFeature('hpxml_bldgs_size', hpxml.buildings.size)
     additionalProperties.setFeature('building_id', building_id.to_s)
     additionalProperties.setFeature('emissions_scenario_names', hpxml.header.emissions_scenarios.map { |s| s.name }.to_s)
     additionalProperties.setFeature('emissions_scenario_types', hpxml.header.emissions_scenarios.map { |s| s.emissions_type }.to_s)
@@ -1486,10 +1487,8 @@ module Outputs
 
       if elcd.inverter.is_initialized
         inv = elcd.inverter.get
-        if inv.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypePhotovoltaics
-          net_key_vars << [inv.name.to_s.upcase, 'Inverter Conversion Loss Decrement Energy']
-          pv_key_vars << net_key_vars[-1]
-        end
+        net_key_vars << [inv.name.to_s.upcase, 'Inverter Conversion Loss Decrement Energy']
+        pv_key_vars << net_key_vars[-1]
       end
 
       # Generator output meter
@@ -1513,6 +1512,9 @@ module Outputs
         if custom_unit_meter.nil?
           key_vars << ['', 'Electricity:Facility']
         else
+          # Meter:Custom cannot reference another Meter:Custom,
+          # so we pass key/variable groups from one to the other.
+          # https://github.com/NatLabRockies/EnergyPlus/issues/11400
           key_vars = custom_unit_meter.keyVarGroups
         end
         Model.add_meter_custom(
@@ -1618,15 +1620,17 @@ module Outputs
 
       next if key_vars.empty?
 
-      meter_custom = Model.add_meter_custom(
+      custom_unit_meter = Model.add_meter_custom(
         model,
         name: "#{fuel_type}:Facility",
         fuel_type: fuel_type,
         key_var_pairs: key_vars
       )
 
+      # We're in the fuel types loop so that we can pass in custom_unit_meter from above.
+      # But we don't want to call create_custom_meters multiple times.
       if fuel_type == EPlus::FuelTypeElectricity
-        Outputs.create_custom_meters(model, meter_custom)
+        create_custom_meters(model, custom_unit_meter)
       end
     end
   end

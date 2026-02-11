@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>report_simulation_output</name>
   <uid>df9d170c-c21a-4130-866d-0d46b06073fd</uid>
-  <version_id>886e9b1d-e6cb-4590-a2ab-8ea83ce6d52e</version_id>
-  <version_modified>2026-02-05T22:03:04Z</version_modified>
+  <version_id>c918abd3-7b54-4649-b9e2-15ab5b36d13c</version_id>
+  <version_modified>2026-02-11T20:41:38Z</version_modified>
   <xml_checksum>9BF1E6AC</xml_checksum>
   <class_name>ReportSimulationOutput</class_name>
   <display_name>HPXML Simulation Output Report</display_name>
@@ -326,7 +326,7 @@
     <argument>
       <name>include_annual_dwelling_unit_outputs</name>
       <display_name>Generate Annual Output: By Dwelling Unit</display_name>
-      <description>Generates annual outputs by dwelling unit.</description>
+      <description>Generates annual outputs by dwelling unit for whole SFA/MF building simulations.</description>
       <type>Boolean</type>
       <required>false</required>
       <model_dependent>false</model_dependent>
@@ -680,7 +680,7 @@
     <argument>
       <name>include_timeseries_dwelling_unit_outputs</name>
       <display_name>Generate Timeseries Output: By Dwelling Unit</display_name>
-      <description>Generates timeseries outputs by dwelling unit.</description>
+      <description>Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations.</description>
       <type>Boolean</type>
       <required>false</required>
       <model_dependent>false</model_dependent>
@@ -2012,7 +2012,7 @@
       <filename>README.md</filename>
       <filetype>md</filetype>
       <usage_type>readme</usage_type>
-      <checksum>84D84D52</checksum>
+      <checksum>8DACFB67</checksum>
     </file>
     <file>
       <filename>README.md.erb</filename>
@@ -2029,13 +2029,13 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>EE693908</checksum>
+      <checksum>9F965D82</checksum>
     </file>
     <file>
       <filename>test_report_sim_output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>8E73AA9F</checksum>
+      <checksum>EF8BCEEA</checksum>
     </file>
   </files>
 </measure>

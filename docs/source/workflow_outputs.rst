@@ -97,7 +97,7 @@ Annual energy outputs are listed below.
   Energy Use: Net (MBtu)                Total energy consumption minus power produced by PV
   ====================================  ===========================
 
-For whole SFA/MF building simulations, annual energy outputs are also reported by dwelling unit (e.g., "Energy Use: <BuildingID>: Total (MBtu)").
+For whole SFA/MF building simulations, annual energy outputs can also be reported by dwelling unit (e.g., "Dwelling Unit Energy Use: <BuildingID>: Total (MBtu)").
 
 Annual Energy by Fuel Use
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,7 +117,7 @@ Fuel uses are listed below.
   Fuel Use: Coal: Total (MBtu)          Includes "coal", "anthracite coal", "bituminous coal", and "coke"
   ====================================  ===========================
 
-For whole SFA/MF building simulations, fuel uses are also reported by dwelling unit (e.g., "Fuel Use: <BuildingID>: Natural Gas: Total (MBtu)").
+For whole SFA/MF building simulations, fuel uses can also be reported by dwelling unit (e.g., "Dwelling Unit Fuel Use: <BuildingID>: Natural Gas: Total (MBtu)").
 
 .. _annualenduses:
 
@@ -663,7 +663,7 @@ Depending on the outputs requested, the file may include:
   Airflows                            ``airflows``         Airflow rates (in cfm) for infiltration, mechanical ventilation (including clothes dryer exhaust), natural ventilation, whole house fans.
   Weather                             ``weather``          Weather file data including outdoor temperatures, relative humidity, wind speed, and solar.
   Resilience                          ``resilience``       Resilience outputs (currently only average resilience hours for battery storage).
-  Dwelling Units                      ``dwellingunits``    Total and Fuel Consumptions for individual dwelling units.
+  Dwelling Units                      ``dwellingunits``    Outputs for each dwelling unit (currently Total/Fuel Consumptions) for whole SFA/MF building simulations.
   EnergyPlus Output Variables/Meters                       Any user-specified EnergyPlus output variables/meters (e.g., 'Zone People Occupant Count', 'MainsWater:Facility').
   ==================================  ===================  ==================================================================================================================================
 

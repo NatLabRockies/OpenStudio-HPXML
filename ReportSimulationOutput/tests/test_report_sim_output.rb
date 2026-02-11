@@ -613,16 +613,16 @@ class ReportSimulationOutputTest < Minitest::Test
   def dwelling_unit_annual_cols
     cols = []
     whole_building_unit_ids.each do |unit_id|
-      cols.concat(["Energy Use: #{unit_id}: #{TE::Total} (MBtu)",
-                   "Energy Use: #{unit_id}: #{TE::Net} (MBtu)",
-                   "Fuel Use: #{unit_id}: #{FT::Elec}: Total (MBtu)",
-                   "Fuel Use: #{unit_id}: #{FT::Elec}: Net (MBtu)",
-                   "Fuel Use: #{unit_id}: #{FT::Gas}: Total (MBtu)",
-                   "Fuel Use: #{unit_id}: #{FT::Oil}: Total (MBtu)",
-                   "Fuel Use: #{unit_id}: #{FT::Propane}: Total (MBtu)",
-                   "Fuel Use: #{unit_id}: #{FT::WoodCord}: Total (MBtu)",
-                   "Fuel Use: #{unit_id}: #{FT::WoodPellets}: Total (MBtu)",
-                   "Fuel Use: #{unit_id}: #{FT::Coal}: Total (MBtu)"])
+      cols.concat(["Dwelling Unit Energy Use: #{unit_id}: #{TE::Total} (MBtu)",
+                   "Dwelling Unit Energy Use: #{unit_id}: #{TE::Net} (MBtu)",
+                   "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Elec}: Total (MBtu)",
+                   "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Elec}: Net (MBtu)",
+                   "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Gas}: Total (MBtu)",
+                   "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Oil}: Total (MBtu)",
+                   "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Propane}: Total (MBtu)",
+                   "Dwelling Unit Fuel Use: #{unit_id}: #{FT::WoodCord}: Total (MBtu)",
+                   "Dwelling Unit Fuel Use: #{unit_id}: #{FT::WoodPellets}: Total (MBtu)",
+                   "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Coal}: Total (MBtu)"])
     end
     return cols
   end

@@ -139,7 +139,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     arg = OpenStudio::Measure::OSArgument.makeBoolArgument('include_annual_dwelling_unit_outputs', false)
     arg.setDisplayName('Generate Annual Output: By Dwelling Unit')
-    arg.setDescription('Generates annual outputs by dwelling unit.')
+    arg.setDescription('Generates annual outputs by dwelling unit for whole SFA/MF building simulations.')
     arg.setDefaultValue(true)
     args << arg
 
@@ -254,7 +254,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     arg = OpenStudio::Measure::OSArgument.makeBoolArgument('include_timeseries_dwelling_unit_outputs', false)
     arg.setDisplayName('Generate Timeseries Output: By Dwelling Unit')
-    arg.setDescription('Generates timeseries outputs by dwelling unit.')
+    arg.setDescription('Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations.')
     arg.setDefaultValue(false)
     args << arg
 
@@ -373,12 +373,6 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       return false
     end
 
-    hpxml_defaults_path = @model.getBuilding.additionalProperties.getFeatureAsString('hpxml_defaults_path').get
-    building_id = @model.getBuilding.additionalProperties.getFeatureAsString('building_id').get
-    hpxml = HPXML.new(hpxml_path: hpxml_defaults_path, building_id: building_id)
-
-    @hpxml_bldgs = hpxml.buildings
-
     unmet_hours_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeUnmetHoursProgram }
     total_loads_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeTotalLoadsProgram }
     comp_loads_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeComponentLoadsProgram }
@@ -403,6 +397,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     end
 
     # Fuel outputs
+    hpxml_bldgs_size = @model.getBuilding.additionalProperties.getFeatureAsInteger('hpxml_bldgs_size').get
     @fuels.each do |(_fuel_type, _total_or_net), fuel|
       next if fuel.meter.nil?
 
@@ -411,10 +406,9 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         Model.add_output_meter(model, meter_name: fuel.meter, reporting_frequency: args[:timeseries_frequency])
       end
 
-      next unless @hpxml_bldgs.size > 1
+      next unless hpxml_bldgs_size > 1
 
-      @hpxml_bldgs.each do |hpxml_bldg|
-        unit_num = @hpxml_bldgs.index(hpxml_bldg) + 1
+      (1..hpxml_bldgs_size).each do |unit_num|
         Model.add_output_meter(model, meter_name: "unit#{unit_num}_#{fuel.meter.gsub(':', '_')}", reporting_frequency: 'runperiod')
         if args[:include_timeseries_fuel_consumptions] && args[:include_timeseries_dwelling_unit_outputs]
           Model.add_output_meter(model, meter_name: "unit#{unit_num}_#{fuel.meter.gsub(':', '_')}", reporting_frequency: args[:timeseries_frequency])
@@ -1770,7 +1764,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       if args[:include_annual_total_consumptions]
         @totals.each do |energy_type, total_energy|
           total_energy.annual_output_by_unit.each do |unit_id, annual_output|
-            results_out << ["Energy Use: #{unit_id}: #{energy_type} (#{total_energy.annual_units})", annual_output.to_f.round(n_digits)]
+            results_out << ["Dwelling Unit Energy Use: #{unit_id}: #{energy_type} (#{total_energy.annual_units})", annual_output.to_f.round(n_digits)]
           end
         end
         results_out << [line_break]
@@ -1780,7 +1774,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       if args[:include_annual_fuel_consumptions]
         @fuels.each do |(fuel_type, total_or_net), fuel|
           fuel.annual_output_by_unit.each do |unit_id, annual_output|
-            results_out << ["Fuel Use: #{unit_id}: #{fuel_type}: #{total_or_net} (#{fuel.annual_units})", annual_output.to_f.round(n_digits)]
+            results_out << ["Dwelling Unit Fuel Use: #{unit_id}: #{fuel_type}: #{total_or_net} (#{fuel.annual_units})", annual_output.to_f.round(n_digits)]
           end
         end
       end
@@ -1968,7 +1962,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           @totals[energy_type].timeseries_output_by_unit.each do |unit_id, timeseries_output|
             next if timeseries_output.empty?
 
-            unit_total_energy_data << ["Energy Use: #{unit_id}: #{energy_type}", @totals[energy_type].timeseries_units] + timeseries_output.map { |v| v.round(n_digits) }
+            unit_total_energy_data << ["Dwelling Unit Energy Use: #{unit_id}: #{energy_type}", @totals[energy_type].timeseries_units] + timeseries_output.map { |v| v.round(n_digits) }
           end
         end
       end
@@ -1979,7 +1973,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           fuel.timeseries_output_by_unit.each do |unit_id, timeseries_output|
             next if timeseries_output.sum(0.0) == 0
 
-            unit_fuel_data << ["Fuel Use: #{unit_id}: #{fuel_type}: #{total_or_net}", fuel.timeseries_units] + timeseries_output.map { |v| v.round(n_digits) }
+            unit_fuel_data << ["Dwelling Unit Fuel Use: #{unit_id}: #{fuel_type}: #{total_or_net}", fuel.timeseries_units] + timeseries_output.map { |v| v.round(n_digits) }
           end
         end
       end

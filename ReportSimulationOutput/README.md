@@ -191,7 +191,7 @@ Generates annual resilience outputs.
 
 **Generate Annual Output: By Dwelling Unit**
 
-Generates annual outputs by dwelling unit.
+Generates annual outputs by dwelling unit for whole SFA/MF building simulations.
 
 - **Name:** ``include_annual_dwelling_unit_outputs``
 - **Type:** ``Boolean``
@@ -391,7 +391,7 @@ Generates timeseries resilience outputs.
 
 **Generate Timeseries Output: By Dwelling Unit**
 
-Generates timeseries outputs by dwelling unit.
+Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations.
 
 - **Name:** ``include_timeseries_dwelling_unit_outputs``
 - **Type:** ``Boolean``
