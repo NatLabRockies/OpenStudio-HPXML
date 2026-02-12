@@ -715,7 +715,7 @@ class ReportSimulationOutputTest < Minitest::Test
     assert(File.exist?(annual_csv))
     assert(!File.exist?(timeseries_csv))
     expected_annual_rows = AnnualRows + dwelling_unit_annual_cols
-    for i in 2..6
+    for i in 2..whole_building_unit_ids.size
       expected_annual_rows << "System Use: HeatingSystem1_#{i}: #{FT::Elec}: Heating (MBtu)"
       expected_annual_rows << "System Use: CoolingSystem1_#{i}: #{FT::Elec}: Cooling (MBtu)"
       expected_annual_rows << "System Use: CoolingSystem1_#{i}: #{FT::Elec}: Cooling Fans/Pumps (MBtu)"
@@ -1043,7 +1043,7 @@ class ReportSimulationOutputTest < Minitest::Test
     assert(File.exist?(timeseries_csv))
     actual_timeseries_cols = File.readlines(timeseries_csv)[0].strip.split(',')
     expected_timeseries_cols = ['Time']
-    for i in 1..6
+    for i in 1..whole_building_unit_ids.size
       i == 1 ? building_id = 'MyBuilding' : building_id = "MyBuilding_#{i}"
       expected_timeseries_cols << "Temperature: #{building_id} Conditioned Space"
       if i <= 2
