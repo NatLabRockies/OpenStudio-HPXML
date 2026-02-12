@@ -1589,12 +1589,22 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     # Check sum of custom unit meters match facility
     if @hpxml_bldgs.size > 1
-      @fuels.each do |(_fuel_type, _total_or_net), fuel|
+      @totals.each do |energy_type, total_energy|
+        total_meter = total_energy.annual_output
+        sum_meters = total_energy.annual_output_by_unit.values.sum
+
+        if (sum_meters - total_meter).abs > tol
+          runner.registerError("Sum of Dwelling Unit Energy Use: *: #{energy_type} (#{sum_meters.round(3)}) does not equal Energy Use: #{energy_type} (#{total_meter.round(3)}).")
+          return false
+        end
+      end
+
+      @fuels.each do |(fuel_type, total_or_net), fuel|
         total_meter = fuel.annual_output
         sum_meters = fuel.annual_output_by_unit.values.sum
 
         if (sum_meters - total_meter).abs > tol
-          runner.registerError("#{fuel.meter} custom unit meters (#{sum_meters.round(3)}) do not sum to total (#{total_meter.round(3)}).")
+          runner.registerError("Sum of Dwelling Unit Fuel Use: *: #{fuel_type}: #{total_or_net} (#{sum_meters.round(3)}) does not equal Fuel Use: #{fuel_type}: #{total_or_net} (#{total_meter.round(3)}).")
           return false
         end
       end
