@@ -1580,7 +1580,6 @@ module Outputs
           output_vars.each do |output_var|
             next if output_var.include? 'ExteriorLights:Electricity' # not associated with a zone, so the meter is across all units
             next if output_var.include? 'InteriorLights:Electricity' # same as above; like interior equipment, we *could* switch to zone level
-            next if output_var.include? 'Electric Storage Charge Energy' # vehicles
 
             if object.to_EnergyManagementSystemOutputVariable.is_initialized
               varkey = 'EMS'
