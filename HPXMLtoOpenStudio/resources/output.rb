@@ -1578,8 +1578,17 @@ module Outputs
           end
 
           output_vars.each do |output_var|
-            next if output_var.include? 'ExteriorLights:Electricity' # not associated with a zone, so the meter is across all units
-            next if output_var.include? 'InteriorLights:Electricity' # same as above; like interior equipment, we *could* switch to zone level
+            # The "output variables" returned by get_object_outputs_by_key for interior/exterior lights are actually meter names.
+            # Meter name "interior lighting:InteriorLights:Electricity", e.g., includes all "UNITX_INTERIOR_LIGHTING:Lights Electricity Energy".
+            #
+            # FIXME: We *could*, alternatively, switch to zone level (e.g., "interior lighting:InteriorLights:Electricity:Zone:UNIT1_CONDITIONED_SPACE")
+            # like we already use for InteriorEquipment (e.g., "misc plug loads:InteriorEquipment:Electricity:Zone:UNIT1_CONDITIONED_SPACE").
+            if output_var.include? 'InteriorLights:Electricity'
+              output_var = 'Lights Electricity Energy'
+            end
+            if output_var.include? 'ExteriorLights:Electricity'
+              output_var = 'Exterior Lights Electricity Energy'
+            end
 
             if object.to_EnergyManagementSystemOutputVariable.is_initialized
               varkey = 'EMS'
@@ -1588,21 +1597,6 @@ module Outputs
             end
 
             key_vars << [varkey, output_var]
-          end
-        end
-
-        # FIXME: can we simplify all this special stuff?
-        if fuel_type == EPlus::FuelTypeElectricity
-          if object.to_ElectricLoadCenterInverterPVWatts.is_initialized
-            key_vars << [object.name.to_s, 'Inverter Ancillary AC Electricity Energy']
-          elsif object.to_ElectricLoadCenterStorageConverter.is_initialized
-            key_vars << [object.name.to_s, 'Converter Ancillary AC Electricity Energy']
-          elsif object.to_CoilHeatingGas.is_initialized
-            key_vars << [object.name.to_s, 'Heating Coil Electricity Energy']
-          elsif object.to_Lights.is_initialized
-            key_vars << [object.name.to_s, 'Lights Electricity Energy']
-          elsif object.to_ExteriorLights.is_initialized
-            key_vars << [object.name.to_s, 'Exterior Lights Electricity Energy']
           end
         end
       end
