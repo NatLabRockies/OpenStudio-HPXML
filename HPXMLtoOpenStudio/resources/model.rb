@@ -1223,7 +1223,7 @@ module Model
       key_var_groups.each do |key_var_group|
         key, var = key_var_group
 
-        if not key.empty?
+        if (not key.empty?) && (key != 'EMS')
           key = make_variable_name(key, unit_number)
         end
 
@@ -1246,6 +1246,8 @@ module Model
           else
             var = "#{var[0..-2].join(':')}:#{make_variable_name(var[-1], unit_number)}"
           end
+        elsif key == 'EMS'
+          var = ems_friendly_name(make_variable_name(var, unit_number))
         end
 
         meter_custom.addKeyVarGroup(key, var)

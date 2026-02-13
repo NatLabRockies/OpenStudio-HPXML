@@ -1565,24 +1565,30 @@ module Outputs
       key_vars = []
       model.getModelObjects.sort.each do |object|
         next if object.to_AdditionalProperties.is_initialized
-        next if object.to_EnergyManagementSystemOutputVariable.is_initialized
 
         vars_by_key = get_object_outputs_by_key(model, object, EUT)
         vars_by_key.each do |key, output_vars|
           ft, eut = key
 
-          if fuel_type == EPlus::FuelTypeElectricity
-            next if [EUT::PV, EUT::Generator, EUT::Vehicle, EUT::Battery].include?(eut) && !output_vars.any? { |x| x.include?(Constants::ObjectTypeBatteryLossesAdjustment) || x.include?(Constants::ObjectTypeMiscElectricVehicleCharging) }
-          end
+          next if to_eplus[ft] != fuel_type
 
-          next unless to_eplus[ft] == fuel_type
+          if fuel_type == EPlus::FuelTypeElectricity
+            next if [EUT::PV, EUT::Generator, EUT::Vehicle, EUT::Battery].include?(eut) &&
+                    !output_vars.any? { |x| x.include?(Constants::ObjectTypeBatteryLossesAdjustment) || x.include?(Constants::ObjectTypeMiscElectricVehicleCharging) }
+          end
 
           output_vars.each do |output_var|
             next if output_var.include? 'ExteriorLights:Electricity' # not associated with a zone, so the meter is across all units
             next if output_var.include? 'InteriorLights:Electricity' # same as above; like interior equipment, we *could* switch to zone level
             next if output_var.include? 'Electric Storage Charge Energy' # vehicles
 
-            key_vars << [object.name.to_s, output_var]
+            if object.to_EnergyManagementSystemOutputVariable.is_initialized
+              varkey = 'EMS'
+            else
+              varkey = object.name.to_s.upcase
+            end
+
+            key_vars << [varkey, output_var]
           end
         end
 
@@ -1592,12 +1598,8 @@ module Outputs
             key_vars << [object.name.to_s, 'Inverter Ancillary AC Electricity Energy']
           elsif object.to_ElectricLoadCenterStorageConverter.is_initialized
             key_vars << [object.name.to_s, 'Converter Ancillary AC Electricity Energy']
-          elsif object.to_PumpVariableSpeed.is_initialized
-            key_vars << [object.name.to_s, 'Pump Electricity Energy']
           elsif object.to_CoilHeatingGas.is_initialized
             key_vars << [object.name.to_s, 'Heating Coil Electricity Energy']
-          elsif object.to_FanSystemModel.is_initialized
-            key_vars << [object.name.to_s, 'Fan Electricity Energy']
           elsif object.to_Lights.is_initialized
             key_vars << [object.name.to_s, 'Lights Electricity Energy']
           elsif object.to_ExteriorLights.is_initialized
