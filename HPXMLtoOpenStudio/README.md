@@ -123,6 +123,17 @@ If true: 1) Writes in.osm file, 2) Generates additional log output, and 3) Creat
 
 <br/>
 
+**EMS Debug Mode?**
+
+If true, writes the EnergyPlus EDD file with timeseries debug output for each EMS program. Note that this file can be VERY large.
+
+- **Name:** ``ems_debug``
+- **Type:** ``Boolean``
+
+- **Required:** ``false``
+
+<br/>
+
 
 
 
