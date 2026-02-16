@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>a373d3d4-347a-4fe6-b7c7-7dd894555151</version_id>
-  <version_modified>2026-02-13T18:35:21Z</version_modified>
+  <version_id>b7f13caf-461a-4710-bd0d-cc2012928b6b</version_id>
+  <version_modified>2026-02-16T17:38:58Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -451,7 +451,7 @@
       <filename>lighting.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>4D031B7F</checksum>
+      <checksum>BE7F70EF</checksum>
     </file>
     <file>
       <filename>location.rb</filename>
@@ -493,13 +493,13 @@
       <filename>model.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>FBAB89E7</checksum>
+      <checksum>7B65AC1E</checksum>
     </file>
     <file>
       <filename>output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>F54543DF</checksum>
+      <checksum>DA3DF28C</checksum>
     </file>
     <file>
       <filename>psychrometrics.rb</filename>
@@ -793,7 +793,7 @@
       <filename>test_lighting.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>7EA417E4</checksum>
+      <checksum>207E7273</checksum>
     </file>
     <file>
       <filename>test_location.rb</filename>

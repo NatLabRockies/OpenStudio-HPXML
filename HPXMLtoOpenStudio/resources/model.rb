@@ -222,31 +222,25 @@ module Model
     return oe
   end
 
-  # Adds a Lights or ExteriorLights object to the OpenStudio model.
+  # Adds a Lights object to the OpenStudio model.
   #
-  # The Lights/ExteriorLights objects model electric lighting in a zone or outside.
+  # The Lights object models electric lighting in a zone.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param name [String] Name for the OpenStudio object
   # @param end_use [String] Name of the end use subcategory for output processing
-  # @param space [OpenStudio::Model::Space] The space the object is added to, or nil if exterior lighting
+  # @param space [OpenStudio::Model::Space] The space the object is added to
   # @param design_level [Double] Maximum electrical power input (W)
   # @param schedule [OpenStudio::Model::Schedule] Schedule fraction (or multiplier) that applies to the design level
-  # @return [OpenStudio::Model::Lights or OpenStudio::Model::ExteriorLights] The model object
+  # @return [OpenStudio::Model::Lights] The model object
   def self.add_lights(model, name:, end_use:, space:, design_level:, schedule:)
-    if space.nil?
-      ltg_def = OpenStudio::Model::ExteriorLightsDefinition.new(model)
-      ltg = OpenStudio::Model::ExteriorLights.new(ltg_def)
-      ltg_def.setDesignLevel(design_level)
-    else
-      ltg_def = OpenStudio::Model::LightsDefinition.new(model)
-      ltg = OpenStudio::Model::Lights.new(ltg_def)
-      ltg.setSpace(space)
-      ltg_def.setLightingLevel(design_level)
-      ltg_def.setFractionRadiant(0.6)
-      ltg_def.setFractionVisible(0.2)
-      ltg_def.setReturnAirFraction(0.0)
-    end
+    ltg_def = OpenStudio::Model::LightsDefinition.new(model)
+    ltg = OpenStudio::Model::Lights.new(ltg_def)
+    ltg.setSpace(space)
+    ltg_def.setLightingLevel(design_level)
+    ltg_def.setFractionRadiant(0.6)
+    ltg_def.setFractionVisible(0.2)
+    ltg_def.setReturnAirFraction(0.0)
     ltg.setName(name)
     ltg.setEndUseSubcategory(end_use)
     ltg.setSchedule(schedule)
