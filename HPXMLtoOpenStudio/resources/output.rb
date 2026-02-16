@@ -1757,10 +1757,14 @@ module Outputs
         return { [to_ft[fuel], EUT::HotWater] => ["Water Heater #{fuel} Energy", 'Water Heater Off Cycle Parasitic Electricity Energy', 'Water Heater On Cycle Parasitic Electricity Energy'] }
 
       elsif object.to_Lights.is_initialized
-        subcategory = object.to_Lights.get.endUseSubcategory
+        object = object.to_Lights.get
+        subcategory = object.endUseSubcategory
         end_use = { Constants::ObjectTypeLightingInterior => EUT::LightsInterior,
                     Constants::ObjectTypeLightingGarage => EUT::LightsGarage }[subcategory]
-        return { [FT::Elec, end_use] => ["#{subcategory}:InteriorLights:Electricity"] }
+        fail 'Unexpected error: InteriorLights:Electricity without a space.' unless object.space.is_initialized
+
+        zone_name = object.space.get.thermalZone.get.name.to_s.upcase
+        return { [FT::Elec, end_use] => ["#{subcategory}:InteriorLights:Electricity:Zone:#{zone_name}"] }
 
       elsif object.to_ElectricLoadCenterInverterPVWatts.is_initialized
         return { [FT::Elec, EUT::PV] => ['Inverter Conversion Loss Decrement Energy'] }
