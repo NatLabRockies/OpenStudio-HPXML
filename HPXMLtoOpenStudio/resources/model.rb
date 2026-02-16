@@ -180,7 +180,7 @@ module Model
     ee = OpenStudio::Model::ElectricEquipment.new(ee_def)
     ee.setName(name)
     ee.setEndUseSubcategory(end_use) unless end_use.nil?
-    ee.setSpace(space) if not space.nil?
+    ee.setSpace(space)
     ee_def.setName(name)
     ee_def.setDesignLevel(design_level) unless design_level.nil? # EMS-actuated if nil
     ee_def.setFractionRadiant(frac_radiant)
