@@ -159,12 +159,15 @@ module Lighting
         runner.registerWarning("Both '#{exterior_col_name}' schedule file and monthly multipliers provided; the latter will be ignored.") if !lighting.exterior_monthly_multipliers.nil?
       end
 
-      Model.add_lights(
+      Model.add_electric_equipment(
         model,
         name: exterior_obj_name,
         end_use: exterior_obj_name,
-        space: nil,
+        space: spaces[HPXML::LocationConditionedSpace],
         design_level: design_level,
+        frac_radiant: 0,
+        frac_latent: 0,
+        frac_lost: 1,
         schedule: exterior_sch
       )
     end
@@ -192,12 +195,15 @@ module Lighting
         runner.registerWarning("Both '#{exterior_holiday_col_name}' schedule file and monthly multipliers provided; the latter will be ignored.") if !lighting.exterior_monthly_multipliers.nil?
       end
 
-      Model.add_lights(
+      Model.add_electric_equipment(
         model,
         name: exterior_holiday_obj_name,
         end_use: exterior_holiday_obj_name,
-        space: nil,
+        space: spaces[HPXML::LocationConditionedSpace],
         design_level: design_level,
+        frac_radiant: 0,
+        frac_latent: 0,
+        frac_lost: 1,
         schedule: exterior_holiday_sch
       )
     end
