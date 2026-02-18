@@ -1592,7 +1592,7 @@ module Outputs
 
       custom_unit_meter = Model.add_meter_custom(
         model,
-        name: "#{fuel_type}:Facility",
+        name: "#{fuel_type}_Facility",
         fuel_type: fuel_type,
         key_var_pairs: key_vars
       )
