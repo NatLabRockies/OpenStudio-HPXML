@@ -1587,8 +1587,6 @@ module Outputs
         end
       end
 
-      next if key_vars.empty?
-
       # Avoid the "Output Variable or Meter Name="x:y:z" referenced multiple
       # times, only first instance will be used" E+ warning.
       key_vars.each_with_index do |key_var1, i|
