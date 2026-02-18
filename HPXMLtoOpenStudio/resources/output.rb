@@ -104,7 +104,8 @@ module Outputs
       }
     end
 
-    hvac_availability_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHVACAvailabilitySensor }
+    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHeatingAvailabilitySensor }
+    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeCoolingAvailabilitySensor }
 
     # EMS program
     clg_hrs = 'clg_unmet_hours'
@@ -126,7 +127,7 @@ module Outputs
         else
           line = "If ((DayOfYear >= #{season_day_nums[unit][:htg_start]}) || (DayOfYear <= #{season_day_nums[unit][:htg_end]}))"
         end
-        line += " && (#{hvac_availability_sensor.name} == 1)" if not hvac_availability_sensor.nil?
+        line += " && (#{htg_avail_sensor.name} == 1)" if not htg_avail_sensor.nil?
         program.addLine(line)
         if zone_air_temp_sensors.keys.include? unit # on off deadband
           program.addLine("  If #{zone_air_temp_sensors[unit].name} < (#{htg_spt_sensors[unit].name} - #{UnitConversions.convert(onoff_deadbands, 'deltaF', 'deltaC')})")
@@ -148,7 +149,7 @@ module Outputs
       else
         line = "If ((DayOfYear >= #{season_day_nums[unit][:clg_start]}) || (DayOfYear <= #{season_day_nums[unit][:clg_end]}))"
       end
-      line += " && (#{hvac_availability_sensor.name} == 1)" if not hvac_availability_sensor.nil?
+      line += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
       program.addLine(line)
       if zone_air_temp_sensors.keys.include? unit # on off deadband
         program.addLine("  If #{zone_air_temp_sensors[unit].name} > (#{clg_spt_sensors[unit].name} + #{UnitConversions.convert(onoff_deadbands, 'deltaF', 'deltaC')})")
@@ -995,6 +996,7 @@ module Outputs
     additionalProperties = model.getBuilding.additionalProperties
     additionalProperties.setFeature('hpxml_path', hpxml_path)
     additionalProperties.setFeature('hpxml_defaults_path', hpxml_defaults_path)
+    additionalProperties.setFeature('hpxml_bldgs_size', hpxml.buildings.size)
     additionalProperties.setFeature('building_id', building_id.to_s)
     additionalProperties.setFeature('emissions_scenario_names', hpxml.header.emissions_scenarios.map { |s| s.name }.to_s)
     additionalProperties.setFeature('emissions_scenario_types', hpxml.header.emissions_scenarios.map { |s| s.emissions_type }.to_s)
@@ -1447,7 +1449,7 @@ module Outputs
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param custom_unit_meter [OpenStudio::Model::MeterCustom] optional OpenStudio custom meter object
   # @return [nil]
-  def self.create_custom_meters(model, custom_unit_meter = nil)
+  def self.create_custom_electricity_meters(model, custom_unit_meter = nil)
     # Create custom meters:
     # - Total Electricity (Electricity:Facility plus EV charging, batteries, generators)
     # - Net Electricity (above plus PV)
@@ -1485,10 +1487,8 @@ module Outputs
 
       if elcd.inverter.is_initialized
         inv = elcd.inverter.get
-        if inv.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypePhotovoltaics
-          net_key_vars << [inv.name.to_s.upcase, 'Inverter Conversion Loss Decrement Energy']
-          pv_key_vars << net_key_vars[-1]
-        end
+        net_key_vars << [inv.name.to_s.upcase, 'Inverter Conversion Loss Decrement Energy']
+        pv_key_vars << net_key_vars[-1]
       end
 
       # Generator output meter
@@ -1503,7 +1503,7 @@ module Outputs
       end
     end
 
-    # Create Total/Net meters
+    # Create Total/Net/Critical meters
     { MeterCustomElectricityTotal => total_key_vars,
       MeterCustomElectricityNet => net_key_vars,
       MeterCustomElectricityCritical => pv_key_vars + gen_key_vars }.each do |meter_name, key_vars|
@@ -1512,8 +1512,9 @@ module Outputs
         if custom_unit_meter.nil?
           key_vars << ['', 'Electricity:Facility']
         else
-          # Since custom meter cannot reference other custom meters, copy
-          # all custom meter key/variable groups to this custom meter.
+          # Meter:Custom cannot reference another Meter:Custom,
+          # so we pass key/variable groups from one to the other.
+          # https://github.com/NatLabRockies/EnergyPlus/issues/11400
           key_vars = custom_unit_meter.keyVarGroups
         end
         Model.add_meter_custom(
@@ -1562,42 +1563,26 @@ module Outputs
       key_vars = []
       model.getModelObjects.sort.each do |object|
         next if object.to_AdditionalProperties.is_initialized
-        next if object.to_EnergyManagementSystemOutputVariable.is_initialized
 
         vars_by_key = get_object_outputs_by_key(model, object, EUT)
         vars_by_key.each do |key, output_vars|
           ft, eut = key
 
-          if fuel_type == EPlus::FuelTypeElectricity
-            next if [EUT::PV, EUT::Generator, EUT::Vehicle, EUT::Battery].include?(eut) && !output_vars.any? { |x| x.include?(Constants::ObjectTypeBatteryLossesAdjustment) || x.include?(Constants::ObjectTypeMiscElectricVehicleCharging) }
-          end
+          next if to_eplus[ft] != fuel_type
 
-          next unless to_eplus[ft] == fuel_type
+          if fuel_type == EPlus::FuelTypeElectricity
+            next if [EUT::PV, EUT::Generator, EUT::Vehicle, EUT::Battery].include?(eut) &&
+                    !output_vars.any? { |x| x.include?(Constants::ObjectTypeBatteryLossesAdjustment) || x.include?(Constants::ObjectTypeMiscElectricVehicleCharging) }
+          end
 
           output_vars.each do |output_var|
-            next if output_var.include? 'ExteriorLights:Electricity' # Not associated with a zone, so the meter is across all units.
-            next if output_var.include? 'InteriorLights:Electricity' # Same as above; like interior equipment, we *could* switch to zone level.
+            if object.to_EnergyManagementSystemOutputVariable.is_initialized
+              varkey = 'EMS'
+            else
+              varkey = object.name.to_s.upcase
+            end
 
-            key_vars << [object.name.to_s, output_var]
-          end
-        end
-
-        # FIXME: Can we simplify/avoid all this special stuff?
-        if fuel_type == EPlus::FuelTypeElectricity
-          if object.to_ElectricLoadCenterInverterPVWatts.is_initialized
-            key_vars << [object.name.to_s, 'Inverter Ancillary AC Electricity Energy']
-          elsif object.to_ElectricLoadCenterStorageConverter.is_initialized
-            key_vars << [object.name.to_s, 'Converter Ancillary AC Electricity Energy']
-          elsif object.to_PumpVariableSpeed.is_initialized
-            key_vars << [object.name.to_s, 'Pump Electricity Energy']
-          elsif object.to_CoilHeatingGas.is_initialized
-            key_vars << [object.name.to_s, 'Heating Coil Electricity Energy']
-          elsif object.to_FanSystemModel.is_initialized
-            key_vars << [object.name.to_s, 'Fan Electricity Energy']
-          elsif object.to_Lights.is_initialized
-            key_vars << [object.name.to_s, 'Lights Electricity Energy']
-          elsif object.to_ExteriorLights.is_initialized
-            key_vars << [object.name.to_s, 'Exterior Lights Electricity Energy']
+            key_vars << [varkey, output_var]
           end
         end
       end
@@ -1617,17 +1602,21 @@ module Outputs
         end
       end
 
-      meter_custom = Model.add_meter_custom(
+      next if key_vars.empty?
+
+      custom_unit_meter = Model.add_meter_custom(
         model,
-        name: "#{fuel_type}_Facility",
+        name: "#{fuel_type}:Facility",
         fuel_type: fuel_type,
         key_var_pairs: key_vars
       )
 
+      # We're in the fuel types loop so that we can pass in custom_unit_meter from above.
+      # But we don't want to call create_custom_electricity_meters multiple times.
       # We only need the electricity Total, Net, PV, Critical meters by unit when
       # there are multiple units.
       if (fuel_type == EPlus::FuelTypeElectricity) && (hpxml.buildings.size > 1)
-        Outputs.create_custom_meters(model, meter_custom)
+        create_custom_electricity_meters(model, custom_unit_meter)
       end
     end
   end
@@ -1758,15 +1747,15 @@ module Outputs
         fuel = object.to_WaterHeaterStratified.get.heaterFuelType
         return { [to_ft[fuel], EUT::HotWater] => ["Water Heater #{fuel} Energy", 'Water Heater Off Cycle Parasitic Electricity Energy', 'Water Heater On Cycle Parasitic Electricity Energy'] }
 
-      elsif object.to_ExteriorLights.is_initialized
-        subcategory = object.to_ExteriorLights.get.endUseSubcategory
-        return { [FT::Elec, EUT::LightsExterior] => ["#{subcategory}:ExteriorLights:Electricity"] }
-
       elsif object.to_Lights.is_initialized
-        subcategory = object.to_Lights.get.endUseSubcategory
+        object = object.to_Lights.get
+        subcategory = object.endUseSubcategory
         end_use = { Constants::ObjectTypeLightingInterior => EUT::LightsInterior,
                     Constants::ObjectTypeLightingGarage => EUT::LightsGarage }[subcategory]
-        return { [FT::Elec, end_use] => ["#{subcategory}:InteriorLights:Electricity"] }
+        fail 'Unexpected error: InteriorLights:Electricity without a space.' unless object.space.is_initialized
+
+        zone_name = object.space.get.thermalZone.get.name.to_s.upcase
+        return { [FT::Elec, end_use] => ["#{subcategory}:InteriorLights:Electricity:Zone:#{zone_name}"] }
 
       elsif object.to_ElectricLoadCenterInverterPVWatts.is_initialized
         return { [FT::Elec, EUT::PV] => ['Inverter Conversion Loss Decrement Energy'] }
@@ -1809,7 +1798,9 @@ module Outputs
           Constants::ObjectTypeMiscPermanentSpaHeater => EUT::PermanentSpaHeater,
           Constants::ObjectTypeMiscPermanentSpaPump => EUT::PermanentSpaPump,
           Constants::ObjectTypeMiscElectricVehicleCharging => EUT::Vehicle,
-          Constants::ObjectTypeMiscWellPump => EUT::WellPump }.each do |obj_name, eut|
+          Constants::ObjectTypeMiscWellPump => EUT::WellPump,
+          Constants::ObjectTypeLightingExterior => EUT::LightsExterior,
+          Constants::ObjectTypeLightingExteriorHoliday => EUT::LightsExterior }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
           fail 'Unexpected error: multiple matches.' unless end_use.nil?
 
@@ -1818,12 +1809,10 @@ module Outputs
 
         if not end_use.nil?
           # Use Output:Meter instead of Output:Variable because they incorporate thermal zone multipliers
-          if object.space.is_initialized
-            zone_name = object.space.get.thermalZone.get.name.to_s.upcase
-            return { [FT::Elec, end_use] => ["#{subcategory}:InteriorEquipment:Electricity:Zone:#{zone_name}"] }
-          else
-            return { [FT::Elec, end_use] => ["#{subcategory}:InteriorEquipment:Electricity"] }
-          end
+          fail 'Unexpected error: InteriorEquipment:Electricity without a space.' unless object.space.is_initialized
+
+          zone_name = object.space.get.thermalZone.get.name.to_s.upcase
+          return { [FT::Elec, end_use] => ["#{subcategory}:InteriorEquipment:Electricity:Zone:#{zone_name}"] }
         end
 
       elsif object.to_OtherEquipment.is_initialized
@@ -1852,12 +1841,10 @@ module Outputs
 
         if not end_use.nil?
           # Use Output:Meter instead of Output:Variable because they incorporate thermal zone multipliers
-          if object.space.is_initialized
-            zone_name = object.space.get.thermalZone.get.name.to_s.upcase
-            return { [to_ft[fuel], end_use] => ["#{subcategory}:InteriorEquipment:#{fuel}:Zone:#{zone_name}"] }
-          else
-            return { [to_ft[fuel], end_use] => ["#{subcategory}:InteriorEquipment:#{fuel}"] }
-          end
+          fail "Unexpected error: InteriorEquipment:#{fuel} without a space." unless object.space.is_initialized
+
+          zone_name = object.space.get.thermalZone.get.name.to_s.upcase
+          return { [to_ft[fuel], end_use] => ["#{subcategory}:InteriorEquipment:#{fuel}:Zone:#{zone_name}"] }
         end
 
       elsif object.to_ZoneHVACDehumidifierDX.is_initialized

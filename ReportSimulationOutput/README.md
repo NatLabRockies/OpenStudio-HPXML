@@ -20,9 +20,11 @@ The file format of the annual (and timeseries, if requested) outputs. If 'csv_dv
 
 - **Required:** ``false``
 
-- **Choices:** `csv`, `json`, `msgpack`, `csv_dview`
+- **Choices:** <br/>  - `csv`<br/>  - `json`<br/>  - `msgpack`<br/>  - `csv_dview`
 
-<br/>
+
+- **Default:** `csv`
+
 
 **Generate Annual Output: Total Consumptions**
 
@@ -33,7 +35,9 @@ Generates annual energy consumptions for the total building.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Fuel Consumptions**
 
@@ -44,18 +48,9 @@ Generates annual energy consumptions for each fuel type.
 
 - **Required:** ``false``
 
-<br/>
 
-**Generate Annual Output: Dwelling Unit Fuel Consumptions**
+- **Default:** `true`
 
-Generates annual energy consumptions for each fuel type of each dwelling unit.
-
-- **Name:** ``include_annual_unit_fuel_consumptions``
-- **Type:** ``Boolean``
-
-- **Required:** ``false``
-
-<br/>
 
 **Generate Annual Output: End Use Consumptions**
 
@@ -66,7 +61,9 @@ Generates annual energy consumptions for each end use.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: System Use Consumptions**
 
@@ -77,7 +74,9 @@ Generates annual energy consumptions for each end use of each HVAC and water hea
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Emissions**
 
@@ -88,7 +87,9 @@ Generates annual emissions. Requires the appropriate HPXML inputs to be specifie
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Emission Fuel Uses**
 
@@ -99,7 +100,9 @@ Generates annual emissions for each fuel type. Requires the appropriate HPXML in
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Emission End Uses**
 
@@ -110,7 +113,9 @@ Generates annual emissions for each end use. Requires the appropriate HPXML inpu
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Total Loads**
 
@@ -121,7 +126,9 @@ Generates annual heating, cooling, and hot water loads.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Unmet Hours**
 
@@ -132,7 +139,9 @@ Generates annual unmet hours for heating, cooling, and EV driving.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Peak Fuels**
 
@@ -143,7 +152,9 @@ Generates annual/summer/winter electricity peaks.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Peak Loads**
 
@@ -154,7 +165,9 @@ Generates annual peak loads for heating/cooling.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Component Loads**
 
@@ -165,7 +178,9 @@ Generates annual heating and cooling loads disaggregated by component type.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Hot Water Uses**
 
@@ -176,7 +191,9 @@ Generates annual hot water usages for each end use.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: HVAC Summary**
 
@@ -187,7 +204,9 @@ Generates HVAC capacities, design temperatures, and design loads.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Annual Output: Resilience**
 
@@ -198,7 +217,22 @@ Generates annual resilience outputs.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
+
+**Generate Annual Output: By Dwelling Unit**
+
+Generates annual outputs by dwelling unit for whole SFA/MF building simulations.
+
+- **Name:** ``include_annual_dwelling_unit_outputs``
+- **Type:** ``Boolean``
+
+- **Required:** ``false``
+
+
+- **Default:** `true`
+
 
 **Timeseries Reporting Frequency**
 
@@ -209,9 +243,11 @@ The frequency at which to report timeseries output data. Using 'none' will disab
 
 - **Required:** ``false``
 
-- **Choices:** `none`, `timestep`, `hourly`, `daily`, `monthly`
+- **Choices:** <br/>  - `none`<br/>  - `timestep`<br/>  - `hourly`<br/>  - `daily`<br/>  - `monthly`
 
-<br/>
+
+- **Default:** `none`
+
 
 **Generate Timeseries Output: Total Consumptions**
 
@@ -222,7 +258,9 @@ Generates timeseries energy consumptions for the total building.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Fuel Consumptions**
 
@@ -233,18 +271,9 @@ Generates timeseries energy consumptions for each fuel type.
 
 - **Required:** ``false``
 
-<br/>
 
-**Generate Timeseries Output: Dwelling Unit Fuel Consumptions**
+- **Default:** `false`
 
-Generates timeseries energy consumptions for each fuel type of each dwelling unit.
-
-- **Name:** ``include_timeseries_unit_fuel_consumptions``
-- **Type:** ``Boolean``
-
-- **Required:** ``false``
-
-<br/>
 
 **Generate Timeseries Output: End Use Consumptions**
 
@@ -255,7 +284,9 @@ Generates timeseries energy consumptions for each end use.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: System Use Consumptions**
 
@@ -266,7 +297,9 @@ Generates timeseries energy consumptions for each end use of each HVAC and water
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Emissions**
 
@@ -277,7 +310,9 @@ Generates timeseries emissions. Requires the appropriate HPXML inputs to be spec
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Emission Fuel Uses**
 
@@ -288,7 +323,9 @@ Generates timeseries emissions for each fuel type. Requires the appropriate HPXM
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Emission End Uses**
 
@@ -299,7 +336,9 @@ Generates timeseries emissions for each end use. Requires the appropriate HPXML 
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Hot Water Uses**
 
@@ -310,7 +349,9 @@ Generates timeseries hot water usages for each end use.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Total Loads**
 
@@ -321,7 +362,9 @@ Generates timeseries heating, cooling, and hot water loads.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Component Loads**
 
@@ -332,7 +375,9 @@ Generates timeseries heating and cooling loads disaggregated by component type.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Unmet Hours**
 
@@ -343,7 +388,9 @@ Generates timeseries unmet hours for heating, cooling, and EV driving.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Zone Temperatures**
 
@@ -354,7 +401,9 @@ Generates timeseries temperatures for each thermal zone.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Zone Conditions**
 
@@ -365,7 +414,9 @@ Generates timeseries temperatures and humidities for each thermal zone.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Airflows**
 
@@ -376,7 +427,9 @@ Generates timeseries airflows.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Weather**
 
@@ -387,7 +440,9 @@ Generates timeseries weather data.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Resilience**
 
@@ -398,7 +453,22 @@ Generates timeseries resilience outputs.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
+
+**Generate Timeseries Output: By Dwelling Unit**
+
+Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations.
+
+- **Name:** ``include_timeseries_dwelling_unit_outputs``
+- **Type:** ``Boolean``
+
+- **Required:** ``false``
+
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Timestamp Convention**
 
@@ -409,9 +479,11 @@ Determines whether timeseries timestamps use the start-of-period or end-of-perio
 
 - **Required:** ``false``
 
-- **Choices:** `start`, `end`
+- **Choices:** <br/>  - `start`<br/>  - `end`
 
-<br/>
+
+- **Default:** `start`
+
 
 **Generate Timeseries Output: Number of Decimal Places**
 
@@ -422,7 +494,7 @@ Allows overriding the default number of decimal places for timeseries outputs.
 
 - **Required:** ``false``
 
-<br/>
+
 
 **Generate Timeseries Output: Add TimeDST Column**
 
@@ -433,7 +505,9 @@ Optionally add, in addition to the default local standard Time column, a local c
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: Add TimeUTC Column**
 
@@ -444,7 +518,9 @@ Optionally add, in addition to the default local standard Time column, a local c
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 **Generate Timeseries Output: EnergyPlus Output Variables**
 
@@ -455,7 +531,7 @@ Optionally generates timeseries EnergyPlus output variables. If multiple output 
 
 - **Required:** ``false``
 
-<br/>
+
 
 **Generate Timeseries Output: EnergyPlus Output Meters**
 
@@ -466,7 +542,7 @@ Optionally generates timeseries EnergyPlus output meters. If multiple output met
 
 - **Required:** ``false``
 
-<br/>
+
 
 **Annual Output File Name**
 
@@ -477,7 +553,7 @@ If not provided, defaults to 'results_annual.csv' (or 'results_annual.json' or '
 
 - **Required:** ``false``
 
-<br/>
+
 
 **Timeseries Output File Name**
 
@@ -488,7 +564,7 @@ If not provided, defaults to 'results_timeseries.csv' (or 'results_timeseries.js
 
 - **Required:** ``false``
 
-<br/>
+
 
 
 

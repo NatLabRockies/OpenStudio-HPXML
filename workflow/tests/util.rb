@@ -45,13 +45,10 @@ def _run_xml(xml, worker_num, apply_unit_multiplier = false, annual_results_1x =
       hpxml_bldg = hpxml.buildings[i]
       if hpxml_bldg.dehumidifiers.size > 0
         # FUTURE: Dehumidifiers currently don't give desired results w/ unit multipliers
-        # https://github.com/NREL/OpenStudio-HPXML/issues/1499
+        # https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1499
       elsif hpxml_bldg.heat_pumps.count { |hp| hp.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir } > 0
         # FUTURE: GSHPs currently don't give desired results w/ unit multipliers
-        # https://github.com/NREL/OpenStudio-HPXML/issues/1499
-        # elsif hpxml_bldg.batteries.size > 0
-        # FUTURE: Batteries currently don't work with whole SFA/MF buildings
-        # https://github.com/NREL/OpenStudio-HPXML/issues/1499
+        # https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1499
       elsif hpxml.header.hvac_onoff_thermostat_deadband
         # On off thermostat not supported with unit multiplier yet
       elsif hpxml.header.heat_pump_backup_heating_capacity_increment
@@ -306,7 +303,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     end
 
     # FUTURE: Revert this eventually
-    # https://github.com/NREL/OpenStudio-HPXML/issues/1499
+    # https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1499
     if hpxml_header.utility_bill_scenarios.has_detailed_electric_rates
       uses_unit_multipliers = hpxml.buildings.count { |hpxml_bldg| hpxml_bldg.building_construction.number_of_units > 1 } > 0
       if uses_unit_multipliers || hpxml.buildings.size > 1
@@ -406,7 +403,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     # GSHPs
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.heat_pumps.count { |hp| hp.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir } > 0 }
       next if message.include?('CheckSimpleWAHPRatedCurvesOutputs') && message.include?('WaterToAirHeatPump:EquationFit') # FUTURE: Check these
-      next if message.include? 'Actual air mass flow rate is smaller than 25% of water-to-air heat pump coil rated air flow rate.' # FUTURE: Remove this when https://github.com/NREL/EnergyPlus/issues/9125 is resolved
+      next if message.include? 'Actual air mass flow rate is smaller than 25% of water-to-air heat pump coil rated air flow rate.' # FUTURE: Remove this when https://github.com/NatLabRockies/EnergyPlus/issues/9125 is resolved
     end
     # GSHPs with only heating or cooling
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.heat_pumps.count { |hp| hp.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir && (hp.fraction_heat_load_served == 0 || hp.fraction_cool_load_served == 0) } > 0 }
@@ -1172,21 +1169,18 @@ def _check_unit_multiplier_results(xml, hpxml_bldg, annual_results_1x, annual_re
   # so remove these from the comparison
   annual_results_1x = annual_results_1x.dup
   annual_results_10x = annual_results_10x.dup
-  ['Fuel Use: *:',
-   'System Use:',
+  ['System Use:',
    'Temperature:',
    'Humidity Ratio:', 'Relative Humidity:', 'Dewpoint Temperature:', 'Radiant Temperature:', 'Operative Temperature:',
    'Utility Bills:',
    'HVAC Zone Design Load:',
-   'HVAC Space Design Load:'].each do |key|
-    [annual_results_1x, annual_results_10x, monthly_results_1x, monthly_results_10x].each do |results|
-      results.each do |k, _v|
-        results.delete(k) if k.start_with? key
-        if (key == 'Fuel Use: *:') && (k.start_with? 'Fuel Use:') && (k.split(':').size == 4)
-          results.delete(k)
-        end
-      end
-    end
+   'HVAC Space Design Load:',
+   'Dwelling Unit Energy Use:',
+   'Dwelling Unit Fuel Use:'].each do |key|
+    annual_results_1x.delete_if { |k, _v| k.start_with? key }
+    annual_results_10x.delete_if { |k, _v| k.start_with? key }
+    monthly_results_1x.delete_if { |k, _v| k.start_with? key }
+    monthly_results_10x.delete_if { |k, _v| k.start_with? key }
   end
 
   # Compare annual and monthly results
@@ -1286,10 +1280,7 @@ def _write_results(results, csv_out, output_groups_filter: [])
       results.values.each do |xml_results|
         xml_results.keys.each do |key|
           next if output_keys.include? key
-
-          key_split = key.split(':')
-          next if key_type != key_split[0]
-          next if (key_type == 'Fuel Use') && (key_split.size == 4)
+          next if key_type != key.split(':')[0]
 
           output_keys << key
         end

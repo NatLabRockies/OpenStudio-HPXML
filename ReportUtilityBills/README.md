@@ -20,9 +20,11 @@ The file format of the annual (and timeseries, if requested) outputs.
 
 - **Required:** ``false``
 
-- **Choices:** `csv`, `json`, `msgpack`
+- **Choices:** <br/>  - `csv`<br/>  - `json`<br/>  - `msgpack`
 
-<br/>
+
+- **Default:** `csv`
+
 
 **Generate Annual Utility Bills**
 
@@ -33,7 +35,9 @@ Generates output file containing annual utility bills.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Monthly Utility Bills**
 
@@ -44,7 +48,9 @@ Generates output file containing monthly utility bills.
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Generate Monthly Output: Timestamp Convention**
 
@@ -55,9 +61,11 @@ Determines whether monthly timestamps use the start-of-period or end-of-period c
 
 - **Required:** ``false``
 
-- **Choices:** `start`, `end`
+- **Choices:** <br/>  - `start`<br/>  - `end`
 
-<br/>
+
+- **Default:** `start`
+
 
 **Annual Output File Name**
 
@@ -68,7 +76,7 @@ If not provided, defaults to 'results_bills.csv' (or 'results_bills.json' or 're
 
 - **Required:** ``false``
 
-<br/>
+
 
 **Monthly Output File Name**
 
@@ -79,7 +87,7 @@ If not provided, defaults to 'results_bills_monthly.csv' (or 'results_bills_mont
 
 - **Required:** ``false``
 
-<br/>
+
 
 **Register Annual Utility Bills**
 
@@ -90,7 +98,9 @@ Registers annual utility bills with the OpenStudio runner for downstream process
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `true`
+
 
 **Register Monthly Utility Bills**
 
@@ -101,7 +111,9 @@ Registers monthly utility bills with the OpenStudio runner for downstream proces
 
 - **Required:** ``false``
 
-<br/>
+
+- **Default:** `false`
+
 
 
 

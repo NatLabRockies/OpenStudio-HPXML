@@ -428,7 +428,7 @@ module HVACSizing
           else
             if not roof.radiant_barrier
               case roof.roof_type
-              when HPXML::RoofTypeAsphaltShingles
+              when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeShingles
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 130.0 * roof.net_area
@@ -437,7 +437,7 @@ module HVACSizing
                 end
               when HPXML::RoofTypeWoodShingles
                 cool_temp += 120.0 * roof.net_area
-              when HPXML::RoofTypeMetal
+              when HPXML::RoofTypeMetal, HPXML::RoofTypePlasticRubber, HPXML::RoofTypeEPS
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 130.0 * roof.net_area
@@ -446,7 +446,7 @@ module HVACSizing
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile
+              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 110.0 * roof.net_area
@@ -455,10 +455,12 @@ module HVACSizing
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
+              else
+                fail "Invalid Roof Type: #{roof.roof_type}."
               end
             else # with a radiant barrier
               case roof.roof_type
-              when HPXML::RoofTypeAsphaltShingles
+              when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeShingles
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 120.0 * roof.net_area
@@ -467,7 +469,7 @@ module HVACSizing
                 end
               when HPXML::RoofTypeWoodShingles
                 cool_temp += 110.0 * roof.net_area
-              when HPXML::RoofTypeMetal
+              when HPXML::RoofTypeMetal, HPXML::RoofTypePlasticRubber, HPXML::RoofTypeEPS
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 120.0 * roof.net_area
@@ -476,7 +478,7 @@ module HVACSizing
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile
+              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 105.0 * roof.net_area
@@ -485,10 +487,14 @@ module HVACSizing
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              end
-            end
+              else
+                fail "Invalid Roof Type: #{roof.roof_type}."
+              end # roof type
+            end # w/ or w/o radiant barrier
           end # vented/unvented
         end # each roof surface
+
+        fail 'Unexpected case.' if cool_temp == 0
 
         cool_temp /= tot_roof_area
 
@@ -1168,17 +1174,17 @@ module HVACSizing
       # Base CLTD color adjustment based on notes in MJ8 Figure A12-16
       case roof.roof_color
       when HPXML::ColorDark, HPXML::ColorMediumDark
-        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeWoodShingles].include? roof.roof_type
+        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool].include? roof.roof_type
           cltd *= 0.83
         end
       when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
-        if [HPXML::RoofTypeClayTile].include? roof.roof_type
+        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool].include? roof.roof_type
           cltd *= 0.65
         else
           cltd *= 0.83
         end
       when HPXML::ColorReflective
-        if [HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles].include? roof.roof_type
+        if [HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeShingles].include? roof.roof_type
           cltd *= 0.83
         else
           cltd *= 0.65
@@ -1881,7 +1887,7 @@ module HVACSizing
           # Calculate the delivery effectiveness
           de_prev = de
           de = calc_delivery_effectiveness_heating(mj, q_s, q_r, heat_cfm, heat_load_next, t_amb_s, t_amb_r, a_s, a_r, mj.heat_setpoint, f_regain_s, f_regain_r, rvalue_s, rvalue_r)
-          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NREL/OpenStudio-HPXML/pull/2004
+          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2004
 
           # Calculate the increase in heating load due to ducts
           heat_load_prev = heat_load_next
@@ -1934,7 +1940,7 @@ module HVACSizing
           # Calculate the delivery effectiveness
           de_prev = de
           de = calc_delivery_effectiveness_cooling(mj, q_s, q_r, clg_ap.leaving_air_temp, cool_cfm, cool_load_sens, cool_load_tot, t_amb_s, t_amb_r, a_s, a_r, mj.cool_setpoint, f_regain_s, f_regain_r, h_r, rvalue_s, rvalue_r)
-          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NREL/OpenStudio-HPXML/pull/2004
+          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2004
 
           # Calculate the increase in cooling load due to ducts
           cool_load_tot_prev = cool_load_tot_next
@@ -3651,6 +3657,13 @@ module HVACSizing
       min_compressor_temp = hvac_heating.backup_heating_switchover_temp
     elsif not hvac_heating.compressor_lockout_temp.nil?
       min_compressor_temp = hvac_heating.compressor_lockout_temp
+    end
+
+    # If switchover temperature is high (e.g., 40F for a dual-fuel heat pump), instead use
+    # 25F (proposed for ANSI 301) to allow some extra capacity should the homeowner want to
+    # use a lower switchover temperature later (say, based on changes to local utility rates).
+    if not min_compressor_temp.nil?
+      min_compressor_temp = [min_compressor_temp, 25.0].min
     end
 
     if (not min_compressor_temp.nil?) && (min_compressor_temp > hpxml_bldg.header.manualj_heating_design_temp)
