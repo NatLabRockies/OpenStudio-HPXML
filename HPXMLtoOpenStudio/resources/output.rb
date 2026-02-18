@@ -1582,21 +1582,10 @@ module Outputs
               varkey = 'EMS'
             else
               varkey = object.name.to_s.upcase
+              varkey = '' if output_var.include?(':') # Avoid the "Output Variable or Meter Name="x:y:z" referenced multiple times warning by just not including key names for meters
             end
 
             key_vars << [varkey, output_var]
-          end
-        end
-      end
-
-      # Avoid the "Output Variable or Meter Name="x:y:z" referenced multiple times, only first instance will be used" E+ warning
-      key_vars.each_with_index do |key_var1, i|
-        key_vars.each_with_index do |key_var2, j|
-          next if key_var1 == key_var2
-
-          if key_var1[1].include?(':') && (key_var1[1] == key_var2[1])
-            key_vars[i] = ['', key_var1[1]]
-            key_vars[j] = ['', key_var2[1]]
           end
         end
       end
