@@ -1599,8 +1599,7 @@ module Outputs
 
       # We're in the fuel types loop so that we can pass in custom_unit_meter from above.
       # But we don't want to call create_custom_electricity_meters multiple times.
-      # We only need the electricity Total, Net, PV, Critical meters by unit when
-      # there are multiple units.
+      # We only need the electricity Total, Net, PV, Critical meters by unit when there are multiple units.
       if (fuel_type == EPlus::FuelTypeElectricity) && (hpxml.buildings.size > 1)
         create_custom_electricity_meters(model, custom_unit_meter)
       end
