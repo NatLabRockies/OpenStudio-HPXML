@@ -1551,6 +1551,8 @@ module Outputs
   # @param hpxml [HPXML] HPXML object
   # @return [nil]
   def self.create_custom_unit_meters(model, hpxml)
+    return if (not hpxml.buildings.size > 1) && (not hpxml.buildings.map { |hpxml_bldg| hpxml_bldg.batteries.size }.sum > 0)
+
     to_eplus = { FT::Elec => EPlus::FuelTypeElectricity,
                  FT::Gas => EPlus::FuelTypeNaturalGas,
                  FT::Oil => EPlus::FuelTypeOil,
