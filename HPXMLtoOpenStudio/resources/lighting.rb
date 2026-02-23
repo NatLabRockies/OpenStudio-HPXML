@@ -157,6 +157,9 @@ module Lighting
         runner.registerWarning("Both '#{exterior_col_name}' schedule file and monthly multipliers provided; the latter will be ignored.") if !lighting.exterior_monthly_multipliers.nil?
       end
 
+      # Note: We use ElectricEquipment instead of ExteriorLights so we can
+      # associate exterior lights with individual dwelling units for reporting.
+      # See https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2163
       Model.add_electric_equipment(
         model,
         name: exterior_obj_name,
@@ -193,6 +196,9 @@ module Lighting
         runner.registerWarning("Both '#{exterior_holiday_col_name}' schedule file and monthly multipliers provided; the latter will be ignored.") if !lighting.exterior_monthly_multipliers.nil?
       end
 
+      # Note: We use ElectricEquipment instead of ExteriorLights so we can
+      # associate exterior lights with individual dwelling units for reporting.
+      # See https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2163
       Model.add_electric_equipment(
         model,
         name: exterior_holiday_obj_name,
