@@ -14,7 +14,6 @@ module Lighting
   def self.apply(runner, model, spaces, hpxml_bldg, hpxml_header, schedules_file)
     lighting_groups = hpxml_bldg.lighting_groups
     lighting = hpxml_bldg.lighting
-    unit_multiplier = hpxml_bldg.building_construction.number_of_units
     cfa = hpxml_bldg.building_construction.conditioned_floor_area
     eri_version = hpxml_header.eri_calculation_versions[0]
     n_occ = hpxml_bldg.building_occupancy.number_of_residents
@@ -53,7 +52,6 @@ module Lighting
     end
     ext_kwh = 0.0 if ext_kwh.nil? || n_occ == 0
     ext_kwh *= lighting.exterior_usage_multiplier unless lighting.exterior_usage_multiplier.nil?
-    ext_kwh *= unit_multiplier # Not in a thermal zone, so needs to be explicitly multiplied
 
     # Calculate garage lighting kWh/yr
     gfa = 0 # Garage floor area
@@ -159,12 +157,18 @@ module Lighting
         runner.registerWarning("Both '#{exterior_col_name}' schedule file and monthly multipliers provided; the latter will be ignored.") if !lighting.exterior_monthly_multipliers.nil?
       end
 
-      Model.add_lights(
+      # Note: We use ElectricEquipment instead of ExteriorLights so we can
+      # associate exterior lights with individual dwelling units for reporting.
+      # See https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2163
+      Model.add_electric_equipment(
         model,
         name: exterior_obj_name,
         end_use: exterior_obj_name,
-        space: nil,
+        space: spaces[HPXML::LocationConditionedSpace],
         design_level: design_level,
+        frac_radiant: 0,
+        frac_latent: 0,
+        frac_lost: 1,
         schedule: exterior_sch
       )
     end
@@ -176,7 +180,7 @@ module Lighting
       exterior_holiday_sch = nil
       exterior_holiday_col_name = SchedulesFile::Columns[:LightingExteriorHoliday].name
       exterior_holiday_obj_name = Constants::ObjectTypeLightingExteriorHoliday
-      exterior_holiday_kwh_per_day = lighting.holiday_kwh_per_day * unit_multiplier
+      exterior_holiday_kwh_per_day = lighting.holiday_kwh_per_day
       if not schedules_file.nil?
         design_level = schedules_file.calc_design_level_from_daily_kwh(col_name: exterior_holiday_col_name, daily_kwh: exterior_holiday_kwh_per_day)
         exterior_holiday_sch = schedules_file.create_schedule_file(model, col_name: exterior_holiday_col_name)
@@ -192,12 +196,18 @@ module Lighting
         runner.registerWarning("Both '#{exterior_holiday_col_name}' schedule file and monthly multipliers provided; the latter will be ignored.") if !lighting.exterior_monthly_multipliers.nil?
       end
 
-      Model.add_lights(
+      # Note: We use ElectricEquipment instead of ExteriorLights so we can
+      # associate exterior lights with individual dwelling units for reporting.
+      # See https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2163
+      Model.add_electric_equipment(
         model,
         name: exterior_holiday_obj_name,
         end_use: exterior_holiday_obj_name,
-        space: nil,
+        space: spaces[HPXML::LocationConditionedSpace],
         design_level: design_level,
+        frac_radiant: 0,
+        frac_latent: 0,
+        frac_lost: 1,
         schedule: exterior_holiday_sch
       )
     end

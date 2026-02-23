@@ -3027,15 +3027,15 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         fuel = object.to_WaterHeaterStratified.get.heaterFuelType
         return { [to_ft[fuel], EUT::HotWater] => ["Water Heater #{fuel} Energy", 'Water Heater Off Cycle Parasitic Electricity Energy', 'Water Heater On Cycle Parasitic Electricity Energy'] }
 
-      elsif object.to_ExteriorLights.is_initialized
-        subcategory = object.to_ExteriorLights.get.endUseSubcategory
-        return { [FT::Elec, EUT::LightsExterior] => ["#{subcategory}:ExteriorLights:Electricity"] }
-
       elsif object.to_Lights.is_initialized
-        subcategory = object.to_Lights.get.endUseSubcategory
+        object = object.to_Lights.get
+        subcategory = object.endUseSubcategory
         end_use = { Constants::ObjectTypeLightingInterior => EUT::LightsInterior,
                     Constants::ObjectTypeLightingGarage => EUT::LightsGarage }[subcategory]
-        return { [FT::Elec, end_use] => ["#{subcategory}:InteriorLights:Electricity"] }
+        fail 'Unexpected error: InteriorLights:Electricity without a space.' unless object.space.is_initialized
+
+        zone_name = object.space.get.thermalZone.get.name.to_s.upcase
+        return { [FT::Elec, end_use] => ["#{subcategory}:InteriorLights:Electricity:Zone:#{zone_name}"] }
 
       elsif object.to_ElectricLoadCenterInverterPVWatts.is_initialized
         return { [FT::Elec, EUT::PV] => ['Inverter Conversion Loss Decrement Energy'] }
@@ -3078,7 +3078,9 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           Constants::ObjectTypeMiscPermanentSpaHeater => EUT::PermanentSpaHeater,
           Constants::ObjectTypeMiscPermanentSpaPump => EUT::PermanentSpaPump,
           Constants::ObjectTypeMiscElectricVehicleCharging => EUT::Vehicle,
-          Constants::ObjectTypeMiscWellPump => EUT::WellPump }.each do |obj_name, eut|
+          Constants::ObjectTypeMiscWellPump => EUT::WellPump,
+          Constants::ObjectTypeLightingExterior => EUT::LightsExterior,
+          Constants::ObjectTypeLightingExteriorHoliday => EUT::LightsExterior }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
           fail 'Unexpected error: multiple matches.' unless end_use.nil?
 
@@ -3087,12 +3089,10 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
         if not end_use.nil?
           # Use Output:Meter instead of Output:Variable because they incorporate thermal zone multipliers
-          if object.space.is_initialized
-            zone_name = object.space.get.thermalZone.get.name.to_s.upcase
-            return { [FT::Elec, end_use] => ["#{subcategory}:InteriorEquipment:Electricity:Zone:#{zone_name}"] }
-          else
-            return { [FT::Elec, end_use] => ["#{subcategory}:InteriorEquipment:Electricity"] }
-          end
+          fail 'Unexpected error: InteriorEquipment:Electricity without a space.' unless object.space.is_initialized
+
+          zone_name = object.space.get.thermalZone.get.name.to_s.upcase
+          return { [FT::Elec, end_use] => ["#{subcategory}:InteriorEquipment:Electricity:Zone:#{zone_name}"] }
         end
 
       elsif object.to_OtherEquipment.is_initialized
@@ -3121,12 +3121,10 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
         if not end_use.nil?
           # Use Output:Meter instead of Output:Variable because they incorporate thermal zone multipliers
-          if object.space.is_initialized
-            zone_name = object.space.get.thermalZone.get.name.to_s.upcase
-            return { [to_ft[fuel], end_use] => ["#{subcategory}:InteriorEquipment:#{fuel}:Zone:#{zone_name}"] }
-          else
-            return { [to_ft[fuel], end_use] => ["#{subcategory}:InteriorEquipment:#{fuel}"] }
-          end
+          fail "Unexpected error: InteriorEquipment:#{fuel} without a space." unless object.space.is_initialized
+
+          zone_name = object.space.get.thermalZone.get.name.to_s.upcase
+          return { [to_ft[fuel], end_use] => ["#{subcategory}:InteriorEquipment:#{fuel}:Zone:#{zone_name}"] }
         end
 
       elsif object.to_ZoneHVACDehumidifierDX.is_initialized
