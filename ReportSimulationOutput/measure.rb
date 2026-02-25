@@ -254,7 +254,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     arg = OpenStudio::Measure::OSArgument.makeBoolArgument('include_timeseries_dwelling_unit_outputs', false)
     arg.setDisplayName('Generate Timeseries Output: By Dwelling Unit')
-    arg.setDescription('Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations.')
+    arg.setDescription('Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations. Only applies when timeseries total and/or fuel consumptions are also requested.')
     arg.setDefaultValue(false)
     args << arg
 
