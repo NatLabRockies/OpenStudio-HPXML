@@ -38,8 +38,10 @@ module Lighting
                                      fractions[[HPXML::LocationInterior, HPXML::LightingTypeCFL]],
                                      fractions[[HPXML::LocationInterior, HPXML::LightingTypeLFL]],
                                      fractions[[HPXML::LocationInterior, HPXML::LightingTypeLED]])
+      # Zero out if no occupants (and kWh/yr not provided; see https://github.com/NatLabRockies/OpenStudio-HPXML/issues/2160)
+      int_kwh = 0.0 if n_occ == 0
     end
-    int_kwh = 0.0 if int_kwh.nil? || n_occ == 0
+    int_kwh = 0.0 if int_kwh.nil?
     int_kwh *= lighting.interior_usage_multiplier unless lighting.interior_usage_multiplier.nil?
 
     # Calculate exterior lighting kWh/yr
@@ -49,8 +51,10 @@ module Lighting
                                      fractions[[HPXML::LocationExterior, HPXML::LightingTypeCFL]],
                                      fractions[[HPXML::LocationExterior, HPXML::LightingTypeLFL]],
                                      fractions[[HPXML::LocationExterior, HPXML::LightingTypeLED]])
+      # Zero out if no occupants (and kWh/yr not provided; see https://github.com/NatLabRockies/OpenStudio-HPXML/issues/2160)
+      ext_kwh = 0.0 if n_occ == 0
     end
-    ext_kwh = 0.0 if ext_kwh.nil? || n_occ == 0
+    ext_kwh = 0.0 if ext_kwh.nil?
     ext_kwh *= lighting.exterior_usage_multiplier unless lighting.exterior_usage_multiplier.nil?
 
     # Calculate garage lighting kWh/yr
@@ -66,9 +70,12 @@ module Lighting
                                      fractions[[HPXML::LocationGarage, HPXML::LightingTypeCFL]],
                                      fractions[[HPXML::LocationGarage, HPXML::LightingTypeLFL]],
                                      fractions[[HPXML::LocationGarage, HPXML::LightingTypeLED]])
+
+        # Zero out if no occupants (and kWh/yr not provided; see https://github.com/NatLabRockies/OpenStudio-HPXML/issues/2160)
+        grg_kwh = 0.0 if n_occ == 0
       end
     end
-    grg_kwh = 0.0 if grg_kwh.nil? || n_occ == 0
+    grg_kwh = 0.0 if grg_kwh.nil?
     grg_kwh *= lighting.garage_usage_multiplier unless lighting.garage_usage_multiplier.nil?
 
     # Add lighting to conditioned space

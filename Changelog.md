@@ -15,6 +15,7 @@ __Bugfixes__
 - Fixes the design cooling temperature calculations for some vented attic roof types (shingles, plastic/rubber/synthetic sheeting, concrete, cool roof, expanded polystyrene sheathing)
 - Fixes unit multiplier ignored for EV charging using `Vehicles`.
 - Fixes handling of battery losses in the battery resilience output.
+- Fixes lighting, plug/fuel loads, and pool/spa energy use from being zeroed out when zero occupants are specified (i.e., unoccupied dwelling unit) but a kWh/year or therm/year value is provided.
 
 ## OpenStudio-HPXML v1.11.0
 

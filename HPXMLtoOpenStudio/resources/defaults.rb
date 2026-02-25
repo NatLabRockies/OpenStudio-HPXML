@@ -4760,17 +4760,16 @@ module Defaults
           plug_load.monthly_multipliers_isdefaulted = true
         end
       when HPXML::PlugLoadTypeTelevision
-        default_annual_kwh, default_sens_frac, default_lat_frac = get_televisions_values(cfa, nbeds, n_occ, unit_type)
         if plug_load.kwh_per_year.nil?
-          plug_load.kwh_per_year = default_annual_kwh
+          plug_load.kwh_per_year = get_televisions_values(cfa, nbeds, n_occ, unit_type)
           plug_load.kwh_per_year_isdefaulted = true
         end
         if plug_load.frac_sensible.nil?
-          plug_load.frac_sensible = default_sens_frac
+          plug_load.frac_sensible = 1.0
           plug_load.frac_sensible_isdefaulted = true
         end
         if plug_load.frac_latent.nil?
-          plug_load.frac_latent = default_lat_frac
+          plug_load.frac_latent = 0.0
           plug_load.frac_latent_isdefaulted = true
         end
         schedules_file_includes_plug_loads_tv = (schedules_file.nil? ? false : schedules_file.includes_col_name(SchedulesFile::Columns[:PlugLoadsTV].name))
@@ -4787,7 +4786,7 @@ module Defaults
           plug_load.monthly_multipliers_isdefaulted = true
         end
       when HPXML::PlugLoadTypeElectricVehicleCharging
-        default_annual_kwh = get_electric_vehicle_charging_annual_energy
+        default_annual_kwh = get_electric_vehicle_charging_annual_energy(n_occ)
         if plug_load.kwh_per_year.nil?
           plug_load.kwh_per_year = default_annual_kwh
           plug_load.kwh_per_year_isdefaulted = true
@@ -7474,7 +7473,10 @@ module Defaults
   # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
   # @return [Array<Double, Double, Double>] Plug loads annual use (kWh), sensible/latent fractions
   def self.get_residual_mels_values(cfa, n_occ = nil, unit_type = nil)
-    if n_occ.nil? # Asset calculation
+    if n_occ == 0
+      # Operational calculation w/ zero occupants, zero out energy use
+      annual_kwh = 0.0
+    elsif n_occ.nil? # Asset calculation
       # ANSI/RESNET/ICC 301
       annual_kwh = 0.91 * cfa
     else # Operational calculation
@@ -7495,15 +7497,18 @@ module Defaults
     return annual_kwh, frac_sens, frac_lat
   end
 
-  # Gets the default television energy use and sensible/latent fractions.
+  # Gets the default television energy use.
   #
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
   # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
-  # @return [Array<Double, Double, Double>] Television annual use (kWh), sensible/latent fractions
+  # @return [Double] Television annual use (kWh)
   def self.get_televisions_values(cfa, nbeds, n_occ = nil, unit_type = nil)
-    if n_occ.nil? # Asset calculation
+    if n_occ == 0
+      # Operational calculation w/ zero occupants, zero out energy use
+      annual_kwh = 0.0
+    elsif n_occ.nil? # Asset calculation
       # ANSI/RESNET/ICC 301
       annual_kwh = 413.0 + 69.0 * nbeds
     else # Operational calculation
@@ -7524,10 +7529,7 @@ module Defaults
         annual_kwh = 99.9 + 129.6 * n_occ + 0.21 * cfa
       end
     end
-    frac_lost = 0.0
-    frac_sens = (1.0 - frac_lost) * 1.0
-    frac_lat = 1.0 - frac_sens - frac_lost
-    return annual_kwh, frac_sens, frac_lat
+    return annual_kwh
   end
 
   # Gets the default pool pump annual energy use.
@@ -7610,8 +7612,14 @@ module Defaults
 
   # Gets the default electric vehicle charging annual energy use.
   #
+  # @param n_occ [Double] Number of occupants in the dwelling unit
   # @return [Double] Annual energy use (kWh/yr)
-  def self.get_electric_vehicle_charging_annual_energy()
+  def self.get_electric_vehicle_charging_annual_energy(n_occ)
+    if n_occ == 0
+      # Operational calculation w/ zero occupants, zero out energy use
+      return 0.0
+    end
+
     ev_charger_efficiency = 0.9
     ev_battery_efficiency = 0.9
 
