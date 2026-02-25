@@ -162,7 +162,7 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
       Outputs.apply_ems_programs(model, hpxml_osm_map, hpxml.header, args[:add_component_loads])
       Outputs.apply_output_file_controls(model, args[:debug])
       Outputs.apply_additional_properties(model, hpxml, hpxml_osm_map, args[:hpxml_path], args[:building_id], args[:hpxml_defaults_path])
-      Outputs.create_custom_meters(model)
+      Outputs.create_custom_electricity_meters(model)
       if args[:ems_debug]
         Outputs.apply_ems_debug_output(model)
       end
@@ -398,6 +398,9 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     Generator.apply(model, hpxml_bldg)
     Battery.apply(runner, model, spaces, hpxml_bldg, schedules_file)
     Vehicle.apply(runner, model, spaces, hpxml_bldg, hpxml.header, schedules_file)
+
+    # Unit Meters
+    Outputs.create_custom_unit_meters(model, hpxml)
   end
 
   # Miscellaneous logic that needs to occur upfront.
