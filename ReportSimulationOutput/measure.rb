@@ -617,7 +617,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     end
 
     if args[:include_timeseries_dwelling_unit_outputs] && !(args[:include_timeseries_total_consumptions] || args[:include_timeseries_fuel_consumptions])
-      runner.registerWarning('Timeseries outputs by dwelling unit were requested but timeseries total and/or fuel consumptions were not; no timeseries total/fuel consumptions will be reported.')
+      runner.registerWarning('Timeseries outputs by dwelling unit were requested but timeseries total and/or fuel consumptions were not; no timeseries dwelling unit outputs will be reported.')
     end
 
     hpxml_defaults_path = @model.getBuilding.additionalProperties.getFeatureAsString('hpxml_defaults_path').get
