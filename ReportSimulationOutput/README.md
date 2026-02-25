@@ -459,7 +459,7 @@ Generates timeseries resilience outputs.
 
 **Generate Timeseries Output: By Dwelling Unit**
 
-Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations.
+Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations. Only applies when timeseries total and/or fuel consumptions are also requested.
 
 - **Name:** ``include_timeseries_dwelling_unit_outputs``
 - **Type:** ``Boolean``

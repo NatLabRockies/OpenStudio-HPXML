@@ -1572,6 +1572,7 @@ module Outputs
 
           next if to_eplus[ft] != fuel_type
 
+          # The electricity meter should only include generation, so we exclude any outputs associated with production.
           if fuel_type == EPlus::FuelTypeElectricity
             next if [EUT::PV, EUT::Generator, EUT::Vehicle, EUT::Battery].include?(eut) &&
                     !output_vars.any? { |x| x.include?(Constants::ObjectTypeBatteryLossesAdjustment) || x.include?(Constants::ObjectTypeMiscElectricVehicleCharging) }

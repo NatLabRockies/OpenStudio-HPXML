@@ -254,7 +254,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     arg = OpenStudio::Measure::OSArgument.makeBoolArgument('include_timeseries_dwelling_unit_outputs', false)
     arg.setDisplayName('Generate Timeseries Output: By Dwelling Unit')
-    arg.setDescription('Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations.')
+    arg.setDescription('Generates timeseries outputs by dwelling unit for whole SFA/MF building simulations. Only applies when timeseries total and/or fuel consumptions are also requested.')
     arg.setDefaultValue(false)
     args << arg
 
@@ -620,6 +620,10 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       args[:use_dview_format] = true
     else
       args[:use_dview_format] = false
+    end
+
+    if args[:include_timeseries_dwelling_unit_outputs] && !(args[:include_timeseries_total_consumptions] || args[:include_timeseries_fuel_consumptions])
+      runner.registerWarning('Timeseries outputs by dwelling unit were requested but timeseries total and/or fuel consumptions were not; no timeseries dwelling unit outputs will be reported.')
     end
 
     hpxml_defaults_path = @model.getBuilding.additionalProperties.getFeatureAsString('hpxml_defaults_path').get

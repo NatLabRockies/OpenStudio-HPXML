@@ -707,7 +707,7 @@ class ReportSimulationOutputTest < Minitest::Test
   end
 
   def test_annual_whole_mf_building
-    args_hash = { 'hpxml_path' => File.join(File.dirname(__FILE__), '../../workflow/sample_files/base-bldgtype-mf-whole-building.xml'),
+    args_hash = { 'hpxml_path' => File.join(File.dirname(__FILE__), '../../workflow/sample_files/base-bldgtype-mf-whole-building-fuels.xml'),
                   'skip_validation' => true,
                   'add_component_loads' => true,
                   'timeseries_frequency' => 'none' }
@@ -715,16 +715,16 @@ class ReportSimulationOutputTest < Minitest::Test
     assert(File.exist?(annual_csv))
     assert(!File.exist?(timeseries_csv))
     expected_annual_rows = AnnualRows + dwelling_unit_annual_cols
+    expected_annual_rows << "System Use: WaterHeatingSystem1: #{FT::Propane}: #{EUT::HotWater} (MBtu)"
     for i in 2..whole_building_unit_ids.size
-      expected_annual_rows << "System Use: HeatingSystem1_#{i}: #{FT::Elec}: Heating (MBtu)"
-      expected_annual_rows << "System Use: CoolingSystem1_#{i}: #{FT::Elec}: Cooling (MBtu)"
-      expected_annual_rows << "System Use: CoolingSystem1_#{i}: #{FT::Elec}: Cooling Fans/Pumps (MBtu)"
-      expected_annual_rows << "System Use: WaterHeatingSystem1_#{i}: #{FT::Elec}: Hot Water (MBtu)"
+      expected_annual_rows << "System Use: HeatingSystem1_#{i}: #{FT::Elec}: #{EUT::HeatingFanPump} (MBtu)"
+      expected_annual_rows << "System Use: HeatingSystem1_#{i}: #{FT::Gas}: #{EUT::Heating} (MBtu)"
+      expected_annual_rows << "System Use: CoolingSystem1_#{i}: #{FT::Elec}: #{EUT::Cooling} (MBtu)"
+      expected_annual_rows << "System Use: CoolingSystem1_#{i}: #{FT::Elec}: #{EUT::CoolingFanPump} (MBtu)"
+      expected_annual_rows << "System Use: WaterHeatingSystem1_#{i}: #{FT::Propane}: #{EUT::HotWater} (MBtu)"
     end
-    # No other fuels because this is an all-electric building.
-    expected_annual_rows.each_with_index do |row, i|
-      expected_annual_rows[i] = expected_annual_rows[i].gsub(EUT::HeatingFanPump, EUT::Heating) if row.include?('System Use')
-      expected_annual_rows.delete(row) if row.include?('System Use') && row.include?(FT::Gas)
+    expected_annual_rows.each do |row|
+      expected_annual_rows.delete(row) if row.include?('System Use') && row.include?(FT::Elec) && row.include?(EUT::HotWater)
     end
     actual_annual_rows = _get_annual_values(annual_csv)
     assert_equal(expected_annual_rows.sort, actual_annual_rows.keys.sort)
@@ -1060,7 +1060,7 @@ class ReportSimulationOutputTest < Minitest::Test
   end
 
   def test_timeseries_hourly_dwelling_unit_outputs_whole_mf_building
-    args_hash = { 'hpxml_path' => File.join(File.dirname(__FILE__), '../../workflow/sample_files/base-bldgtype-mf-whole-building.xml'),
+    args_hash = { 'hpxml_path' => File.join(File.dirname(__FILE__), '../../workflow/sample_files/base-bldgtype-mf-whole-building-fuels.xml'),
                   'skip_validation' => true,
                   'timeseries_frequency' => 'hourly',
                   'include_timeseries_total_consumptions' => true,
@@ -1075,12 +1075,17 @@ class ReportSimulationOutputTest < Minitest::Test
     expected_timeseries_cols << "Energy Use: #{TE::Net}"
     expected_timeseries_cols << "Fuel Use: #{FT::Elec}: #{TE::Total}"
     expected_timeseries_cols << "Fuel Use: #{FT::Elec}: #{TE::Net}"
+    expected_timeseries_cols << "Fuel Use: #{FT::Gas}: #{TE::Total}"
+    expected_timeseries_cols << "Fuel Use: #{FT::Propane}: #{TE::Total}"
+    expected_timeseries_cols << "Fuel Use: #{FT::WoodCord}: #{TE::Total}"
     whole_building_unit_ids.each do |unit_id|
       expected_timeseries_cols << "Dwelling Unit Energy Use: #{unit_id}: #{TE::Total}"
       expected_timeseries_cols << "Dwelling Unit Energy Use: #{unit_id}: #{TE::Net}"
       expected_timeseries_cols << "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Elec}: #{TE::Total}"
       expected_timeseries_cols << "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Elec}: #{TE::Net}"
-      # No other fuels because this is an all-electric building.
+      expected_timeseries_cols << "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Gas}: #{TE::Total}"
+      expected_timeseries_cols << "Dwelling Unit Fuel Use: #{unit_id}: #{FT::Propane}: #{TE::Total}"
+      expected_timeseries_cols << "Dwelling Unit Fuel Use: #{unit_id}: #{FT::WoodCord}: #{TE::Total}"
     end
     assert_equal(expected_timeseries_cols.sort, actual_timeseries_cols.sort)
     timeseries_rows = CSV.read(timeseries_csv)

@@ -663,7 +663,7 @@ Depending on the outputs requested, the file may include:
   Airflows                            ``airflows``         Airflow rates (in cfm) for infiltration, mechanical ventilation (including clothes dryer exhaust), natural ventilation, whole house fans.
   Weather                             ``weather``          Weather file data including outdoor temperatures, relative humidity, wind speed, and solar.
   Resilience                          ``resilience``       Resilience outputs (currently only average resilience hours for battery storage).
-  Dwelling Units                      ``dwellingunits``    Outputs for each dwelling unit (currently Total/Fuel Consumptions) for whole SFA/MF building simulations.
+  Dwelling Units                      ``dwellingunits``    Outputs for each dwelling unit for whole SFA/MF building simulations. Only applies when total and/or fuel consumptions are also requested.
   EnergyPlus Output Variables/Meters                       Any user-specified EnergyPlus output variables/meters (e.g., 'Zone People Occupant Count', 'MainsWater:Facility').
   ==================================  ===================  ==================================================================================================================================
 
