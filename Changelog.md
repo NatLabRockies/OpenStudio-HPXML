@@ -16,7 +16,11 @@ __Bugfixes__
 - Fixes the design cooling temperature calculations for some vented attic roof types (shingles, plastic/rubber/synthetic sheeting, concrete, cool roof, expanded polystyrene sheathing)
 - Fixes unit multiplier ignored for EV charging using `Vehicles`.
 - Fixes handling of battery losses in the battery resilience output.
-- Fixes incorrectly using cooling coefficients to introduce indoor temperature sensitivity to heating performance lookup tables.
+
+## OpenStudio-HPXML v1.11.1
+
+__Bugfixes__
+- Fixes heat pump heating performance sensitivity to indoor temperatures.
 
 ## OpenStudio-HPXML v1.11.0
 
