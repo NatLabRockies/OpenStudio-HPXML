@@ -248,22 +248,22 @@ class HPXMLtoOpenStudioMiscLoadsTest < Minitest::Test
 
     # Check pool pump
     kwh_yr, therm_yr = get_kwh_therm_per_year(model, Constants::ObjectTypeMiscPoolPump)
-    refute_equal(0, kwh_yr)
+    assert_equal(0, kwh_yr)
     assert_equal(0, therm_yr)
 
     # Check pool heater
     kwh_yr, therm_yr = get_kwh_therm_per_year(model, Constants::ObjectTypeMiscPoolHeater)
     assert_equal(0, kwh_yr)
-    refute_equal(0, therm_yr)
+    assert_equal(0, therm_yr)
 
     # Check permanent spa pump
     kwh_yr, therm_yr = get_kwh_therm_per_year(model, Constants::ObjectTypeMiscPermanentSpaPump)
-    refute_equal(0, kwh_yr)
+    assert_equal(0, kwh_yr)
     assert_equal(0, therm_yr)
 
     # Check permanent spa heater
     kwh_yr, therm_yr = get_kwh_therm_per_year(model, Constants::ObjectTypeMiscPermanentSpaHeater)
-    refute_equal(0, kwh_yr)
+    assert_equal(0, kwh_yr)
     assert_equal(0, therm_yr)
 
     # Check grill

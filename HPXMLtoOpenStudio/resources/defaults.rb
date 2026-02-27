@@ -7540,6 +7540,11 @@ module Defaults
   # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (kWh/yr)
   def self.get_pool_pump_annual_energy(cfa, nbeds, n_occ, unit_type)
+    if n_occ == 0
+      # Operational calculation w/ zero occupants, zero out energy use
+      return 0.0
+    end
+
     nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     return 158.6 / 0.070 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0)
@@ -7560,13 +7565,23 @@ module Defaults
     load_value = nil
     if [HPXML::HeaterTypeElectricResistance, HPXML::HeaterTypeHeatPump].include? type
       load_units = HPXML::UnitsKwhPerYear
-      load_value = 8.3 / 0.004 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # kWh/yr
-      if type == HPXML::HeaterTypeHeatPump
-        load_value /= 5.0 # Assume seasonal COP of 5.0 per https://www.energy.gov/energysaver/heat-pump-swimming-pool-heaters
+      if n_occ == 0
+        # Operational calculation w/ zero occupants, zero out energy use
+        load_value = 0.0
+      else
+        load_value = 8.3 / 0.004 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # kWh/yr
+        if type == HPXML::HeaterTypeHeatPump
+          load_value /= 5.0 # Assume seasonal COP of 5.0 per https://www.energy.gov/energysaver/heat-pump-swimming-pool-heaters
+        end
       end
     elsif type == HPXML::HeaterTypeGas
       load_units = HPXML::UnitsThermPerYear
-      load_value = 3.0 / 0.014 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # therm/yr
+      if n_occ == 0
+        # Operational calculation w/ zero occupants, zero out energy use
+        load_value = 0.0
+      else
+        load_value = 3.0 / 0.014 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # therm/yr
+      end
     end
     return load_units, load_value
   end
@@ -7579,6 +7594,11 @@ module Defaults
   # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (kWh/yr)
   def self.get_permanent_spa_pump_annual_energy(cfa, nbeds, n_occ, unit_type)
+    if n_occ == 0
+      # Operational calculation w/ zero occupants, zero out energy use
+      return 0.0
+    end
+
     nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     return 59.5 / 0.059 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # kWh/yr
@@ -7599,13 +7619,23 @@ module Defaults
     load_value = nil
     if [HPXML::HeaterTypeElectricResistance, HPXML::HeaterTypeHeatPump].include? type
       load_units = HPXML::UnitsKwhPerYear
-      load_value = 49.0 / 0.048 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # kWh/yr
-      if type == HPXML::HeaterTypeHeatPump
-        load_value /= 5.0 # Assume seasonal COP of 5.0 per https://www.energy.gov/energysaver/heat-pump-swimming-pool-heaters
+      if n_occ == 0
+        # Operational calculation w/ zero occupants, zero out energy use
+        load_value = 0.0
+      else
+        load_value = 49.0 / 0.048 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # kWh/yr
+        if type == HPXML::HeaterTypeHeatPump
+          load_value /= 5.0 # Assume seasonal COP of 5.0 per https://www.energy.gov/energysaver/heat-pump-swimming-pool-heaters
+        end
       end
     elsif type == HPXML::HeaterTypeGas
       load_units = HPXML::UnitsThermPerYear
-      load_value = 0.87 / 0.011 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # therm/yr
+      if n_occ == 0
+        # Operational calculation w/ zero occupants, zero out energy use
+        load_value = 0.0
+      else
+        load_value = 0.87 / 0.011 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # therm/yr
+      end
     end
     return load_units, load_value
   end
