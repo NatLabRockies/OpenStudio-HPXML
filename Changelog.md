@@ -20,6 +20,11 @@ __Bugfixes__
   - Fixes lighting and plug/fuel load energy use to not be zeroed out when a kWh/year or therm/year value is provided.
   - Fixes pool/spa energy use to be zeroed out when a kWh/year or therm/year value is not provided.
 
+## OpenStudio-HPXML v1.11.1
+
+__Bugfixes__
+- Fixes heat pump heating performance sensitivity to indoor temperatures.
+
 ## OpenStudio-HPXML v1.11.0
 
 __New Features__
