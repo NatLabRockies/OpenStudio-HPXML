@@ -2853,12 +2853,14 @@ module HVAC
     if mode == :clg
       rated_t_i = HVAC::AirSourceCoolRatedIWB
       indoor_t = [57.0, rated_t_i, 72.0]
+      cap_ft_spec_ss = hvac_ap.cool_cap_ft_spec
+      eir_ft_spec_ss = hvac_ap.cool_eir_ft_spec
     else
       rated_t_i = HVAC::AirSourceHeatRatedIDB
       indoor_t = [60.0, rated_t_i, 80.0]
+      cap_ft_spec_ss = hvac_ap.heat_cap_ft_spec
+      eir_ft_spec_ss = hvac_ap.heat_eir_ft_spec
     end
-    cap_ft_spec_ss = hvac_ap.cool_cap_ft_spec
-    eir_ft_spec_ss = hvac_ap.cool_eir_ft_spec
 
     datapoints_by_speed.each do |_capacity_description, datapoints|
       datapoints.each do |dp|

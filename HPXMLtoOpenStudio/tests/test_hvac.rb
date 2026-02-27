@@ -105,6 +105,16 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
       5 => [2541.1, 7535.3, 7531.5],
       -20 => [1585.7, 4536.7, 4496.8],
     }
+    # Cooling indoor temps
+    indoor_t_clg = [57.0, HVAC::AirSourceCoolRatedIWB, 72.0]
+    # Heating coefficients to introduce indoor sensitivity
+    cool_cap_ft_spec = [3.717717741, -0.09918866, 0.000964488, 0.005887776, -0.000012808, -0.000132822]
+    cool_eir_ft_spec = [-3.400341169, 0.135184783, -0.001037932, -0.007852322, 0.000183438, -0.000142548]
+    # Heating indoor temps
+    indoor_t_htg = [60.0, HVAC::AirSourceHeatRatedIDB, 80.0]
+    # Heating coefficients to introduce indoor sensitivity
+    heat_cap_ft_spec = [0.568706266, -0.000747282, -0.0000103432, 0.00945408, 0.000050812, -0.00000677828]
+    heat_eir_ft_spec = [0.722917608, 0.003520184, 0.000143097, -0.005760341, 0.000141736, -0.000216676]
 
     # Check cooling coil
     assert_equal(1, model.getCoilCoolingDXMultiSpeeds.size)
@@ -117,12 +127,32 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
       cops.each_with_index do |cop, i|
         eir_adj = _get_table_lookup_factor(clg_coil.stages[i].energyInputRatioFunctionofTemperatureCurve, HVAC::AirSourceCoolRatedIWB, odb)
         assert_in_epsilon(cop, 1.0 / eir_adj * clg_coil.stages[i].grossRatedCoolingCOP, tol)
+        # Indoor sensitivity test
+        indoor_t_clg.each do |indoor_t|
+          # Indoor + outdoor impact from table lookup
+          eir_adj_indoor = _get_table_lookup_factor(clg_coil.stages[i].energyInputRatioFunctionofTemperatureCurve, indoor_t, odb)
+          # Indoor impact
+          odb_indoor = [odb, 75.0].max
+          eir_correction_factor = MathTools.biquadratic(indoor_t, odb_indoor, cool_eir_ft_spec) / MathTools.biquadratic(HVAC::AirSourceCoolRatedIWB, odb_indoor, cool_eir_ft_spec)
+          # eir_correction_factor * eir_adj = eir_adj_indoor
+          assert_in_epsilon(cop / eir_correction_factor, 1.0 / eir_adj_indoor * clg_coil.stages[i].grossRatedCoolingCOP, tol)
+        end
       end
     end
     expected_clg_capacities.each do |odb, capacities|
       capacities.each_with_index do |capacity, i|
         cap_adj = _get_table_lookup_factor(clg_coil.stages[i].totalCoolingCapacityFunctionofTemperatureCurve, HVAC::AirSourceCoolRatedIWB, odb)
         assert_in_epsilon(capacity, cap_adj * UnitConversions.convert(clg_coil.stages[i].grossRatedTotalCoolingCapacity.get, 'W', 'Btu/hr'), tol)
+        # Indoor sensitivity test
+        indoor_t_clg.each do |indoor_t|
+          # Indoor + outdoor impact from table lookup
+          cap_adj_indoor = _get_table_lookup_factor(clg_coil.stages[i].totalCoolingCapacityFunctionofTemperatureCurve, indoor_t, odb)
+          # Indoor impact
+          odb_indoor = [odb, 75.0].max
+          cap_correction_factor = MathTools.biquadratic(indoor_t, odb_indoor, cool_cap_ft_spec) / MathTools.biquadratic(HVAC::AirSourceCoolRatedIWB, odb_indoor, cool_cap_ft_spec)
+          # cap_correction_factor * cap_adj = cap_adj_indoor
+          assert_in_epsilon(capacity * cap_correction_factor, cap_adj_indoor * UnitConversions.convert(clg_coil.stages[i].grossRatedTotalCoolingCapacity.get, 'W', 'Btu/hr'), tol)
+        end
       end
     end
     clg_coil.stages.each do |stage|
@@ -140,12 +170,29 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
       cops.each_with_index do |cop, i|
         eir_adj = _get_table_lookup_factor(htg_coil.stages[i].energyInputRatioFunctionofTemperatureCurve, HVAC::AirSourceHeatRatedIDB, odb)
         assert_in_epsilon(cop, 1.0 / eir_adj * htg_coil.stages[i].grossRatedHeatingCOP, tol)
+        # Indoor sensitivity test
+        indoor_t_htg.each do |indoor_t|
+          # Indoor + outdoor impact from table lookup
+          eir_adj_indoor = _get_table_lookup_factor(htg_coil.stages[i].energyInputRatioFunctionofTemperatureCurve, indoor_t, odb)
+          eir_correction_factor = MathTools.biquadratic(indoor_t, odb, heat_eir_ft_spec) / MathTools.biquadratic(HVAC::AirSourceHeatRatedIDB, odb, heat_eir_ft_spec)
+          # eir_correction_factor * eir_adj = eir_adj_indoor
+          assert_in_epsilon(cop / eir_correction_factor, 1.0 / eir_adj_indoor * htg_coil.stages[i].grossRatedHeatingCOP, tol)
+        end
       end
     end
     expected_htg_capacities.each do |odb, capacities|
       capacities.each_with_index do |capacity, i|
         cap_adj = _get_table_lookup_factor(htg_coil.stages[i].heatingCapacityFunctionofTemperatureCurve, HVAC::AirSourceHeatRatedIDB, odb)
         assert_in_epsilon(capacity, cap_adj * UnitConversions.convert(htg_coil.stages[i].grossRatedHeatingCapacity.get, 'W', 'Btu/hr'), tol)
+        # Indoor sensitivity test
+        indoor_t_htg.each do |indoor_t|
+          # Indoor + outdoor impact from table lookup
+          cap_adj_indoor = _get_table_lookup_factor(htg_coil.stages[i].heatingCapacityFunctionofTemperatureCurve, indoor_t, odb)
+          # Indoor impact
+          cap_correction_factor = MathTools.biquadratic(indoor_t, odb, heat_cap_ft_spec) / MathTools.biquadratic(HVAC::AirSourceHeatRatedIDB, odb, heat_cap_ft_spec)
+          # cap_correction_factor * cap_adj = cap_adj_indoor
+          assert_in_epsilon(capacity * cap_correction_factor, cap_adj_indoor * UnitConversions.convert(htg_coil.stages[i].grossRatedHeatingCapacity.get, 'W', 'Btu/hr'), tol)
+        end
       end
     end
 
