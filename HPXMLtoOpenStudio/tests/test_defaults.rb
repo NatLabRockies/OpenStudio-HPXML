@@ -4911,6 +4911,13 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     _test_default_pool_heater_values(default_hpxml_bldg.pools[0], HPXML::UnitsThermPerYear, 236, 1.0, default_ph_sched['WeekdayScheduleFractions'], default_ph_sched['WeekendScheduleFractions'], default_ph_sched['MonthlyScheduleMultipliers'])
     _test_default_pool_pump_values(default_hpxml_bldg.pools[0], 2496, 1.0, default_pp_sched['WeekdayScheduleFractions'], default_pp_sched['WeekendScheduleFractions'], default_pp_sched['MonthlyScheduleMultipliers'])
 
+    # Test defaults w/ zero occupants
+    hpxml_bldg.building_occupancy.number_of_residents = 0
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _default_hpxml, default_hpxml_bldg = _test_measure()
+    _test_default_pool_heater_values(default_hpxml_bldg.pools[0], HPXML::UnitsThermPerYear, 0, 1.0, default_ph_sched['WeekdayScheduleFractions'], default_ph_sched['WeekendScheduleFractions'], default_ph_sched['MonthlyScheduleMultipliers'])
+    _test_default_pool_pump_values(default_hpxml_bldg.pools[0], 0, 1.0, default_pp_sched['WeekdayScheduleFractions'], default_pp_sched['WeekendScheduleFractions'], default_pp_sched['MonthlyScheduleMultipliers'])
+
     # Test defaults 2
     hpxml, hpxml_bldg = _create_hpxml('base-misc-loads-large-uncommon2.xml')
     pool = hpxml_bldg.pools[0]
@@ -4929,6 +4936,13 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     _default_hpxml, default_hpxml_bldg = _test_measure()
     _test_default_pool_heater_values(default_hpxml_bldg.pools[0], nil, nil, nil, nil, nil, nil)
     _test_default_pool_pump_values(default_hpxml_bldg.pools[0], 2496, 1.0, default_pp_sched['WeekdayScheduleFractions'], default_pp_sched['WeekendScheduleFractions'], default_pp_sched['MonthlyScheduleMultipliers'])
+
+    # Test defaults 2 w/ zero occupants
+    hpxml_bldg.building_occupancy.number_of_residents = 0
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _default_hpxml, default_hpxml_bldg = _test_measure()
+    _test_default_pool_heater_values(default_hpxml_bldg.pools[0], nil, nil, nil, nil, nil, nil)
+    _test_default_pool_pump_values(default_hpxml_bldg.pools[0], 0, 1.0, default_pp_sched['WeekdayScheduleFractions'], default_pp_sched['WeekendScheduleFractions'], default_pp_sched['MonthlyScheduleMultipliers'])
   end
 
   def test_permanent_spas
@@ -4971,6 +4985,13 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     _test_default_permanent_spa_heater_values(default_hpxml_bldg.permanent_spas[0], HPXML::UnitsKwhPerYear, 1125, 1.0, default_sh_sched['WeekdayScheduleFractions'], default_sh_sched['WeekendScheduleFractions'], default_sh_sched['MonthlyScheduleMultipliers'])
     _test_default_permanent_spa_pump_values(default_hpxml_bldg.permanent_spas[0], 1111, 1.0, default_sp_sched['WeekdayScheduleFractions'], default_sp_sched['WeekendScheduleFractions'], default_sp_sched['MonthlyScheduleMultipliers'])
 
+    # Test defaults w/ zero occupants
+    hpxml_bldg.building_occupancy.number_of_residents = 0
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _default_hpxml, default_hpxml_bldg = _test_measure()
+    _test_default_permanent_spa_heater_values(default_hpxml_bldg.permanent_spas[0], HPXML::UnitsKwhPerYear, 0, 1.0, default_sh_sched['WeekdayScheduleFractions'], default_sh_sched['WeekendScheduleFractions'], default_sh_sched['MonthlyScheduleMultipliers'])
+    _test_default_permanent_spa_pump_values(default_hpxml_bldg.permanent_spas[0], 0, 1.0, default_sp_sched['WeekdayScheduleFractions'], default_sp_sched['WeekendScheduleFractions'], default_sp_sched['MonthlyScheduleMultipliers'])
+
     # Test defaults 2
     hpxml, hpxml_bldg = _create_hpxml('base-misc-loads-large-uncommon2.xml')
     spa = hpxml_bldg.permanent_spas[0]
@@ -4989,6 +5010,13 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     _default_hpxml, default_hpxml_bldg = _test_measure()
     _test_default_permanent_spa_heater_values(default_hpxml_bldg.permanent_spas[0], HPXML::UnitsKwhPerYear, 225, 1.0, default_sh_sched['WeekdayScheduleFractions'], default_sh_sched['WeekendScheduleFractions'], default_sh_sched['MonthlyScheduleMultipliers'])
     _test_default_permanent_spa_pump_values(default_hpxml_bldg.permanent_spas[0], 1111, 1.0, default_sp_sched['WeekdayScheduleFractions'], default_sp_sched['WeekendScheduleFractions'], default_sp_sched['MonthlyScheduleMultipliers'])
+
+    # Test defaults 2 w/ zero occupants
+    hpxml_bldg.building_occupancy.number_of_residents = 0
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _default_hpxml, default_hpxml_bldg = _test_measure()
+    _test_default_permanent_spa_heater_values(default_hpxml_bldg.permanent_spas[0], HPXML::UnitsKwhPerYear, 0, 1.0, default_sh_sched['WeekdayScheduleFractions'], default_sh_sched['WeekendScheduleFractions'], default_sh_sched['MonthlyScheduleMultipliers'])
+    _test_default_permanent_spa_pump_values(default_hpxml_bldg.permanent_spas[0], 0, 1.0, default_sp_sched['WeekdayScheduleFractions'], default_sp_sched['WeekendScheduleFractions'], default_sp_sched['MonthlyScheduleMultipliers'])
   end
 
   def test_plug_loads
@@ -5053,6 +5081,15 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     _test_default_plug_load_values(default_hpxml_bldg, HPXML::PlugLoadTypeOther, 2457, 0.855, 0.045, 1.0, default_ot_sched['WeekdayScheduleFractions'], default_ot_sched['WeekendScheduleFractions'], default_ot_sched['MonthlyScheduleMultipliers'])
     _test_default_plug_load_values(default_hpxml_bldg, HPXML::PlugLoadTypeElectricVehicleCharging, 2368.4, 0.0, 0.0, 1.0, default_ev_sched['WeekdayScheduleFractions'], default_ev_sched['WeekendScheduleFractions'], default_ev_sched['MonthlyScheduleMultipliers'])
     _test_default_plug_load_values(default_hpxml_bldg, HPXML::PlugLoadTypeWellPump, 441, 0.0, 0.0, 1.0, default_wp_sched['WeekdayScheduleFractions'], default_wp_sched['WeekendScheduleFractions'], default_wp_sched['MonthlyScheduleMultipliers'])
+
+    # Test defaults w/ zero occupants
+    hpxml_bldg.building_occupancy.number_of_residents = 0
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _default_hpxml, default_hpxml_bldg = _test_measure()
+    _test_default_plug_load_values(default_hpxml_bldg, HPXML::PlugLoadTypeTelevision, 0, 1.0, 0.0, 1.0, default_tv_sched['WeekdayScheduleFractions'], default_tv_sched['WeekendScheduleFractions'], default_tv_sched['MonthlyScheduleMultipliers'])
+    _test_default_plug_load_values(default_hpxml_bldg, HPXML::PlugLoadTypeOther, 0, 0.855, 0.045, 1.0, default_ot_sched['WeekdayScheduleFractions'], default_ot_sched['WeekendScheduleFractions'], default_ot_sched['MonthlyScheduleMultipliers'])
+    _test_default_plug_load_values(default_hpxml_bldg, HPXML::PlugLoadTypeElectricVehicleCharging, 0, 0.0, 0.0, 1.0, default_ev_sched['WeekdayScheduleFractions'], default_ev_sched['WeekendScheduleFractions'], default_ev_sched['MonthlyScheduleMultipliers'])
+    _test_default_plug_load_values(default_hpxml_bldg, HPXML::PlugLoadTypeWellPump, 0, 0.0, 0.0, 1.0, default_wp_sched['WeekdayScheduleFractions'], default_wp_sched['WeekendScheduleFractions'], default_wp_sched['MonthlyScheduleMultipliers'])
   end
 
   def test_fuel_loads
@@ -5106,6 +5143,14 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     _test_default_fuel_load_values(default_hpxml_bldg, HPXML::FuelLoadTypeGrill, 33, 0.0, 0.0, 1.0, default_gr_sched['WeekdayScheduleFractions'], default_gr_sched['WeekendScheduleFractions'], default_gr_sched['MonthlyScheduleMultipliers'])
     _test_default_fuel_load_values(default_hpxml_bldg, HPXML::FuelLoadTypeLighting, 20, 0.0, 0.0, 1.0, default_li_sched['WeekdayScheduleFractions'], default_li_sched['WeekendScheduleFractions'], default_li_sched['MonthlyScheduleMultipliers'])
     _test_default_fuel_load_values(default_hpxml_bldg, HPXML::FuelLoadTypeFireplace, 67, 0.5, 0.1, 1.0, default_fp_sched['WeekdayScheduleFractions'], default_fp_sched['WeekendScheduleFractions'], default_fp_sched['MonthlyScheduleMultipliers'])
+
+    # Test defaults w/ zero occupants
+    hpxml_bldg.building_occupancy.number_of_residents = 0
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _default_hpxml, default_hpxml_bldg = _test_measure()
+    _test_default_fuel_load_values(default_hpxml_bldg, HPXML::FuelLoadTypeGrill, 0, 0.0, 0.0, 1.0, default_gr_sched['WeekdayScheduleFractions'], default_gr_sched['WeekendScheduleFractions'], default_gr_sched['MonthlyScheduleMultipliers'])
+    _test_default_fuel_load_values(default_hpxml_bldg, HPXML::FuelLoadTypeLighting, 0, 0.0, 0.0, 1.0, default_li_sched['WeekdayScheduleFractions'], default_li_sched['WeekendScheduleFractions'], default_li_sched['MonthlyScheduleMultipliers'])
+    _test_default_fuel_load_values(default_hpxml_bldg, HPXML::FuelLoadTypeFireplace, 0, 0.5, 0.1, 1.0, default_fp_sched['WeekdayScheduleFractions'], default_fp_sched['WeekendScheduleFractions'], default_fp_sched['MonthlyScheduleMultipliers'])
   end
 
   def _test_measure()

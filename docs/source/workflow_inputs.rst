@@ -5426,6 +5426,7 @@ If specifying lighting type fractions, three ``/HPXML/Building/BuildingDetails/L
          If the fractions sum to less than 1, the remainder is assumed to be incandescent lighting.
 
   Interior, exterior, and garage lighting energy use is calculated per the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2019 <https://codes.iccsafe.org/content/RESNET3012019P1>`_.
+  If NumberofResidents is provided and zero (i.e., the dwelling unit is unoccupied), no lighting energy use will be modeled.
 
 .. _lighting_annual_energy:
 
@@ -5537,7 +5538,8 @@ If not entered, the simulation will not include a pool pump.
          If "not present" is entered, the simulation will not include a pool pump.
          Any other value entered will indicate the presence of a pool pump; the specific value chosen does not affect the energy model.
   .. [#] If Value not provided, defaults based on the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_: 158.5 / 0.070 * (0.5 + 0.25 * NumberofBedrooms / 3 + 0.25 * ConditionedFloorArea / 1920).
-         If NumberofResidents provided, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and not zero, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and zero (i.e., the dwelling unit is unoccupied), the default value will be assigned zero.
   .. [#] If WeekdayScheduleFractions or WeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
   .. [#] If MonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
 
@@ -5570,7 +5572,8 @@ If not entered, the simulation will not include a pool heater.
 
          \- **heat pump [kWh/year]**: (electric resistance [kWh/year]) / 5.0 (based on an average COP of 5 from `Energy Saver <https://www.energy.gov/energysaver/heat-pump-swimming-pool-heaters>`_)
 
-         If NumberofResidents provided, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and not zero, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and zero (i.e., the dwelling unit is unoccupied), the default value will be assigned zero.
 
   .. [#] If WeekdayScheduleFractions or WeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
   .. [#] If MonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
@@ -5614,7 +5617,8 @@ If not entered, the simulation will not include a permanent spa pump.
          If "not present" is entered, the simulation will not include a permanent spa pump.
          Any other value entered will indicate the presence of a permanent spa pump; the specific value chosen does not affect the energy model.
   .. [#] If Value not provided, defaults based on the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_: 59.5 / 0.059 * (0.5 + 0.25 * NumberofBedrooms / 3 + 0.25 * ConditionedFloorArea / 1920).
-         If NumberofResidents provided, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and not zero, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and zero (i.e., the dwelling unit is unoccupied), the default value will be assigned zero.
   .. [#] If WeekdayScheduleFractions or WeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
   .. [#] If MonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
 
@@ -5647,7 +5651,8 @@ If not entered, the simulation will not include a permanent spa heater.
 
          \- **heat pump [kWh/year]** = (electric resistance) / 5.0 (based on an average COP of 5 from `Energy Saver <https://www.energy.gov/energysaver/heat-pump-swimming-pool-heaters>`_)
 
-         If NumberofResidents provided, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and not zero, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and zero (i.e., the dwelling unit is unoccupied), the default value will be assigned zero.
 
   .. [#] If WeekdayScheduleFractions or WeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
   .. [#] If MonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
@@ -5694,7 +5699,7 @@ If not entered, the simulation will not include that type of plug load.
 
          \- **electric vehicle charging**: 2368.4 (calculated using AnnualMiles * kWhPerMile * FractionChargedAtHome / (ChargerEfficiency * BatteryEfficiency) where AnnualMiles=11000, kWhPerMile=0.22, FractionChargedAtHome=0.8, ChargerEfficiency=0.9, and BatteryEfficiency=0.9). If this plug load type is specified, it will take precedence over an EV specified in :ref:`hpxml_vehicles`.
 
-         If NumberofResidents is provided, the following defaults are used instead:
+         If NumberofResidents is provided and not zero, the following defaults are used instead:
 
          \- **other** (single-family detached): 786.9 + 241.8 * NumberofResidents + 0.33 * ConditionedFloorArea (based on `RECS 2020 <https://www.eia.gov/consumption/residential/data/2020/>`_)
 
@@ -5715,6 +5720,8 @@ If not entered, the simulation will not include that type of plug load.
          \- **well pump**: Same as above, but this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
 
          \- **electric vehicle charging**: Same as above
+
+         If NumberofResidents is provided and zero (i.e., the dwelling unit is unoccupied), the default value will be assigned zero.
 
   .. [#] If FracSensible not provided, defaults as:
 
@@ -5767,7 +5774,7 @@ If not entered, the simulation will not include that type of fuel load.
   ========================================  =======  ========  ===========  ========  ========  =============================================================
 
   .. [#] FuelLoadType choices are "grill", "fireplace", or "lighting".
-  .. [#] If Value not provided, calculated as based on the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_:
+  .. [#] If Value not provided, calculated based on the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_:
 
          \- **grill**: 0.87 / 0.029 * (0.5 + 0.25 * NumberofBedrooms / 3 + 0.25 * ConditionedFloorArea / 1920)
 
@@ -5775,7 +5782,8 @@ If not entered, the simulation will not include that type of fuel load.
 
          \- **lighting**: 0.22 / 0.012 * (0.5 + 0.25 * NumberofBedrooms / 3 + 0.25 * ConditionedFloorArea / 1920)
 
-         If NumberofResidents provided, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and not zero, this value will be adjusted using the equations from RECS in :ref:`building_occupancy`.
+         If NumberofResidents is provided and zero (i.e., the dwelling unit is unoccupied), the default value will be assigned zero.
 
   .. [#] FuelType choices are "natural gas", "fuel oil", "fuel oil 1", "fuel oil 2", "fuel oil 4", "fuel oil 5/6", "diesel", "propane", "kerosene", "coal", "coke", "bituminous coal", "anthracite coal", "wood", or "wood pellets".
   .. [#] If FracSensible not provided, defaults to 0.5 for fireplace and 0.0 for all other types.
