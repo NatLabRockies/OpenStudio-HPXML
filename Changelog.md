@@ -1,7 +1,7 @@
 ## OpenStudio-HPXML v1.11.1
 
 __Bugfixes__
-- Fixes heat pump heating performance sensitivity to indoor conditions.
+- Fixes heat pump heating performance sensitivity to indoor temperatures.
 
 ## OpenStudio-HPXML v1.11.0
 
