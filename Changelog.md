@@ -17,6 +17,11 @@ __Bugfixes__
 - Fixes unit multiplier ignored for EV charging using `Vehicles`.
 - Fixes handling of battery losses in the battery resilience output.
 
+## OpenStudio-HPXML v1.11.1
+
+__Bugfixes__
+- Fixes heat pump heating performance sensitivity to indoor temperatures.
+
 ## OpenStudio-HPXML v1.11.0
 
 __New Features__
