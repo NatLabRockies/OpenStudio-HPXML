@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>c167ca68-0d61-473e-8f59-79c624038b75</version_id>
-  <version_modified>2026-02-27T21:56:20Z</version_modified>
+  <version_id>82d6bb3c-559d-4b5a-b289-277db82d96dd</version_id>
+  <version_modified>2026-02-27T22:01:10Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -355,7 +355,7 @@
       <filename>data/unavailable_periods.csv</filename>
       <filetype>csv</filetype>
       <usage_type>resource</usage_type>
-      <checksum>2DE72980</checksum>
+      <checksum>9D353655</checksum>
     </file>
     <file>
       <filename>data/zipcode_weather_stations.csv</filename>

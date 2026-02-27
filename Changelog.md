@@ -18,7 +18,7 @@ __Bugfixes__
 - Fixes handling of battery losses in the battery resilience output.
 - Fixes handling of zero occupants (i.e., unoccupied dwelling unit):
   - Fixes lighting and plug/fuel load energy use to not be zeroed out when a kWh/year or therm/year value is provided.
-  - Fixes pool/spa energy use to be zeroed out when a kWh/year or therm/year value is not provided.
+  - Fixes pool/spa energy use to be zeroed out when a kWh/year or therm/year value is not provided, or when there is a "Vacancy" unavailable period.
 
 ## OpenStudio-HPXML v1.11.1
 
