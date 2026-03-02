@@ -461,17 +461,10 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[Zones]</sch:title>
-    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Zones'>
-      <sch:assert role='ERROR' test='count(h:Zone) &gt;= 1'>Expected 1 or more element(s) for xpath: Zone</sch:assert>
-    </sch:rule>
-  </sch:pattern>
-
-  <sch:pattern>
     <sch:title>[Zone]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Zones/h:Zone'>
       <sch:assert role='ERROR' test='count(h:ZoneType) = 1'>Expected 1 element(s) for xpath: ZoneType</sch:assert>
-      <sch:assert role='ERROR' test='count(h:Spaces/h:Space) &gt;= 1'>Expected 1 or more element(s) for xpath: Spaces/Space</sch:assert>
+      <sch:assert role='ERROR' test='count(h:Spaces) = 1'>Expected 1 element(s) for xpath: Spaces</sch:assert>
     </sch:rule>
   </sch:pattern>
 
