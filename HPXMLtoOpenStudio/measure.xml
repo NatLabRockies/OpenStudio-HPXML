@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>5246e1af-2d7a-4f65-a3b7-d8c796b4e1ff</version_id>
-  <version_modified>2026-03-05T18:26:05Z</version_modified>
+  <version_id>8f99eaa6-71b7-4b22-8621-02e632769a32</version_id>
+  <version_modified>2026-03-05T18:36:44Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -734,48 +734,6 @@
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
       <checksum>93120E27</checksum>
-    </file>
-    <file>
-      <filename>in.epw</filename>
-      <filetype>epw</filetype>
-      <usage_type>test</usage_type>
-      <checksum>69C20D75</checksum>
-    </file>
-    <file>
-      <filename>in.osm</filename>
-      <filetype>osm</filetype>
-      <usage_type>test</usage_type>
-      <checksum>D3126765</checksum>
-    </file>
-    <file>
-      <filename>in.schedules2.csv</filename>
-      <filetype>csv</filetype>
-      <usage_type>test</usage_type>
-      <checksum>695A8A2F</checksum>
-    </file>
-    <file>
-      <filename>in.schedules3.csv</filename>
-      <filetype>csv</filetype>
-      <usage_type>test</usage_type>
-      <checksum>F5C1844E</checksum>
-    </file>
-    <file>
-      <filename>in.schedules4.csv</filename>
-      <filetype>csv</filetype>
-      <usage_type>test</usage_type>
-      <checksum>52C0B611</checksum>
-    </file>
-    <file>
-      <filename>in.schedules5.csv</filename>
-      <filetype>csv</filetype>
-      <usage_type>test</usage_type>
-      <checksum>6412298C</checksum>
-    </file>
-    <file>
-      <filename>in.schedules6.csv</filename>
-      <filetype>csv</filetype>
-      <usage_type>test</usage_type>
-      <checksum>F2EFC494</checksum>
     </file>
     <file>
       <filename>test_airflow.rb</filename>

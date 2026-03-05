@@ -98,7 +98,7 @@ The soil and moisture type.
 
 - **Required:** ``false``
 
-- **Choices:** <br/>  - `Unknown`<br/>  - `Clay, Dry`<br/>  - `Clay, Mixed`<br/>  - `Clay, Wet`<br/>  - `Gravel, Dry`<br/>  - `Gravel, Mixed`<br/>  - `Gravel, Wet`<br/>  - `Loam, Dry`<br/>  - `Loam, Mixed`<br/>  - `Loam, Wet`<br/>  - `Sand, Dry`<br/>  - `Sand, Mixed`<br/>  - `Sand, Wet`<br/>  - `Silt, Dry`<br/>  - `Silt, Mixed`<br/>  - `Silt, Wet`<br/>  - `0.5 Btu/hr-ft-F`<br/>  - `0.8 Btu/hr-ft-F`<br/>  - `1.1 Btu/hr-ft-F`<br/>  - `1.4 Btu/hr-ft-F`<br/>  - `1.7 Btu/hr-ft-F`<br/>  - `2.0 Btu/hr-ft-F`<br/>  - `2.3 Btu/hr-ft-F`<br/>  - `2.6 Btu/hr-ft-F`<br/>  - `Detailed Example: Sand, Dry, 0.03 Diffusivity`
+- **Choices:** <br/>  - `Unknown`<br/>  - `Unknown, Dry`<br/>  - `Unknown, Mixed`<br/>  - `Unknown, Wet`<br/>  - `Clay, Dry`<br/>  - `Clay, Mixed`<br/>  - `Clay, Wet`<br/>  - `Gravel, Dry`<br/>  - `Gravel, Mixed`<br/>  - `Gravel, Wet`<br/>  - `Loam, Dry`<br/>  - `Loam, Mixed`<br/>  - `Loam, Wet`<br/>  - `Sand, Dry`<br/>  - `Sand, Mixed`<br/>  - `Sand, Wet`<br/>  - `Silt, Dry`<br/>  - `Silt, Mixed`<br/>  - `Silt, Wet`<br/>  - `Other, Dry`<br/>  - `Other, Mixed`<br/>  - `Other, Wet`<br/>  - `0.5 Btu/hr-ft-F`<br/>  - `0.8 Btu/hr-ft-F`<br/>  - `1.1 Btu/hr-ft-F`<br/>  - `1.4 Btu/hr-ft-F`<br/>  - `1.7 Btu/hr-ft-F`<br/>  - `2.0 Btu/hr-ft-F`<br/>  - `2.3 Btu/hr-ft-F`<br/>  - `2.6 Btu/hr-ft-F`<br/>  - `Detailed Example: Sand, Dry, 0.03 Diffusivity`
 
 
 - **Default:** `Unknown`
