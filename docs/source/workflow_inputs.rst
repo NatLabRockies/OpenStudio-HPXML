@@ -472,51 +472,71 @@ Site information is entered in ``/HPXML/Building/BuildingDetails/BuildingSummary
   .. [#] SiteType choices are "rural", "suburban", or "urban".
   .. [#] ShieldingofHome choices are "normal", "exposed", or "well-shielded".
   .. [#] If ShieldingofHome not provided, defaults to "normal" for single-family detached or manufactured home and "well-shielded" for single-family attached or apartment unit.
-  .. [#] SoilType choices are "sand", "silt", "clay", "loam", "gravel", or "unknown".
+  .. [#] SoilType choices are "sand", "silt", "clay", "loam", "gravel", "other", or "unknown".
   .. [#] MoistureType choices are "dry", "wet", or "mixed".
   .. [#] If Conductivity not provided, defaults to Diffusivity / 0.0208 if Diffusivity provided, otherwise defaults based on SoilType and MoistureType per Table 1 of `Ground Thermal Diffusivity Calculation by Direct Soil Temperature Measurement <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4813881>`_ unless otherwise noted:
 
-         \- **unknown, dry/wet/mixed**: 1.0000 (based on ANSI/RESNET/ICC 301-2022 Addendum C)
+         \- **unknown/other, dry**: 0.3680
 
-         \- **sand/gravel, dry**: 0.2311
+         \- **unknown/other, mixed**: 1.0000 (based on ANSI/RESNET/ICC 301-2022 Addendum C)
 
-         \- **sand, wet**: 1.3865
+         \- **unknown/other, wet**: 1.6320
+
+         \- **sand, dry**: 0.2311
 
          \- **sand, mixed**: 0.8088
 
-         \- **silt/clay, dry**: 0.2889
+         \- **sand, wet**: 1.3865
 
-         \- **silt/clay, wet**: 0.9821
+         \- **silt/clay, dry**: 0.2889
 
          \- **silt/clay, mixed**: 0.6355
 
-         \- **loam, dry/wet/mixed**: 1.2132
+         \- **silt/clay, wet**: 0.9821
 
-         \- **gravel, wet**: 1.0399
+         \- **loam, dry**: 0.4465
+
+         \- **loam, mixed**: 1.2132
+
+         \- **loam, wet**: 1.9799
+
+         \- **gravel, dry**: 0.2311
 
          \- **gravel, mixed**: 0.6355
 
+         \- **gravel, wet**: 1.0399
+
   .. [#] If Diffusivity not provided, defaults to Conductivity * 0.0208 if Conductivity provided, otherwise defaults based on SoilType and MoistureType per Table 1 of `Ground Thermal Diffusivity Calculation by Direct Soil Temperature Measurement <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4813881>`_:
 
-         \- **unknown, dry/wet/mixed**: 0.0208
+         \- **unknown/other, dry**: 0.0120
 
-         \- **sand/gravel, dry**: 0.0097
+         \- **unknown/other, mixed**: 0.0208
 
-         \- **sand, wet**: 0.0322
+         \- **unknown/other, wet**: 0.0296
+
+         \- **sand, dry**: 0.0097
 
          \- **sand, mixed**: 0.0210
 
-         \- **silt/clay, dry**: 0.0120
+         \- **sand, wet**: 0.0322
 
-         \- **silt/clay, wet**: 0.0194
+         \- **silt/clay, dry**: 0.0120
 
          \- **silt/clay, mixed**: 0.0157
 
-         \- **loam, dry/wet/mixed**: 0.0353
+         \- **silt/clay, wet**: 0.0194
 
-         \- **gravel, wet**: 0.0291
+         \- **loam, dry**: 0.0203
+
+         \- **loam, mixed**: 0.0353
+
+         \- **loam, wet**: 0.0502
+
+         \- **gravel, dry**: 0.0097
 
          \- **gravel, mixed**: 0.0194
+
+         \- **gravel, wet**: 0.0291
 
 .. note::
 
