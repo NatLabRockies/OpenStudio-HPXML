@@ -1566,7 +1566,7 @@ module Outputs
       model.getModelObjects.sort.each do |object|
         next if object.to_AdditionalProperties.is_initialized
 
-        vars_by_key = get_object_outputs_by_key(model, object, EUT)
+        vars_by_key = get_object_outputs_by_key(object, EUT)
         vars_by_key.each do |key, output_vars|
           ft, eut = key
 
