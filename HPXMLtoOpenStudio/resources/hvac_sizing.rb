@@ -223,7 +223,8 @@ module HVACSizing
     # Other
     if (not hpxml_bldg.site.soil_type.nil?) && (not hpxml_bldg.site.moisture_type.nil?)
       if ([HPXML::SiteSoilTypeClay,
-           HPXML::SiteSoilTypeUnknown].include?(hpxml_bldg.site.soil_type) &&
+           HPXML::SiteSoilTypeUnknown,
+           HPXML::SiteSoilTypeOther].include?(hpxml_bldg.site.soil_type) &&
           [HPXML::SiteSoilMoistureTypeWet,
            HPXML::SiteSoilMoistureTypeMixed].include?(hpxml_bldg.site.moisture_type))
         # Heavy moist soil, R-value/ft=1.25 (Manual J default for Table 4A)
@@ -3657,6 +3658,13 @@ module HVACSizing
       min_compressor_temp = hvac_heating.backup_heating_switchover_temp
     elsif not hvac_heating.compressor_lockout_temp.nil?
       min_compressor_temp = hvac_heating.compressor_lockout_temp
+    end
+
+    # If switchover temperature is high (e.g., 40F for a dual-fuel heat pump), instead use
+    # 25F (proposed for ANSI 301) to allow some extra capacity should the homeowner want to
+    # use a lower switchover temperature later (say, based on changes to local utility rates).
+    if not min_compressor_temp.nil?
+      min_compressor_temp = [min_compressor_temp, 25.0].min
     end
 
     if (not min_compressor_temp.nil?) && (min_compressor_temp > hpxml_bldg.header.manualj_heating_design_temp)

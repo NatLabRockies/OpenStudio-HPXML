@@ -222,31 +222,25 @@ module Model
     return oe
   end
 
-  # Adds a Lights or ExteriorLights object to the OpenStudio model.
+  # Adds a Lights object to the OpenStudio model.
   #
-  # The Lights/ExteriorLights objects model electric lighting in a zone or outside.
+  # The Lights object models electric lighting in a zone.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param name [String] Name for the OpenStudio object
   # @param end_use [String] Name of the end use subcategory for output processing
-  # @param space [OpenStudio::Model::Space] The space the object is added to, or nil if exterior lighting
+  # @param space [OpenStudio::Model::Space] The space the object is added to
   # @param design_level [Double] Maximum electrical power input (W)
   # @param schedule [OpenStudio::Model::Schedule] Schedule fraction (or multiplier) that applies to the design level
-  # @return [OpenStudio::Model::Lights or OpenStudio::Model::ExteriorLights] The model object
+  # @return [OpenStudio::Model::Lights] The model object
   def self.add_lights(model, name:, end_use:, space:, design_level:, schedule:)
-    if space.nil?
-      ltg_def = OpenStudio::Model::ExteriorLightsDefinition.new(model)
-      ltg = OpenStudio::Model::ExteriorLights.new(ltg_def)
-      ltg_def.setDesignLevel(design_level)
-    else
-      ltg_def = OpenStudio::Model::LightsDefinition.new(model)
-      ltg = OpenStudio::Model::Lights.new(ltg_def)
-      ltg.setSpace(space)
-      ltg_def.setLightingLevel(design_level)
-      ltg_def.setFractionRadiant(0.6)
-      ltg_def.setFractionVisible(0.2)
-      ltg_def.setReturnAirFraction(0.0)
-    end
+    ltg_def = OpenStudio::Model::LightsDefinition.new(model)
+    ltg = OpenStudio::Model::Lights.new(ltg_def)
+    ltg.setSpace(space)
+    ltg_def.setLightingLevel(design_level)
+    ltg_def.setFractionRadiant(0.6)
+    ltg_def.setFractionVisible(0.2)
+    ltg_def.setReturnAirFraction(0.0)
     ltg.setName(name)
     ltg.setEndUseSubcategory(end_use)
     ltg.setSchedule(schedule)
@@ -1208,6 +1202,32 @@ module Model
     return new_name
   end
 
+  # Key/variable groups for custom meters don't get updated automatically.
+  # Keys that aren't nil or EMS get updated.
+  # Variables that are ":Zone:XXX" meters get the XXX zone names updated (e.g.,
+  # cooking range:InteriorEquipment:Electricity:Zone:CONDITIONED SPACE to
+  # cooking range:InteriorEquipment:Electricity:Zone:unit1_CONDITIONED_SPACE).
+  # Additionally, variables with the EMS key get updated.
+  #
+  # @param key_var_group
+  # @param unit_number [Integer] index number corresponding to an HPXML Building object
+  # @return [String, String] The key and variable updated with prefixes and friendly strings.
+  def self.update_key_variable_group(key_var_group, unit_number)
+    key, var = key_var_group
+    if (not key.empty?) && (key != 'EMS')
+      key = make_variable_name(key, unit_number)
+    end
+    if var.include?(':Zone:')
+      var = var.split(':')
+      prefix = var[0..-2].join(':')
+      zone_name = make_variable_name(var[-1], unit_number)
+      var = "#{prefix}:#{zone_name}"
+    elsif key == 'EMS'
+      var = make_variable_name(var, unit_number)
+    end
+    return key, var
+  end
+
   # Prefix all object names using using a provided unit number.
   #
   # @param unit_model [OpenStudio::Model::Model] OpenStudio Model object (corresponding to one of multiple dwelling units)
@@ -1215,6 +1235,22 @@ module Model
   # @return [nil]
   def self.prefix_object_names(unit_model, unit_number)
     # FUTURE: Create objects with unique names up front so we don't have to do this
+
+    # Custom meter objects
+    (unit_model.getMeterCustoms + unit_model.getMeterCustomDecrements).each do |meter|
+      if meter.is_a? OpenStudio::Model::MeterCustomDecrement
+        source_meter_name = meter.sourceMeterName
+        source_meter_name = make_variable_name(source_meter_name, unit_number)
+        meter.setSourceMeterName(source_meter_name)
+      end
+
+      key_var_groups = meter.keyVarGroups
+      meter.removeAllKeyVarGroups
+      key_var_groups.each do |key_var_group|
+        key, var = update_key_variable_group(key_var_group, unit_number)
+        meter.addKeyVarGroup(key, var)
+      end
+    end
 
     # EMS objects
     ems_map = {}
@@ -1249,7 +1285,7 @@ module Model
       ems_map[subroutine.name.to_s] = make_variable_name(subroutine.name, unit_number)
     end
 
-    # variables in program lines don't get updated automatically
+    # Variables in program lines don't get updated automatically
     lhs_characters = [' ', ',', '(', ')', '+', '-', '*', '/', ';']
     rhs_characters = [''] + lhs_characters
     (unit_model.getEnergyManagementSystemPrograms + unit_model.getEnergyManagementSystemSubroutines).each do |program|
