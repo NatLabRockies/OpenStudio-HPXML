@@ -156,7 +156,7 @@ module Battery
         else
           elcd.setStorageOperationScheme('TrackMeterDemandStoreExcessOnSite')
           unit_num = hpxml.buildings.index(hpxml_bldg) + 1
-          meter_name = "unit#{unit_num}_Electricity_DwellingUnit"
+          meter_name = "unit#{unit_num}_Electricity_Critical"
           elcd.setStorageControlTrackMeterName(meter_name)
         end
       else

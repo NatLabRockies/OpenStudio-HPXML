@@ -429,10 +429,10 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           resilience_frequency = EPlus::TimeseriesFrequencyHourly
         end
         if hpxml_bldgs_size == 1
-          Model.add_output_meter(model, meter_name: Outputs::MeterCustomElectricityCritical, reporting_frequency: resilience_frequency)
+          Model.add_output_meter(model, meter_name: Outputs::MeterCustomElectricityNetCritical, reporting_frequency: resilience_frequency)
         else
           (1..hpxml_bldgs_size).each do |unit_num|
-            Model.add_output_meter(model, meter_name: unit_meter_name(Outputs::MeterCustomElectricityCritical, unit_num), reporting_frequency: resilience_frequency)
+            Model.add_output_meter(model, meter_name: unit_meter_name(Outputs::MeterCustomElectricityNetCritical, unit_num), reporting_frequency: resilience_frequency)
           end
         end
         @resilience.values.each do |resilience|
@@ -1134,10 +1134,10 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         batt_soc_kwh = batt_soc.map { |soc| soc - min_soc }.map { |soc| soc * batt_kwh }
 
         if @hpxml_bldgs.size == 1
-          crit_load = get_report_meter_data_timeseries([Outputs::MeterCustomElectricityCritical.upcase], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
+          crit_load = get_report_meter_data_timeseries([Outputs::MeterCustomElectricityNetCritical.upcase], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
         else
           unit_num = @hpxml_bldgs.index(hpxml_bldg) + 1
-          crit_load = get_report_meter_data_timeseries(["unit#{unit_num}_#{Outputs::MeterCustomElectricityCritical.gsub(':', '_')}".upcase], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
+          crit_load = get_report_meter_data_timeseries(["unit#{unit_num}_#{Outputs::MeterCustomElectricityNetCritical.gsub(':', '_')}".upcase], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
         end
 
         resilience_timeseries = []
