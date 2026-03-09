@@ -1137,7 +1137,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           crit_load = get_report_meter_data_timeseries([Outputs::MeterCustomElectricityNetCritical.upcase], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
         else
           unit_num = @hpxml_bldgs.index(hpxml_bldg) + 1
-          crit_load = get_report_meter_data_timeseries(["unit#{unit_num}_#{Outputs::MeterCustomElectricityNetCritical.gsub(':', '_')}".upcase], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
+          crit_load = get_report_meter_data_timeseries([unit_meter_name(Outputs::MeterCustomElectricityNetCritical, unit_num).upcase], UnitConversions.convert(1.0, 'J', 'kWh'), 0, resilience_frequency)
         end
 
         resilience_timeseries = []
