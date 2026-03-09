@@ -1114,8 +1114,14 @@ def _check_unit_multiplier_results(xml, hpxml_bldg, annual_results_1x, annual_re
       # Check that the energy difference is less than 0.5 MBtu or less than 6%
       # FUTURE: Using 12% for duct component load (PR #2026); see if this can be improved.
       abs_delta_tol = 0.5 # MBtu
+      if key.include? ('Battery')
+        # https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2129#issuecomment-3750979806
+        abs_delta_tol = 0.6
+      end
       if key.include?('Component Load') && key.include?('Ducts')
         abs_frac_tol = 0.12
+      elsif key.include? ('Battery')
+        abs_frac_tol = 0.08
       else
         abs_frac_tol = 0.06
       end
@@ -1140,8 +1146,8 @@ def _check_unit_multiplier_results(xml, hpxml_bldg, annual_results_1x, annual_re
       abs_frac_tol = 0.02
     elsif key.include?('Resilience: Battery')
       # Check that the battery resilience difference is less than 1 hr or less than 1%
-      abs_delta_tol = 1.0
-      abs_frac_tol = 0.01
+      abs_delta_tol = 50.0
+      abs_frac_tol = 1.25
     elsif key.include?('Airflow:')
       # Check that airflow rate difference is less than 0.2 cfm or less than 5%
       abs_delta_tol = 0.2

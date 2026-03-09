@@ -409,9 +409,9 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       next unless hpxml_bldgs_size > 1
 
       (1..hpxml_bldgs_size).each do |unit_num|
-        Model.add_output_meter(model, meter_name: "unit#{unit_num}_#{fuel.meter.gsub(':', '_')}", reporting_frequency: 'runperiod')
+        Model.add_output_meter(model, meter_name: unit_meter_name(fuel.meter, unit_num), reporting_frequency: 'runperiod')
         if args[:include_timeseries_fuel_consumptions] && args[:include_timeseries_dwelling_unit_outputs]
-          Model.add_output_meter(model, meter_name: "unit#{unit_num}_#{fuel.meter.gsub(':', '_')}", reporting_frequency: args[:timeseries_frequency])
+          Model.add_output_meter(model, meter_name: unit_meter_name(fuel.meter, unit_num), reporting_frequency: args[:timeseries_frequency])
         end
       end
     end
@@ -432,7 +432,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           Model.add_output_meter(model, meter_name: Outputs::MeterCustomElectricityCritical, reporting_frequency: resilience_frequency)
         else
           (1..hpxml_bldgs_size).each do |unit_num|
-            Model.add_output_meter(model, meter_name: "unit#{unit_num}_#{Outputs::MeterCustomElectricityCritical.gsub(':', '_')}", reporting_frequency: resilience_frequency)
+            Model.add_output_meter(model, meter_name: unit_meter_name(Outputs::MeterCustomElectricityCritical, unit_num), reporting_frequency: resilience_frequency)
           end
         end
         @resilience.values.each do |resilience|
@@ -825,10 +825,10 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
       @hpxml_bldgs.each do |hpxml_bldg|
         unit_num = @hpxml_bldgs.index(hpxml_bldg) + 1
-        fuel_meter = fuel.meter.nil? ? nil : fuel.meter.gsub(':', '_')
-        fuel.annual_output_by_unit[hpxml_bldg.building_id] = get_report_meter_data_annual(["unit#{unit_num}_#{fuel_meter}".upcase])
+        fuel_meter = fuel.meter.nil? ? '' : unit_meter_name(fuel.meter, unit_num)
+        fuel.annual_output_by_unit[hpxml_bldg.building_id] = get_report_meter_data_annual([fuel_meter.upcase])
         if args[:include_timeseries_fuel_consumptions] && args[:include_timeseries_dwelling_unit_outputs]
-          fuel.timeseries_output_by_unit[hpxml_bldg.building_id] = get_report_meter_data_timeseries(["unit#{unit_num}_#{fuel_meter}".upcase], UnitConversions.convert(1.0, 'J', fuel.timeseries_units), 0, args[:timeseries_frequency])
+          fuel.timeseries_output_by_unit[hpxml_bldg.building_id] = get_report_meter_data_timeseries([fuel_meter.upcase], UnitConversions.convert(1.0, 'J', fuel.timeseries_units), 0, args[:timeseries_frequency])
         end
       end
     end
@@ -3050,6 +3050,18 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       end
     end
     return system_ids
+  end
+
+  # Return the unit-level meter name based on the building-level meter name.
+  #
+  # @param meter_name [String] Building-level EnergyPlus meter name
+  # @param unit_num [Integer] Dwelling unit number
+  # @return [String] Unit-level EnergyPlus meter name
+  def unit_meter_name(meter_name, unit_num)
+    meter_name = meter_name.gsub('Facility', 'DwellingUnit')
+    meter_name = meter_name.gsub(':', '_')
+    meter_name = "unit#{unit_num}_#{meter_name}"
+    return meter_name
   end
 end
 

@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>c0ea9651-819e-4e30-a5b3-d5c30d03381c</version_id>
-  <version_modified>2026-03-06T21:09:23Z</version_modified>
+  <version_id>5a204122-ba89-42fb-98bb-a09d6e9cb787</version_id>
+  <version_modified>2026-03-09T16:43:03Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -223,7 +223,7 @@
       <filename>battery.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>AD9ACED2</checksum>
+      <checksum>B6B42A17</checksum>
     </file>
     <file>
       <filename>calendar.rb</filename>
@@ -499,7 +499,7 @@
       <filename>output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>5BF3B78E</checksum>
+      <checksum>18A0CE1C</checksum>
     </file>
     <file>
       <filename>psychrometrics.rb</filename>
@@ -745,7 +745,7 @@
       <filename>test_battery.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>11254D6D</checksum>
+      <checksum>BD69BEA3</checksum>
     </file>
     <file>
       <filename>test_defaults.rb</filename>
@@ -835,7 +835,7 @@
       <filename>test_vehicle.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>39B48E52</checksum>
+      <checksum>2EB7C07E</checksum>
     </file>
     <file>
       <filename>test_water_heater.rb</filename>

@@ -151,18 +151,14 @@ module Battery
       elcd = elcds.find { |elcd| elcd.name.to_s.include?('PVSystem') }
       if elcd
         elcd.setElectricalBussType('DirectCurrentWithInverterACStorage')
-        # Use TrackMeterDemandStoreExcessOnSite for single unit simulations.
-        # Even when custom Electricity_Facility mirrors Electricity:Facility
-        # exactly, TrackMeterDemandStoreExcessOnSite produces different results
-        # than TrackFacilityElectricDemandStoreExcessOnSite.
-        elcd.setStorageOperationScheme('TrackMeterDemandStoreExcessOnSite')
         if hpxml.buildings.size == 1
-          meter_name = 'Electricity_Facility'
+          elcd.setStorageOperationScheme('TrackFacilityElectricDemandStoreExcessOnSite')
         else
+          elcd.setStorageOperationScheme('TrackMeterDemandStoreExcessOnSite')
           unit_num = hpxml.buildings.index(hpxml_bldg) + 1
-          meter_name = "unit#{unit_num}_Electricity_Facility"
+          meter_name = "unit#{unit_num}_Electricity_DwellingUnit"
+          elcd.setStorageControlTrackMeterName(meter_name)
         end
-        elcd.setStorageControlTrackMeterName(meter_name)
       else
         elcd = OpenStudio::Model::ElectricLoadCenterDistribution.new(model)
         elcd.setName("#{obj_name} elec load center dist")

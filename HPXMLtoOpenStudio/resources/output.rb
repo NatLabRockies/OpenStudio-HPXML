@@ -1524,12 +1524,17 @@ module Outputs
           key_var_pairs: key_vars
         )
       else
+        if custom_unit_meter.nil?
+          source_meter_name = 'Electricity:Facility'
+        else
+          source_meter_name = 'Electricity:DwellingUnit'
+        end
         Model.add_meter_custom_decrement(
           model,
           name: meter_name,
           fuel_type: EPlus::FuelTypeElectricity,
           key_var_pairs: key_vars,
-          source_meter_name: 'Electricity:Facility'
+          source_meter_name: source_meter_name
         )
       end
     end
@@ -1551,7 +1556,7 @@ module Outputs
   # @param hpxml [HPXML] HPXML object
   # @return [nil]
   def self.create_custom_unit_meters(model, hpxml)
-    return if (not hpxml.buildings.size > 1) && (not hpxml.buildings.map { |hpxml_bldg| hpxml_bldg.batteries.size }.sum > 0)
+    return if hpxml.buildings.size == 1
 
     to_eplus = { FT::Elec => EPlus::FuelTypeElectricity,
                  FT::Gas => EPlus::FuelTypeNaturalGas,
@@ -1595,7 +1600,7 @@ module Outputs
 
       custom_unit_meter = Model.add_meter_custom(
         model,
-        name: "#{fuel_type}_Facility",
+        name: "#{fuel_type}:DwellingUnit",
         fuel_type: fuel_type,
         key_var_pairs: key_vars
       )
@@ -1603,7 +1608,7 @@ module Outputs
       # We're in the fuel types loop so that we can pass in custom_unit_meter from above.
       # But we don't want to call create_custom_electricity_meters multiple times.
       # We only need the electricity Total, Net, PV, Critical meters by unit when there are multiple units.
-      if (fuel_type == EPlus::FuelTypeElectricity) && (hpxml.buildings.size > 1)
+      if fuel_type == EPlus::FuelTypeElectricity
         create_custom_electricity_meters(model, custom_unit_meter)
       end
     end
