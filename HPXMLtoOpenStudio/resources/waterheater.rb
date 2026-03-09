@@ -1996,7 +1996,7 @@ module Waterheater
     else
       fuel = water_heating_system.fuel_type
       tank_type = water_heating_system.water_heater_type
-      cap = water_heating_system.heating_capacity / 1000.0
+      cap = water_heating_system.heating_capacity
       tank_model_type = water_heating_system.tank_model_type
     end
 
@@ -2014,10 +2014,10 @@ module Waterheater
       water_heater.setTankHeight(h_tank)
       water_heater.setMaximumTemperatureLimit(90)
       water_heater.setHeaterPriorityControl('MasterSlave')
-      water_heater.setHeater1Capacity(UnitConversions.convert(cap, 'kBtu/hr', 'W'))
+      water_heater.setHeater1Capacity(UnitConversions.convert(cap, 'Btu/hr', 'W'))
       water_heater.setHeater1Height((1.0 - (4 - 0.5) / 15) * h_tank) # in the 4th node of a 15-node tank (counting from top); height of upper element based on TRNSYS assumptions for an ERWH
       water_heater.setHeater1DeadbandTemperatureDifference(5.556)
-      water_heater.setHeater2Capacity(UnitConversions.convert(cap, 'kBtu/hr', 'W'))
+      water_heater.setHeater2Capacity(UnitConversions.convert(cap, 'Btu/hr', 'W'))
       water_heater.setHeater2Height((1.0 - (13 - 0.5) / 15) * h_tank) # in the 13th node of a 15-node tank (counting from top); height of upper element based on TRNSYS assumptions for an ERWH
       water_heater.setHeater2DeadbandTemperatureDifference(5.556)
       water_heater.setHeaterThermalEfficiency(1.0)
@@ -2044,7 +2044,7 @@ module Waterheater
       water_heater.setDeadbandTemperatureDifference(get_deadband(tank_type))
 
       # Capacity, storage tank to be 0
-      water_heater.setHeaterMaximumCapacity(UnitConversions.convert(cap, 'kBtu/hr', 'W'))
+      water_heater.setHeaterMaximumCapacity(UnitConversions.convert(cap, 'Btu/hr', 'W'))
       water_heater.setHeaterMinimumCapacity(0.0)
 
       # Set fraction of heat loss from tank to ambient (vs out flue)

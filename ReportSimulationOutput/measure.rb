@@ -1737,7 +1737,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     # Peak loads
     if args[:include_annual_peak_loads]
       @peak_loads.each do |_load_type, peak_load|
-        results_out << ["#{peak_load.name} (#{peak_load.annual_units})", peak_load.annual_output.to_f.round(n_digits)]
+        results_out << ["#{peak_load.name} (#{peak_load.annual_units})", peak_load.annual_output.to_f.round]
       end
       results_out << [line_break]
     end
@@ -2954,7 +2954,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     @peak_loads.each do |load_type, peak_load|
       peak_load.name = "Peak Load: #{load_type}"
-      peak_load.annual_units = 'kBtu/hr'
+      peak_load.annual_units = 'Btu/hr'
     end
 
     # Zone Temperatures
