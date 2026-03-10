@@ -408,7 +408,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
       next unless hpxml_bldgs_size > 1
 
-      (0...hpxml_bldgs_size).each do |unit_num|
+      for unit_num in 0..(hpxml_bldgs_size - 1)
         Model.add_output_meter(model, meter_name: Model.make_unit_meter_name(fuel.meter, unit_num, hpxml_bldgs_size), reporting_frequency: 'runperiod')
         if args[:include_timeseries_fuel_consumptions] && args[:include_timeseries_dwelling_unit_outputs]
           Model.add_output_meter(model, meter_name: Model.make_unit_meter_name(fuel.meter, unit_num, hpxml_bldgs_size), reporting_frequency: args[:timeseries_frequency])
@@ -428,7 +428,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         if args[:timeseries_frequency] != EPlus::TimeseriesFrequencyTimestep
           resilience_frequency = EPlus::TimeseriesFrequencyHourly
         end
-        (0...hpxml_bldgs_size).each do |unit_num|
+        for unit_num in 0..(hpxml_bldgs_size - 1)
           Model.add_output_meter(model, meter_name: Model.make_unit_meter_name(Outputs::MeterCustomElectricityNetCritical, unit_num, hpxml_bldgs_size), reporting_frequency: resilience_frequency)
         end
 
@@ -1135,7 +1135,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
         resilience_timeseries = []
         n_timesteps = crit_load.size
-        (0...n_timesteps).each do |init_time_step|
+        for init_time_step in 0..(n_timesteps - 1)
           resilience_timeseries << get_resilience_timestep_value(init_time_step, batt_kwh, batt_kw, batt_soc_kwh[init_time_step], crit_load, batt_roundtrip_eff, n_timesteps, ts_per_hr)
         end
 
@@ -2167,7 +2167,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
   # @param ts_per_hr [Integer] Number of timesteps per hour
   # @return [Double] Resilience value for the timestep.
   def get_resilience_timestep_value(init_time_step, batt_kwh, batt_kw, batt_soc_kwh, crit_load, batt_roundtrip_eff, n_timesteps, ts_per_hr)
-    for i in 0...n_timesteps
+    for i in 0..(n_timesteps - 1)
       t = (init_time_step + i) % n_timesteps # for wrapping around end of year
       load_kw = crit_load[t]
 
