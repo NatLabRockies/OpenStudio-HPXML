@@ -1206,6 +1206,7 @@ module Model
   #
   # @param obj_name [String] building-level EnergyPlus meter name
   # @param unit_number [Integer] index number corresponding to an HPXML Building object
+  # @param hpxml_bldgs_size [Integer] number of dwelling units in the HPXML file
   # @return [String] unit-level EnergyPlus meter name
   def self.make_unit_meter_name(obj_name, unit_number, hpxml_bldgs_size)
     return obj_name if hpxml_bldgs_size == 1
