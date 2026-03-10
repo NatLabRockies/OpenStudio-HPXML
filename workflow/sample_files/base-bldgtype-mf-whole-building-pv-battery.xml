@@ -820,7 +820,7 @@
             <SystemIdentifier id='PVSystem1_2'/>
             <ArrayAzimuth>270</ArrayAzimuth>
             <ArrayTilt>10.0</ArrayTilt>
-            <MaxPowerOutput>10000.0</MaxPowerOutput>
+            <MaxPowerOutput>4000.0</MaxPowerOutput>
           </PVSystem>
         </Photovoltaics>
         <Batteries>
@@ -1186,7 +1186,7 @@
             <SystemIdentifier id='PVSystem1_3'/>
             <ArrayAzimuth>270</ArrayAzimuth>
             <ArrayTilt>10.0</ArrayTilt>
-            <MaxPowerOutput>10000.0</MaxPowerOutput>
+            <MaxPowerOutput>4000.0</MaxPowerOutput>
           </PVSystem>
         </Photovoltaics>
         <Batteries>
@@ -1552,7 +1552,7 @@
             <SystemIdentifier id='PVSystem1_4'/>
             <ArrayAzimuth>270</ArrayAzimuth>
             <ArrayTilt>10.0</ArrayTilt>
-            <MaxPowerOutput>10000.0</MaxPowerOutput>
+            <MaxPowerOutput>4000.0</MaxPowerOutput>
           </PVSystem>
         </Photovoltaics>
         <Batteries>
@@ -1967,7 +1967,7 @@
             <SystemIdentifier id='PVSystem1_5'/>
             <ArrayAzimuth>270</ArrayAzimuth>
             <ArrayTilt>10.0</ArrayTilt>
-            <MaxPowerOutput>10000.0</MaxPowerOutput>
+            <MaxPowerOutput>4000.0</MaxPowerOutput>
           </PVSystem>
         </Photovoltaics>
         <Batteries>
@@ -2382,7 +2382,7 @@
             <SystemIdentifier id='PVSystem1_6'/>
             <ArrayAzimuth>270</ArrayAzimuth>
             <ArrayTilt>10.0</ArrayTilt>
-            <MaxPowerOutput>10000.0</MaxPowerOutput>
+            <MaxPowerOutput>4000.0</MaxPowerOutput>
           </PVSystem>
         </Photovoltaics>
         <Batteries>

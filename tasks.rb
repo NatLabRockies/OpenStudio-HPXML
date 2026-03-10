@@ -2890,7 +2890,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         hpxml_bldg.pv_systems.add(id: "PVSystem#{hpxml_bldg.pv_systems.size + 1}_#{hpxml_bldg_index + 1}",
                                   array_azimuth: 270,
                                   array_tilt: 10,
-                                  max_power_output: 10000)
+                                  max_power_output: 4000)
         hpxml_bldg.batteries.add(id: "Battery#{hpxml_bldg.batteries.size + 1}_#{hpxml_bldg_index + 1}",
                                  type: HPXML::BatteryTypeLithiumIon)
       end
