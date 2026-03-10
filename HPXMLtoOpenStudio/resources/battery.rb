@@ -155,8 +155,8 @@ module Battery
           elcd.setStorageOperationScheme('TrackFacilityElectricDemandStoreExcessOnSite')
         else
           elcd.setStorageOperationScheme('TrackMeterDemandStoreExcessOnSite')
-          unit_num = hpxml.buildings.index(hpxml_bldg) + 1
-          meter_name = "unit#{unit_num}_Electricity_Critical"
+          unit_num = hpxml.buildings.index(hpxml_bldg)
+          meter_name = Model.make_unit_meter_name(Outputs::MeterCustomElectricityCritical, unit_num, hpxml.buildings.size)
           elcd.setStorageControlTrackMeterName(meter_name)
         end
       else
