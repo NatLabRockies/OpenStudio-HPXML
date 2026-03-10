@@ -9,7 +9,7 @@ __New Features__
   - **Breaking change**: Replaces "UnitX" prefixes with Building IDs in whole SFA/MF building timeseries outputs.
   - For whole SFA/MF building simulations, reports energy/fuel use by dwelling unit (i.e., "Dwelling Unit Energy Use: \*" and "Dwelling Unit Fuel Use: \*"). Timeseries outputs are also available.
 - Whole SFA/MF buildings:
-  - Allows modeling batteries.
+  - Allows modeling batteries in individual dwelling units of whole SFA/MF buildings (previously unsupported).
 - Adds a `run_simulation.rb --ems-debug` argument to generate the EnergyPlus EDD file for debugging EMS programs.
 
 __Bugfixes__
