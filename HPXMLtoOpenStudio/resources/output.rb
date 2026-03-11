@@ -6,6 +6,7 @@ module Outputs
   MeterCustomElectricityNet = 'Electricity:Net'
   MeterCustomElectricityPV = 'Electricity:PV'
   MeterCustomElectricityCritical = 'Electricity:Critical'
+  MeterCustomElectricityNetCritical = 'Electricity:NetCritical'
 
   # Add EMS programs for output reporting. In the case where a whole SFA/MF building is
   # being simulated, these programs are added to the whole building (merged) model, not
@@ -1454,7 +1455,8 @@ module Outputs
     # - Total Electricity (Electricity:Facility plus EV charging, batteries, generators)
     # - Net Electricity (above plus PV)
     # - PV Electricity
-    # - Critical Electricity (Electricity:Facility plus PV, generators)
+    # - Critical Electricity (Electricity:Facility plus generators)
+    # - Net Critical Electricity (Electricity:Facility plus PV, generators)
 
     total_key_vars = []
     net_key_vars = []
@@ -1506,7 +1508,8 @@ module Outputs
     # Create Total/Net/Critical meters
     { MeterCustomElectricityTotal => total_key_vars,
       MeterCustomElectricityNet => net_key_vars,
-      MeterCustomElectricityCritical => pv_key_vars + gen_key_vars }.each do |meter_name, key_vars|
+      MeterCustomElectricityCritical => gen_key_vars,
+      MeterCustomElectricityNetCritical => pv_key_vars + gen_key_vars }.each do |meter_name, key_vars|
       if key_vars.empty?
         # Avoid OpenStudio warnings if nothing to decrement
         if custom_unit_meter.nil?
@@ -1524,12 +1527,17 @@ module Outputs
           key_var_pairs: key_vars
         )
       else
+        if custom_unit_meter.nil?
+          source_meter_name = 'Electricity:Facility'
+        else
+          source_meter_name = 'Electricity:DwellingUnit'
+        end
         Model.add_meter_custom_decrement(
           model,
           name: meter_name,
           fuel_type: EPlus::FuelTypeElectricity,
           key_var_pairs: key_vars,
-          source_meter_name: 'Electricity:Facility'
+          source_meter_name: source_meter_name
         )
       end
     end
@@ -1595,13 +1603,14 @@ module Outputs
 
       custom_unit_meter = Model.add_meter_custom(
         model,
-        name: "#{fuel_type}:Facility",
+        name: "#{fuel_type}:DwellingUnit",
         fuel_type: fuel_type,
         key_var_pairs: key_vars
       )
 
       # We're in the fuel types loop so that we can pass in custom_unit_meter from above.
       # But we don't want to call create_custom_electricity_meters multiple times.
+      # We only need the electricity Total, Net, PV, Critical meters by unit when there are multiple units.
       if fuel_type == EPlus::FuelTypeElectricity
         create_custom_electricity_meters(model, custom_unit_meter)
       end
