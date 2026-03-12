@@ -1756,18 +1756,4 @@ module Geometry
     end
     return spaces[location]
   end
-
-  # Store the HPXML Building object unit number for use in reporting measure.
-  #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param hpxml [HPXML] HPXML object
-  # @return [nil]
-  def self.apply_building_unit(model, hpxml)
-    return if hpxml.buildings.size == 1
-
-    unit = OpenStudio::Model::BuildingUnit.new(model)
-    model.getSpaces.each do |s|
-      s.setBuildingUnit(unit)
-    end
-  end
 end
