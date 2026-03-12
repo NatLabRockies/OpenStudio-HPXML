@@ -1338,7 +1338,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
 
     assert_equal(1, model.getCoilHeatingDXMultiSpeeds.size)
     htg_coil = model.getCoilHeatingDXMultiSpeeds[0]
-    _check_defrost_and_pan_heater(model, htg_coil, 10000, 0.95, backup_fuel, 0.06667, 0.0)
+    _check_defrost_and_pan_heater(model, htg_coil, 17584, 0.95, backup_fuel, 0.06667, 0.0)
 
     # Two heat pump test
     args_hash = {}
