@@ -132,7 +132,6 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
 
       # Do these once upfront for the entire HPXML object
       weather = process_weather(runner, hpxml, args)
-      process_whole_sfa_mf_inputs(hpxml)
       hpxml_sch_map, design_loads_results_out = process_defaults_schedules_emissions_files(runner, weather, hpxml, args)
 
       # Write updated HPXML object (w/ defaults) to file for inspection
@@ -273,23 +272,6 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     return weather
   end
 
-  # Performs error-checking on the inputs for whole SFA/MF building simulations.
-  #
-  # @param hpxml [HPXML] HPXML object
-  # @return [nil]
-  def process_whole_sfa_mf_inputs(hpxml)
-    if hpxml.header.whole_sfa_or_mf_building_sim && (hpxml.buildings.size > 1)
-      if hpxml.buildings.map { |hpxml_bldg| hpxml_bldg.batteries.size }.sum > 0
-        # FUTURE: Figure out how to allow this. If we allow it, update docs and hpxml_translator_test.rb too.
-        # Batteries use "TrackFacilityElectricDemandStoreExcessOnSite"; to support modeling of batteries in whole
-        # SFA/MF building simulations, we'd need to create custom meters with electricity usage *for each unit*
-        # and switch to "TrackMeterDemandStoreExcessOnSite".
-        # https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1499
-        fail 'Modeling batteries for whole SFA/MF buildings is not currently supported.'
-      end
-    end
-  end
-
   # Processes HPXML defaults, schedules, and emissions files upfront.
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
@@ -368,7 +350,6 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     Geometry.apply_thermal_mass(model, spaces, hpxml_bldg, hpxml.header)
     Geometry.set_zone_volumes(spaces, hpxml_bldg, hpxml.header)
     Geometry.explode_surfaces(model, hpxml_bldg)
-    Geometry.apply_building_unit(model, hpxml)
 
     # HVAC
     airloop_map = HVAC.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file, hvac_days)
@@ -396,8 +377,8 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     # Other
     PV.apply(runner, model, hpxml_bldg)
     Generator.apply(model, hpxml_bldg)
-    Battery.apply(runner, model, spaces, hpxml_bldg, schedules_file)
-    Vehicle.apply(runner, model, spaces, hpxml_bldg, hpxml.header, schedules_file)
+    Battery.apply(runner, model, spaces, hpxml, hpxml_bldg, schedules_file)
+    Vehicle.apply(runner, model, spaces, hpxml, hpxml_bldg, hpxml.header, schedules_file)
 
     # Unit Meters
     Outputs.create_custom_unit_meters(model, hpxml)
