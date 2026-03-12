@@ -1216,7 +1216,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       heated_zones = eval(@model.getBuilding.additionalProperties.getFeatureAsString('heated_zones').get)
       heated_zones.each do |heated_zone|
         var_name = 'Temperature: Heating Setpoint'
-        if @hpxml_header.whole_sfa_or_mf_building_sim
+        if @hpxml_bldgs.size > 1
           building_id = @model.getThermalZones.find { |z| z.name.to_s == heated_zone }.additionalProperties.getFeatureAsString('BuildingID').get
           var_name = "Temperature: #{building_id} Heating Setpoint"
         end
@@ -1230,7 +1230,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       cooled_zones = eval(@model.getBuilding.additionalProperties.getFeatureAsString('cooled_zones').get)
       cooled_zones.each do |cooled_zone|
         var_name = 'Temperature: Cooling Setpoint'
-        if @hpxml_header.whole_sfa_or_mf_building_sim
+        if @hpxml_bldgs.size > 1
           building_id = @model.getThermalZones.find { |z| z.name.to_s == cooled_zone }.additionalProperties.getFeatureAsString('BuildingID').get
           var_name = "Temperature: #{building_id} Cooling Setpoint"
         end
