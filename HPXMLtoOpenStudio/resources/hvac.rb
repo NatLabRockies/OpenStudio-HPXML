@@ -494,14 +494,6 @@ module HVAC
       tout_db_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeOATDrybulbSensor)
 
       if is_heatpump
-        htg_coil_rtf_sensor = Model.add_ems_sensor(
-          model,
-          name: "#{htg_coil.name} rtf s",
-          output_var_or_meter_name: 'Heating Coil Runtime Fraction',
-          key_name: htg_coil.name
-        )
-        htg_coil_rtf_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeHPHeatingRTFSensor)
-
         ems_program = apply_defrost_ems_program(model, htg_coil, control_zone.spaces[0], cooling_system, hpxml_bldg.building_construction.number_of_units)
         apply_pan_heater_ems_program(model, ems_program, htg_coil, control_zone.spaces[0], cooling_system, htg_ap.hp_min_temp)
       end
@@ -4750,7 +4742,12 @@ module HVAC
     clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeCoolingAvailabilitySensor }
 
     if not htg_coil.nil?
-      htg_coil_rtf_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHPHeatingRTFSensor }
+      htg_coil_rtf_sensor = Model.add_ems_sensor(
+        model,
+        name: "#{htg_coil.name} rtf s",
+        output_var_or_meter_name: 'Heating Coil Runtime Fraction',
+        key_name: htg_coil.name
+      )
     end
 
     if (heat_pump.is_a? HPXML::CoolingSystem) || ((heat_pump.is_a? HPXML::HeatPump) && (heat_pump.fraction_cool_load_served > 0))
@@ -4820,20 +4817,10 @@ module HVAC
     program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = 0.0")
     program.addLine('EndIf')
 
-    # Model.add_ems_output_variable(
-    # model,
-    # name: "#{crankcase_heater_energy_oe_act.name}",
-    # ems_variable_name: "#{crankcase_heater_energy_oe_act.name}",
-    # type_of_data: 'Summed',
-    # update_frequency: 'SystemTimestep',
-    # ems_program_or_subroutine: program,
-    # units: 'W'
-    # )
-
     Model.add_ems_program_calling_manager(
       model,
       name: "#{program.name} calling manager",
-      calling_point: 'InsideHVACSystemIterationLoop',
+      calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [program]
     )
   end
@@ -4973,7 +4960,13 @@ module HVAC
 
     # Sensors
     tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeOATDrybulbSensor }
-    htg_coil_rtf_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHPHeatingRTFSensor }
+
+    htg_coil_rtf_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{htg_coil.name} rtf s",
+      output_var_or_meter_name: 'Heating Coil Runtime Fraction',
+      key_name: htg_coil.name
+    )
 
     htg_coil_htg_rate_sensor = Model.add_ems_sensor(
       model,
