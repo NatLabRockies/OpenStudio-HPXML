@@ -1619,31 +1619,36 @@
     "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-1-speed.xml",
     "hvac_heat_pump": "Central HP, SEER2 13.4, HSPF2 7.0",
     "hvac_heat_pump_backup": "Integrated, Natural Gas, 95% AFUE",
-    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp"
+    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp",
+    "hvac_heat_pump_backup_capacity": "60 kBtu/hr"
   },
   "sample_files/base-hvac-dual-fuel-air-to-air-heat-pump-1-speed-lockout-temperatures.xml": {
     "parent_hpxml": "sample_files/base-hvac-dual-fuel-air-to-air-heat-pump-1-speed.xml",
     "hvac_heat_pump": "Central HP, SEER2 13.4, HSPF2 7.0",
     "hvac_heat_pump_backup": "Integrated, Natural Gas, 95% AFUE",
-    "hvac_heat_pump_temperatures": "Detailed Example: 25F Min Compressor Temp, 45F Max HP Backup Temp"
+    "hvac_heat_pump_temperatures": "Detailed Example: 25F Min Compressor Temp, 45F Max HP Backup Temp",
+    "hvac_heat_pump_backup_capacity": "60 kBtu/hr"
   },
   "sample_files/base-hvac-dual-fuel-air-to-air-heat-pump-2-speed.xml": {
     "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-2-speed.xml",
     "hvac_heat_pump": "Central HP, SEER2 17.0, HSPF2 8.2",
     "hvac_heat_pump_backup": "Integrated, Natural Gas, 95% AFUE",
-    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp"
+    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp",
+    "hvac_heat_pump_backup_capacity": "60 kBtu/hr"
   },
   "sample_files/base-hvac-dual-fuel-air-to-air-heat-pump-var-speed.xml": {
     "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed.xml",
     "hvac_heat_pump": "Central HP, SEER2 21.0, HSPF2 9.2",
     "hvac_heat_pump_backup": "Integrated, Natural Gas, 95% AFUE",
-    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp"
+    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp",
+    "hvac_heat_pump_backup_capacity": "60 kBtu/hr"
   },
   "sample_files/base-hvac-dual-fuel-mini-split-heat-pump-ducted.xml": {
     "parent_hpxml": "sample_files/base-hvac-mini-split-heat-pump-ducted.xml",
     "hvac_heat_pump": "Central HP, SEER2 18.0, HSPF2 8.5",
     "hvac_heat_pump_backup": "Integrated, Natural Gas, 95% AFUE",
-    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp"
+    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp",
+    "hvac_heat_pump_backup_capacity": "60 kBtu/hr"
   },
   "sample_files/base-hvac-ducts-leakage-cfm50.xml": {
     "parent_hpxml": "sample_files/base.xml",
@@ -2437,6 +2442,17 @@
     "hvac_heating_system_capacity": "10 kBtu/hr",
     "appliance_clothes_dryer": "None"
   },
+  "sample_files/base-bldgtype-mf-whole-building-fuels.xml": {
+    "parent_hpxml": "sample_files/base-bldgtype-mf-whole-building.xml",
+    "hvac_heating_system_fuel": "Natural Gas",
+    "hvac_heating_system": "Central Furnace, 92% AFUE",
+    "hvac_cooling_system": "Central AC, SEER2 13.4",
+    "hvac_ducts": "0 CFM25 per 100ft2, Uninsulated",
+    "hvac_ducts_supply_location": "Conditioned Space",
+    "hvac_ducts_return_location": "Conditioned Space",
+    "dhw_water_heater": "Propane, Tankless, UEF 0.82",
+    "misc_fireplace": "Detailed Example: Wood, 55 therm/yr"
+  },
   "sample_files/base-bldgtype-mf-whole-building-inter-unit-heat-transfer.xml": {
     "parent_hpxml": "sample_files/base-bldgtype-mf-whole-building.xml",
     "hvac_heating_system_capacity": "25 kBtu/hr"
@@ -2449,6 +2465,9 @@
     "parent_hpxml": "sample_files/base-bldgtype-mf-whole-building.xml"
   },
   "sample_files/base-bldgtype-mf-whole-building-vehicle-ev-charger.xml": {
+    "parent_hpxml": "sample_files/base-bldgtype-mf-whole-building.xml"
+  },
+  "sample_files/base-bldgtype-mf-whole-building-pv-battery.xml": {
     "parent_hpxml": "sample_files/base-bldgtype-mf-whole-building.xml"
   },
   "sample_files/base-pv.xml": {

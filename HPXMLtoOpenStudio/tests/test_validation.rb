@@ -230,7 +230,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'invalid-number-of-conditioned-floors' => ['Expected NumberofConditionedFloors to be greater than or equal to NumberofConditionedFloorsAboveGrade [context: /HPXML/Building/BuildingDetails/BuildingSummary/BuildingConstruction, id: "MyBuilding"]'],
                             'invalid-number-of-conditioned-floors-above-grade' => ['Expected NumberofConditionedFloorsAboveGrade to be greater than 0 [context: /HPXML/Building/BuildingDetails/BuildingSummary/BuildingConstruction, id: "MyBuilding"]'],
                             'invalid-pilot-light-heating-system' => ['Expected 1 element(s) for xpath: ../../HeatingSystemFuel[text()!="electricity"]'],
-                            'invalid-soil-type' => ["Expected SoilType to be 'sand' or 'silt' or 'clay' or 'loam' or 'gravel' or 'unknown' [context: /HPXML/Building/BuildingDetails/BuildingSummary/Site/Soil, id: \"MyBuilding\"]"],
                             'invalid-shared-vent-in-unit-flowrate' => ['Expected RatedFlowRate to be greater than extension/InUnitFlowRate [context: /HPXML/Building/BuildingDetails/Systems/MechanicalVentilation/VentilationFans/VentilationFan[UsedForWholeBuildingVentilation="true" and IsSharedSystem="true"], id: "VentilationFan1"]'],
                             'invalid-timestep' => ['Expected Timestep to be 60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, or 1'],
                             'invalid-timezone-utcoffset-low' => ["Element 'UTCOffset': [facet 'minInclusive'] The value '-13.0' is less than the minimum value allowed ('-12')."],
@@ -264,7 +263,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'missing-duct-location' => ['Expected 0 element(s) for xpath: FractionDuctArea | DuctSurfaceArea [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/Ducts[not(DuctLocation)], id: "Ducts2"]'],
                             'missing-elements' => ['Expected 1 element(s) for xpath: NumberofConditionedFloors [context: /HPXML/Building/BuildingDetails/BuildingSummary/BuildingConstruction, id: "MyBuilding"]',
                                                    'Expected 1 element(s) for xpath: ConditionedFloorArea [context: /HPXML/Building/BuildingDetails/BuildingSummary/BuildingConstruction, id: "MyBuilding"]'],
-                            'missing-epw-filepath-and-zipcode' => ['Expected 1 or more element(s) for xpath: Address/ZipCode | ../BuildingDetails/ClimateandRiskZones/WeatherStation/extension/EPWFilePath'],
+                            'missing-epw-filepath-and-zipcode' => ['Expected 1 or more element(s) for xpath: Site/Address/ZipCode | BuildingDetails/ClimateandRiskZones/WeatherStation/extension/EPWFilePath'],
                             'missing-hpwh-containment-volume' => ['Expected 1 element(s) for xpath: HPWHContainmentVolume [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem/extension[HPWHInConfinedSpaceWithoutMitigation="true"], id: "WaterHeatingSystem1"]'],
                             'missing-inverter-idref' => ['Expected 1 element(s) for xpath: AttachedToInverter [context: /HPXML/Building/BuildingDetails/Systems/Photovoltaics/PVSystem[count(../Inverter) > 1], id: "PVSystem1"]',
                                                          'Expected 1 element(s) for xpath: AttachedToInverter [context: /HPXML/Building/BuildingDetails/Systems/Photovoltaics/PVSystem[count(../Inverter) > 1], id: "PVSystem2"]'],
@@ -297,7 +296,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'sum-space-floor-area' => ['Expected sum(Zones/Zone[ZoneType="conditioned"]/Spaces/Space/FloorArea) to be equal to BuildingSummary/BuildingConstruction/ConditionedFloorArea'],
                             'sum-space-floor-area2' => ['Expected sum(Zones/Zone[ZoneType="conditioned"]/Spaces/Space/FloorArea) to be equal to BuildingSummary/BuildingConstruction/ConditionedFloorArea'],
                             'vehicle-ev-multiple-BEV' => ['Expected 0 or 1 element(s) for xpath: Vehicle/VehicleType/BatteryElectricVehicle [context: /HPXML/Building/BuildingDetails/Systems/Vehicles, id: "MyBuilding"]'],
-                            'vehicle-ev-invalid-fuel-economy-units' => ['Expected ../../FuelEconomyCombined/Units to be "kWh/mile" or "mile/kWh" or "mpge" [context: /HPXML/Building/BuildingDetails/Systems/Vehicles/Vehicle/VehicleType/BatteryElectricVehicle, id: "Vehicle1"]'],
+                            'vehicle-ev-invalid-fuel-economy-units' => ["Expected ../../FuelEconomyCombined/Units to be 'kWh/mile' or 'mile/kWh' or 'mpge' [context: /HPXML/Building/BuildingDetails/Systems/Vehicles/Vehicle/VehicleType/BatteryElectricVehicle, id: \"Vehicle1\"]"],
                             'water-heater-location' => ['A location is specified as "crawlspace - vented" but no surfaces were found adjacent to this space type.'],
                             'water-heater-location-other' => ["Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'crawlspace - conditioned' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'"],
                             'water-heater-recovery-efficiency' => ['Expected RecoveryEfficiency to be greater than EnergyFactor'],
@@ -775,9 +774,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
       when 'invalid-pilot-light-heating-system'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-floor-furnace-propane-only.xml')
         hpxml_bldg.heating_systems[0].heating_system_fuel = HPXML::FuelTypeElectricity
-      when 'invalid-soil-type'
-        hpxml, hpxml_bldg = _create_hpxml('base.xml')
-        hpxml_bldg.site.soil_type = HPXML::SiteSoilTypeOther
       when 'invalid-shared-vent-in-unit-flowrate'
         hpxml, hpxml_bldg = _create_hpxml('base-bldgtype-mf-unit-shared-mechvent.xml')
         hpxml_bldg.ventilation_fans[0].rated_flow_rate = 80
@@ -1411,7 +1407,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'unique-objects-vary-across-units-epw' => ['Weather station EPW filepath has different values across dwelling units.'],
                             'unique-objects-vary-across-units-dst' => ['Unique object (OS:RunPeriodControl:DaylightSavingTime) has different values across dwelling units.'],
                             'unique-objects-vary-across-units-tmains' => ['Unique object (OS:Site:WaterMainsTemperature) has different values across dwelling units.'],
-                            'whole-mf-building-batteries' => ['Modeling batteries for whole SFA/MF buildings is not currently supported.'],
                             'whole-mf-building-dehumidifiers-unit-multiplier' => ['NumberofUnits greater than 1 is not supported for dehumidifiers.'],
                             'whole-mf-building-gshps-unit-multiplier' => ['NumberofUnits greater than 1 is not supported for ground-to-air heat pumps.'] }
 
@@ -1985,10 +1980,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.hot_water_distributions[0].dwhr_facilities_connected = HPXML::DWHRFacilitiesConnectedOne
         hpxml_bldg.hot_water_distributions[0].dwhr_equal_flow = true
         hpxml_bldg.hot_water_distributions[0].dwhr_efficiency = 0.55
-      when 'whole-mf-building-batteries'
-        hpxml, hpxml_bldg = _create_hpxml('base-bldgtype-mf-whole-building.xml', building_id: building_id)
-        hpxml_bldg.batteries.add(id: 'Battery1',
-                                 type: HPXML::BatteryTypeLithiumIon)
       when 'whole-mf-building-dehumidifiers-unit-multiplier'
         hpxml, hpxml_bldg = _create_hpxml('base-appliances-dehumidifier.xml')
         hpxml_bldg.building_construction.number_of_units = 2
