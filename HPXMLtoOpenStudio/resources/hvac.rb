@@ -4690,10 +4690,10 @@ module HVAC
   end
 
   # Creates an EMS program to add crankcase heater energy use for a heat pump.
-  # A crankcase heater ...
+  # The crankcase heater is enabled during the time that the compressor is not running and the ODB is below a specified temperature.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param htg_coil [TODO] TODO
+  # @param htg_coil [OpenStudio::Model::CoilHeatingDXSingleSpeed or OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio Heating Coil object
   # @param clg_coil [OpenStudio::Model::CoilCoolingDXSingleSpeed or OpenStudio::Model::CoilCoolingDXMultiSpeed] OpenStudio Cooling Coil object
   # @param conditioned_space [OpenStudio::Model::Space] OpenStudio Space object for conditioned zone
   # @param heat_pump [HPXML::HeatPump] The HPXML heat pump of interest
