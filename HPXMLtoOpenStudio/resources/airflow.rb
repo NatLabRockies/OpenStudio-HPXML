@@ -136,22 +136,15 @@ module Airflow
       key_name: conditioned_zone.name
     )
 
-    # Create season schedule sensors (applies only to natural ventilation, not HVAC equipment).
-    # Uses BAHSP seasons, not user-specified seasons (which are typically year-round).
-    bahsp_heating_months, bahsp_cooling_months = HVAC.get_building_america_hvac_seasons(weather, hpxml_bldg.latitude)
+    # Create cooling season schedule sensors (applies only to natural ventilation, not HVAC equipment).
+    # Uses BAHSP cooling season, not user-specified cooling season (which is typically year-round).
+    _, bahsp_cooling_months = HVAC.get_building_america_hvac_seasons(weather, hpxml_bldg.latitude)
     clg_season_sch = MonthWeekdayWeekendSchedule.new(model, 'cooling season schedule', Array.new(24, 1), Array.new(24, 1), bahsp_cooling_months, EPlus::ScheduleTypeLimitsFraction)
     sensors[:clg_ssn] = Model.add_ems_sensor(
       model,
       name: 'cool_season',
       output_var_or_meter_name: 'Schedule Value',
       key_name: clg_season_sch.schedule.name
-    )
-    htg_season_sch = MonthWeekdayWeekendSchedule.new(model, 'heating season schedule', Array.new(24, 1), Array.new(24, 1), bahsp_heating_months, EPlus::ScheduleTypeLimitsFraction)
-    sensors[:htg_ssn] = Model.add_ems_sensor(
-      model,
-      name: 'heat_season',
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: htg_season_sch.schedule.name
     )
 
     return sensors
@@ -565,14 +558,14 @@ module Airflow
       vent_program.addLine("Set NVavailSeasonClg = #{sensors[:clg_ssn].name}")
       vent_program.addLine('Set NVavailSeasonHtg = 0')
     elsif hpxml_bldg.header.natvent_seasons == HPXML::NatVentSeasonsHeating
-      vent_program.addLine("Set NVavailSeasonHtg = #{sensors[:htg_ssn].name}")
+      vent_program.addLine("Set NVavailSeasonHtg = 1 - #{sensors[:clg_ssn].name}")
       vent_program.addLine('Set NVavailSeasonClg = 0')
     end
     vent_program.addLine('Set Qnv = 0') # Init
     vent_program.addLine('Set Qwhf = 0') # Init
     vent_program.addLine("Set #{cond_to_zone_flow_rate_actuator.name} = 0") unless whf_zone.nil? # Init
     vent_program.addLine("Set #{whf_elec_actuator.name} = 0") # Init
-    # From ANSI/RESNET/ICC 301-2025
+    # From ANSI 301
     # allow natural ventilation when the outdoor humidity ratio is less than 0.0115 lb_w/lb_da and either:
     # A) outdoor temperature is below the indoor temperature and the indoor temperature is above the average of the heating and cooling setpoints, or
     # B) outdoor temperature is above the indoor temperature and the indoor temperature is below the average of the heating and cooling setpoints
