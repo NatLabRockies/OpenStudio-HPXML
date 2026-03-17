@@ -1249,6 +1249,7 @@ module Model
   # @return [nil]
   def self.prefix_object_names(unit_model, unit_number)
     # FUTURE: Create objects with unique names up front so we don't have to do this
+    # Although it may be challenging for objects that OpenStudio automatically creates/names.
 
     # Custom meter objects
     (unit_model.getMeterCustoms + unit_model.getMeterCustomDecrements).each do |meter|
@@ -1271,7 +1272,11 @@ module Model
 
     unit_model.getEnergyManagementSystemSensors.each do |sensor|
       ems_map[sensor.name.to_s] = make_unit_variable_name(sensor.name, unit_number)
-      sensor.setKeyName(make_unit_variable_name(sensor.keyName, unit_number)) unless sensor.keyName.empty? || sensor.keyName.downcase == 'environment'
+      if sensor.keyName.downcase == 'ems'
+        sensor.setOutputVariableOrMeterName(make_unit_variable_name(sensor.outputVariableOrMeterName, unit_number))
+      else
+        sensor.setKeyName(make_unit_variable_name(sensor.keyName, unit_number)) unless sensor.keyName.empty? || sensor.keyName.downcase == 'environment'
+      end
     end
 
     unit_model.getEnergyManagementSystemActuators.each do |actuator|
