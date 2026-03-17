@@ -1618,6 +1618,34 @@ module Outputs
     end
   end
 
+  # Returns all the Output:Variables or Output:Meters that are related to the
+  # energy use of the given HPXML system (e.g., HeatPump, WaterHeatingSystem).
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param sys_id [String] HPXML System ID
+  # @param eut_list [Array<String>] Optional list of EUT::XXX that we should filter down to
+  # @return [Hash] Map of output key => (Map of OpenStudio model object => array of EnergyPlus output variable/meter names)
+  def self.get_object_outputs_for_hpxml_system(model, sys_id, eut_filter = nil)
+    vars = {}
+    model.getModelObjects.sort.each do |object|
+      next if object.to_AdditionalProperties.is_initialized
+
+      obj_id = object.additionalProperties.getFeatureAsString('HPXML_ID')
+      next unless obj_id.is_initialized
+      next if sys_id != obj_id.get
+
+      vars_by_key = get_object_outputs_by_key(model, object, EUT)
+      vars_by_key.each do |key, object_vars|
+        if eut_filter.nil? || eut_filter.include?(key[1])
+          vars[key] = {} if vars[key].nil?
+          vars[key][object] = object_vars
+        end
+      end
+    end
+
+    return vars
+  end
+
   # For a given object, returns the Output:Variables or Output:Meters to be requested,
   # and associates them with the appropriate keys (e.g., [FT::Elec, EUT::Heating]).
   #

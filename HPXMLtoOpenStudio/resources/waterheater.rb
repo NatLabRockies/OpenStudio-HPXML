@@ -75,7 +75,7 @@ module Waterheater
                                       unit_multiplier: unit_multiplier)
     plant_loop.addSupplyBranchForComponent(water_heater)
 
-    apply_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier)
+    add_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier)
     apply_desuperheater(runner, model, water_heating_system, water_heater, loc_space, loc_schedule, plant_loop, unit_multiplier)
 
     plantloop_map[water_heating_system.id] = plant_loop
@@ -118,7 +118,7 @@ module Waterheater
 
     plant_loop.addSupplyBranchForComponent(water_heater)
 
-    apply_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier)
+    add_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier)
     apply_desuperheater(runner, model, water_heating_system, water_heater, loc_space, loc_schedule, plant_loop, unit_multiplier)
 
     plantloop_map[water_heating_system.id] = plant_loop
@@ -254,7 +254,7 @@ module Waterheater
       ems_programs: [hpwh_ctrl_program, hpwh_zone_heat_gain_program]
     )
 
-    apply_ec_adj_ems_program(model, hpxml_bldg, hpwh, loc_space, water_heating_system, unit_multiplier)
+    add_ec_adj_ems_program(model, hpxml_bldg, hpwh, loc_space, water_heating_system, unit_multiplier)
 
     plantloop_map[water_heating_system.id] = plant_loop
   end
@@ -351,7 +351,7 @@ module Waterheater
 
     plant_loop.addSupplyBranchForComponent(water_heater)
 
-    apply_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier, boiler)
+    add_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier, boiler)
 
     plantloop_map[water_heating_system.id] = plant_loop
   end
@@ -1682,7 +1682,7 @@ module Waterheater
   # @param unit_multiplier [Integer] Number of similar dwelling units
   # @param combi_boiler [OpenStudio::Model::BoilerHotWater] The boiler object if the HPXML water heating system is a combi boiler
   # @return [nil]
-  def self.apply_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier, combi_boiler = nil)
+  def self.add_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier, combi_boiler = nil)
     ec_adj = get_dist_energy_consumption_adjustment(hpxml_bldg, water_heating_system)
     adjustment = ec_adj - 1.0
 

@@ -4918,13 +4918,13 @@ module HVAC
     # Get DSE value (if we're modeling distribution losses using the DSE type)
     hvac_dse = nil
     if mode == :htg
-      if hvac_system.fraction_heat_load_served > 0 || (hvac_system.is_a?(HPXML::HeatingSystem) && hvac_system.is_heat_pump_backup_system)
+      if hvac_system.fraction_heat_load_served.to_f > 0 || (hvac_system.is_a?(HPXML::HeatingSystem) && hvac_system.is_heat_pump_backup_system)
         if (not hvac_system.distribution_system_idref.nil?) && hvac_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
           hvac_dse = hvac_system.distribution_system.annual_heating_dse
         end
       end
     else
-      if hvac_system.fraction_cool_load_served > 0
+      if hvac_system.fraction_cool_load_served.to_f > 0
         if (not hvac_system.distribution_system_idref.nil?) && hvac_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
           hvac_dse = hvac_system.distribution_system.annual_cooling_dse
         end
@@ -4947,6 +4947,14 @@ module HVAC
                  FT::WoodPellets => HPXML::FuelTypeWoodPellets,
                  FT::Coal => HPXML::FuelTypeCoal }
 
+    # Get HPXML heating/cooling IDs
+    sys_id = nil
+    if not hvac_system.nil?
+      sys_id = hvac_system.id
+    elsif hvac_system.is_a?(HPXML::CoolingSystem) && hvac_system.has_integrated_heating
+      sys_id = hvac_system.id
+    end
+
     if mode == :htg
       eut_map = { EUT::Heating => Constants::ObjectTypeDSEHeating,
                   EUT::HeatingHeatPumpBackup => Constants::ObjectTypeDSEHeatingHeatPumpBackup,
@@ -4957,31 +4965,8 @@ module HVAC
                   EUT::CoolingFanPump => Constants::ObjectTypeDSECoolingFanPump }
     end
 
-    # Get HPXML heating/cooling IDs
-    sys_id = nil
-    if not hvac_system.nil?
-      sys_id = hvac_system.id
-    elsif hvac_system.is_a?(HPXML::CoolingSystem) && hvac_system.has_integrated_heating
-      sys_id = hvac_system.id
-    end
-
     # Get output vars/meters associated with the HVAC object
-    hvac_vars = {}
-    model.getModelObjects.sort.each do |object|
-      next if object.to_AdditionalProperties.is_initialized
-
-      obj_id = object.additionalProperties.getFeatureAsString('HPXML_ID')
-      next unless obj_id.is_initialized
-      next if sys_id != obj_id.get
-
-      vars_by_key = Outputs.get_object_outputs_by_key(model, object, EUT)
-      vars_by_key.each do |key, vars|
-        if eut_map.keys.include? key[1]
-          hvac_vars[key] = {} if hvac_vars[key].nil?
-          hvac_vars[key][object] = vars
-        end
-      end
-    end
+    hvac_vars = Outputs.get_object_outputs_for_hpxml_system(model, sys_id, eut_map.keys)
 
     # Other equipment objects to add electricity/fuel use
     dse_objects = {}
