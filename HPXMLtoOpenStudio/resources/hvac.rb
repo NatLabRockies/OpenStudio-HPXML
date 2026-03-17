@@ -186,12 +186,12 @@ module HVAC
         airloop_map[sys_id] = apply_air_source_hvac_systems(runner, model, weather, hpxml_bldg, hpxml_header, nil, heating_system,
                                                             hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods, schedules_file)
       when HPXML::HVACTypeBoiler
-        airloop_map[sys_id] = apply_boiler(runner, model, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
+        airloop_map[sys_id] = apply_boiler(runner, model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
       when HPXML::HVACTypeElectricResistance
-        apply_electric_baseboard(model, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
+        apply_electric_baseboard(model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
       when HPXML::HVACTypeStove, HPXML::HVACTypeSpaceHeater, HPXML::HVACTypeWallFurnace,
            HPXML::HVACTypeFloorFurnace, HPXML::HVACTypeFireplace
-        apply_unit_heater(model, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
+        apply_unit_heater(model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
       end
 
       next unless heating_system.is_heat_pump_backup_system
@@ -242,7 +242,7 @@ module HVAC
       sys_id = heat_pump.id
       case heat_pump.heat_pump_type
       when HPXML::HVACTypeHeatPumpWaterLoopToAir
-        airloop_map[sys_id] = apply_water_loop_to_air_heat_pump(model, heat_pump, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
+        airloop_map[sys_id] = apply_water_loop_to_air_heat_pump(model, hpxml_bldg, heat_pump, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
       when HPXML::HVACTypeHeatPumpAirToAir, HPXML::HVACTypeHeatPumpMiniSplit,
            HPXML::HVACTypeHeatPumpPTHP, HPXML::HVACTypeHeatPumpRoom
         airloop_map[sys_id] = apply_air_source_hvac_systems(runner, model, weather, hpxml_bldg, hpxml_header, heat_pump, heat_pump,
@@ -929,12 +929,13 @@ module HVAC
   # Adds the HPXML water-loop heat pump system to the OpenStudio model.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heat_pump [HPXML::HeatPump] The HPXML heat pump of interest
   # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [OpenStudio::Model::AirLoopHVAC] The newly created air loop hvac object
-  def self.apply_water_loop_to_air_heat_pump(model, heat_pump, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
+  def self.apply_water_loop_to_air_heat_pump(model, hpxml_bldg, heat_pump, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
     if heat_pump.fraction_cool_load_served > 0
       # WLHPs connected to chillers or cooling towers should have already been converted to
       # central air conditioners
@@ -1052,12 +1053,13 @@ module HVAC
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [OpenStudio::Model::ZoneHVACFourPipeFanCoil or OpenStudio::Model::ZoneHVACBaseboardConvectiveWater] The newly created zone hvac object
-  def self.apply_boiler(runner, model, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
+  def self.apply_boiler(runner, model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
     obj_name = Constants::ObjectTypeBoiler
     is_condensing = false # FUTURE: Expose as input; default based on AFUE
     oat_reset_enabled = false
@@ -1251,12 +1253,13 @@ module HVAC
   # Adds the HPXML electric baseboard system to the OpenStudio model.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [nil]
-  def self.apply_electric_baseboard(model, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
+  def self.apply_electric_baseboard(model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
     obj_name = Constants::ObjectTypeElectricBaseboard
 
     # Baseboard
@@ -1276,12 +1279,13 @@ module HVAC
   # Adds the HPXML unit heater system (wall/floor furnace, space heater, stove, fireplace, etc.) to the OpenStudio model.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [nil]
-  def self.apply_unit_heater(model, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
+  def self.apply_unit_heater(model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
     obj_name = Constants::ObjectTypeUnitHeater
 
     htg_ap = heating_system.additional_properties
