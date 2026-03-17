@@ -267,9 +267,6 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
       next if message.include? 'Could not find a marginal Electricity rate.'
       next if message.include? 'Could not find a marginal Natural Gas rate.'
     end
-    if hpxml.buildings.any? { |hpxml_bldg| !hpxml_bldg.hvac_distributions.select { |d| d.distribution_system_type == HPXML::HVACDistributionTypeDSE }.empty? }
-      next if message.include? 'DSE is not currently supported when calculating utility bills.'
-    end
     if !hpxml_header.unavailable_periods.select { |up| up.column_name == 'Power Outage' }.empty?
       next if message.include? 'It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus during an unavailable period.'
       next if message.include? 'It is not possible to eliminate all DHW energy use (e.g. water heater parasitics) in EnergyPlus during an unavailable period.'
