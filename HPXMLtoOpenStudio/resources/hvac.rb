@@ -4930,6 +4930,7 @@ module HVAC
 
     return if hvac_dse.nil?
 
+    # Converts the [ft, eut] key to an ems-friendly name
     def self.key_name(key)
       return Model.ems_friendly_name(key.join('_')).downcase
     end
