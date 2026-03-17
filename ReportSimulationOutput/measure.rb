@@ -2183,21 +2183,31 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     shift_values = {}
     indexes.each_with_index do |_i, idx|
       shift_values[idx] = false
-      if apply_ems_shift(timeseries_frequency)
-        if meter_names[idx].include? Constants::ObjectTypeWaterHeaterAdjustment
-          # Shift energy use adjustment to align with hot water energy use
-          shift_values[idx] = true
-        elsif meter_names[idx].include? Constants::ObjectTypePanHeater
-          # Shift energy use adjustment to align with HVAC operation and weather
-          shift_values[idx] = true
-        elsif meter_names[idx].include? Constants::ObjectTypeHPDefrostSupplHeat
-          # Shift energy use adjustment to align with HVAC operation and weather
-          shift_values[idx] = true
-        elsif meter_names[idx].include? 'FIXME'
-          # Shift energy use adjustment to align with HVAC operation
-          shift_values[idx] = true
+      next unless apply_ems_shift(timeseries_frequency)
+
+      if meter_names[idx].include? Constants::ObjectTypeWaterHeaterAdjustment
+        # Shift energy use adjustment to align with hot water energy use
+        shift_values[idx] = true
+      elsif meter_names[idx].include? Constants::ObjectTypePanHeater
+        # Shift energy use adjustment to align with HVAC operation and weather
+        shift_values[idx] = true
+      elsif meter_names[idx].include? Constants::ObjectTypeHPDefrostSupplHeat
+        # Shift energy use adjustment to align with HVAC operation and weather
+        shift_values[idx] = true
+      else
+        [Constants::ObjectTypeDSEHeating,
+         Constants::ObjectTypeDSEHeatingHeatPumpBackup,
+         Constants::ObjectTypeDSEHeatingFanPump,
+         Constants::ObjectTypeDSEHeatingHeatPumpBackupFanPump,
+         Constants::ObjectTypeDSECooling,
+         Constants::ObjectTypeDSECoolingFanPump].each do |dse_obj_type|
+          if meter_names[idx].include? dse_obj_type
+            # Shift energy use adjustment to align with HVAC operation
+            shift_values[idx] = true
+          end
         end
       end
+      puts "#{meter_names[idx]}: #{shift_values[idx]}"
     end
 
     rows.each_with_index do |row, row_idx|
