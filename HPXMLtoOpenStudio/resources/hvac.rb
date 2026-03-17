@@ -133,6 +133,227 @@ module HVAC
     end
   end
 
+  # FIXME
+  def self.add_dse_ems_program(model, heating_system, cooling_system, obj_name)
+    # Get heating/cooling DSEs
+    htg_dse, clg_dse = nil
+    if not heating_system.nil?
+      if heating_system.fraction_heat_load_served > 0 || (heating_system.is_a?(HPXML::HeatingSystem) && heating_system.is_heat_pump_backup_system)
+        if not heating_system.distribution_system_idref.nil?
+          if heating_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
+            htg_dse = heating_system.distribution_system.annual_heating_dse
+          end
+        end
+      end
+    end
+    if not cooling_system.nil?
+      if cooling_system.fraction_cool_load_served > 0
+        if not cooling_system.distribution_system_idref.nil?
+          if cooling_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
+            clg_dse = cooling_system.distribution_system.annual_cooling_dse
+          end
+        end
+      end
+    end
+
+    return if htg_dse.nil? && clg_dse.nil?
+
+    def self.key_name(key)
+      return Model.ems_friendly_name(key.join('_')).downcase
+    end
+
+    # FIXME: This is duplicated multiple times
+    to_hpxml = { FT::Elec => HPXML::FuelTypeElectricity,
+                 FT::Gas => HPXML::FuelTypeNaturalGas,
+                 FT::Oil => HPXML::FuelTypeOil,
+                 FT::Propane => HPXML::FuelTypePropane,
+                 FT::WoodCord => HPXML::FuelTypeWoodCord,
+                 FT::WoodPellets => HPXML::FuelTypeWoodPellets,
+                 FT::Coal => HPXML::FuelTypeCoal }
+
+    htg_map = { EUT::Heating => Constants::ObjectTypeDSEHeating,
+                EUT::HeatingHeatPumpBackup => Constants::ObjectTypeDSEHeatingHeatPumpBackup,
+                EUT::HeatingFanPump => Constants::ObjectTypeDSEHeatingFanPump,
+                EUT::HeatingHeatPumpBackupFanPump => Constants::ObjectTypeDSEHeatingHeatPumpBackupFanPump }
+    clg_map = { EUT::Cooling => Constants::ObjectTypeDSECooling,
+                EUT::CoolingFanPump => Constants::ObjectTypeDSECoolingFanPump }
+
+    # Get HPXML heating/cooling IDs
+    htg_id, clg_id = nil, nil
+    if not heating_system.nil?
+      htg_id = heating_system.id
+    elsif cooling_system.has_integrated_heating
+      htg_id = cooling_system.id
+    end
+    if not cooling_system.nil?
+      clg_id = cooling_system.id
+    end
+
+    htg_vars, clg_vars = {}, {}
+    model.getModelObjects.sort.each do |object|
+      next if object.to_AdditionalProperties.is_initialized
+
+      obj_id = object.additionalProperties.getFeatureAsString('HPXML_ID')
+      next unless obj_id.is_initialized
+      next unless [clg_id, htg_id].include? obj_id.get
+
+      vars_by_key = Outputs.get_object_outputs_by_key(model, object, EUT)
+      vars_by_key.each do |key, vars|
+        if htg_map.keys.include? key[1]
+          htg_vars[key] = {} if htg_vars[key].nil?
+          htg_vars[key][object] = vars
+        elsif clg_map.keys.include? key[1]
+          clg_vars[key] = {} if clg_vars[key].nil?
+          clg_vars[key][object] = vars
+        end
+      end
+    end
+
+    # Other equipment objects to add fuel use
+    htg_dse_objects = {}
+    htg_keys = htg_vars.keys.uniq
+    htg_keys.each do |key|
+      end_use = htg_map[key[1]]
+      cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? end_use } # Ensure unique name
+      htg_dse_objects[key] = Model.add_other_equipment(
+        model,
+        name: "#{htg_id} dse #{key_name(key)} adjustment",
+        end_use: "#{end_use}#{cnt}",
+        space: model.getSpaces[0],
+        design_level: 0.01,
+        frac_radiant: 0,
+        frac_latent: 0,
+        frac_lost: 1,
+        schedule: model.alwaysOnDiscreteSchedule,
+        fuel_type: to_hpxml[key[0]]
+      )
+      htg_dse_objects[key].additionalProperties.setFeature('HPXML_ID', htg_id) # Used by reporting measure
+    end
+
+    clg_dse_objects = {}
+    clg_keys = clg_vars.keys.uniq
+    clg_keys.each do |key|
+      end_use = clg_map[key[1]]
+      cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? end_use } # Ensure unique name
+      clg_dse_objects[key] = Model.add_other_equipment(
+        model,
+        name: "#{clg_id} dse #{key_name(key)} adjustment",
+        end_use: "#{end_use}#{cnt}",
+        space: model.getSpaces[0],
+        design_level: 0.01,
+        frac_radiant: 0,
+        frac_latent: 0,
+        frac_lost: 1,
+        schedule: model.alwaysOnDiscreteSchedule,
+        fuel_type: to_hpxml[key[0]]
+      )
+      clg_dse_objects[key].additionalProperties.setFeature('HPXML_ID', clg_id) # Used by reporting measure
+    end
+
+    # EMS Actuators
+    htg_dse_acts = {}
+    htg_dse_objects.each do |key, obj|
+      htg_dse_acts[key] = Model.add_ems_actuator(
+        name: "#{htg_id} dse #{key_name(key)} actuator",
+        model_object: obj,
+        comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
+      )
+    end
+
+    clg_dse_acts = {}
+    clg_dse_objects.each do |key, obj|
+      clg_dse_acts[key] = Model.add_ems_actuator(
+        name: "#{clg_id} dse #{key_name(key)} actuator",
+        model_object: obj,
+        comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
+      )
+    end
+
+    # EMS Sensors
+    htg_sensors = {}
+    htg_vars.each do |key, values|
+      values.each do |object, vars|
+        vars.each do |var|
+          if object.to_EnergyManagementSystemOutputVariable.is_initialized
+            varkey = 'EMS'
+          else
+            varkey = object.name.to_s.upcase
+          end
+          htg_sensors[key] = [] if htg_sensors[key].nil?
+          htg_sensors[key] << Model.add_ems_sensor(
+            model,
+            name: "#{htg_id} #{key_name(key)} energy",
+            output_var_or_meter_name: var,
+            key_name: varkey
+          )
+        end
+      end
+    end
+
+    clg_sensors = {}
+    clg_vars.each do |key, values|
+      values.each do |object, vars|
+        vars.each do |var|
+          if object.to_EnergyManagementSystemOutputVariable.is_initialized
+            varkey = 'EMS'
+          else
+            varkey = object.name.to_s.upcase
+          end
+          clg_sensors[key] = [] if clg_sensors[key].nil?
+          clg_sensors[key] << Model.add_ems_sensor(
+            model,
+            name: "#{clg_id} #{key_name(key)} energy",
+            output_var_or_meter_name: var,
+            key_name: varkey
+          )
+        end
+      end
+    end
+
+    # Program
+    # FIXME: Need to use unit multiplier?
+    dse_program = Model.add_ems_program(
+      model,
+      name: "#{obj_name} dse program"
+    )
+    dse_program.addLine('If WarmupFlag == 0') # Prevent a non-zero adjustment in the first hour because of the warmup period
+    if not htg_dse.nil?
+      htg_keys.each do |key|
+        dse_program.addLine("Set htg_#{key_name(key)} = 0")
+      end
+      htg_sensors.each do |key, sensors|
+        sensors.each do |sensor|
+          dse_program.addLine("Set htg_#{key_name(key)} = htg_#{key_name(key)} + (#{sensor.name} * ((1.0 / #{htg_dse}) - 1.0))")
+        end
+      end
+      htg_dse_acts.each do |key, dse_htg_act|
+        dse_program.addLine("Set #{dse_htg_act.name} = htg_#{key_name(key)} / ( 3600 * SystemTimeStep )")
+      end
+    end
+    if not clg_dse.nil?
+      clg_keys.each do |key|
+        dse_program.addLine("Set clg_#{key_name(key)} = 0")
+      end
+      clg_sensors.each do |key, sensors|
+        sensors.each do |sensor|
+          dse_program.addLine("Set clg_#{key_name(key)} = clg_#{key_name(key)} + (#{sensor.name} * ((1.0 / #{clg_dse}) - 1.0))")
+        end
+      end
+      clg_dse_acts.each do |key, dse_clg_act|
+        dse_program.addLine("Set #{dse_clg_act.name} = clg_#{key_name(key)} / ( 3600 * SystemTimeStep )")
+      end
+    end
+    dse_program.addLine('EndIf')
+
+    # Calling Point
+    Model.add_ems_program_calling_manager(
+      model,
+      name: "#{dse_program.name} calling manager",
+      calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
+      ems_programs: [dse_program]
+    )
+  end
+
   # Adds any HPXML Heating Systems to the OpenStudio model.
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
@@ -473,7 +694,7 @@ module HVAC
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, [htg_cfm.to_f, clg_cfm.to_f].max, heating_system, hvac_unavailable_periods)
 
     add_backup_staging_ems_program(model, air_loop_unitary, htg_supp_coil, control_zone, htg_coil)
-    apply_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
+    add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
 
     # supp coil control in staging EMS
     add_two_speed_staging_ems_program(model, air_loop_unitary, htg_supp_coil, control_zone, has_deadband_control, cooling_system)
@@ -488,6 +709,9 @@ module HVAC
         apply_pan_heater_ems_program(model, ems_program, htg_coil, control_zone.spaces[0], cooling_system, htg_ap.hp_min_temp)
       end
     end
+
+    add_dse_ems_program(model, heating_system, cooling_system, obj_name)
+
     return air_loop
   end
 
@@ -545,6 +769,8 @@ module HVAC
     evap_stpt_manager.setReferenceTemperatureType('OutdoorAirWetBulb')
     evap_stpt_manager.setOffsetTemperatureDifference(0.0)
     evap_stpt_manager.addToNode(air_loop.supplyOutletNode)
+
+    add_dse_ems_program(model, nil, cooling_system, obj_name)
 
     return air_loop
   end
@@ -912,7 +1138,9 @@ module HVAC
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, [htg_cfm, clg_cfm].max, heat_pump, hvac_unavailable_periods)
 
     # HVAC Installation Quality
-    apply_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil, control_zone)
+    add_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil, control_zone)
+
+    add_dse_ems_program(model, heat_pump, heat_pump, obj_name)
 
     return air_loop
   end
@@ -973,6 +1201,8 @@ module HVAC
 
     # Air Loop
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, htg_cfm, heat_pump, hvac_unavailable_periods)
+
+    add_dse_ems_program(model, heat_pump, heat_pump, obj_name)
 
     return air_loop
   end
@@ -1231,6 +1461,8 @@ module HVAC
 
     set_sequential_load_fractions(model, control_zone, zone_hvac, hvac_sequential_load_fracs, hvac_unavailable_periods, heating_system)
 
+    add_dse_ems_program(model, heating_system, nil, obj_name)
+
     return zone_hvac
   end
 
@@ -1255,6 +1487,8 @@ module HVAC
     zone_hvac.additionalProperties.setFeature('IsHeatPumpBackup', heating_system.is_heat_pump_backup_system) # Used by reporting measure
 
     set_sequential_load_fractions(model, control_zone, zone_hvac, hvac_sequential_load_fracs, hvac_unavailable_periods, heating_system)
+
+    add_dse_ems_program(model, heating_system, nil, obj_name)
   end
 
   # Adds the HPXML unit heater system (wall/floor furnace, space heater, stove, fireplace, etc.) to the OpenStudio model.
@@ -1296,6 +1530,8 @@ module HVAC
     unitary_system.addToThermalZone(control_zone)
 
     set_sequential_load_fractions(model, control_zone, unitary_system, hvac_sequential_load_fracs, hvac_unavailable_periods, heating_system)
+
+    add_dse_ems_program(model, heating_system, nil, obj_name)
   end
 
   # Adds ideal air systems as needed to meet the load under certain circumstances:
@@ -4605,7 +4841,7 @@ module HVAC
   # @param clg_coil [OpenStudio::Model::CoilCoolingXXX] Cooling coil model object
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @return [nil]
-  def self.apply_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
+  def self.add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
     if not cooling_system.nil?
       charge_defect_ratio = cooling_system.charge_defect_ratio
       cool_airflow_defect_ratio = cooling_system.airflow_defect_ratio

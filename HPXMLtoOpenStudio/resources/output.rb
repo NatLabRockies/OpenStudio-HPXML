@@ -1561,6 +1561,7 @@ module Outputs
   def self.create_custom_unit_meters(model, hpxml)
     return if hpxml.buildings.size == 1
 
+    # FIXME: This is duplicated multiple times
     to_eplus = { FT::Elec => EPlus::FuelTypeElectricity,
                  FT::Gas => EPlus::FuelTypeNaturalGas,
                  FT::Oil => EPlus::FuelTypeOil,
@@ -1798,7 +1799,7 @@ module Outputs
           Constants::ObjectTypeLightingExterior => EUT::LightsExterior,
           Constants::ObjectTypeLightingExteriorHoliday => EUT::LightsExterior }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
-          fail 'Unexpected error: multiple matches.' unless end_use.nil?
+          fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?
 
           end_use = eut
         end
@@ -1828,9 +1829,15 @@ module Outputs
           Constants::ObjectTypeHPDefrostSupplHeat => EUT::HeatingHeatPumpBackup,
           Constants::ObjectTypePanHeater => EUT::Heating,
           Constants::ObjectTypeWaterHeaterAdjustment => EUT::HotWater,
+          Constants::ObjectTypeDSEHeating => EUT::Heating,
+          Constants::ObjectTypeDSEHeatingHeatPumpBackup => EUT::HeatingHeatPumpBackup,
+          Constants::ObjectTypeDSEHeatingFanPump => EUT::HeatingFanPump,
+          Constants::ObjectTypeDSEHeatingHeatPumpBackupFanPump => EUT::HeatingHeatPumpBackupFanPump,
+          Constants::ObjectTypeDSECooling => EUT::Cooling,
+          Constants::ObjectTypeDSECoolingFanPump => EUT::CoolingFanPump,
           Constants::ObjectTypeBatteryLossesAdjustment => EUT::Battery }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
-          fail 'Unexpected error: multiple matches.' unless end_use.nil?
+          fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?
 
           end_use = eut
         end

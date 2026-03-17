@@ -75,7 +75,7 @@ module Waterheater
                                       unit_multiplier: unit_multiplier)
     plant_loop.addSupplyBranchForComponent(water_heater)
 
-    apply_ec_adj_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier)
+    apply_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier)
     apply_desuperheater(runner, model, water_heating_system, water_heater, loc_space, loc_schedule, plant_loop, unit_multiplier)
 
     plantloop_map[water_heating_system.id] = plant_loop
@@ -118,7 +118,7 @@ module Waterheater
 
     plant_loop.addSupplyBranchForComponent(water_heater)
 
-    apply_ec_adj_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier)
+    apply_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier)
     apply_desuperheater(runner, model, water_heating_system, water_heater, loc_space, loc_schedule, plant_loop, unit_multiplier)
 
     plantloop_map[water_heating_system.id] = plant_loop
@@ -254,7 +254,7 @@ module Waterheater
       ems_programs: [hpwh_ctrl_program, hpwh_zone_heat_gain_program]
     )
 
-    apply_ec_adj_program(model, hpxml_bldg, hpwh, loc_space, water_heating_system, unit_multiplier)
+    apply_ec_adj_ems_program(model, hpxml_bldg, hpwh, loc_space, water_heating_system, unit_multiplier)
 
     plantloop_map[water_heating_system.id] = plant_loop
   end
@@ -351,7 +351,7 @@ module Waterheater
 
     plant_loop.addSupplyBranchForComponent(water_heater)
 
-    apply_ec_adj_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier, boiler)
+    apply_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier, boiler)
 
     plantloop_map[water_heating_system.id] = plant_loop
   end
@@ -1672,7 +1672,7 @@ module Waterheater
   end
 
   # Adds an EMS program to increase/decrease the energy consumption of the water heater based on
-  # the energy consumption adjustment factor (EC_adj).
+  # the energy consumption adjustment factor (EC_adj), per ANSI 301.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
@@ -1682,7 +1682,7 @@ module Waterheater
   # @param unit_multiplier [Integer] Number of similar dwelling units
   # @param combi_boiler [OpenStudio::Model::BoilerHotWater] The boiler object if the HPXML water heating system is a combi boiler
   # @return [nil]
-  def self.apply_ec_adj_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier, combi_boiler = nil)
+  def self.apply_ec_adj_ems_program(model, hpxml_bldg, water_heater, loc_space, water_heating_system, unit_multiplier, combi_boiler = nil)
     ec_adj = get_dist_energy_consumption_adjustment(hpxml_bldg, water_heating_system)
     adjustment = ec_adj - 1.0
 
@@ -1702,7 +1702,7 @@ module Waterheater
     end
 
     # Add an other equipment object for water heating that will get actuated, has a small initial load but gets overwritten by EMS
-    cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeWaterHeaterAdjustment } # Ensure unique meter for each water heater
+    cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeWaterHeaterAdjustment } # Ensure unique name for each water heater
     ec_adj_object = Model.add_other_equipment(
       model,
       name: "#{Constants::ObjectTypeWaterHeaterAdjustment}#{cnt + 1}",
@@ -1720,6 +1720,7 @@ module Waterheater
     # EMS for calculating the EC_adj
 
     # Sensors
+    # FIXME: Get variables of interest from Outputs.get_object_outputs_by_key so we don't need to maintain a separate list
     if [HPXML::WaterHeaterTypeCombiStorage, HPXML::WaterHeaterTypeCombiTankless].include? water_heating_system.water_heater_type
       ec_adj_sensor_boiler = Model.add_ems_sensor(
         model,
