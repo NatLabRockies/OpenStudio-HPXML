@@ -489,8 +489,8 @@ module HVAC
       end
     end
 
-    add_dse_ems_program(:clg, model, cooling_system, obj_name)
-    add_dse_ems_program(:htg, model, heating_system, obj_name)
+    add_dse_ems_program(:clg, model, hpxml_bldg, cooling_system, obj_name)
+    add_dse_ems_program(:htg, model, hpxml_bldg, heating_system, obj_name)
 
     return air_loop
   end
@@ -550,7 +550,7 @@ module HVAC
     evap_stpt_manager.setOffsetTemperatureDifference(0.0)
     evap_stpt_manager.addToNode(air_loop.supplyOutletNode)
 
-    add_dse_ems_program(:clg, model, cooling_system, obj_name)
+    add_dse_ems_program(:clg, model, hpxml_bldg, cooling_system, obj_name)
 
     return air_loop
   end
@@ -920,8 +920,8 @@ module HVAC
     # HVAC Installation Quality
     add_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil, control_zone)
 
-    add_dse_ems_program(:clg, model, heat_pump, obj_name)
-    add_dse_ems_program(:htg, model, heat_pump, obj_name)
+    add_dse_ems_program(:clg, model, hpxml_bldg, heat_pump, obj_name)
+    add_dse_ems_program(:htg, model, hpxml_bldg, heat_pump, obj_name)
 
     return air_loop
   end
@@ -983,8 +983,8 @@ module HVAC
     # Air Loop
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, htg_cfm, heat_pump, hvac_unavailable_periods)
 
-    add_dse_ems_program(:clg, model, heat_pump, obj_name)
-    add_dse_ems_program(:htg, model, heat_pump, obj_name)
+    add_dse_ems_program(:clg, model, hpxml_bldg, heat_pump, obj_name)
+    add_dse_ems_program(:htg, model, hpxml_bldg, heat_pump, obj_name)
 
     return air_loop
   end
@@ -1243,7 +1243,7 @@ module HVAC
 
     set_sequential_load_fractions(model, control_zone, zone_hvac, hvac_sequential_load_fracs, hvac_unavailable_periods, heating_system)
 
-    add_dse_ems_program(:htg, model, heating_system, obj_name)
+    add_dse_ems_program(:htg, model, hpxml_bldg, heating_system, obj_name)
 
     return zone_hvac
   end
@@ -1270,7 +1270,7 @@ module HVAC
 
     set_sequential_load_fractions(model, control_zone, zone_hvac, hvac_sequential_load_fracs, hvac_unavailable_periods, heating_system)
 
-    add_dse_ems_program(:htg, model, heating_system, obj_name)
+    add_dse_ems_program(:htg, model, hpxml_bldg, heating_system, obj_name)
   end
 
   # Adds the HPXML unit heater system (wall/floor furnace, space heater, stove, fireplace, etc.) to the OpenStudio model.
@@ -1313,7 +1313,7 @@ module HVAC
 
     set_sequential_load_fractions(model, control_zone, unitary_system, hvac_sequential_load_fracs, hvac_unavailable_periods, heating_system)
 
-    add_dse_ems_program(:htg, model, heating_system, obj_name)
+    add_dse_ems_program(:htg, model, hpxml_bldg, heating_system, obj_name)
   end
 
   # Adds ideal air systems as needed to meet the load under certain circumstances:
@@ -4907,9 +4907,8 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
   # @param obj_name [String] Name for the OpenStudio object
-  #
   # @return [nil]
-  def self.add_dse_ems_program(mode, model, hvac_system, obj_name)
+  def self.add_dse_ems_program(mode, model, hpxml_bldg, hvac_system, obj_name)
     return if hvac_system.nil?
 
     # Get DSE value (if we're modeling distribution losses using the DSE type)
@@ -5032,7 +5031,7 @@ module HVAC
     end
 
     # Program
-    # FIXME: Need to use unit multiplier?
+    unit_multiplier = hpxml_bldg.building_construction.number_of_units
     dse_program = Model.add_ems_program(
       model,
       name: "#{obj_name} dse program"
@@ -5046,7 +5045,7 @@ module HVAC
       end
     end
     dse_acts.each do |key, dse_act|
-      dse_program.addLine("Set #{dse_act.name} = #{mode}_#{key_name(key)} / ( 3600 * SystemTimeStep )")
+      dse_program.addLine("Set #{dse_act.name} = #{mode}_#{key_name(key)} / ( #{unit_multiplier} * 3600 * SystemTimeStep )")
     end
 
     # Calling Point
