@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>report_simulation_output</name>
   <uid>df9d170c-c21a-4130-866d-0d46b06073fd</uid>
-  <version_id>458ccb5b-8a15-4b23-a38b-190b5dcb6725</version_id>
-  <version_modified>2026-03-12T15:31:17Z</version_modified>
+  <version_id>eb4f574b-b85a-401c-a072-5bd88188bd61</version_id>
+  <version_modified>2026-03-12T18:26:27Z</version_modified>
   <xml_checksum>9BF1E6AC</xml_checksum>
   <class_name>ReportSimulationOutput</class_name>
   <display_name>HPXML Simulation Output Report</display_name>
@@ -1657,16 +1657,16 @@
       <model_dependent>false</model_dependent>
     </output>
     <output>
-      <name>peak_load_heating_delivered_k_btu_hr</name>
-      <display_name>peak_load_heating_delivered_k_btu_hr</display_name>
-      <short_name>peak_load_heating_delivered_k_btu_hr</short_name>
+      <name>peak_load_heating_delivered_btu_hr</name>
+      <display_name>peak_load_heating_delivered_btu_hr</display_name>
+      <short_name>peak_load_heating_delivered_btu_hr</short_name>
       <type>Double</type>
       <model_dependent>false</model_dependent>
     </output>
     <output>
-      <name>peak_load_cooling_delivered_k_btu_hr</name>
-      <display_name>peak_load_cooling_delivered_k_btu_hr</display_name>
-      <short_name>peak_load_cooling_delivered_k_btu_hr</short_name>
+      <name>peak_load_cooling_delivered_btu_hr</name>
+      <display_name>peak_load_cooling_delivered_btu_hr</display_name>
+      <short_name>peak_load_cooling_delivered_btu_hr</short_name>
       <type>Double</type>
       <model_dependent>false</model_dependent>
     </output>
@@ -2012,7 +2012,7 @@
       <filename>README.md</filename>
       <filetype>md</filetype>
       <usage_type>readme</usage_type>
-      <checksum>B3FAFB3B</checksum>
+      <checksum>CE9B7B60</checksum>
     </file>
     <file>
       <filename>README.md.erb</filename>
@@ -2029,13 +2029,13 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>87FA0839</checksum>
+      <checksum>E18F5630</checksum>
     </file>
     <file>
       <filename>test_report_sim_output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>526CDDC3</checksum>
+      <checksum>85981580</checksum>
     </file>
   </files>
 </measure>

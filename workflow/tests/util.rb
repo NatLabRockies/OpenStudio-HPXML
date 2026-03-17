@@ -1131,8 +1131,8 @@ def _check_unit_multiplier_results(xml, hpxml_bldg, annual_results_1x, annual_re
       abs_delta_tol = 500.0
       abs_frac_tol = 0.15
     elsif key.include?('Peak Load:')
-      # Check that the peak load difference is less than 0.2 kBtu/hr or less than 10%
-      abs_delta_tol = 0.2
+      # Check that the peak load difference is less than 200 Btu/hr or less than 10%
+      abs_delta_tol = 200
       abs_frac_tol = 0.1
     elsif key.include?('Hot Water:')
       # Check that the hot water usage difference is less than 10 gal/yr or less than 2%

@@ -978,13 +978,15 @@ module HVAC
   end
 
   # Get the outdoor unit (compressor) power (W) using regression based on (output) capacity.
-  # The equation is a derived regression for the minimum circuit amp (MCA) of direct expansion compressor from 201 product datapoints (including central ACs, room ACs, and ASHPs) collected between 2023-2024.
+  # The equation is a derived regression for the minimum circuit amp (MCA) of direct expansion
+  # compressor from 201 product datapoints (including central ACs, room ACs, and ASHPs)
+  # collected between 2023-2024.
   #
-  # @param capacity [Double] Direct expansion coil rated (output) capacity [kBtu/hr].
+  # @param capacity [Double] Direct expansion coil rated (output) capacity (Btu/hr)
   # @param voltage [String] '120' or '240'
   # @return [Double] Direct expansion coil rated (input) capacity (W)
   def self.get_dx_coil_power_watts_from_capacity(capacity, voltage)
-    required_amperage = 0.631 * capacity + 1.615
+    required_amperage = 0.631 * UnitConversions.convert(capacity, 'Btu/hr', 'kBtu/hr') + 1.615
     power = required_amperage * Float(voltage)
     return power
   end
