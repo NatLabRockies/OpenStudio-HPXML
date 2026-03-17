@@ -65,6 +65,7 @@
     <sch:title>[AdvancedResearchFeatures]</sch:title>
     <sch:rule context='/h:HPXML/h:SoftwareInfo/h:extension/h:SimulationControl/h:AdvancedResearchFeatures'>
       <sch:assert role='ERROR' test='count(h:TemperatureCapacitanceMultiplier) &lt;= 1'>Expected at most one TemperatureCapacitanceMultiplier</sch:assert>
+      <sch:assert role='ERROR' test='number(h:TemperatureCapacitanceMultiplier) &gt; 0 or not (h:TemperatureCapacitanceMultiplier)'>Expected TemperatureCapacitanceMultiplier to be greater than 0</sch:assert>
       <!-- Deprecated DefrostModelType input; see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2015 -->
       <sch:assert role='ERROR' test='count(h:DefrostModelType) = 0'>DefrostModelType has been deprecated</sch:assert>
       <sch:assert role='ERROR' test='count(h:OnOffThermostatDeadbandTemperature) &lt;= 1'>Expected at most one OnOffThermostatDeadbandTemperature</sch:assert>
@@ -79,20 +80,20 @@
   <sch:pattern>
     <sch:title>[OnOffThermostatDeadbandTemperature]</sch:title>
     <sch:rule context='/h:HPXML[h:SoftwareInfo/h:extension/h:SimulationControl/h:AdvancedResearchFeatures/h:OnOffThermostatDeadbandTemperature]/h:Building/h:BuildingDetails'>
-      <sch:assert role='ERROR' test='count(h:Systems/h:HVAC/h:HVACPlant/h:CoolingSystem[h:FractionCoolLoadServed > 0]) + count(h:Systems/h:HVAC/h:HVACPlant/h:HeatPump[h:FractionCoolLoadServed > 0]) &lt;= 1'>Expected at most one cooling system for each Building</sch:assert>
-      <sch:assert role='ERROR' test='count(h:Systems/h:HVAC/h:HVACPlant/h:HeatingSystem[h:FractionHeatLoadServed > 0]) + count(h:Systems/h:HVAC/h:HVACPlant/h:HeatPump[h:FractionHeatLoadServed > 0]) &lt;= 1'>Expected at most one heating system for each Building</sch:assert>
-      <sch:assert role='ERROR' test='sum(h:Systems/h:HVAC/h:HVACPlant/*/h:FractionHeatLoadServed) &gt;= 0.99 or count(h:Systems/h:HVAC/h:HVACPlant/*/h:FractionHeatLoadServed) = 0'>Expected sum(FractionHeatLoadServed) to be equal to 1</sch:assert>
-      <sch:assert role='ERROR' test='sum(h:Systems/h:HVAC/h:HVACPlant/*/h:FractionCoolLoadServed) &gt;= 0.99 or count(h:Systems/h:HVAC/h:HVACPlant/*/h:FractionCoolLoadServed) = 0'>Expected sum(FractionCoolLoadServed) to be equal to 1</sch:assert>
-      <sch:assert role='ERROR' test='number(/h:HPXML/h:SoftwareInfo/h:extension/h:SimulationControl/h:Timestep) = 1'>Expected /HPXML/SoftwareInfo/extension/SimulationControl/Timestep to be 1</sch:assert>
+      <sch:assert role='ERROR' test='count(h:Systems/h:HVAC/h:HVACPlant/h:CoolingSystem[h:FractionCoolLoadServed > 0]) + count(h:Systems/h:HVAC/h:HVACPlant/h:HeatPump[h:FractionCoolLoadServed > 0]) &lt;= 1'>Expected at most one cooling system for each Building if OnOffThermostatDeadbandTemperature is specified</sch:assert>
+      <sch:assert role='ERROR' test='count(h:Systems/h:HVAC/h:HVACPlant/h:HeatingSystem[h:FractionHeatLoadServed > 0]) + count(h:Systems/h:HVAC/h:HVACPlant/h:HeatPump[h:FractionHeatLoadServed > 0]) &lt;= 1'>Expected at most one heating system for each Building if OnOffThermostatDeadbandTemperature is specified</sch:assert>
+      <sch:assert role='ERROR' test='sum(h:Systems/h:HVAC/h:HVACPlant/*/h:FractionHeatLoadServed) &gt;= 0.99 or count(h:Systems/h:HVAC/h:HVACPlant/*/h:FractionHeatLoadServed) = 0'>Expected sum(FractionHeatLoadServed) to be equal to 1 if OnOffThermostatDeadbandTemperature is specified</sch:assert>
+      <sch:assert role='ERROR' test='sum(h:Systems/h:HVAC/h:HVACPlant/*/h:FractionCoolLoadServed) &gt;= 0.99 or count(h:Systems/h:HVAC/h:HVACPlant/*/h:FractionCoolLoadServed) = 0'>Expected sum(FractionCoolLoadServed) to be equal to 1 if OnOffThermostatDeadbandTemperature is specified</sch:assert>
+      <sch:assert role='ERROR' test='number(../../h:SoftwareInfo/h:extension/h:SimulationControl/h:Timestep) = 1'>Expected Timestep to be 1 if OnOffThermostatDeadbandTemperature is specified</sch:assert>
       <!-- Warnings -->
-      <sch:report role='WARN' test='number(/h:HPXML/h:SoftwareInfo/h:extension/h:SimulationControl/h:AdvancedResearchFeatures/h:TemperatureCapacitanceMultiplier) &lt;= 1'>TemperatureCapacitanceMultiplier should typically be greater than 1.</sch:report>
+      <sch:report role='WARN' test='number(../../h:SoftwareInfo/h:extension/h:SimulationControl/h:AdvancedResearchFeatures/h:TemperatureCapacitanceMultiplier) &lt;= 1'>TemperatureCapacitanceMultiplier should typically be greater than 1 if OnOffThermostatDeadbandTemperature is specified.</sch:report>
     </sch:rule>
   </sch:pattern>
 
   <sch:pattern>
     <sch:title>[HeatPumpBackupCapacityIncrement]</sch:title>
     <sch:rule context='/h:HPXML/h:SoftwareInfo/h:extension/h:SimulationControl[h:AdvancedResearchFeatures/h:HeatPumpBackupCapacityIncrement]'>
-      <sch:assert role='ERROR' test='number(h:Timestep) = 1'>Expected Timestep to be 1</sch:assert>
+      <sch:assert role='ERROR' test='number(h:Timestep) = 1'>Expected Timestep to be 1 if HeatPumpBackupCapacityIncrement is specified</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -153,18 +154,20 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[UtilityRate=Electricity]</sch:title>
-    <sch:rule context='/h:HPXML/h:SoftwareInfo/h:extension/h:UtilityBillScenarios/h:UtilityBillScenario/h:UtilityRate[h:FuelType="electricity"]'>
-      <sch:assert role='ERROR' test='count(h:FixedCharge) + count(h:TariffFilePath) &lt;= 1'>Expected not both FixedCharge and TariffFilePath</sch:assert>
-      <sch:assert role='ERROR' test='count(h:MarginalRate) + count(h:TariffFilePath) &lt;= 1'>Expected not both MarginalRate and TariffFilePath</sch:assert>
+    <sch:title>[UtilityRate]</sch:title>
+    <sch:rule context='/h:HPXML/h:SoftwareInfo/h:extension/h:UtilityBillScenarios/h:UtilityBillScenario/h:UtilityRate'>
+      <sch:assert role='ERROR' test='count(h:FixedCharge) &lt;= 1'>Expected at most one FixedCharge</sch:assert>
+      <sch:assert role='ERROR' test='number(h:FixedCharge) &gt;= 0 or not(h:FixedCharge)'>Expected FixedCharge to be greater than or equal to 0</sch:assert>
+      <sch:assert role='ERROR' test='count(h:MarginalRate) &lt;= 1'>Expected at most one MarginalRate</sch:assert>
+      <sch:assert role='ERROR' test='number(h:MarginalRate) &gt;= 0 or not(h:MarginalRate)'>Expected MarginalRate to be greater than or equal to 0</sch:assert>
     </sch:rule>
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[UtilityRate=Fuel]</sch:title>
-    <sch:rule context='/h:HPXML/h:SoftwareInfo/h:extension/h:UtilityBillScenarios/h:UtilityBillScenario/h:UtilityRate[h:FuelType!="electricity"]'>
-      <sch:assert role='ERROR' test='count(h:FixedCharge) &lt;= 1'>Expected at most one FixedCharge</sch:assert>
-      <sch:assert role='ERROR' test='count(h:MarginalRate) &lt;= 1'>Expected at most one MarginalRate</sch:assert>
+    <sch:title>[UtilityRate=Electricity]</sch:title>
+    <sch:rule context='/h:HPXML/h:SoftwareInfo/h:extension/h:UtilityBillScenarios/h:UtilityBillScenario/h:UtilityRate[h:FuelType="electricity"]'>
+      <sch:assert role='ERROR' test='count(h:FixedCharge) + count(h:TariffFilePath) &lt;= 1'>Expected not both FixedCharge and TariffFilePath</sch:assert>
+      <sch:assert role='ERROR' test='count(h:MarginalRate) + count(h:TariffFilePath) &lt;= 1'>Expected not both MarginalRate and TariffFilePath</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -188,6 +191,7 @@
     <sch:title>[PVCompensationType=NetMeteringWithUserExcessSellbackRate]</sch:title>
     <sch:rule context='/h:HPXML/h:SoftwareInfo/h:extension/h:UtilityBillScenarios/h:UtilityBillScenario/h:PVCompensation/h:CompensationType/h:NetMetering[h:AnnualExcessSellbackRateType="User-Specified"]'>
       <sch:assert role='ERROR' test='count(h:AnnualExcessSellbackRate) &lt;= 1'>Expected at most one AnnualExcessSellbackRate</sch:assert>
+      <sch:assert role='ERROR' test='number(h:AnnualExcessSellbackRate) &gt;= 0 or not(h:AnnualExcessSellbackRate)'>Expected AnnualExcessSellbackRate to be greater than or equal to 0</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -195,6 +199,7 @@
     <sch:title>[PVCompensationType=FeedInTariff]</sch:title>
     <sch:rule context='/h:HPXML/h:SoftwareInfo/h:extension/h:UtilityBillScenarios/h:UtilityBillScenario/h:PVCompensation/h:CompensationType/h:FeedInTariff'>
       <sch:assert role='ERROR' test='count(h:FeedInTariffRate) &lt;= 1'>Expected at most one FeedInTariffRate</sch:assert>
+      <sch:assert role='ERROR' test='number(h:FeedInTariffRate) &gt;= 0 or not(h:FeedInTariffRate)'>Expected FeedInTariffRate to be greater than or equal to 0</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -333,6 +338,7 @@
       <sch:assert role='ERROR' test='count(h:HeatPumpBackupSizingMethodology) &lt;= 1'>Expected at most one HeatPumpBackupSizingMethodology</sch:assert>
       <sch:assert role='ERROR' test='h:HeatPumpBackupSizingMethodology[text()="emergency" or text()="supplemental"] or not(h:HeatPumpBackupSizingMethodology)'>Expected HeatPumpBackupSizingMethodology to be 'emergency' or 'supplemental'</sch:assert>
       <sch:assert role='ERROR' test='count(h:AllowIncreasedFixedCapacities) &lt;= 1'>Expected at most one AllowIncreasedFixedCapacities</sch:assert>
+      <sch:assert role='ERROR' test='h:AllowIncreasedFixedCapacities[text()="true" or text()="false"] or not(h:AllowIncreasedFixedCapacities)'>Expected AllowIncreasedFixedCapacities to be 'true' or 'false'</sch:assert>
       <sch:assert role='ERROR' test='count(h:ManualJInputs/h:HeatingDesignTemperature) &lt;= 1'>Expected at most one ManualJInputs/WinterDesignTemperature</sch:assert>
       <sch:assert role='ERROR' test='count(h:ManualJInputs/h:CoolingDesignTemperature) &lt;= 1'>Expected at most one ManualJInputs/SummerDesignTemperature</sch:assert>
       <sch:assert role='ERROR' test='count(h:ManualJInputs/h:DailyTemperatureRange) &lt;= 1'>Expected at most one ManualJInputs/DailyTemperatureRange</sch:assert>
@@ -413,8 +419,13 @@
     <sch:title>[NeighborBuilding]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:BuildingSummary/h:Site/h:extension/h:Neighbors/h:NeighborBuilding'>
       <sch:assert role='ERROR' test='count(h:Azimuth) + count(h:Orientation) &gt;= 1'>Expected Azimuth or Orientation</sch:assert>
+      <sch:assert role='ERROR' test='number(h:Azimuth) &gt;= 0 or not(h:Azimuth)'>Expected Azimuth to be greater than or equal to 0</sch:assert>
+      <sch:assert role='ERROR' test='number(h:Azimuth) &lt; 360 or not(h:Azimuth)'>Expected Azimuth to be less than 360</sch:assert>
+      <sch:assert role='ERROR' test='h:Orientation[text()="northeast" or text()="east" or text()="southeast" or text()="south" or text()="southwest" or text()="west" or text()="northwest" or text()="north"] or not(h:Orientation)'>Expected Orientation to be 'northeast' or 'east' or 'southeast' or 'south' or 'southwest' or 'west' or 'northwest' or 'north'</sch:assert>
       <sch:assert role='ERROR' test='count(h:Distance) = 1'>Expected Distance</sch:assert>
+      <sch:assert role='ERROR' test='number(h:Distance) &gt; 0 or not(h:Distance)'>Expected Distance to be greater than 0</sch:assert>
       <sch:assert role='ERROR' test='count(h:Height) &lt;= 1'>Expected at most one Height</sch:assert>
+      <sch:assert role='ERROR' test='number(h:Height) &gt; 0 or not(h:Height)'>Expected Height to be greater than 0</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -456,14 +467,14 @@
     <sch:title>[BuildingType=SFAorMF]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:BuildingSummary/h:BuildingConstruction/h:ResidentialFacilityType[text()="single-family attached" or text()="apartment unit"]'>
       <!-- Warnings -->
-      <sch:report role='WARN' test='count(//h:ExteriorAdjacentTo[text()="other housing unit" or text()="other heated space" or text()="other multifamily buffer space" or text()="other non-freezing space"]) = 0'>ResidentialFacilityType is "single-family attached" or "apartment unit", but no attached surfaces were found. This may result in erroneous results (e.g., for infiltration).</sch:report>
+      <sch:report role='WARN' test='count(../../../h:Enclosure/*/*/h:ExteriorAdjacentTo[text()="other housing unit" or text()="other heated space" or text()="other multifamily buffer space" or text()="other non-freezing space"]) = 0'>ResidentialFacilityType is "single-family attached" or "apartment unit", but no attached surfaces were found. This may result in erroneous results (e.g., for infiltration).</sch:report>
     </sch:rule>
   </sch:pattern>
 
   <sch:pattern>
     <sch:title>[BuildingType=SFDorMH]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:BuildingSummary/h:BuildingConstruction/h:ResidentialFacilityType[text()="single-family detached" or text()="manufactured home"]'>
-      <sch:assert role='ERROR' test='count(/h:HPXML/h:SoftwareInfo/h:extension/h:WholeSFAorMFBuildingSimulation[text()="true"]) = 0'>Expected WholeSFAorMFBuildingSimulation to not be "true" if ResidentialFacilityType is "single-family detached" or "manufactured home"</sch:assert>
+      <sch:assert role='ERROR' test='count(../../../../../h:SoftwareInfo/h:extension/h:WholeSFAorMFBuildingSimulation[text()="true"]) = 0'>Expected WholeSFAorMFBuildingSimulation to not be "true" if ResidentialFacilityType is "single-family detached" or "manufactured home"</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -547,7 +558,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[LeakinessDescription]</sch:title>
+    <sch:title>[AirInfiltrationMeasurement=LeakinessDescription]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails[h:Enclosure/h:AirInfiltration/h:AirInfiltrationMeasurement/h:LeakinessDescription]'>
       <sch:assert role='ERROR' test='count(h:BuildingSummary/h:BuildingConstruction/h:YearBuilt) = 1'>Expected BuildingSummary/BuildingConstruction/YearBuilt if AirInfiltrationMeasurement/LeakinessDescription is specified</sch:assert>
     </sch:rule>
@@ -568,6 +579,13 @@
       <sch:assert role='ERROR' test='count(h:UnitofMeasure) = 1'>Expected UnitofMeasure</sch:assert> <!-- Can remove this when https://github.com/hpxmlwg/hpxml/pull/467 is available -->
       <sch:assert role='ERROR' test='h:UnitofMeasure[text()="SLA"] or not (h:UnitofMeasure)'>Expected UnitofMeasure to be 'SLA'</sch:assert>
       <sch:assert role='ERROR' test='count(h:Value) = 1'>Expected Value</sch:assert> <!-- Can remove this when https://github.com/hpxmlwg/hpxml/pull/467 is available -->
+    </sch:rule>
+  </sch:pattern>
+
+  <sch:pattern>
+    <sch:title>[SameasSurfaces]</sch:title>
+    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/*/*[h:SystemIdentifier/@sameas and /h:HPXML/h:SoftwareInfo/h:extension/h:WholeSFAorMFBuildingSimulation[text()="true"]]'>
+      <sch:assert role='ERROR' test='count(*) = 1'>Expected only SystemIdentifier to be specified when sameas attribute used</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -670,13 +688,6 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[SameasSurfaces]</sch:title>
-    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/*/*[h:SystemIdentifier/@sameas and /h:HPXML/h:SoftwareInfo/h:extension/h:WholeSFAorMFBuildingSimulation[text()="true"]]'>
-      <sch:assert role='ERROR' test='count(*) = 1'>Expected only SystemIdentifier to be specified when sameas attribute used</sch:assert>
-    </sch:rule>
-  </sch:pattern>
-
-  <sch:pattern>
     <sch:title>[Slab]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/h:Slabs/h:Slab'>
       <sch:assert role='ERROR' test='count(h:InteriorAdjacentTo) = 1'>Expected InteriorAdjacentTo</sch:assert>
@@ -691,6 +702,7 @@
       <sch:assert role='ERROR' test='number(h:extension/h:CarpetFraction) &gt;= 0 or not(h:extension/h:CarpetFraction)'>Expected extension/CarpetFraction to be greater than or equal to 0</sch:assert>
       <sch:assert role='ERROR' test='number(h:extension/h:CarpetFraction) &lt;= 1 or not(h:extension/h:CarpetFraction)'>Expected extension/CarpetFraction to be less than or equal to 1</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:CarpetRValue) &lt;= 1'>Expected at most one extension/CarpetRValue</sch:assert>
+      <sch:assert role='ERROR' test='number(h:extension/h:CarpetRValue) &gt;= 0 or not(h:extension/h:CarpetRValue)'>Expected extension/CarpetRValue to be greater than or equal to 0</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:ExposedPerimeter) = 0'>Slab has zero exposed perimeter, this may indicate an input error.</sch:report>
       <sch:report role='WARN' test='number(h:ExposedPerimeter) &gt; 2*number(h:Area)'>Slab exposed perimeter is more than twice the slab area, this may indicate an input error.</sch:report>
@@ -710,6 +722,7 @@
       <sch:assert role='ERROR' test='h:GlassLayers[text()="single-pane" or text()="double-pane" or text()="triple-pane" or text()="glass block"] or not(h:GlassLayers) or h:UFactor'>Expected GlassLayers to be 'single-pane' or 'double-pane' or 'triple-pane' or 'glass block'</sch:assert>
       <sch:assert role='ERROR' test='count(h:ExteriorShading) &lt;= 1'>Expected at most one ExteriorShading</sch:assert>
       <sch:assert role='ERROR' test='count(h:InteriorShading) &lt;= 1'>Expected at most one InteriorShading</sch:assert>
+      <sch:assert role='ERROR' test='h:StormWindow/h:GlassType[text()="clear" or text()="low-e"] or not(h:StormWindow/h:GlassType)'>Expected StormWindow/GlassType to be 'clear' or 'low-e'</sch:assert>
       <sch:assert role='ERROR' test='count(h:AttachedToWall) = 1'>Expected AttachedToWall</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='h:ExteriorShading/h:Type[text()="external overhangs"] and count(h:Overhangs) &gt; 0'>Exterior shading type is 'external overhangs', but overhangs are explicitly defined; exterior shading type will be ignored.</sch:report>
@@ -723,13 +736,6 @@
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/h:Windows/h:Window[not(h:UFactor) and h:GlassLayers[text()="single-pane" or text()="double-pane" or text()="triple-pane"]]'>
       <sch:assert role='ERROR' test='count(h:FrameType[h:Aluminum | h:Fiberglass | h:Metal | h:Vinyl | h:Wood]) = 1'>Expected FrameType[Aluminum | Fiberglass | Metal | Vinyl | Wood]</sch:assert>
       <sch:assert role='ERROR' test='h:GlassType[text()="clear" or text()="low-e" or text()="low-e, high-solar-gain" or text()="low-e, low-solar-gain" or text()="tinted" or text()="tinted/reflective" or text()="reflective"] or not(h:GlassType)'>Expected GlassType to be 'clear' or 'low-e' or 'low-e, high-solar-gain' or 'low-e, low-solar-gain' or 'tinted' or 'tinted/reflective' or 'reflective'</sch:assert>
-    </sch:rule>
-  </sch:pattern>
-
-  <sch:pattern>
-    <sch:title>[WindowStorm]</sch:title>
-    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/h:Windows/h:Window/h:StormWindow'>
-      <sch:assert role='ERROR' test='h:GlassType[text()="clear" or text()="low-e"] or not(h:GlassType)'>Expected GlassType to be 'clear' or 'low-e'</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -762,6 +768,7 @@
       <sch:assert role='ERROR' test='count(h:SHGC) + count(h:GlassLayers) &gt;= 1'>Expected SHGC or GlassLayers</sch:assert>
       <sch:assert role='ERROR' test='h:GlassLayers[text()="single-pane" or text()="double-pane" or text()="triple-pane" or text()="glass block"] or not(h:GlassLayers) or h:UFactor'>Expected GlassLayers to be 'single-pane' or 'double-pane' or 'triple-pane' or 'glass block'</sch:assert>
       <sch:assert role='ERROR' test='count(h:ExteriorShading) &lt;= 1'>Expected at most one ExteriorShading</sch:assert>
+      <sch:assert role='ERROR' test='h:StormWindow/h:GlassType[text()="clear" or text()="low-e"] or not(h:StormWindow/h:GlassType)'>Expected StormWindow/GlassType to be 'clear' or 'low-e'</sch:assert>
       <sch:assert role='ERROR' test='count(h:AttachedToRoof) = 1'>Expected AttachedToRoof</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:Curb) &lt;= 1'>Expected at most one Curb</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:Shaft) &lt;= 1'>Expected at most one Shaft</sch:assert>
@@ -773,13 +780,6 @@
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/h:Skylights/h:Skylight[not(h:UFactor) and h:GlassLayers[text()="single-pane" or text()="double-pane" or text()="triple-pane"]]'>
       <sch:assert role='ERROR' test='count(h:FrameType[h:Aluminum | h:Fiberglass | h:Metal | h:Vinyl | h:Wood]) = 1'>Expected FrameType[Aluminum | Fiberglass | Metal | Vinyl | Wood]</sch:assert>
       <sch:assert role='ERROR' test='h:GlassType[text()="clear" or text()="low-e" or text()="low-e, high-solar-gain" or text()="low-e, low-solar-gain" or text()="tinted" or text()="tinted/reflective" or text()="reflective"] or not(h:GlassType)'>Expected GlassType to be 'clear' or 'low-e' or 'low-e, high-solar-gain' or 'low-e, low-solar-gain' or 'tinted' or 'tinted/reflective' or 'reflective'</sch:assert>
-    </sch:rule>
-  </sch:pattern>
-
-  <sch:pattern>
-    <sch:title>[SkylightStorm]</sch:title>
-    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/h:Skylights/h:Skylight/h:StormWindow'>
-      <sch:assert role='ERROR' test='h:GlassType[text()="clear" or text()="low-e"] or not(h:GlassType)'>Expected GlassType to be 'clear' or 'low-e'</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -821,6 +821,7 @@
       <sch:assert role='ERROR' test='count(h:InteriorFinish/h:Type) &lt;= 1'>Expected at most one InteriorFinish/Type</sch:assert>
       <sch:assert role='ERROR' test='h:InteriorFinish/h:Type[text()="gypsum board" or text()="gypsum composite board" or text()="plaster" or text()="wood" or text()="not present"] or not(h:InteriorFinish/h:Type)'>Expected InteriorFinish/Type to be 'gypsum board' or 'gypsum composite board' or 'plaster' or 'wood' or 'not present'</sch:assert>
       <sch:assert role='ERROR' test='count(h:InteriorFinish/h:Thickness) &lt;= 1'>Expected at most one InteriorFinish/Thickness</sch:assert>
+      <sch:assert role='ERROR' test='number(h:InteriorFinish/h:Thickness) &gt;= 0 or not(h:InteriorFinish/h:Thickness)'>Expected InteriorFinish/Thickness to be greater than or equal to 0</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -1485,7 +1486,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[HeatingDetailedPerformanceDataSingleStage]</sch:title>
+    <sch:title>[HeatingDetailedPerformanceData=SingleStage]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/h:HeatingDetailedPerformanceData[../h:CompressorType="single stage"]'>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature=47 and h:CapacityDescription="nominal"]) = 1'>Expected PerformanceDataPoint[OutdoorTemperature=47 and CapacityDescription="nominal"]</sch:assert>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature=17 and h:CapacityDescription="nominal"]) = 1'>Expected PerformanceDataPoint[OutdoorTemperature=17 and CapacityDescription="nominal"]</sch:assert>
@@ -1496,7 +1497,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[HeatingDetailedPerformanceDataTwoStage]</sch:title>
+    <sch:title>[HeatingDetailedPerformanceData=TwoStage]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/h:HeatingDetailedPerformanceData[../h:CompressorType="two stage"]'>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature=47 and h:CapacityDescription="minimum"]) = 1'>Expected PerformanceDataPoint[OutdoorTemperature=47 and CapacityDescription="minimum"]</sch:assert>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature=47 and h:CapacityDescription="nominal"]) = 1'>Expected PerformanceDataPoint[OutdoorTemperature=47 and CapacityDescription="nominal"]</sch:assert>
@@ -1531,7 +1532,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[HeatingDetailedPerformanceDataVariableSpeed]</sch:title>
+    <sch:title>[HeatingDetailedPerformanceData=VariableSpeed]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/h:HeatingDetailedPerformanceData[../h:CompressorType="variable speed"]'>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature=47 and h:CapacityDescription="minimum"]) = 1'>Expected PerformanceDataPoint[OutdoorTemperature=47 and CapacityDescription="minimum"]</sch:assert>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature=47 and h:CapacityDescription="nominal"]) = 1'>Expected PerformanceDataPoint[OutdoorTemperature=47 and CapacityDescription="nominal"]</sch:assert>
@@ -1604,7 +1605,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[CoolingDetailedPerformanceDataSingleStage]</sch:title>
+    <sch:title>[CoolingDetailedPerformanceData=SingleStage]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/h:CoolingDetailedPerformanceData[../h:CompressorType="single stage"]'>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature &gt; 95 and h:CapacityDescription="nominal"]) &lt;= 1'>Expected at most one PerformanceDataPoint[OutdoorTemperature&gt;95 and CapacityDescription="nominal"]</sch:assert>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature=95 and h:CapacityDescription="nominal"]) = 1'>Expected PerformanceDataPoint[OutdoorTemperature=95 and CapacityDescription="nominal"]</sch:assert>
@@ -1614,7 +1615,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[CoolingDetailedPerformanceDataTwoStage]</sch:title>
+    <sch:title>[CoolingDetailedPerformanceData=TwoStage]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/h:CoolingDetailedPerformanceData[../h:CompressorType="two stage"]'>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature &gt; 95 and h:CapacityDescription="minimum"]) &lt;= 1'>Expected at most one PerformanceDataPoint[OutdoorTemperature&gt;95 and CapacityDescription="minimum"]</sch:assert>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature &gt; 95 and h:CapacityDescription="nominal"]) &lt;= 1'>Expected at most one PerformanceDataPoint[OutdoorTemperature&gt;95 and CapacityDescription="nominal"]</sch:assert>
@@ -1643,7 +1644,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[CoolingDetailedPerformanceDataVariableSpeed]</sch:title>
+    <sch:title>[CoolingDetailedPerformanceData=VariableSpeed]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/h:CoolingDetailedPerformanceData[../h:CompressorType="variable speed"]'>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature &gt; 95 and h:CapacityDescription="minimum"]) &lt;= 1'>Expected at most one PerformanceDataPoint[OutdoorTemperature&gt;95 and CapacityDescription="minimum"]</sch:assert>
       <sch:assert role='ERROR' test='count(h:PerformanceDataPoint[h:OutdoorTemperature &gt; 95 and h:CapacityDescription="nominal"]) &lt;= 1'>Expected at most one PerformanceDataPoint[OutdoorTemperature&gt;95 and CapacityDescription="nominal"]</sch:assert>
@@ -1701,7 +1702,17 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[HeatingDetailedPerformanceDataPointCapacity]</sch:title>
+    <sch:title>[PerformanceDataPoint]</sch:title>
+    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/*/h:PerformanceDataPoint'>
+      <sch:assert role='ERROR' test='count(h:Capacity) + count(h:CapacityFractionOfNominal) &gt;= 1'>Expected Capacity or CapacityFractionOfNominal</sch:assert>
+      <sch:assert role='ERROR' test='number(h:Capacity) &gt;= 0 or not(h:Capacity)'>Expected Capacity to be greater than or equal to 0</sch:assert>
+      <sch:assert role='ERROR' test='number(h:CapacityFractionOfNominal) &gt;= 0 or not(h:CapacityFractionOfNominal)'>Expected CapacityFractionOfNominal to be greater than or equal to 0</sch:assert>
+      <sch:assert role='ERROR' test='count(h:Efficiency[h:Units="COP"]/h:Value) = 1'>Expected Efficiency[Units="COP"]/Value</sch:assert>
+    </sch:rule>
+  </sch:pattern>
+
+  <sch:pattern>
+    <sch:title>[PerformanceDataPoint=HeatingCapacity]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/h:HeatingDetailedPerformanceData/h:PerformanceDataPoint[number(h:OutdoorTemperature)=47 and h:CapacityDescription="nominal"]'>
       <sch:assert role='ERROR' test='(number(../../h:HeatingCapacity) &gt;= 0.99 * number(h:Capacity) or not (../../h:HeatingCapacity)) or not (h:Capacity)'>Expected ../../HeatingCapacity to be equal to Capacity</sch:assert>
       <sch:assert role='ERROR' test='(number(../../h:HeatingCapacity) &lt;= 1.01 * number(h:Capacity) or not (../../h:HeatingCapacity)) or not (h:Capacity)'>Expected ../../HeatingCapacity to be equal to Capacity</sch:assert>
@@ -1711,7 +1722,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[HeatingDetailedPerformanceDataPointCapacity17F]</sch:title>
+    <sch:title>[PerformanceDataPoint=HeatingCapacity17F]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/h:HeatingDetailedPerformanceData/h:PerformanceDataPoint[number(h:OutdoorTemperature)=17 and h:CapacityDescription="nominal"]'>
       <sch:assert role='ERROR' test='(number(../../h:HeatingCapacity17F) &gt;= 0.99 * number(h:Capacity) or not (../../h:HeatingCapacity17F)) or not (h:Capacity)'>Expected ../../HeatingCapacity17F to be equal to Capacity</sch:assert>
       <sch:assert role='ERROR' test='(number(../../h:HeatingCapacity17F) &lt;= 1.01 * number(h:Capacity) or not (../../h:HeatingCapacity17F)) or not (h:Capacity)'>Expected ../../HeatingCapacity17F to be equal to Capacity</sch:assert>
@@ -1719,22 +1730,12 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[CoolingDetailedPerformanceDataPointCapacity]</sch:title>
+    <sch:title>[PerformanceDataPoint=CoolingCapacity]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/h:CoolingDetailedPerformanceData/h:PerformanceDataPoint[number(h:OutdoorTemperature)=95 and h:CapacityDescription="nominal"]'>
       <sch:assert role='ERROR' test='(number(../../h:CoolingCapacity) &gt;= 0.99 * number(h:Capacity) or not (../../h:CoolingCapacity)) or not (h:Capacity)'>Expected ../../CoolingCapacity to be equal to Capacity</sch:assert>
       <sch:assert role='ERROR' test='(number(../../h:CoolingCapacity) &lt;= 1.01 * number(h:Capacity) or not (../../h:CoolingCapacity)) or not (h:Capacity)'>Expected ../../CoolingCapacity to be equal to Capacity</sch:assert>
       <sch:assert role='ERROR' test='number(h:CapacityFractionOfNominal) &gt;= 0.99 or not (h:CapacityFractionOfNominal)'>Expected CapacityFractionOfNominal to be 1.0</sch:assert>
       <sch:assert role='ERROR' test='number(h:CapacityFractionOfNominal) &lt;= 1.01 or not (h:CapacityFractionOfNominal)'>Expected CapacityFractionOfNominal to be 1.0</sch:assert>
-    </sch:rule>
-  </sch:pattern>
-
-  <sch:pattern>
-    <sch:title>[PerformanceDataPoint]</sch:title>
-    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/*/*/h:PerformanceDataPoint'>
-      <sch:assert role='ERROR' test='count(h:Capacity) + count(h:CapacityFractionOfNominal) &gt;= 1'>Expected Capacity or CapacityFractionOfNominal</sch:assert>
-      <sch:assert role='ERROR' test='number(h:Capacity) &gt;= 0 or not(h:Capacity)'>Expected Capacity to be greater than or equal to 0</sch:assert>
-      <sch:assert role='ERROR' test='number(h:CapacityFractionOfNominal) &gt;= 0 or not(h:CapacityFractionOfNominal)'>Expected CapacityFractionOfNominal to be greater than or equal to 0</sch:assert>
-      <sch:assert role='ERROR' test='count(h:Efficiency[h:Units="COP"]/h:Value) = 1'>Expected Efficiency[Units="COP"]/Value</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -1935,7 +1936,7 @@
   <sch:pattern>
     <sch:title>[HVACDuct=WithLocation]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACDistribution/h:DistributionSystemType/h:AirDistribution/h:Ducts[h:DuctLocation]'>
-      <sch:assert role='ERROR' test='count(h:FractionDuctArea) + count(h:DuctSurfaceArea) &gt;= 1'>Expected FractionDuctArea or DuctSurfaceArea</sch:assert>
+      <sch:assert role='ERROR' test='count(h:FractionDuctArea) + count(h:DuctSurfaceArea) &gt;= 1'>Expected FractionDuctArea or DuctSurfaceArea if Ducts with DuctLocation are specified</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -1948,7 +1949,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[HVACDuct=SurfaceAreaDefaulted]</sch:title>
+    <sch:title>[HVACDuct=WithoutSurfaceArea]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACDistribution/h:DistributionSystemType/h:AirDistribution/h:Ducts[not(h:DuctSurfaceArea)]'>
       <sch:assert role='ERROR' test='count(../../../h:ConditionedFloorAreaServed) = 1'>Expected ../../../ConditionedFloorAreaServed if Ducts without DuctSurfaceArea are specified</sch:assert>
     </sch:rule>
@@ -2039,6 +2040,7 @@
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:MechanicalVentilation/h:VentilationFans/h:VentilationFan[h:UsedForWholeBuildingVentilation="true" and h:FanType="central fan integrated supply" and h:CFISControls/h:AdditionalRuntimeOperatingMode="supplemental fan"]'>
       <sch:assert role='ERROR' test='count(h:CFISControls/h:SupplementalFan) = 1'>Expected CFISControls/SupplementalFan if CFISControls/AdditionalRuntimeOperatingMode="supplemental fan"</sch:assert>
       <sch:assert role='ERROR' test='count(h:CFISControls/h:extension/h:SupplementalFanRunsWithAirHandlerFan) &lt;= 1'>Expected at most one CFISControls/extension/SupplementalFanRunsWithAirHandlerFan</sch:assert>
+      <sch:assert role='ERROR' test='h:CFISControls/h:extension/h:SupplementalFanRunsWithAirHandlerFan[text()="true" or text()="false"] or not(h:CFISControls/h:extension/h:SupplementalFanRunsWithAirHandlerFan)'>Expected CFISControls/extension/SupplementalFanRunsWithAirHandlerFan to be 'true' or 'false'</sch:assert>
       <sch:assert role='ERROR' test='count(h:FanPower) = 0'>Expected no FanPower if CFISControls/AdditionalRuntimeOperatingMode="supplemental fan"</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:VentilationOnlyModeAirflowFraction) = 0'>Expected no extension/VentilationOnlyModeAirflowFraction if CFISControls/AdditionalRuntimeOperatingMode="supplemental fan"</sch:assert>
     </sch:rule>
@@ -2171,7 +2173,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[WaterHeatingSystemType=HeatPump]</sch:title>
+    <sch:title>[WaterHeatingSystemType=HPWH]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:WaterHeating/h:WaterHeatingSystem[h:WaterHeaterType="heat pump water heater"]'>
       <sch:assert role='ERROR' test='count(h:FuelType[text()="electricity"]) = 1'>Expected FuelType to be "electricity"</sch:assert>
       <sch:assert role='ERROR' test='h:Location[text()="conditioned space" or text()="basement - unconditioned" or text()="basement - conditioned" or text()="attic - unvented" or text()="attic - vented" or text()="garage" or text()="crawlspace - unvented" or text()="crawlspace - vented" or text()="crawlspace - conditioned" or text()="other exterior" or text()="other housing unit" or text()="other heated space" or text()="other multifamily buffer space" or text()="other non-freezing space"] or not(h:Location)'>Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'crawlspace - conditioned' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'</sch:assert>
@@ -2191,7 +2193,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[HPWHInConfinedSpaceWithoutMitigation]</sch:title>
+    <sch:title>[WaterHeatingSystemType=HPWHInConfinedSpaceWithoutMitigation]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:WaterHeating/h:WaterHeatingSystem/h:extension[h:HPWHInConfinedSpaceWithoutMitigation="true"]'>
       <sch:assert role='ERROR' test='count(h:HPWHContainmentVolume) = 1'>Expected HPWHContainmentVolume if HPWHInConfinedSpaceWithoutMitigation="true"</sch:assert>
       <sch:assert role='ERROR' test='number(h:HPWHContainmentVolume) &gt; 0 or not(h:HPWHContainmentVolume)'>Expected HPWHContainmentVolume to be greater than 0.</sch:assert>
@@ -2279,6 +2281,7 @@
       <sch:assert role='ERROR' test='count(h:NumberofBedroomsServed) = 1'>Expected NumberofBedroomsServed</sch:assert>
       <sch:assert role='ERROR' test='number(h:NumberofBedroomsServed) &gt; number(../../../../../h:BuildingSummary/h:BuildingConstruction/h:NumberofBedrooms) or not(h:NumberofBedroomsServed) or not(../../../../../h:BuildingSummary/h:BuildingConstruction/h:NumberofBedrooms)'>Expected NumberofBedroomsServed to be greater than ../../../../../BuildingSummary/BuildingConstruction/NumberofBedrooms</sch:assert>
       <sch:assert role='ERROR' test='count(h:PumpPower) &lt;= 1'>Expected at most one PumpPower</sch:assert>
+      <sch:assert role='ERROR' test='number(h:PumpPower) &gt;= 0 or not(h:PumpPower)'>Expected PumpPower to be greater than or equal to 0</sch:assert>
       <sch:assert role='ERROR' test='count(h:ControlType) = 1'>Expected ControlType</sch:assert>
       <sch:assert role='ERROR' test='h:ControlType[text()="manual demand control" or text()="presence sensor demand control" or text()="temperature" or text()="timer" or text()="no control"] or not(h:ControlType)'>Expected ControlType to be 'manual demand control' or 'presence sensor demand control' or 'temperature' or 'timer' or 'no control'</sch:assert>
       <sch:assert role='ERROR' test='count(../../h:extension/h:RecirculationPumpWeekdayScheduleFractions) &lt;= 1'>Expected at most one ../../extension/RecirculationPumpWeekdayScheduleFractions</sch:assert>
@@ -2317,12 +2320,6 @@
       <sch:assert role='ERROR' test='count(h:SystemType) = 1'>Expected SystemType</sch:assert>
       <sch:assert role='ERROR' test='h:SystemType[text()="hot water"] or not(h:SystemType)'>Expected SystemType to be 'hot water'</sch:assert>
       <sch:assert role='ERROR' test='count(h:CollectorArea) + count(h:SolarFraction) = 1'>Expected CollectorArea or SolarFraction but not both</sch:assert>
-    </sch:rule>
-  </sch:pattern>
-
-  <sch:pattern>
-    <sch:title>[SolarThermalSystemType=Simple]</sch:title>
-    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:SolarThermal/h:SolarThermalSystem[h:SolarFraction]'>
       <sch:assert role='ERROR' test='number(h:SolarFraction) &lt;= 0.99 or not(h:SolarFraction)'>Expected SolarFraction to be less than or equal to 0.99</sch:assert>
     </sch:rule>
   </sch:pattern>
@@ -2697,6 +2694,7 @@
     <sch:title>[ExteriorHolidayLighting]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Lighting/h:extension/h:ExteriorHolidayLighting'>
       <sch:assert role='ERROR' test='count(h:Load[h:Units="kWh/day"]/h:Value) &lt;= 1'>Expected at most one Load[Units="kWh/day"]/Value</sch:assert>
+      <sch:assert role='ERROR' test='number(h:Load[h:Units="kWh/day"]/h:Value) &gt;= 0 or not(h:Load[h:Units="kWh/day"]/h:Value)'>Expected Load[Units="kWh/day"]/Value to be greater than or equal to 0</sch:assert>
       <sch:assert role='ERROR' test='count(h:WeekdayScheduleFractions) &lt;= 1'>Expected at most one WeekdayScheduleFractions</sch:assert>
       <sch:assert role='ERROR' test='count(h:WeekendScheduleFractions) &lt;= 1'>Expected at most one WeekendScheduleFractions</sch:assert>
     </sch:rule>
@@ -2737,7 +2735,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[PoolPump]</sch:title>
+    <sch:title>[Pool=Pump]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Pools/h:Pool/h:Pumps/h:Pump'>
       <sch:assert role='ERROR' test='count(h:Type) = 1'>Expected Type</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:UsageMultiplier) &lt;= 1'>Expected at most one extension/UsageMultiplier</sch:assert>
@@ -2749,7 +2747,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[PoolHeater]</sch:title>
+    <sch:title>[Pool=Heater]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Pools/h:Pool/h:Heater'>
       <sch:assert role='ERROR' test='count(h:Type) = 1'>Expected Type</sch:assert>
       <sch:assert role='ERROR' test='h:Type[text()="not present" or text()="gas fired" or text()="electric resistance" or text()="heat pump"] or not(h:Type)'>Expected Type to be 'not present' or 'gas fired' or 'electric resistance' or 'heat pump'</sch:assert>
@@ -2770,7 +2768,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[PermanentSpaPump]</sch:title>
+    <sch:title>[PermanentSpa=Pump]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Spas/h:PermanentSpa/h:Pumps/h:Pump'>
       <sch:assert role='ERROR' test='count(h:Type) = 1'>Expected Type</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:UsageMultiplier) &lt;= 1'>Expected at most one extension/UsageMultiplier</sch:assert>
@@ -2782,7 +2780,7 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[PermanentSpaHeater]</sch:title>
+    <sch:title>[PermanentSpa=Heater]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Spas/h:PermanentSpa/h:Heater'>
       <sch:assert role='ERROR' test='count(h:Type) = 1'>Expected Type</sch:assert>
       <sch:assert role='ERROR' test='h:Type[text()="not present" or text()="gas fired" or text()="electric resistance" or text()="heat pump"] or not(h:Type)'>Expected Type to be 'not present' or 'gas fired' or 'electric resistance' or 'heat pump'</sch:assert>

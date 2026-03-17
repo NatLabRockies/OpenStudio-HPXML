@@ -10,6 +10,7 @@ __New Features__
   - For whole SFA/MF building simulations, reports energy/fuel use by dwelling unit (i.e., "Dwelling Unit Energy Use: \*" and "Dwelling Unit Fuel Use: \*"). Timeseries outputs are also available.
 - Whole SFA/MF buildings:
   - Allows modeling batteries in individual dwelling units (previously unsupported).
+- Updates schematron validation error messages to be more user friendly.
 - Adds a `run_simulation.rb --ems-debug` argument to generate the EnergyPlus EDD file for debugging EMS programs.
 
 __Bugfixes__
