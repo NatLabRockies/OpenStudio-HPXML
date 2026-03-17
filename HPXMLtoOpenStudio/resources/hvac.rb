@@ -5037,7 +5037,6 @@ module HVAC
       model,
       name: "#{obj_name} dse program"
     )
-    dse_program.addLine('If WarmupFlag == 0') # Prevent a non-zero adjustment in the first hour because of the warmup period
     hvac_vars.keys.uniq.each do |key|
       dse_program.addLine("Set #{mode}_#{key_name(key)} = 0")
     end
@@ -5049,7 +5048,6 @@ module HVAC
     dse_acts.each do |key, dse_act|
       dse_program.addLine("Set #{dse_act.name} = #{mode}_#{key_name(key)} / ( 3600 * SystemTimeStep )")
     end
-    dse_program.addLine('EndIf')
 
     # Calling Point
     Model.add_ems_program_calling_manager(
