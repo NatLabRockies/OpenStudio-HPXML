@@ -1231,12 +1231,12 @@ module Model
   # cooking range:InteriorEquipment:Electricity:Zone:unit1_CONDITIONED_SPACE).
   # Additionally, variables with the EMS key get updated.
   #
-  # @param key [FIXME] FIXME
-  # @param var [FIXME] FIXME
+  # @param key [String] Key Name
+  # @param var [String] Output Variable or Meter Name
   # @param unit_number [Integer] index number corresponding to an HPXML Building object
   # @return [String, String] The key and variable updated with prefixes and friendly strings.
   def self.update_key_variable_group(key, var, unit_number)
-    if (not key.empty?) && (key.downcase != 'ems')
+    if (not key.empty?) && (key.downcase != 'ems') && (key.downcase != 'environment')
       key = make_unit_variable_name(key, unit_number)
     end
     if var.include?(':Zone:') || key.downcase == 'ems'
