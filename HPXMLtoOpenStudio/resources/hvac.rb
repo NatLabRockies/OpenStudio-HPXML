@@ -5005,7 +5005,7 @@ module HVAC
         vars.each do |var|
           if object.to_EnergyManagementSystemOutputVariable.is_initialized
             varkey = 'EMS'
-          else
+          elsif not var.include?(':') # If not a meter
             varkey = object.name.to_s.upcase
           end
           dse_sensors[key] = [] if dse_sensors[key].nil?

@@ -1800,7 +1800,8 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.hvac_controls[0].cooling_setup_start_hour = 9 # 9am
     elsif ['base-hvac-dse.xml',
            'base-dhw-indirect-dse.xml',
-           'base-mechvent-cfis-dse.xml'].include? hpxml_file
+           'base-mechvent-cfis-dse.xml',
+           'base-hvac-dual-fuel-air-to-air-heat-pump-var-speed-dse.xml'].include? hpxml_file
       hpxml_bldg.hvac_distributions[0].distribution_system_type = HPXML::HVACDistributionTypeDSE
       hpxml_bldg.hvac_distributions[0].annual_heating_dse = 0.8
       hpxml_bldg.hvac_distributions[0].annual_cooling_dse = 0.7
