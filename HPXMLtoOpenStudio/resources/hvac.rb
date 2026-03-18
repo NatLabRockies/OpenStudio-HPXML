@@ -4916,7 +4916,7 @@ module HVAC
     return if hvac_system.nil?
 
     # Get DSE value (if we're modeling distribution losses using the DSE type)
-    hvac_dse = nil
+    hvac_dse = 1.0
     if mode == :htg
       if hvac_system.fraction_heat_load_served.to_f > 0 || (hvac_system.is_a?(HPXML::HeatingSystem) && hvac_system.is_heat_pump_backup_system)
         if (not hvac_system.distribution_system_idref.nil?) && hvac_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
@@ -4931,7 +4931,7 @@ module HVAC
       end
     end
 
-    return if hvac_dse.nil?
+    return if (hvac_dse - 1).abs < Constants::Small
 
     # Converts the [ft, eut] key to an ems-friendly name
     def self.key_name(key)
