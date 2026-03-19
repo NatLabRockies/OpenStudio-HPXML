@@ -4938,15 +4938,6 @@ module HVAC
       return Model.ems_friendly_name(key.join('_')).downcase
     end
 
-    # FIXME: This is duplicated multiple times
-    to_hpxml = { FT::Elec => HPXML::FuelTypeElectricity,
-                 FT::Gas => HPXML::FuelTypeNaturalGas,
-                 FT::Oil => HPXML::FuelTypeOil,
-                 FT::Propane => HPXML::FuelTypePropane,
-                 FT::WoodCord => HPXML::FuelTypeWoodCord,
-                 FT::WoodPellets => HPXML::FuelTypeWoodPellets,
-                 FT::Coal => HPXML::FuelTypeCoal }
-
     # Get HPXML heating/cooling IDs
     sys_id = nil
     if not hvac_system.nil?
@@ -4983,7 +4974,7 @@ module HVAC
         frac_latent: 0,
         frac_lost: 1,
         schedule: model.alwaysOnDiscreteSchedule,
-        fuel_type: to_hpxml[key[0]]
+        fuel_type: Outputs::FT_to_HPXML_fuel_map[key[0]]
       )
       dse_objects[key].additionalProperties.setFeature('HPXML_ID', sys_id) # Used by reporting measure
     end

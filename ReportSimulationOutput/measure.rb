@@ -955,7 +955,6 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     end
 
     @hpxml_bldgs.each do |hpxml_bldg|
-      # FIXME: Replace with an EMS program
       # Apply solar fraction to load for simple solar water heating systems
       hpxml_bldg.solar_thermal_systems.each do |solar_system|
         next if solar_system.solar_fraction.nil?

@@ -8,6 +8,26 @@ module Outputs
   MeterCustomElectricityCritical = 'Electricity:Critical'
   MeterCustomElectricityNetCritical = 'Electricity:NetCritical'
 
+  FT_to_HPXML_fuel_map = {
+    FT::Elec => HPXML::FuelTypeElectricity,
+    FT::Gas => HPXML::FuelTypeNaturalGas,
+    FT::Oil => HPXML::FuelTypeOil,
+    FT::Propane => HPXML::FuelTypePropane,
+    FT::WoodCord => HPXML::FuelTypeWoodCord,
+    FT::WoodPellets => HPXML::FuelTypeWoodPellets,
+    FT::Coal => HPXML::FuelTypeCoal
+  }
+
+  FT_to_EPlus_fuel_map = {
+    FT::Elec => EPlus::FuelTypeElectricity,
+    FT::Gas => EPlus::FuelTypeNaturalGas,
+    FT::Oil => EPlus::FuelTypeOil,
+    FT::Propane => EPlus::FuelTypePropane,
+    FT::WoodCord => EPlus::FuelTypeWoodCord,
+    FT::WoodPellets => EPlus::FuelTypeWoodPellets,
+    FT::Coal => EPlus::FuelTypeCoal
+  }
+
   # Add EMS programs for output reporting. In the case where a whole SFA/MF building is
   # being simulated, these programs are added to the whole building (merged) model, not
   # the individual dwelling unit models.
@@ -1561,16 +1581,7 @@ module Outputs
   def self.create_custom_unit_meters(model, hpxml)
     return if hpxml.buildings.size == 1
 
-    # FIXME: This is duplicated multiple times
-    to_eplus = { FT::Elec => EPlus::FuelTypeElectricity,
-                 FT::Gas => EPlus::FuelTypeNaturalGas,
-                 FT::Oil => EPlus::FuelTypeOil,
-                 FT::Propane => EPlus::FuelTypePropane,
-                 FT::WoodCord => EPlus::FuelTypeWoodCord,
-                 FT::WoodPellets => EPlus::FuelTypeWoodPellets,
-                 FT::Coal => EPlus::FuelTypeCoal }
-
-    to_eplus.values.each do |fuel_type|
+    FT_to_EPlus_fuel_map.values.each do |fuel_type|
       key_vars = []
       model.getModelObjects.sort.each do |object|
         next if object.to_AdditionalProperties.is_initialized
@@ -1579,7 +1590,7 @@ module Outputs
         vars_by_key.each do |key, output_vars|
           ft, eut = key
 
-          next if to_eplus[ft] != fuel_type
+          next if FT_to_EPlus_fuel_map[ft] != fuel_type
 
           # The electricity meter should only include generation, so we exclude any outputs associated with production.
           if fuel_type == EPlus::FuelTypeElectricity
@@ -1657,13 +1668,8 @@ module Outputs
     object_type = object.additionalProperties.getFeatureAsString('ObjectType')
     object_type = object_type.get if object_type.is_initialized
 
-    to_ft = { EPlus::FuelTypeElectricity => FT::Elec,
-              EPlus::FuelTypeNaturalGas => FT::Gas,
-              EPlus::FuelTypeOil => FT::Oil,
-              EPlus::FuelTypePropane => FT::Propane,
-              EPlus::FuelTypeWoodCord => FT::WoodCord,
-              EPlus::FuelTypeWoodPellets => FT::WoodPellets,
-              EPlus::FuelTypeCoal => FT::Coal }
+    # Map of EPlus => FT fuel
+    to_ft = FT_to_EPlus_fuel_map.invert
 
     if class_type == EUT
 
