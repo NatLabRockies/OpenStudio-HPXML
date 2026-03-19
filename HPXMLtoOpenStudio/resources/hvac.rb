@@ -4968,7 +4968,7 @@ module HVAC
     # Get output vars/meters associated with the HVAC object
     hvac_vars = Outputs.get_object_outputs_for_hpxml_system(model, sys_id, eut_map.keys)
 
-    # Other equipment objects to add electricity/fuel use
+    # OtherEquipment objects to add electricity/fuel use
     dse_objects = {}
     hvac_vars.keys.uniq.each do |key|
       end_use = eut_map[key[1]]
@@ -5019,7 +5019,7 @@ module HVAC
       end
     end
 
-    # Program
+    # EMS Program
     unit_multiplier = hpxml_bldg.building_construction.number_of_units
     dse_program = Model.add_ems_program(
       model,
@@ -5037,7 +5037,7 @@ module HVAC
       dse_program.addLine("Set #{dse_act.name} = #{mode}_#{key_name(key)} / ( #{unit_multiplier} * 3600 * SystemTimeStep )")
     end
 
-    # Calling Point
+    # EMS Program Calling Point
     Model.add_ems_program_calling_manager(
       model,
       name: "#{dse_program.name} calling manager",

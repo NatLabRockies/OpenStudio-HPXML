@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>41ba2216-fc5b-419f-b13b-20e9e290747c</version_id>
-  <version_modified>2026-03-18T22:00:08Z</version_modified>
+  <version_id>57b7f1cc-c5ea-40e9-8409-5c0f435f8e80</version_id>
+  <version_modified>2026-03-19T00:15:14Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -433,7 +433,7 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>E4681401</checksum>
+      <checksum>8E3FE054</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>
@@ -715,7 +715,7 @@
       <filename>waterheater.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>B266B3FF</checksum>
+      <checksum>B895AB7F</checksum>
     </file>
     <file>
       <filename>weather.rb</filename>
