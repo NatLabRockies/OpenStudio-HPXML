@@ -430,6 +430,10 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         end
         for unit_num in 0..(hpxml_bldgs_size - 1)
           Model.add_output_meter(model, meter_name: Model.make_unit_meter_name(Outputs::MeterCustomElectricityNetCritical, unit_num, hpxml_bldgs_size), reporting_frequency: resilience_frequency)
+          if unit_num == 0 && args[:timeseries_frequency] != resilience_frequency
+            # Add one meter using args[:timeseries_frequency] so we can get E+ timestamps that correspond to that frequency
+            Model.add_output_meter(model, meter_name: Model.make_unit_meter_name(Outputs::MeterCustomElectricityNetCritical, unit_num, hpxml_bldgs_size), reporting_frequency: args[:timeseries_frequency])
+          end
         end
 
         @resilience.values.each do |resilience|
@@ -2967,12 +2971,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     @output_meters_requests = args[:user_output_meters].to_s.split(',').map(&:strip)
   end
 
-  # Sets timeseries output requests for EnergyPlus needed to support performing emissions calculations.
-  # To calculate timeseries emissions or timeseries fuel consumption, we also need to select timeseries
-  # end use consumption because EnergyPlus results may be post-processed due to HVAC DSE.
-  #
-  # NOTE: We might be able to avoid this if we could account for DSE inside EnergyPlus instead of
-  # applying the DSE impact during post-processing.
+  # Sets E+ timeseries output requests needed to support various calculations.
   #
   # @param args [Hash] Map of :argument_name => value
   # @return [Hash] New map of :argument_name => value
@@ -2980,18 +2979,18 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     args = args.dup # We don't want to modify the original arguments
     args[:include_hourly_electric_end_use_consumptions] = false
     if not @emissions.empty?
-      args[:include_hourly_electric_end_use_consumptions] = true # Need hourly electricity values for Cambium
+      # We use hourly electricity values for Cambium and end use consumption data to do emissions calculations
+      args[:include_hourly_electric_end_use_consumptions] = true
       if args[:include_timeseries_emissions] || args[:include_timeseries_emission_end_uses] || args[:include_timeseries_emission_fuels]
-        args[:include_timeseries_fuel_consumptions] = true
+        args[:include_timeseries_end_use_consumptions] = true
       end
     end
-    if args[:include_timeseries_total_consumptions] || args[:include_timeseries_resilience]
+    if args[:include_timeseries_total_consumptions]
+      # Total/net consumptions are rolled up from each fuel consumption
       args[:include_timeseries_fuel_consumptions] = true
     end
-    if args[:include_timeseries_fuel_consumptions]
-      args[:include_timeseries_end_use_consumptions] = true
-    end
     if args[:include_timeseries_system_use_consumptions]
+      # System uses are obtained while getting end use consumption data
       args[:include_timeseries_end_use_consumptions] = true
     end
     return args

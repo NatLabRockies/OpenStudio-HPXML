@@ -950,6 +950,8 @@ module Model
   # @param reporting_frequency [String] Output reporting frequency ('detailed', 'timestep', 'hourly', 'daily', 'monthly', 'runperiod', or 'annual')
   # @return [OpenStudio::Model::OutputMeter] The model object
   def self.add_output_meter(model, meter_name:, reporting_frequency:)
+    return if reporting_frequency.downcase == 'none'
+
     model.getOutputMeters.each do |om|
       next unless om.name == meter_name
       next unless om.reportingFrequency == reporting_frequency
