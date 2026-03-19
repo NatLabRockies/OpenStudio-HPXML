@@ -1745,16 +1745,18 @@ module Waterheater
       model,
       name: "#{water_heater.name} EC_adj"
     )
+    ec_adj_program.addLine('If WarmupFlag == 0') # Prevent a non-zero adjustment in the first hour because of the warmup period
     ec_adj_program.addLine('Set dhw_e_cons = 0')
     dhw_sensors.each do |sensor|
       ec_adj_program.addLine("Set dhw_e_cons = dhw_e_cons + #{sensor.name}")
     end
     ec_adj_program.addLine("Set #{ec_adj_actuator.name} = #{ec_adj - 1.0} * dhw_e_cons / (#{unit_multiplier} * 3600 * SystemTimestep)")
+    ec_adj_program.addLine('EndIf')
 
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{water_heater.name} EC_adj ProgramManager",
+      name: "#{ec_adj_program.name} calling manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [ec_adj_program]
     )
