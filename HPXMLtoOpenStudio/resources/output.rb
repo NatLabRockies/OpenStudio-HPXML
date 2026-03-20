@@ -8,6 +8,26 @@ module Outputs
   MeterCustomElectricityCritical = 'Electricity:Critical'
   MeterCustomElectricityNetCritical = 'Electricity:NetCritical'
 
+  FT_to_HPXML_fuel_map = {
+    FT::Elec => HPXML::FuelTypeElectricity,
+    FT::Gas => HPXML::FuelTypeNaturalGas,
+    FT::Oil => HPXML::FuelTypeOil,
+    FT::Propane => HPXML::FuelTypePropane,
+    FT::WoodCord => HPXML::FuelTypeWoodCord,
+    FT::WoodPellets => HPXML::FuelTypeWoodPellets,
+    FT::Coal => HPXML::FuelTypeCoal
+  }
+
+  FT_to_EPlus_fuel_map = {
+    FT::Elec => EPlus::FuelTypeElectricity,
+    FT::Gas => EPlus::FuelTypeNaturalGas,
+    FT::Oil => EPlus::FuelTypeOil,
+    FT::Propane => EPlus::FuelTypePropane,
+    FT::WoodCord => EPlus::FuelTypeWoodCord,
+    FT::WoodPellets => EPlus::FuelTypeWoodPellets,
+    FT::Coal => EPlus::FuelTypeCoal
+  }
+
   # Add EMS programs for output reporting. In the case where a whole SFA/MF building is
   # being simulated, these programs are added to the whole building (merged) model, not
   # the individual dwelling unit models.
@@ -1561,15 +1581,7 @@ module Outputs
   def self.create_custom_unit_meters(model, hpxml)
     return if hpxml.buildings.size == 1
 
-    to_eplus = { FT::Elec => EPlus::FuelTypeElectricity,
-                 FT::Gas => EPlus::FuelTypeNaturalGas,
-                 FT::Oil => EPlus::FuelTypeOil,
-                 FT::Propane => EPlus::FuelTypePropane,
-                 FT::WoodCord => EPlus::FuelTypeWoodCord,
-                 FT::WoodPellets => EPlus::FuelTypeWoodPellets,
-                 FT::Coal => EPlus::FuelTypeCoal }
-
-    to_eplus.values.each do |fuel_type|
+    FT_to_EPlus_fuel_map.values.each do |fuel_type|
       key_vars = []
       model.getModelObjects.sort.each do |object|
         next if object.to_AdditionalProperties.is_initialized
@@ -1578,7 +1590,7 @@ module Outputs
         vars_by_key.each do |key, output_vars|
           ft, eut = key
 
-          next if to_eplus[ft] != fuel_type
+          next if FT_to_EPlus_fuel_map[ft] != fuel_type
 
           # The electricity meter should only include generation, so we exclude any outputs associated with production.
           if fuel_type == EPlus::FuelTypeElectricity
@@ -1617,6 +1629,34 @@ module Outputs
     end
   end
 
+  # Returns all the Output:Variables or Output:Meters that are related to the
+  # energy use of the given HPXML system (e.g., HeatPump, WaterHeatingSystem).
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param sys_id [String] HPXML System ID
+  # @param eut_list [Array<String>] Optional list of EUT::XXX that we should filter down to
+  # @return [Hash] Map of output key => (Map of OpenStudio model object => array of EnergyPlus output variable/meter names)
+  def self.get_object_outputs_for_hpxml_system(model, sys_id, eut_filter = nil)
+    vars = {}
+    model.getModelObjects.sort.each do |object|
+      next if object.to_AdditionalProperties.is_initialized
+
+      obj_id = object.additionalProperties.getFeatureAsString('HPXML_ID')
+      next unless obj_id.is_initialized
+      next if sys_id != obj_id.get
+
+      vars_by_key = get_object_outputs_by_key(model, object, EUT)
+      vars_by_key.each do |key, object_vars|
+        if eut_filter.nil? || eut_filter.include?(key[1])
+          vars[key] = {} if vars[key].nil?
+          vars[key][object] = object_vars
+        end
+      end
+    end
+
+    return vars
+  end
+
   # For a given object, returns the Output:Variables or Output:Meters to be requested,
   # and associates them with the appropriate keys (e.g., [FT::Elec, EUT::Heating]).
   #
@@ -1628,13 +1668,8 @@ module Outputs
     object_type = object.additionalProperties.getFeatureAsString('ObjectType')
     object_type = object_type.get if object_type.is_initialized
 
-    to_ft = { EPlus::FuelTypeElectricity => FT::Elec,
-              EPlus::FuelTypeNaturalGas => FT::Gas,
-              EPlus::FuelTypeOil => FT::Oil,
-              EPlus::FuelTypePropane => FT::Propane,
-              EPlus::FuelTypeWoodCord => FT::WoodCord,
-              EPlus::FuelTypeWoodPellets => FT::WoodPellets,
-              EPlus::FuelTypeCoal => FT::Coal }
+    # Map of EPlus => FT fuel
+    to_ft = FT_to_EPlus_fuel_map.invert
 
     if class_type == EUT
 
@@ -1798,7 +1833,7 @@ module Outputs
           Constants::ObjectTypeLightingExterior => EUT::LightsExterior,
           Constants::ObjectTypeLightingExteriorHoliday => EUT::LightsExterior }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
-          fail 'Unexpected error: multiple matches.' unless end_use.nil?
+          fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?
 
           end_use = eut
         end
@@ -1828,9 +1863,15 @@ module Outputs
           Constants::ObjectTypeHPDefrostSupplHeat => EUT::HeatingHeatPumpBackup,
           Constants::ObjectTypePanHeater => EUT::Heating,
           Constants::ObjectTypeWaterHeaterAdjustment => EUT::HotWater,
+          Constants::ObjectTypeDSEHeating => EUT::Heating,
+          Constants::ObjectTypeDSEHeatingHeatPumpBackup => EUT::HeatingHeatPumpBackup,
+          Constants::ObjectTypeDSEHeatingFanPump => EUT::HeatingFanPump,
+          Constants::ObjectTypeDSEHeatingHeatPumpBackupFanPump => EUT::HeatingHeatPumpBackupFanPump,
+          Constants::ObjectTypeDSECooling => EUT::Cooling,
+          Constants::ObjectTypeDSECoolingFanPump => EUT::CoolingFanPump,
           Constants::ObjectTypeBatteryLossesAdjustment => EUT::Battery }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
-          fail 'Unexpected error: multiple matches.' unless end_use.nil?
+          fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?
 
           end_use = eut
         end
