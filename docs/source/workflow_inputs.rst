@@ -186,8 +186,8 @@ For simple utility rate structures, inputs can be entered using a fixed charge a
   Element                           Type      Units    Constraints  Required  Default   Notes
   ================================  ========  =======  ===========  ========  ========  ====================
   ``FuelType``                      string             electricity  Yes                 Fuel type
-  ``FixedCharge``                   double    $/month               No        12.0      Monthly fixed charge [#]_
-  ``MarginalRate``                  double    $/kWh                 No        See [#]_  Marginal flat rate
+  ``FixedCharge``                   double    $/month  >= 0         No        12.0      Monthly fixed charge [#]_
+  ``MarginalRate``                  double    $/kWh    >= 0         No        See [#]_  Marginal flat rate
   ================================  ========  =======  ===========  ========  ========  ====================
 
   .. [#] If running :ref:`bldg_type_whole_mf_buildings`, the fixed charge will apply to every dwelling unit in the building.
@@ -220,8 +220,8 @@ For each scenario, fuel rates can be optionally entered as an ``/HPXML/SoftwareI
   Element                           Type      Units     Constraints  Required  Default   Notes
   ================================  ========  ========  ===========  ========  ========  ====================
   ``FuelType``                      string              See [#]_     Yes                 Fuel type
-  ``FixedCharge``                   double    $/month                No        See [#]_  Monthly fixed charge
-  ``MarginalRate``                  double    See [#]_               No        See [#]_  Marginal flat rate
+  ``FixedCharge``                   double    $/month   >= 0         No        See [#]_  Monthly fixed charge
+  ``MarginalRate``                  double    See [#]_  >= 0         No        See [#]_  Marginal flat rate
   ================================  ========  ========  ===========  ========  ========  ====================
 
   .. [#] FuelType choices are "natural gas", "propane", "fuel oil", "coal", "wood", and "wood pellets".
@@ -249,7 +249,7 @@ If the PV compensation type is net-metering, additional information can be enter
   Element                           Type      Units    Constraints  Required  Default         Notes
   ================================  ========  =======  ===========  ========  ==============  =============================================================
   ``AnnualExcessSellbackRateType``  string             See [#]_     No        User-Specified  Net metering annual excess sellback rate type [#]_
-  ``AnnualExcessSellbackRate``      double    $/kWh                 No [#]_   0.03            User-specified net metering annual excess sellback rate [#]_
+  ``AnnualExcessSellbackRate``      double    $/kWh    >= 0         No [#]_   0.03            User-specified net metering annual excess sellback rate [#]_
   ================================  ========  =======  ===========  ========  ==============  =============================================================
 
   .. [#] AnnualExcessSellbackRateType choices are "User-Specified" and "Retail Electricity Cost".
@@ -265,7 +265,7 @@ If the PV compensation type is feed-in tariff, additional information can be ent
   ============================  ========  =======  ===========  ========  ==============  ========================
   Element                       Type      Units    Constraints  Required  Default         Notes
   ============================  ========  =======  ===========  ========  ==============  ========================
-  ``FeedInTariffRate``          double    $/kWh                 No        0.12            Feed-in tariff rate [#]_
+  ``FeedInTariffRate``          double    $/kWh    >= 0         No        0.12            Feed-in tariff rate [#]_
   ============================  ========  =======  ===========  ========  ==============  ========================
 
   .. [#] FeedInTariffRate applies to full (not excess) PV production.

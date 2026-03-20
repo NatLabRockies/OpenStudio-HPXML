@@ -12,6 +12,7 @@ __New Features__
   - Allows calculating utility bills for homes with HVAC distribution systems using simplified heating/cooling DSE values (previously unsupported).
 - Whole SFA/MF buildings:
   - Allows modeling batteries in individual dwelling units (previously unsupported).
+- Updates schematron validation error messages to be more user friendly.
 - Adds a `run_simulation.rb --ems-debug` argument to generate the EnergyPlus EDD file for debugging EMS programs.
 
 __Bugfixes__
