@@ -820,9 +820,9 @@ All possible measure outputs are listed below. Actual outputs depend on measure 
 
 - ``peak_electricity_annual_net_w``
 
-- ``peak_load_heating_delivered_k_btu_hr``
+- ``peak_load_heating_delivered_btu_hr``
 
-- ``peak_load_cooling_delivered_k_btu_hr``
+- ``peak_load_cooling_delivered_btu_hr``
 
 - ``component_load_heating_roofs_m_btu``
 

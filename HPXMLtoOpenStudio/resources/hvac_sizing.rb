@@ -2632,7 +2632,7 @@ module HVACSizing
     hr_indoor_cooling_rated = Psychrometrics.w_fT_Twb_P(rated_idb, rated_iwb, rated_barometric_pressure_psi) # [lbm/lbm]
 
     # Calculate A_o using rated conditions; used to calculate an initial estimate of the design SHR
-    a_o_rated = Psychrometrics.CoilAoFactor(rated_idb, rated_barometric_pressure_psi, UnitConversions.convert(cool_cap_rated, 'btu/hr', 'kbtu/hr'), cool_cfm_rated, clg_ap.cool_rated_shr_gross, hr_indoor_cooling_rated)
+    a_o_rated = Psychrometrics.CoilAoFactor(rated_idb, rated_barometric_pressure_psi, cool_cap_rated, cool_cfm_rated, clg_ap.cool_rated_shr_gross, hr_indoor_cooling_rated)
     cool_cap_design = hvac_sizings.Cool_Load_Tot
 
     # initial estimate for design airflow rate [cfm]
@@ -2653,7 +2653,7 @@ module HVACSizing
 
       # Calculate the coil SHR at the given incoming air state, CFM, total capacity, and coil Ao factor
       # CFM changes in the iteration based on current value of design_shr
-      design_shr = Psychrometrics.CalculateSHR(mj.cool_setpoint, mj.p_psi, UnitConversions.convert(cool_cap_design, 'btu/hr', 'kbtu/hr'), airflow, a_o_rated, hr_indoor_cooling_design)
+      design_shr = Psychrometrics.CalculateSHR(mj.cool_setpoint, mj.p_psi, cool_cap_design, airflow, a_o_rated, hr_indoor_cooling_design)
 
       # calculate sensible/latent split at design conditions
       cool_sens_cap_design = cool_cap_design * design_shr

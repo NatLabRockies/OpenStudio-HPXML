@@ -7004,7 +7004,7 @@ module Defaults
 
         watts_ahu = HVAC.get_blower_fan_power_watts(heat_pump.fan_watts_per_cfm, heat_pump.additional_properties.heating_actual_airflow_cfm)
         watts_ahu += HVAC.get_pump_power_watts(heat_pump)
-        watts_odu = HVAC.get_dx_coil_power_watts_from_capacity(UnitConversions.convert(heat_pump.heating_capacity, 'btu/hr', 'kbtu/hr'), branch_circuit_odu.voltage)
+        watts_odu = HVAC.get_dx_coil_power_watts_from_capacity(heat_pump.heating_capacity, branch_circuit_odu.voltage)
 
         if heat_pump.backup_type == HPXML::HeatPumpBackupTypeIntegrated
 
@@ -7050,7 +7050,7 @@ module Defaults
         branch_circuit_ahu = get_or_add_branch_circuit(electric_panel, cooling_system, unit_num, true)
 
         watts_ahu = HVAC.get_blower_fan_power_watts(cooling_system.fan_watts_per_cfm, cooling_system.additional_properties.cooling_actual_airflow_cfm)
-        watts_odu = HVAC.get_dx_coil_power_watts_from_capacity(UnitConversions.convert(cooling_system.cooling_capacity, 'btu/hr', 'kbtu/hr'), branch_circuit_odu.voltage)
+        watts_odu = HVAC.get_dx_coil_power_watts_from_capacity(cooling_system.cooling_capacity, branch_circuit_odu.voltage)
 
         if branch_circuit_ahu.occupied_spaces.nil?
           if (not cooling_system.distribution_system.nil?) && (cooling_system.attached_heating_system.nil? || cooling_system.attached_heating_system.distribution_system.nil?)
@@ -7081,7 +7081,7 @@ module Defaults
 
         watts_ahu = HVAC.get_blower_fan_power_watts(heat_pump.fan_watts_per_cfm, heat_pump.additional_properties.cooling_actual_airflow_cfm)
         watts_ahu += HVAC.get_pump_power_watts(heat_pump)
-        watts_odu = HVAC.get_dx_coil_power_watts_from_capacity(UnitConversions.convert(heat_pump.cooling_capacity, 'btu/hr', 'kbtu/hr'), HPXML::ElectricPanelVoltage240)
+        watts_odu = HVAC.get_dx_coil_power_watts_from_capacity(heat_pump.cooling_capacity, HPXML::ElectricPanelVoltage240)
 
         if heat_pump.fraction_heat_load_served == 0
           branch_circuit_odu = get_or_add_branch_circuit(electric_panel, heat_pump, unit_num)

@@ -8,6 +8,26 @@ module Outputs
   MeterCustomElectricityCritical = 'Electricity:Critical'
   MeterCustomElectricityNetCritical = 'Electricity:NetCritical'
 
+  FT_to_HPXML_fuel_map = {
+    FT::Elec => HPXML::FuelTypeElectricity,
+    FT::Gas => HPXML::FuelTypeNaturalGas,
+    FT::Oil => HPXML::FuelTypeOil,
+    FT::Propane => HPXML::FuelTypePropane,
+    FT::WoodCord => HPXML::FuelTypeWoodCord,
+    FT::WoodPellets => HPXML::FuelTypeWoodPellets,
+    FT::Coal => HPXML::FuelTypeCoal
+  }
+
+  FT_to_EPlus_fuel_map = {
+    FT::Elec => EPlus::FuelTypeElectricity,
+    FT::Gas => EPlus::FuelTypeNaturalGas,
+    FT::Oil => EPlus::FuelTypeOil,
+    FT::Propane => EPlus::FuelTypePropane,
+    FT::WoodCord => EPlus::FuelTypeWoodCord,
+    FT::WoodPellets => EPlus::FuelTypeWoodPellets,
+    FT::Coal => EPlus::FuelTypeCoal
+  }
+
   # Add EMS programs for output reporting. In the case where a whole SFA/MF building is
   # being simulated, these programs are added to the whole building (merged) model, not
   # the individual dwelling unit models.
@@ -1170,9 +1190,9 @@ module Outputs
 
     # Summary HVAC capacities
     all_hvac_capacities = hpxml_bldgs.map { |hpxml_bldg| get_total_hvac_capacities(hpxml_bldg) }
-    results_out << ['HVAC Capacity: Heating (Btu/h)', all_hvac_capacities.sum { |h| h[:htg] }.round(1)]
-    results_out << ['HVAC Capacity: Cooling (Btu/h)', all_hvac_capacities.sum { |h| h[:clg] }.round(1)]
-    results_out << ['HVAC Capacity: Heat Pump Backup (Btu/h)', all_hvac_capacities.sum { |h| h[:htg_backup] }.round(1)]
+    results_out << ['HVAC Capacity: Heating (Btu/h)', all_hvac_capacities.sum { |h| h[:htg] }.round]
+    results_out << ['HVAC Capacity: Cooling (Btu/h)', all_hvac_capacities.sum { |h| h[:clg] }.round]
+    results_out << ['HVAC Capacity: Heat Pump Backup (Btu/h)', all_hvac_capacities.sum { |h| h[:htg_backup] }.round]
 
     # HVAC design temperatures
     results_out << [line_break]
@@ -1181,39 +1201,39 @@ module Outputs
 
     # HVAC Building design loads
     results_out << [line_break]
-    results_out << ['HVAC Design Load: Heating: Total (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_total * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Ducts (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_ducts * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Windows (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_windows * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Skylights (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_skylights * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Doors (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_doors * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Walls (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_walls * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Roofs (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_roofs * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Floors (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_floors * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Slabs (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_slabs * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Ceilings (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_ceilings * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Infiltration (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_infil * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Ventilation (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_vent * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Heating: Piping (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_piping * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Total (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_total * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Ducts (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_ducts * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Windows (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_windows * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Skylights (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_skylights * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Doors (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_doors * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Walls (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_walls * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Roofs (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_roofs * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Floors (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_floors * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Slabs (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_slabs * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Ceilings (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_ceilings * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Infiltration (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_infil * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Ventilation (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_vent * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Internal Gains (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_intgains * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: Blower Heat (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_blowerheat * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Sensible: AED Excursion (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_aedexcursion * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Latent: Total (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_total * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Latent: Ducts (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_ducts * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Latent: Infiltration (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_infil * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Latent: Ventilation (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_vent * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
-    results_out << ['HVAC Design Load: Cooling Latent: Internal Gains (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_intgains * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round(1)]
+    results_out << ['HVAC Design Load: Heating: Total (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_total * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Ducts (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_ducts * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Windows (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_windows * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Skylights (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_skylights * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Doors (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_doors * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Walls (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_walls * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Roofs (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_roofs * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Floors (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_floors * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Slabs (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_slabs * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Ceilings (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_ceilings * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Infiltration (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_infil * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Ventilation (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_vent * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Heating: Piping (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_piping * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Total (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_total * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Ducts (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_ducts * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Windows (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_windows * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Skylights (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_skylights * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Doors (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_doors * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Walls (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_walls * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Roofs (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_roofs * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Floors (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_floors * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Slabs (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_slabs * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Ceilings (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_ceilings * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Infiltration (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_infil * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Ventilation (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_vent * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Internal Gains (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_intgains * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: Blower Heat (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_blowerheat * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Sensible: AED Excursion (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_sens_aedexcursion * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Latent: Total (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_total * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Latent: Ducts (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_ducts * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Latent: Infiltration (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_infil * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Latent: Ventilation (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_vent * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
+    results_out << ['HVAC Design Load: Cooling Latent: Internal Gains (Btu/h)', hpxml_bldgs.map { |hpxml_bldg| hpxml_bldg.hvac_plant.cdl_lat_intgains * hpxml_bldg.building_construction.number_of_units }.sum(0.0).round]
 
     # HVAC Zone design loads
     hpxml_bldgs.each do |hpxml_bldg|
@@ -1221,39 +1241,39 @@ module Outputs
         next if zone.id.start_with? Constants::AutomaticallyAdded
 
         results_out << [line_break]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Total (Btu/h)", zone.hdl_total.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Ducts (Btu/h)", zone.hdl_ducts.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Windows (Btu/h)", zone.hdl_windows.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Skylights (Btu/h)", zone.hdl_skylights.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Doors (Btu/h)", zone.hdl_doors.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Walls (Btu/h)", zone.hdl_walls.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Roofs (Btu/h)", zone.hdl_roofs.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Floors (Btu/h)", zone.hdl_floors.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Slabs (Btu/h)", zone.hdl_slabs.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Ceilings (Btu/h)", zone.hdl_ceilings.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Infiltration (Btu/h)", zone.hdl_infil.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Ventilation (Btu/h)", zone.hdl_vent.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Piping (Btu/h)", zone.hdl_piping.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Total (Btu/h)", zone.cdl_sens_total.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Ducts (Btu/h)", zone.cdl_sens_ducts.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Windows (Btu/h)", zone.cdl_sens_windows.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Skylights (Btu/h)", zone.cdl_sens_skylights.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Doors (Btu/h)", zone.cdl_sens_doors.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Walls (Btu/h)", zone.cdl_sens_walls.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Roofs (Btu/h)", zone.cdl_sens_roofs.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Floors (Btu/h)", zone.cdl_sens_floors.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Slabs (Btu/h)", zone.cdl_sens_slabs.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Ceilings (Btu/h)", zone.cdl_sens_ceilings.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Infiltration (Btu/h)", zone.cdl_sens_infil.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Ventilation (Btu/h)", zone.cdl_sens_vent.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Internal Gains (Btu/h)", zone.cdl_sens_intgains.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Blower Heat (Btu/h)", zone.cdl_sens_blowerheat.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: AED Excursion (Btu/h)", zone.cdl_sens_aedexcursion.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Total (Btu/h)", zone.cdl_lat_total.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Ducts (Btu/h)", zone.cdl_lat_ducts.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Infiltration (Btu/h)", zone.cdl_lat_infil.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Ventilation (Btu/h)", zone.cdl_lat_vent.round(1)]
-        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Internal Gains (Btu/h)", zone.cdl_lat_intgains.round(1)]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Total (Btu/h)", zone.hdl_total.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Ducts (Btu/h)", zone.hdl_ducts.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Windows (Btu/h)", zone.hdl_windows.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Skylights (Btu/h)", zone.hdl_skylights.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Doors (Btu/h)", zone.hdl_doors.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Walls (Btu/h)", zone.hdl_walls.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Roofs (Btu/h)", zone.hdl_roofs.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Floors (Btu/h)", zone.hdl_floors.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Slabs (Btu/h)", zone.hdl_slabs.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Ceilings (Btu/h)", zone.hdl_ceilings.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Infiltration (Btu/h)", zone.hdl_infil.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Ventilation (Btu/h)", zone.hdl_vent.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Heating: Piping (Btu/h)", zone.hdl_piping.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Total (Btu/h)", zone.cdl_sens_total.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Ducts (Btu/h)", zone.cdl_sens_ducts.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Windows (Btu/h)", zone.cdl_sens_windows.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Skylights (Btu/h)", zone.cdl_sens_skylights.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Doors (Btu/h)", zone.cdl_sens_doors.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Walls (Btu/h)", zone.cdl_sens_walls.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Roofs (Btu/h)", zone.cdl_sens_roofs.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Floors (Btu/h)", zone.cdl_sens_floors.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Slabs (Btu/h)", zone.cdl_sens_slabs.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Ceilings (Btu/h)", zone.cdl_sens_ceilings.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Infiltration (Btu/h)", zone.cdl_sens_infil.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Ventilation (Btu/h)", zone.cdl_sens_vent.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Internal Gains (Btu/h)", zone.cdl_sens_intgains.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: Blower Heat (Btu/h)", zone.cdl_sens_blowerheat.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Sensible: AED Excursion (Btu/h)", zone.cdl_sens_aedexcursion.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Total (Btu/h)", zone.cdl_lat_total.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Ducts (Btu/h)", zone.cdl_lat_ducts.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Infiltration (Btu/h)", zone.cdl_lat_infil.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Ventilation (Btu/h)", zone.cdl_lat_vent.round]
+        results_out << ["HVAC Zone Design Load: #{zone.id}: Cooling Latent: Internal Gains (Btu/h)", zone.cdl_lat_intgains.round]
       end
     end
 
@@ -1262,30 +1282,30 @@ module Outputs
       hpxml_bldg.conditioned_spaces.each do |space|
         results_out << [line_break]
         # Note: Latent loads are not calculated for spaces
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Total (Btu/h)", space.hdl_total.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Ducts (Btu/h)", space.hdl_ducts.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Windows (Btu/h)", space.hdl_windows.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Skylights (Btu/h)", space.hdl_skylights.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Doors (Btu/h)", space.hdl_doors.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Walls (Btu/h)", space.hdl_walls.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Roofs (Btu/h)", space.hdl_roofs.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Floors (Btu/h)", space.hdl_floors.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Slabs (Btu/h)", space.hdl_slabs.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Ceilings (Btu/h)", space.hdl_ceilings.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Infiltration (Btu/h)", space.hdl_infil.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Total (Btu/h)", space.cdl_sens_total.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Ducts (Btu/h)", space.cdl_sens_ducts.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Windows (Btu/h)", space.cdl_sens_windows.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Skylights (Btu/h)", space.cdl_sens_skylights.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Doors (Btu/h)", space.cdl_sens_doors.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Walls (Btu/h)", space.cdl_sens_walls.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Roofs (Btu/h)", space.cdl_sens_roofs.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Floors (Btu/h)", space.cdl_sens_floors.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Slabs (Btu/h)", space.cdl_sens_slabs.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Ceilings (Btu/h)", space.cdl_sens_ceilings.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Infiltration (Btu/h)", space.cdl_sens_infil.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Internal Gains (Btu/h)", space.cdl_sens_intgains.round(1)]
-        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: AED Excursion (Btu/h)", space.cdl_sens_aedexcursion.round(1)]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Total (Btu/h)", space.hdl_total.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Ducts (Btu/h)", space.hdl_ducts.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Windows (Btu/h)", space.hdl_windows.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Skylights (Btu/h)", space.hdl_skylights.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Doors (Btu/h)", space.hdl_doors.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Walls (Btu/h)", space.hdl_walls.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Roofs (Btu/h)", space.hdl_roofs.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Floors (Btu/h)", space.hdl_floors.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Slabs (Btu/h)", space.hdl_slabs.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Ceilings (Btu/h)", space.hdl_ceilings.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Heating: Infiltration (Btu/h)", space.hdl_infil.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Total (Btu/h)", space.cdl_sens_total.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Ducts (Btu/h)", space.cdl_sens_ducts.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Windows (Btu/h)", space.cdl_sens_windows.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Skylights (Btu/h)", space.cdl_sens_skylights.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Doors (Btu/h)", space.cdl_sens_doors.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Walls (Btu/h)", space.cdl_sens_walls.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Roofs (Btu/h)", space.cdl_sens_roofs.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Floors (Btu/h)", space.cdl_sens_floors.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Slabs (Btu/h)", space.cdl_sens_slabs.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Ceilings (Btu/h)", space.cdl_sens_ceilings.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Infiltration (Btu/h)", space.cdl_sens_infil.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: Internal Gains (Btu/h)", space.cdl_sens_intgains.round]
+        results_out << ["HVAC Space Design Load: #{space.id}: Cooling Sensible: AED Excursion (Btu/h)", space.cdl_sens_aedexcursion.round]
       end
     end
 
@@ -1561,15 +1581,7 @@ module Outputs
   def self.create_custom_unit_meters(model, hpxml)
     return if hpxml.buildings.size == 1
 
-    to_eplus = { FT::Elec => EPlus::FuelTypeElectricity,
-                 FT::Gas => EPlus::FuelTypeNaturalGas,
-                 FT::Oil => EPlus::FuelTypeOil,
-                 FT::Propane => EPlus::FuelTypePropane,
-                 FT::WoodCord => EPlus::FuelTypeWoodCord,
-                 FT::WoodPellets => EPlus::FuelTypeWoodPellets,
-                 FT::Coal => EPlus::FuelTypeCoal }
-
-    to_eplus.values.each do |fuel_type|
+    FT_to_EPlus_fuel_map.values.each do |fuel_type|
       key_vars = []
       model.getModelObjects.sort.each do |object|
         next if object.to_AdditionalProperties.is_initialized
@@ -1578,7 +1590,7 @@ module Outputs
         vars_by_key.each do |key, output_vars|
           ft, eut = key
 
-          next if to_eplus[ft] != fuel_type
+          next if FT_to_EPlus_fuel_map[ft] != fuel_type
 
           # The electricity meter should only include generation, so we exclude any outputs associated with production.
           if fuel_type == EPlus::FuelTypeElectricity
@@ -1617,6 +1629,34 @@ module Outputs
     end
   end
 
+  # Returns all the Output:Variables or Output:Meters that are related to the
+  # energy use of the given HPXML system (e.g., HeatPump, WaterHeatingSystem).
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param sys_id [String] HPXML System ID
+  # @param eut_list [Array<String>] Optional list of EUT::XXX that we should filter down to
+  # @return [Hash] Map of output key => (Map of OpenStudio model object => array of EnergyPlus output variable/meter names)
+  def self.get_object_outputs_for_hpxml_system(model, sys_id, eut_filter = nil)
+    vars = {}
+    model.getModelObjects.sort.each do |object|
+      next if object.to_AdditionalProperties.is_initialized
+
+      obj_id = object.additionalProperties.getFeatureAsString('HPXML_ID')
+      next unless obj_id.is_initialized
+      next if sys_id != obj_id.get
+
+      vars_by_key = get_object_outputs_by_key(model, object, EUT)
+      vars_by_key.each do |key, object_vars|
+        if eut_filter.nil? || eut_filter.include?(key[1])
+          vars[key] = {} if vars[key].nil?
+          vars[key][object] = object_vars
+        end
+      end
+    end
+
+    return vars
+  end
+
   # For a given object, returns the Output:Variables or Output:Meters to be requested,
   # and associates them with the appropriate keys (e.g., [FT::Elec, EUT::Heating]).
   #
@@ -1628,13 +1668,8 @@ module Outputs
     object_type = object.additionalProperties.getFeatureAsString('ObjectType')
     object_type = object_type.get if object_type.is_initialized
 
-    to_ft = { EPlus::FuelTypeElectricity => FT::Elec,
-              EPlus::FuelTypeNaturalGas => FT::Gas,
-              EPlus::FuelTypeOil => FT::Oil,
-              EPlus::FuelTypePropane => FT::Propane,
-              EPlus::FuelTypeWoodCord => FT::WoodCord,
-              EPlus::FuelTypeWoodPellets => FT::WoodPellets,
-              EPlus::FuelTypeCoal => FT::Coal }
+    # Map of EPlus => FT fuel
+    to_ft = FT_to_EPlus_fuel_map.invert
 
     if class_type == EUT
 
@@ -1798,7 +1833,7 @@ module Outputs
           Constants::ObjectTypeLightingExterior => EUT::LightsExterior,
           Constants::ObjectTypeLightingExteriorHoliday => EUT::LightsExterior }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
-          fail 'Unexpected error: multiple matches.' unless end_use.nil?
+          fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?
 
           end_use = eut
         end
@@ -1828,9 +1863,15 @@ module Outputs
           Constants::ObjectTypeHPDefrostSupplHeat => EUT::HeatingHeatPumpBackup,
           Constants::ObjectTypePanHeater => EUT::Heating,
           Constants::ObjectTypeWaterHeaterAdjustment => EUT::HotWater,
+          Constants::ObjectTypeDSEHeating => EUT::Heating,
+          Constants::ObjectTypeDSEHeatingHeatPumpBackup => EUT::HeatingHeatPumpBackup,
+          Constants::ObjectTypeDSEHeatingFanPump => EUT::HeatingFanPump,
+          Constants::ObjectTypeDSEHeatingHeatPumpBackupFanPump => EUT::HeatingHeatPumpBackupFanPump,
+          Constants::ObjectTypeDSECooling => EUT::Cooling,
+          Constants::ObjectTypeDSECoolingFanPump => EUT::CoolingFanPump,
           Constants::ObjectTypeBatteryLossesAdjustment => EUT::Battery }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
-          fail 'Unexpected error: multiple matches.' unless end_use.nil?
+          fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?
 
           end_use = eut
         end
