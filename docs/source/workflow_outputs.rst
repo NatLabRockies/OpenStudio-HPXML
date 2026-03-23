@@ -307,7 +307,7 @@ Annual building loads are listed below.
   Type                                    Notes
   ======================================  ==================================================================
   Load: Heating: Delivered (MBtu)         Total heating load delivered, including distribution losses.
-  Load: Heating: Heat Pump Backup (MBtu)  Heating load delivered by the heat pump backup only, including distribution losses.
+  Load: Heating: Heat Pump Backup (MBtu)  Heating load delivered by the heat pump backup only (aside from during defrost), including distribution losses.
   Load: Cooling: Delivered (MBtu)         Total cooling load delivered, including distribution losses.
   Load: Hot Water: Delivered (MBtu)       Total hot water load delivered, including contributions by desuperheaters or solar thermal systems.
   Load: Hot Water: Tank Losses (MBtu)
