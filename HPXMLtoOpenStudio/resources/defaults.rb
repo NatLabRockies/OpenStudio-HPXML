@@ -6059,7 +6059,7 @@ module Defaults
       end
     else
       if side == HPXML::DuctTypeSupply
-        # Equations derived from Table 13 in https://www.nrel.gov/docs/fy13osti/55876.pdf
+        # Equations derived from Table 13 in https://docs.nlr.gov/docs/fy13osti/55876.pdf
         # assuming 6-in supply diameter
         case buried_level
         when HPXML::DuctBuriedInsulationPartial
@@ -6070,7 +6070,7 @@ module Defaults
           return (13.41 + 0.63 * r_nominal).round(2)
         end
       elsif side == HPXML::DuctTypeReturn
-        # Equations derived from Table 13 in https://www.nrel.gov/docs/fy13osti/55876.pdf
+        # Equations derived from Table 13 in https://docs.nlr.gov/docs/fy13osti/55876.pdf
         # assuming 14-in return diameter
         case buried_level
         when HPXML::DuctBuriedInsulationPartial

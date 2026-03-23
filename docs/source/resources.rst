@@ -6,7 +6,7 @@ Resources
 HPXML Resources
 ---------------
 
-- `HPXML Toolbox Website <https://hpxml.nrel.gov/>`_
+- `HPXML Toolbox Website <https://hpxml.nlr.gov/>`_
 
 - `HPXML Python Version Translator <https://github.com/NatLabRockies/hpxml_version_translator>`_
 

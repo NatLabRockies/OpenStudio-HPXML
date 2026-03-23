@@ -1796,7 +1796,7 @@ module Waterheater
   #
   # IF using UEF:
   #   Calculations based on the Uniform Energy Factor, First Hour Rating, and Recovery Efficiency of the tank
-  #   Source: Maguire and Roberts 2020 - https://www.nrel.gov/docs/fy21osti/71633.pdf
+  #   Source: Maguire and Roberts 2020 - https://docs.nlr.gov/docs/fy21osti/71633.pdf
   # If using EF:
   #   Calculations based on the Energy Factor and Recovery Efficiency of the tank
   #   Using the same approach as in Maguire and Roberts 2020, but with EF specific load and temperatures
@@ -1902,7 +1902,7 @@ module Waterheater
       end
       # water heater wrap calculation based on:
       # Modeling Water Heat Wraps in BEopt DRAFT Technical Note
-      # Authors:  Ben Polly and Jay Burch (NREL)
+      # Authors:  Ben Polly and Jay Burch (NLR)
       u_pre_skin = 1.0 / (skin_insulation_t * skin_insulation_R + 1.0 / 1.3 + 1.0 / 52.8) # Btu/hr-ft^2-F = (1 / hout + kins / tins + t / hin)^-1
       ua_adj = ua - water_heating_system.jacket_r_value / (1.0 / u_pre_skin + water_heating_system.jacket_r_value) * u_pre_skin * side_a
     else
