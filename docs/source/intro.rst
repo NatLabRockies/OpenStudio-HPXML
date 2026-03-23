@@ -1,7 +1,7 @@
 Introduction
 ============
 
-OpenStudio-HPXML allows running residential EnergyPlus simulations using an `HPXML file <https://hpxml.nrel.gov/>`_ for the building description.
+OpenStudio-HPXML allows running residential EnergyPlus simulations using an `HPXML file <https://hpxml.nlr.gov/>`_ for the building description.
 It is intended to be used by user interfaces or other automated software workflows that automatically produce the HPXML file.
 A `Schematron <http://schematron.com/>`_ document for the EnergyPlus use case is used to validate that the appropriate HPXML inputs are provided to run EnergyPlus.
 
