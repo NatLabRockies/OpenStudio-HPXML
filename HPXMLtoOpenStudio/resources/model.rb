@@ -175,14 +175,18 @@ module Model
   # @param frac_lost [Double] Fraction of energy consumption that is not heat to the zone (for example, vented to the atmosphere)
   # @param schedule [OpenStudio::Model::Schedule] Schedule fraction (or multiplier) that applies to the design level
   # @return [OpenStudio::Model::ElectricEquipment] The model object
-  def self.add_electric_equipment(model, name:, end_use:, space:, design_level:, frac_radiant:, frac_latent:, frac_lost:, schedule:)
+  def self.add_electric_equipment(model, name:, end_use:, space:, design_level: nil, frac_radiant:, frac_latent:, frac_lost:, schedule:)
     ee_def = OpenStudio::Model::ElectricEquipmentDefinition.new(model)
     ee = OpenStudio::Model::ElectricEquipment.new(ee_def)
     ee.setName(name)
     ee.setEndUseSubcategory(end_use) unless end_use.nil?
     ee.setSpace(space)
     ee_def.setName(name)
-    ee_def.setDesignLevel(design_level) unless design_level.nil? # EMS-actuated if nil
+    if design_level.nil? # EMS-actuated if nil
+      ee_def.setDesignLevel(0)
+    else
+      ee_def.setDesignLevel(design_level)
+    end
     ee_def.setFractionRadiant(frac_radiant)
     ee_def.setFractionLatent(frac_latent)
     ee_def.setFractionLost(frac_lost)
@@ -197,16 +201,16 @@ module Model
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param name [String] Name for the OpenStudio object
-  # @param end_use [String] Name of the end use subcategory for output processing
+  # @param end_use [String] Name of the end use subcategory for output processing, or nil
   # @param space [OpenStudio::Model::Space] The space the object is added to
-  # @param design_level [Double] Maximum energy input (W)
+  # @param design_level [Double] Maximum energy input (W), or nil if EMS-actuated
   # @param frac_radiant [Double] Fraction of energy consumption that is long-wave radiant heat to the zone
   # @param frac_latent [Double] Fraction of energy consumption that is latent heat to the zone
   # @param frac_lost [Double] Fraction of energy consumption that is not heat to the zone (for example, vented to the atmosphere)
   # @param schedule [OpenStudio::Model::Schedule] Schedule fraction (or multiplier) that applies to the design level
-  # @param fuel_type [String] Fuel type if the equipment consumes fuel (HPXML::FuelTypeXXX)
+  # @param fuel_type [String] Fuel type if the equipment consumes fuel (HPXML::FuelTypeXXX), or nil if adding load only (no energy consumption)
   # @return [OpenStudio::Model::OtherEquipment] The model object
-  def self.add_other_equipment(model, name:, end_use:, space:, design_level:, frac_radiant:, frac_latent:, frac_lost:, schedule:, fuel_type:)
+  def self.add_other_equipment(model, name:, end_use: nil, space:, design_level: nil, frac_radiant:, frac_latent:, frac_lost:, schedule:, fuel_type: nil)
     oe_def = OpenStudio::Model::OtherEquipmentDefinition.new(model)
     oe = OpenStudio::Model::OtherEquipment.new(oe_def)
     oe.setName(name)
@@ -214,7 +218,11 @@ module Model
     oe.setFuelType(EPlus.fuel_type(fuel_type)) unless fuel_type.nil?
     oe.setSpace(space)
     oe_def.setName(name)
-    oe_def.setDesignLevel(design_level) unless design_level.nil? # EMS-actuated if nil
+    if design_level.nil? # EMS-actuated if nil
+      oe_def.setDesignLevel(0)
+    else
+      oe_def.setDesignLevel(design_level)
+    end
     oe_def.setFractionRadiant(frac_radiant)
     oe_def.setFractionLatent(frac_latent)
     oe_def.setFractionLost(frac_lost)

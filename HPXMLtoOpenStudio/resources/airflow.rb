@@ -474,7 +474,6 @@ module Airflow
       name: Constants::ObjectTypeWholeHouseFan,
       end_use: Constants::ObjectTypeWholeHouseFan,
       space: conditioned_space, # no heat gain, so assign the equipment to an arbitrary space
-      design_level: nil, # will be EMS-actuated
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 1,
@@ -1321,12 +1320,10 @@ module Airflow
           name: object_name,
           end_use: end_use,
           space: space,
-          design_level: nil,
           frac_radiant: 0,
           frac_latent: frac_lat,
           frac_lost: frac_lost,
-          schedule: model.alwaysOnDiscreteSchedule,
-          fuel_type: nil
+          schedule: model.alwaysOnDiscreteSchedule
         )
 
         duct_actuators[var_name] = Model.add_ems_actuator(
@@ -2241,12 +2238,10 @@ module Airflow
       name: "#{Constants::ObjectTypeMechanicalVentilationHouseFan} sensible load",
       end_use: Constants::ObjectTypeMechanicalVentilationHouseFan,
       space: conditioned_space,
-      design_level: nil,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 0,
-      schedule: model.alwaysOnDiscreteSchedule,
-      fuel_type: nil
+      schedule: model.alwaysOnDiscreteSchedule
     )
 
     fan_sens_load_actuator = Model.add_ems_actuator(
@@ -2260,12 +2255,10 @@ module Airflow
       name: "#{Constants::ObjectTypeMechanicalVentilationHouseFan} latent load",
       end_use: Constants::ObjectTypeMechanicalVentilationHouseFan,
       space: conditioned_space,
-      design_level: nil,
       frac_radiant: 0,
       frac_latent: 1,
       frac_lost: 0,
-      schedule: model.alwaysOnDiscreteSchedule,
-      fuel_type: nil
+      schedule: model.alwaysOnDiscreteSchedule
     )
 
     fan_lat_load_actuator = Model.add_ems_actuator(
@@ -2555,7 +2548,6 @@ module Airflow
         name: "shared mech vent preheating energy #{i}",
         end_use: "#{Constants::ObjectTypeMechanicalVentilationPreheating}#{cnt + 1}",
         space: conditioned_space,
-        design_level: nil,
         frac_radiant: 0,
         frac_latent: 0,
         frac_lost: 1,
@@ -2600,7 +2592,6 @@ module Airflow
         name: "shared mech vent precooling energy #{i}",
         end_use: "#{Constants::ObjectTypeMechanicalVentilationPrecooling}#{cnt + 1}",
         space: conditioned_space,
-        design_level: nil,
         frac_radiant: 0,
         frac_latent: 0,
         frac_lost: 1,

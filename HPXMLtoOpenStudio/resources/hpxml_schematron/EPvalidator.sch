@@ -70,6 +70,8 @@
       <sch:assert role='ERROR' test='count(h:DefrostModelType) = 0'>DefrostModelType has been deprecated</sch:assert>
       <sch:assert role='ERROR' test='count(h:OnOffThermostatDeadbandTemperature) &lt;= 1'>Expected at most one OnOffThermostatDeadbandTemperature</sch:assert>
       <sch:assert role='ERROR' test='number(h:OnOffThermostatDeadbandTemperature) &gt; 0 or not(h:OnOffThermostatDeadbandTemperature)'>Expected OnOffThermostatDeadbandTemperature to be greater than 0</sch:assert>
+      <sch:assert role='ERROR' test='count(h:HVACBlowerOffDelay) &lt;= 1'>Expected at most one HVACBlowerOffDelay</sch:assert>
+      <sch:assert role='ERROR' test='number(h:HVACBlowerOffDelay) &gt;= 0 or not(h:HVACBlowerOffDelay)'>Expected HVACBlowerOffDelay to be greater than or equal to 0</sch:assert>
       <sch:assert role='ERROR' test='count(h:HeatPumpBackupCapacityIncrement) &lt;= 1'>Expected at most one HeatPumpBackupCapacityIncrement</sch:assert>
       <sch:assert role='ERROR' test='number(h:HeatPumpBackupCapacityIncrement) &gt; 0 or not (h:HeatPumpBackupCapacityIncrement)'>Expected HeatPumpBackupCapacityIncrement to be greater than 0</sch:assert>
       <sch:assert role='ERROR' test='count(h:GroundToAirHeatPumpModelType) &lt;= 1'>Expected at most one GroundToAirHeatPumpModelType</sch:assert>

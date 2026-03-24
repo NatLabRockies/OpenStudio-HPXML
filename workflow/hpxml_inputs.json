@@ -421,6 +421,20 @@
     "parent_hpxml": "sample_files/base-location-dallas-tx.xml",
     "appliance_dehumidifier": "Detailed Example: Portable, 40 pints/day, IEF 1.4"
   },
+  "sample_files/base-appliances-dehumidifier-blower-off-delay.xml": {
+    "parent_hpxml": "sample_files/base-appliances-dehumidifier.xml",
+    "advanced_feature_2": "HVAC Blower-Off Delay, 45 sec"
+  },
+  "sample_files/base-appliances-dehumidifier-blower-off-delay-variable-speed-ashp.xml": {
+    "parent_hpxml": "sample_files/base-appliances-dehumidifier.xml",
+    "advanced_feature_2": "HVAC Blower-Off Delay, 45 sec",
+    "hvac_heating_system": "None",
+    "hvac_cooling_system": "None",
+    "hvac_heat_pump": "Central HP, SEER2 21.0, HSPF2 9.2",
+    "hvac_heat_pump_capacity": "2.0 tons",
+    "hvac_heat_pump_heating_load_served": "100%",
+    "hvac_heat_pump_cooling_load_served": "100%"
+  },
   "sample_files/base-appliances-dehumidifier-ef-portable.xml": {
     "parent_hpxml": "sample_files/base-appliances-dehumidifier.xml",
     "appliance_dehumidifier": "Detailed Example: Portable, 40 pints/day, EF 1.8"

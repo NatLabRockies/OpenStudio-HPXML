@@ -1337,6 +1337,15 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
       hpxml.header.hvac_onoff_thermostat_deadband = onoff_db
     end
 
+    hvac_bod = args[:advanced_feature_hvac_blower_off_delay]
+    hvac_bod = args[:advanced_feature_2_hvac_blower_off_delay] if hvac_bod.nil?
+    if not hvac_bod.nil?
+      if (not hpxml.header.hvac_blower_off_delay.nil?) && (hpxml.header.hvac_blower_off_delay != hvac_bod)
+        errors << "Advanced feature 'HVAC Blower-Off Delay' cannot vary across dwelling units."
+      end
+      hpxml.header.hvac_blower_off_delay = hvac_bod
+    end
+
     hpbak = args[:advanced_feature_heat_pump_backup_capacity_increment]
     hpbak = args[:advanced_feature_2_heat_pump_backup_capacity_increment] if hpbak.nil?
     if not hpbak.nil?

@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>353e5b26-f5f2-414d-a19a-1168231bf5d5</version_id>
-  <version_modified>2026-03-23T19:27:49Z</version_modified>
+  <version_id>8717491b-c4c1-4588-848c-fd952db186e8</version_id>
+  <version_modified>2026-03-24T23:50:09Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -217,13 +217,13 @@
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>2F17E22A</checksum>
+      <checksum>08A1E217</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>E058674B</checksum>
+      <checksum>E49D3A84</checksum>
     </file>
     <file>
       <filename>calendar.rb</filename>
@@ -403,7 +403,7 @@
       <filename>hpxml.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>E69EEA14</checksum>
+      <checksum>7B02F947</checksum>
     </file>
     <file>
       <filename>hpxml_schema/HPXML.xsd</filename>
@@ -421,7 +421,7 @@
       <filename>hpxml_schematron/EPvalidator.sch</filename>
       <filetype>sch</filetype>
       <usage_type>resource</usage_type>
-      <checksum>9B5934A8</checksum>
+      <checksum>D8EAEEA0</checksum>
     </file>
     <file>
       <filename>hpxml_schematron/iso-schematron.xsd</filename>
@@ -433,7 +433,7 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>86BE60D7</checksum>
+      <checksum>78D724D4</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>
@@ -445,7 +445,7 @@
       <filename>internal_gains.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>D8FFFC3A</checksum>
+      <checksum>CD7FA760</checksum>
     </file>
     <file>
       <filename>lighting.rb</filename>
@@ -493,7 +493,7 @@
       <filename>model.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>A41E8C73</checksum>
+      <checksum>336485CA</checksum>
     </file>
     <file>
       <filename>output.rb</filename>
@@ -715,7 +715,7 @@
       <filename>waterheater.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>F6FDFDBD</checksum>
+      <checksum>99184866</checksum>
     </file>
     <file>
       <filename>weather.rb</filename>
@@ -829,7 +829,7 @@
       <filename>test_validation.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>5146716A</checksum>
+      <checksum>159BD29C</checksum>
     </file>
     <file>
       <filename>test_vehicle.rb</filename>
