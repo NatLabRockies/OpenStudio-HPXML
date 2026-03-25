@@ -4368,9 +4368,11 @@ module HVAC
     )
 
     # OtherEquipment objects to add heat/cool
-    fan_heat_oe = Model.add_other_equipment(
+    cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeBlowerOffDelayFanPower } # Ensure unique name for each water heater
+    fan_power_oe = Model.add_other_equipment(
       model,
-      name: "#{air_loop_unitary.name} bod fan heat",
+      name: "#{air_loop_unitary.name} bod fan power",
+      end_use: "#{Constants::ObjectTypeBlowerOffDelayFanPower}#{cnt + 1}",
       space: conditioned_space,
       frac_radiant: 0,
       frac_latent: 0,
@@ -4378,6 +4380,7 @@ module HVAC
       schedule: model.alwaysOnDiscreteSchedule,
       fuel_type: HPXML::FuelTypeElectricity
     )
+    fan_power_oe.additionalProperties.setFeature('HPXML_ID', cooling_system.id) # Used by reporting measure
 
     latent_heat_oe = Model.add_other_equipment(
       model,
@@ -4400,9 +4403,9 @@ module HVAC
     )
 
     # Actuators
-    fan_heat_act = Model.add_ems_actuator(
-      name: "#{fan_heat_oe.name} act",
-      model_object: fan_heat_oe,
+    fan_power_act = Model.add_ems_actuator(
+      name: "#{fan_power_oe.name} act",
+      model_object: fan_power_oe,
       comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
     )
 
@@ -4436,7 +4439,7 @@ module HVAC
     bod_program.addLine('IF (RTF == 0) || (RTF == 1) || (Ql == 0)')
     bod_program.addLine("  Set #{latent_heat_act.name}=0")
     bod_program.addLine("  Set #{sens_cool_act.name}=0")
-    bod_program.addLine("  Set #{fan_heat_act.name}=0")
+    bod_program.addLine("  Set #{fan_power_act.name}=0")
     bod_program.addLine('  Return')
     bod_program.addLine('EndIf')
     if continuous_fan
@@ -4521,9 +4524,9 @@ module HVAC
     bod_program.addLine("Set #{latent_heat_act.name} = (Ql - Qlnew) * RTF / 3.4121")
     bod_program.addLine("Set #{sens_cool_act.name} = (Qs - Qsnew) * RTF / 3.4121")
     if continuous_fan
-      bod_program.addLine("Set #{fan_heat_act.name} = 0")
+      bod_program.addLine("Set #{fan_power_act.name} = 0")
     else
-      bod_program.addLine("Set #{fan_heat_act.name} = #{blower_off_delay} / ton * Qfan")
+      bod_program.addLine("Set #{fan_power_act.name} = #{blower_off_delay} / ton * Qfan")
     end
 
     # EMS Program Calling Manager

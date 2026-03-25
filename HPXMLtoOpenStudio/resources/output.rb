@@ -1869,6 +1869,7 @@ module Outputs
           Constants::ObjectTypeDSEHeatingHeatPumpBackupFanPump => EUT::HeatingHeatPumpBackupFanPump,
           Constants::ObjectTypeDSECooling => EUT::Cooling,
           Constants::ObjectTypeDSECoolingFanPump => EUT::CoolingFanPump,
+          Constants::ObjectTypeBlowerOffDelayFanPower => EUT::CoolingFanPump,
           Constants::ObjectTypeBatteryLossesAdjustment => EUT::Battery }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
           fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?

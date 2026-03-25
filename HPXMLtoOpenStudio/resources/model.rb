@@ -1203,7 +1203,7 @@ module Model
   # @param unit_number [Integer] index number corresponding to an HPXML Building object
   # @return [String] the new OpenStudio object name with unique unit prefix
   def self.make_unit_variable_name(obj_name, unit_number)
-    if obj_name.to_s.include?(':Zone:')
+    if obj_name.to_s.include? ':Zone:'
       obj_name = obj_name.split(':')
       prefix = obj_name[0..-2].join(':')
       zone_name = make_unit_variable_name(obj_name[-1], unit_number)
@@ -1211,9 +1211,18 @@ module Model
       return new_name
     end
 
+    # Need to fix cooling coil inlet node name (for blower off delay/latent degradation model)
+    clg_coil_node_str = ' Fan - Cooling Coil Node'
+    if obj_name.to_s.include? clg_coil_node_str
+      clg_coil_name = obj_name.split(clg_coil_node_str)[0]
+      clg_coil_name = make_unit_variable_name(clg_coil_name, unit_number)
+      new_name = "#{clg_coil_name}#{clg_coil_node_str}"
+      return new_name
+    end
+
     new_name = ems_friendly_name("unit#{unit_number + 1}_#{obj_name}")
 
-    # Need to fix HWPH outlet node name
+    # Need to fix HWPH outlet node name (for ducting)
     if new_name.include?('_Outlet') && new_name.include?(ems_friendly_name(Constants::ObjectTypeWaterHeater))
       new_name.gsub!('_Outlet', ' Outlet')
     end
