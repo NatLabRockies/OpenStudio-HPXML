@@ -4283,7 +4283,6 @@ module HVAC
   # @param conditioned_space [OpenStudio::Model::Space] OpenStudio Space object for conditioned zone
   # @return [nil]
   def self.add_blower_off_delay_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, conditioned_space)
-    continuous_fan = false # FIXME: Remove this?
     blower_off_delay = hpxml_header.hvac_blower_off_delay
     return if blower_off_delay.nil?
 
@@ -4442,11 +4441,7 @@ module HVAC
     bod_program.addLine("  Set #{fan_power_act.name}=0")
     bod_program.addLine('  Return')
     bod_program.addLine('EndIf')
-    if continuous_fan
-      bod_program.addLine("Set scfm = #{vfr_sensor.name} * #{m3s_to_cfm}")
-    else
-      bod_program.addLine("Set scfm = #{vfr_sensor.name} * #{m3s_to_cfm} / RTF")
-    end
+    bod_program.addLine("Set scfm = #{vfr_sensor.name} * #{m3s_to_cfm} / RTF")
     bod_program.addLine("Set Patm = #{p_atm_sensor.name}")
     bod_program.addLine("Set ReturnDB = #{return_db_sensor.name}")
     bod_program.addLine("Set ReturnHumRat = #{return_hr_sensor.name}")
@@ -4454,13 +4449,8 @@ module HVAC
     bod_program.addLine('Set tau = 60')
     bod_program.addLine('Set K1Per1000ft2 = 8')
     bod_program.addLine('Set K2 = 0.03')
-    if continuous_fan
-      bod_program.addLine('Set BlowerOffDelay = 0.0001')
-      bod_program.addLine('Set OffCycleFlowFraction = 1')
-    else
-      bod_program.addLine("Set BlowerOffDelay = #{blower_off_delay}")
-      bod_program.addLine('Set OffCycleFlowFraction = 0.001')
-    end
+    bod_program.addLine("Set BlowerOffDelay = #{blower_off_delay}")
+    bod_program.addLine('Set OffCycleFlowFraction = 0.001')
     bod_program.addLine('Set MaxCyclesPerHour = 3')
     bod_program.addLine('Set AfacePerTon = 1.57')
     bod_program.addLine('Set EvapFPI = 14')
@@ -4523,11 +4513,7 @@ module HVAC
     bod_program.addLine('Set Qlnew = Qt - Qsnew')
     bod_program.addLine("Set #{latent_heat_act.name} = (Ql - Qlnew) * RTF / 3.4121")
     bod_program.addLine("Set #{sens_cool_act.name} = (Qs - Qsnew) * RTF / 3.4121")
-    if continuous_fan
-      bod_program.addLine("Set #{fan_power_act.name} = 0")
-    else
-      bod_program.addLine("Set #{fan_power_act.name} = #{blower_off_delay} / ton * Qfan")
-    end
+    bod_program.addLine("Set #{fan_power_act.name} = #{blower_off_delay} / ton * Qfan")
 
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
