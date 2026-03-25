@@ -483,7 +483,7 @@ module HVAC
     add_variable_speed_power_ems_program(runner, model, air_loop_unitary, control_zone, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
 
     if not cooling_system.nil?
-      add_blower_off_delay_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, control_zone.spaces[0])
+      add_blower_off_delay_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, control_zone.spaces[0], hpxml_bldg.building_construction.number_of_units)
     end
 
     if is_heatpump
@@ -4281,8 +4281,9 @@ module HVAC
   # @param clg_coil [OpenStudio::Model::CoilCoolingXXX] Cooling coil model object
   # @param fan [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
   # @param conditioned_space [OpenStudio::Model::Space] OpenStudio Space object for conditioned zone
+  # @param unit_multiplier [Integer] Number of similar dwelling units
   # @return [nil]
-  def self.add_blower_off_delay_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, conditioned_space)
+  def self.add_blower_off_delay_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, conditioned_space, unit_multiplier)
     blower_off_delay = hpxml_header.hvac_blower_off_delay
     return if blower_off_delay.nil?
 
@@ -4511,9 +4512,9 @@ module HVAC
     bod_program.addLine('Set SHRnew = 1 - (1 - SHR) * LHR / LHRss')
     bod_program.addLine('Set Qsnew = Qt * SHRnew')
     bod_program.addLine('Set Qlnew = Qt - Qsnew')
-    bod_program.addLine("Set #{latent_heat_act.name} = (Ql - Qlnew) * RTF / 3.4121")
-    bod_program.addLine("Set #{sens_cool_act.name} = (Qs - Qsnew) * RTF / 3.4121")
-    bod_program.addLine("Set #{fan_power_act.name} = #{blower_off_delay} / ton * Qfan")
+    bod_program.addLine("Set #{latent_heat_act.name} = ((Ql - Qlnew) * RTF / 3.4121) / #{unit_multiplier}")
+    bod_program.addLine("Set #{sens_cool_act.name} = ((Qs - Qsnew) * RTF / 3.4121) / #{unit_multiplier}")
+    bod_program.addLine("Set #{fan_power_act.name} = (#{blower_off_delay} / ton * Qfan) / #{unit_multiplier}")
 
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
