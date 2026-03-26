@@ -4368,7 +4368,7 @@ module HVAC
     )
 
     # OtherEquipment objects to add heat/cool
-    cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeBlowerOffDelayFanPower } # Ensure unique name for each water heater
+    cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeBlowerOffDelayFanPower } # Ensure unique name for each cooling system
     fan_power_oe = Model.add_other_equipment(
       model,
       name: "#{air_loop_unitary.name} bod fan power",
