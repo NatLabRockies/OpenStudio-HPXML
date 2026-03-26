@@ -8,7 +8,9 @@ module HVAC
   AirSourceCoolRatedOWB = 75.0 # degF, Rated outdoor wetbulb for air-source systems, cooling
   AirSourceCoolRatedIDB = 80.0 # degF, Rated indoor drybulb for air-source systems, cooling
   AirSourceCoolRatedIWB = 67.0 # degF, Rated indoor wetbulb for air-source systems, cooling
-  RatedCFMPerTon = 400.0 # cfm/ton of rated capacity, RESNET HERS Addendum 82
+  RatedCFMPerTonDX = 400.0 # cfm/ton of rated capacity, airflow rate assumed during rating test for AC/HP systems, RESNET HERS Addendum 82
+  ActualCFMPerTonDX = 360.0 # cfm/ton of rated capacity, default actual airflow rate for AC/HP systems, RESNET
+  ActualCFMPerTonHeat = 240.0 # cfm/ton of rated capacity, default actual airflow rate for furnaces, RESNET
   CrankcaseHeaterTemp = 50.0 # degF, RESNET HERS Addendum 82
   MinCapacity = 1.0 # Btuh
   MinAirflow = 3.0 # cfm; E+ min airflow is 0.001 m3/s
@@ -1186,7 +1188,7 @@ module HVAC
 
     if heating_system.distribution_system.air_type.to_s == HPXML::AirTypeFanCoil
       # Fan
-      fan_cfm = RatedCFMPerTon * UnitConversions.convert(heating_system.heating_capacity, 'Btu/hr', 'ton') # CFM
+      fan_cfm = ActualCFMPerTonHeat * UnitConversions.convert(heating_system.heating_capacity, 'Btu/hr', 'ton') # CFM
       fan = create_supply_fan(model, obj_name, 0.0, [fan_cfm], heating_system) # fan energy included in above pump via Electric Auxiliary Energy (EAE)
 
       # Heating Coil
@@ -4459,7 +4461,7 @@ module HVAC
     bod_program.addLine('Set ReturnWB = (@TwbFnTdbWPb ReturnDB ReturnHumRat Patm)')
     bod_program.addLine("Set QratedTons = #{cool_cap_tons}")
     bod_program.addLine('If scfm == 0')
-    bod_program.addLine("  Set scfm = QratedTons * #{RatedCFMPerTon}")
+    bod_program.addLine("  Set scfm = QratedTons * #{RatedCFMPerTonDX}")
     bod_program.addLine('EndIf')
     bod_program.addLine('Set Aface = AfacePerTon * QratedTons')
     bod_program.addLine('Set Ao = 2 * Aface * EvapFPI * EvapDepth')
@@ -4468,7 +4470,7 @@ module HVAC
     bod_program.addLine('Set WBDepression = (ReturnDB - ReturnWB) * 1.8')
     bod_program.addLine('Set K1 = K1Per1000ft2 * Ao / 1000')
     bod_program.addLine("Set scfmPerTon = scfm / (Qt * #{w_to_ton} / RTF)")
-    bod_program.addLine("Set Mo = K1 * Ao / 1000 * (1 + 0.2 * (#{RatedCFMPerTon} - scfmPerTon) / 300)")
+    bod_program.addLine("Set Mo = K1 * Ao / 1000 * (1 + 0.2 * (#{RatedCFMPerTonDX} - scfmPerTon) / 300)")
     bod_program.addLine('Set scfmOffCycle = scfm * OffCycleFlowFraction + 0.0000001')
     bod_program.addLine('Set NTUo = K2 * Ao / (scfmOffCycle^0.2)')
     bod_program.addLine('Set NTU1o = K2 * Ao / (scfm^0.2)')

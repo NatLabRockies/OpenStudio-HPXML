@@ -3829,14 +3829,14 @@ module HVACSizing
       case hvac_type
       when HPXML::HVACTypeFurnace,
            HPXML::HVACTypeBoiler # boiler needed here in case of ducted fan coil
-        cfm_per_ton = 240.0
+        cfm_per_ton = HVAC::ActualCFMPerTonHeat
       when HPXML::HVACTypeCentralAirConditioner,
            HPXML::HVACTypeMiniSplitAirConditioner,
            HPXML::HVACTypeHeatPumpAirToAir,
            HPXML::HVACTypeHeatPumpMiniSplit,
            HPXML::HVACTypeHeatPumpGroundToAir,
            HPXML::HVACTypeHeatPumpWaterLoopToAir
-        cfm_per_ton = 360.0
+        cfm_per_ton = HVAC::ActualCFMPerTonDX
       else
         begin
           if mode == :htg
