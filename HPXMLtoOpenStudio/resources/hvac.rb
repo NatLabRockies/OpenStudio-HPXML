@@ -4468,7 +4468,7 @@ module HVAC
     bod_program.addLine('Set WBDepression = (ReturnDB - ReturnWB) * 1.8')
     bod_program.addLine('Set K1 = K1Per1000ft2 * Ao / 1000')
     bod_program.addLine("Set scfmPerTon = scfm / (Qt * #{w_to_ton} / RTF)")
-    bod_program.addLine('Set Mo = K1 * Ao / 1000 * (1 + 0.2 * (400 - scfmPerTon) / 300)')
+    bod_program.addLine("Set Mo = K1 * Ao / 1000 * (1 + 0.2 * (#{RatedCFMPerTon} - scfmPerTon) / 300)")
     bod_program.addLine('Set scfmOffCycle = scfm * OffCycleFlowFraction + 0.0000001')
     bod_program.addLine('Set NTUo = K2 * Ao / (scfmOffCycle^0.2)')
     bod_program.addLine('Set NTU1o = K2 * Ao / (scfm^0.2)')
