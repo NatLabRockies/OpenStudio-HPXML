@@ -223,7 +223,8 @@ module HVACSizing
     # Other
     if (not hpxml_bldg.site.soil_type.nil?) && (not hpxml_bldg.site.moisture_type.nil?)
       if ([HPXML::SiteSoilTypeClay,
-           HPXML::SiteSoilTypeUnknown].include?(hpxml_bldg.site.soil_type) &&
+           HPXML::SiteSoilTypeUnknown,
+           HPXML::SiteSoilTypeOther].include?(hpxml_bldg.site.soil_type) &&
           [HPXML::SiteSoilMoistureTypeWet,
            HPXML::SiteSoilMoistureTypeMixed].include?(hpxml_bldg.site.moisture_type))
         # Heavy moist soil, R-value/ft=1.25 (Manual J default for Table 4A)
@@ -428,7 +429,7 @@ module HVACSizing
           else
             if not roof.radiant_barrier
               case roof.roof_type
-              when HPXML::RoofTypeAsphaltShingles
+              when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeShingles
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 130.0 * roof.net_area
@@ -437,28 +438,30 @@ module HVACSizing
                 end
               when HPXML::RoofTypeWoodShingles
                 cool_temp += 120.0 * roof.net_area
-              when HPXML::RoofTypeMetal
+              when HPXML::RoofTypeMetal, HPXML::RoofTypePlasticRubber, HPXML::RoofTypeEPS
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 130.0 * roof.net_area
-                when HPXML::ColorMedium, HPXML::ColorLight
+                when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 120.0 * roof.net_area
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile
+              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 110.0 * roof.net_area
-                when HPXML::ColorMedium, HPXML::ColorLight
+                when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 105.0 * roof.net_area
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
+              else
+                fail "Invalid Roof Type: #{roof.roof_type}."
               end
             else # with a radiant barrier
               case roof.roof_type
-              when HPXML::RoofTypeAsphaltShingles
+              when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeShingles
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 120.0 * roof.net_area
@@ -467,28 +470,32 @@ module HVACSizing
                 end
               when HPXML::RoofTypeWoodShingles
                 cool_temp += 110.0 * roof.net_area
-              when HPXML::RoofTypeMetal
+              when HPXML::RoofTypeMetal, HPXML::RoofTypePlasticRubber, HPXML::RoofTypeEPS
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 120.0 * roof.net_area
-                when HPXML::ColorMedium, HPXML::ColorLight
+                when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 110.0 * roof.net_area
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile
+              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 105.0 * roof.net_area
-                when HPXML::ColorMedium, HPXML::ColorLight
+                when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 100.0 * roof.net_area
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              end
-            end
+              else
+                fail "Invalid Roof Type: #{roof.roof_type}."
+              end # roof type
+            end # w/ or w/o radiant barrier
           end # vented/unvented
         end # each roof surface
+
+        fail 'Unexpected case.' if cool_temp == 0
 
         cool_temp /= tot_roof_area
 
@@ -1168,17 +1175,17 @@ module HVACSizing
       # Base CLTD color adjustment based on notes in MJ8 Figure A12-16
       case roof.roof_color
       when HPXML::ColorDark, HPXML::ColorMediumDark
-        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeWoodShingles].include? roof.roof_type
+        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool].include? roof.roof_type
           cltd *= 0.83
         end
-      when HPXML::ColorMedium, HPXML::ColorLight
-        if [HPXML::RoofTypeClayTile].include? roof.roof_type
+      when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
+        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool].include? roof.roof_type
           cltd *= 0.65
         else
           cltd *= 0.83
         end
       when HPXML::ColorReflective
-        if [HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles].include? roof.roof_type
+        if [HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeShingles].include? roof.roof_type
           cltd *= 0.83
         else
           cltd *= 0.65
@@ -1881,7 +1888,7 @@ module HVACSizing
           # Calculate the delivery effectiveness
           de_prev = de
           de = calc_delivery_effectiveness_heating(mj, q_s, q_r, heat_cfm, heat_load_next, t_amb_s, t_amb_r, a_s, a_r, mj.heat_setpoint, f_regain_s, f_regain_r, rvalue_s, rvalue_r)
-          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NREL/OpenStudio-HPXML/pull/2004
+          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2004
 
           # Calculate the increase in heating load due to ducts
           heat_load_prev = heat_load_next
@@ -1934,7 +1941,7 @@ module HVACSizing
           # Calculate the delivery effectiveness
           de_prev = de
           de = calc_delivery_effectiveness_cooling(mj, q_s, q_r, clg_ap.leaving_air_temp, cool_cfm, cool_load_sens, cool_load_tot, t_amb_s, t_amb_r, a_s, a_r, mj.cool_setpoint, f_regain_s, f_regain_r, h_r, rvalue_s, rvalue_r)
-          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NREL/OpenStudio-HPXML/pull/2004
+          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2004
 
           # Calculate the increase in cooling load due to ducts
           cool_load_tot_prev = cool_load_tot_next
@@ -2625,7 +2632,7 @@ module HVACSizing
     hr_indoor_cooling_rated = Psychrometrics.w_fT_Twb_P(rated_idb, rated_iwb, rated_barometric_pressure_psi) # [lbm/lbm]
 
     # Calculate A_o using rated conditions; used to calculate an initial estimate of the design SHR
-    a_o_rated = Psychrometrics.CoilAoFactor(rated_idb, rated_barometric_pressure_psi, UnitConversions.convert(cool_cap_rated, 'btu/hr', 'kbtu/hr'), cool_cfm_rated, clg_ap.cool_rated_shr_gross, hr_indoor_cooling_rated)
+    a_o_rated = Psychrometrics.CoilAoFactor(rated_idb, rated_barometric_pressure_psi, cool_cap_rated, cool_cfm_rated, clg_ap.cool_rated_shr_gross, hr_indoor_cooling_rated)
     cool_cap_design = hvac_sizings.Cool_Load_Tot
 
     # initial estimate for design airflow rate [cfm]
@@ -2646,7 +2653,7 @@ module HVACSizing
 
       # Calculate the coil SHR at the given incoming air state, CFM, total capacity, and coil Ao factor
       # CFM changes in the iteration based on current value of design_shr
-      design_shr = Psychrometrics.CalculateSHR(mj.cool_setpoint, mj.p_psi, UnitConversions.convert(cool_cap_design, 'btu/hr', 'kbtu/hr'), airflow, a_o_rated, hr_indoor_cooling_design)
+      design_shr = Psychrometrics.CalculateSHR(mj.cool_setpoint, mj.p_psi, cool_cap_design, airflow, a_o_rated, hr_indoor_cooling_design)
 
       # calculate sensible/latent split at design conditions
       cool_sens_cap_design = cool_cap_design * design_shr
@@ -2870,6 +2877,8 @@ module HVACSizing
       end
     end
 
+    heating_load = hvac_sizings.Heat_Load
+
     if hvac_sizings.Heat_Load <= 0
 
       hvac_sizings.Heat_Capacity = 0.0
@@ -2881,7 +2890,7 @@ module HVACSizing
            HPXML::HVACTypeHeatPumpPTHP,
            HPXML::HVACTypeHeatPumpRoom].include? heating_type
 
-      calculate_heat_pump_capacities(mj, runner, hvac_sizings, weather, hvac_heating, total_cap_curve_value, hvac_system, oversize_limit, oversize_delta, hpxml_bldg, hpxml_header)
+      heating_load = calculate_heat_pump_capacities(mj, runner, hvac_sizings, weather, hvac_heating, total_cap_curve_value, hvac_system, oversize_limit, oversize_delta, hpxml_bldg, hpxml_header)
 
       hvac_sizings.Heat_Capacity_Supp = calculate_heat_pump_backup_load(mj, hvac_heating, hvac_sizings.Heat_Load_Supp, hvac_sizings.Heat_Capacity, hpxml_bldg)
       hvac_sizings.Heat_Airflow = calc_airflow_rate(:htg, hvac_heating, hvac_sizings.Heat_Capacity, hpxml_bldg)
@@ -2953,7 +2962,7 @@ module HVACSizing
     # If HERS sizing methodology, ensure HP capacity is at least equal to larger of
     # heating and sensible cooling loads.
     if is_heatpump_with_both_htg_and_clg && (hpxml_bldg.header.heat_pump_sizing_methodology == HPXML::HeatPumpSizingHERS)
-      min_capacity = [hvac_sizings.Heat_Load, hvac_sizings.Cool_Load_Sens].max
+      min_capacity = [heating_load, hvac_sizings.Cool_Load_Sens].max
       if hvac_sizings.Cool_Capacity < min_capacity
         scaling_factor = min_capacity / hvac_sizings.Cool_Capacity
         hvac_sizings.Cool_Capacity *= scaling_factor
@@ -3641,7 +3650,7 @@ module HVACSizing
   # @param oversize_limit [Double] Oversize fraction (frac)
   # @param oversize_delta [Double] Oversize delta (Btu/hr)
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
-  # @return [nil]
+  # @return [Double] Design heating load used for sizing the heat pump
   def self.calculate_heat_pump_capacities(mj, runner, hvac_sizings, weather, hvac_heating, cool_cap_adj_factor, hvac_system,
                                           oversize_limit, oversize_delta, hpxml_bldg, hpxml_header)
 
@@ -3649,6 +3658,13 @@ module HVACSizing
       min_compressor_temp = hvac_heating.backup_heating_switchover_temp
     elsif not hvac_heating.compressor_lockout_temp.nil?
       min_compressor_temp = hvac_heating.compressor_lockout_temp
+    end
+
+    # If switchover temperature is high (e.g., 40F for a dual-fuel heat pump), instead use
+    # 25F (proposed for ANSI 301) to allow some extra capacity should the homeowner want to
+    # use a lower switchover temperature later (say, based on changes to local utility rates).
+    if not min_compressor_temp.nil?
+      min_compressor_temp = [min_compressor_temp, 25.0].min
     end
 
     if (not min_compressor_temp.nil?) && (min_compressor_temp > hpxml_bldg.header.manualj_heating_design_temp)
@@ -3697,6 +3713,8 @@ module HVACSizing
       hvac_sizings.Cool_Airflow = cfm_per_btuh * hvac_sizings.Cool_Capacity
       hvac_sizings.Heat_Capacity = hvac_sizings.Cool_Capacity
     end
+
+    return heating_load
   end
 
   # Retrieves a collection of ventilation information from the HPXML building.
@@ -4422,7 +4440,7 @@ module HVACSizing
       wall_ufactor = 1.0 / wall.insulation_assembly_r_value
 
       if wall_type == HPXML::WallTypeWoodStud
-        if wall.siding == HPXML::SidingTypeBrick
+        if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
           if wall_ufactor <= 0.070
             table_4a_wall_group = 'K'
           elsif wall_ufactor <= 0.083
@@ -4463,7 +4481,7 @@ module HVACSizing
         end
 
       elsif wall_type == HPXML::WallTypeSteelStud
-        if wall.siding == HPXML::SidingTypeBrick
+        if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
           if wall_ufactor <= 0.090
             table_4a_wall_group = 'K'
           elsif wall_ufactor <= 0.105
@@ -4505,20 +4523,20 @@ module HVACSizing
 
       elsif wall_type == HPXML::WallTypeDoubleWoodStud
         table_4a_wall_group = 'J' # assumed since MJ8 does not include double stud constructions
-        if wall.siding == HPXML::SidingTypeBrick
+        if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
           table_4a_wall_group = 'K'
         end
 
       elsif wall_type == HPXML::WallTypeSIP
         # Manual J refers to SIPs as Structural Foam Panel (SFP)
         if wall_ufactor >= (0.072 + 0.050) / 2
-          if wall.siding == HPXML::SidingTypeBrick
+          if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
             table_4a_wall_group = 'J'
           else
             table_4a_wall_group = 'G'
           end
         elsif wall_ufactor >= 0.050
-          if wall.siding == HPXML::SidingTypeBrick
+          if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
             table_4a_wall_group = 'K'
           else
             table_4a_wall_group = 'I'
@@ -4543,7 +4561,7 @@ module HVACSizing
           table_4a_wall_group = 'E'
         end
 
-      elsif [HPXML::WallTypeBrick, HPXML::WallTypeAdobe, HPXML::WallTypeConcrete].include? wall_type
+      elsif [HPXML::WallTypeBrick, HPXML::WallTypeAdobe, HPXML::WallTypeConcrete, HPXML::WallTypeStone].include? wall_type
         # Two Courses Brick or 8 Inches Concrete
         if wall_ufactor >= (0.218 + 0.179) / 2
           table_4a_wall_group = 'G'
@@ -4571,7 +4589,7 @@ module HVACSizing
           table_4a_wall_group = 'K'
         end
 
-      elsif [HPXML::WallTypeICF, HPXML::WallTypeStrawBale, HPXML::WallTypeStone].include? wall_type
+      elsif [HPXML::WallTypeICF, HPXML::WallTypeStrawBale].include? wall_type
         table_4a_wall_group = 'K'
 
       end
@@ -4952,7 +4970,7 @@ module HVACSizing
   # @param window [HPXML::Window] The window of interest
   # @return [Double] Interior shading coefficient
   def self.get_window_interior_shading_coefficient(window)
-    return 1.0 if window.interior_shading_type == HPXML::InteriorShadingTypeNone
+    return 1.0 if window.interior_shading_type == HPXML::InteriorShadingTypeNotPresent
 
     # Look up window type
     if window.glass_layers.nil? || window.glass_type.nil?

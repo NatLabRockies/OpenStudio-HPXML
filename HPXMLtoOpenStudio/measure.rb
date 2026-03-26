@@ -97,6 +97,12 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     arg.setDefaultValue(false)
     args << arg
 
+    arg = OpenStudio::Measure::OSArgument.makeBoolArgument('ems_debug', false)
+    arg.setDisplayName('EMS Debug Mode?')
+    arg.setDescription('If true, writes the EnergyPlus EDD file with timeseries debug output for each EMS program. Note that this file can be VERY large.')
+    arg.setDefaultValue(false)
+    args << arg
+
     return args
   end
 
@@ -126,7 +132,6 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
 
       # Do these once upfront for the entire HPXML object
       weather = process_weather(runner, hpxml, args)
-      process_whole_sfa_mf_inputs(hpxml)
       hpxml_sch_map, design_loads_results_out = process_defaults_schedules_emissions_files(runner, weather, hpxml, args)
 
       # Write updated HPXML object (w/ defaults) to file for inspection
@@ -156,8 +161,10 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
       Outputs.apply_ems_programs(model, hpxml_osm_map, hpxml.header, args[:add_component_loads])
       Outputs.apply_output_file_controls(model, args[:debug])
       Outputs.apply_additional_properties(model, hpxml, hpxml_osm_map, args[:hpxml_path], args[:building_id], args[:hpxml_defaults_path])
-      Outputs.create_custom_meters(model)
-      # Outputs.apply_ems_debug_output(model) # Uncomment to debug EMS
+      Outputs.create_custom_electricity_meters(model)
+      if args[:ems_debug]
+        Outputs.apply_ems_debug_output(model)
+      end
 
       # Write output files
       Outputs.write_debug_files(runner, model, weather, args[:debug], args[:output_dir])
@@ -265,23 +272,6 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     return weather
   end
 
-  # Performs error-checking on the inputs for whole SFA/MF building simulations.
-  #
-  # @param hpxml [HPXML] HPXML object
-  # @return [nil]
-  def process_whole_sfa_mf_inputs(hpxml)
-    if hpxml.header.whole_sfa_or_mf_building_sim && (hpxml.buildings.size > 1)
-      if hpxml.buildings.map { |hpxml_bldg| hpxml_bldg.batteries.size }.sum > 0
-        # FUTURE: Figure out how to allow this. If we allow it, update docs and hpxml_translator_test.rb too.
-        # Batteries use "TrackFacilityElectricDemandStoreExcessOnSite"; to support modeling of batteries in whole
-        # SFA/MF building simulations, we'd need to create custom meters with electricity usage *for each unit*
-        # and switch to "TrackMeterDemandStoreExcessOnSite".
-        # https://github.com/NREL/OpenStudio-HPXML/issues/1499
-        fail 'Modeling batteries for whole SFA/MF buildings is not currently supported.'
-      end
-    end
-  end
-
   # Processes HPXML defaults, schedules, and emissions files upfront.
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
@@ -360,7 +350,6 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     Geometry.apply_thermal_mass(model, spaces, hpxml_bldg, hpxml.header)
     Geometry.set_zone_volumes(spaces, hpxml_bldg, hpxml.header)
     Geometry.explode_surfaces(model, hpxml_bldg)
-    Geometry.apply_building_unit(model, hpxml, hpxml_bldg)
 
     # HVAC
     airloop_map = HVAC.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file, hvac_days)
@@ -388,8 +377,11 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     # Other
     PV.apply(runner, model, hpxml_bldg)
     Generator.apply(model, hpxml_bldg)
-    Battery.apply(runner, model, spaces, hpxml_bldg, schedules_file)
-    Vehicle.apply(runner, model, spaces, hpxml_bldg, hpxml.header, schedules_file)
+    Battery.apply(runner, model, spaces, hpxml, hpxml_bldg, schedules_file)
+    Vehicle.apply(runner, model, spaces, hpxml, hpxml_bldg, hpxml.header, schedules_file)
+
+    # Unit Meters
+    Outputs.create_custom_unit_meters(model, hpxml)
   end
 
   # Miscellaneous logic that needs to occur upfront.
@@ -404,7 +396,7 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     # we didn't go this, we'd end up with successful EnergyPlus simulations that
     # use the wrong (default) value unless we check the return value of *every*
     # OS SDK setter method to notice there was an invalid value provided.
-    # See https://github.com/NREL/OpenStudio/pull/4505 for more background.
+    # See https://github.com/NatLabRockies/OpenStudio/pull/4505 for more background.
     model.setStrictnessLevel('None'.to_StrictnessLevel)
 
     # Store the fraction of windows operable before we collapse surfaces

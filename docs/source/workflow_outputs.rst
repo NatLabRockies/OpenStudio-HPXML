@@ -97,6 +97,8 @@ Annual energy outputs are listed below.
   Energy Use: Net (MBtu)                Total energy consumption minus power produced by PV
   ====================================  ===========================
 
+For whole SFA/MF building simulations, annual energy outputs can also be reported by dwelling unit (e.g., "Dwelling Unit Energy Use: <BuildingID>: Total (MBtu)").
+
 Annual Energy by Fuel Use
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -114,6 +116,8 @@ Fuel uses are listed below.
   Fuel Use: Wood Pellets: Total (MBtu)
   Fuel Use: Coal: Total (MBtu)          Includes "coal", "anthracite coal", "bituminous coal", and "coke"
   ====================================  ===========================
+
+For whole SFA/MF building simulations, fuel uses can also be reported by dwelling unit (e.g., "Dwelling Unit Fuel Use: <BuildingID>: Natural Gas: Total (MBtu)").
 
 .. _annualenduses:
 
@@ -303,7 +307,7 @@ Annual building loads are listed below.
   Type                                    Notes
   ======================================  ==================================================================
   Load: Heating: Delivered (MBtu)         Total heating load delivered, including distribution losses.
-  Load: Heating: Heat Pump Backup (MBtu)  Heating load delivered by the heat pump backup only, including distribution losses.
+  Load: Heating: Heat Pump Backup (MBtu)  Heating load delivered by the heat pump backup only (aside from during defrost), including distribution losses.
   Load: Cooling: Delivered (MBtu)         Total cooling load delivered, including distribution losses.
   Load: Hot Water: Delivered (MBtu)       Total hot water load delivered, including contributions by desuperheaters or solar thermal systems.
   Load: Hot Water: Tank Losses (MBtu)
@@ -365,8 +369,8 @@ Values are calculated as the maximum load for any individual timestep divided by
   =======================================  ==================================
   Type                                     Notes
   =======================================  ==================================
-  Peak Load: Heating: Delivered (kBtu/hr)  Includes HVAC distribution losses.
-  Peak Load: Cooling: Delivered (kBtu/hr)  Includes HVAC distribution losses.
+  Peak Load: Heating: Delivered (Btu/hr)   Includes HVAC distribution losses.
+  Peak Load: Cooling: Delivered (Btu/hr)   Includes HVAC distribution losses.
   =======================================  ==================================
 
 Note that the "Delivered" peak loads represent the energy delivered by the HVAC system; if a system is significantly undersized, there will be unmet peak load not reflected by these values.
@@ -401,7 +405,7 @@ Component loads disaggregated by Heating/Cooling are listed below.
   Component Load: \*: Internal Mass (MBtu)           Heat gain/loss from internal mass (e.g., furniture, interior walls/floors) in conditioned space
   Component Load: \*: Infiltration (MBtu)            Heat gain/loss from airflow induced by stack and wind effects
   Component Load: \*: Natural Ventilation (MBtu)     Heat gain/loss from airflow through operable windows
-  Component Load: \*: Mechanical Ventilation (MBtu)  Heat gain/loss from airflow/fan energy from mechanical ventilation systems (including clothes dryer exhaust)
+  Component Load: \*: Mechanical Ventilation (MBtu)  Heat gain/loss from airflow/fan energy from mechanical ventilation systems (including any clothes dryer exhaust or HPWH ducting)
   Component Load: \*: Whole House Fan (MBtu)         Heat gain/loss from airflow due to a whole house fan
   Component Load: \*: Ducts (MBtu)                   Heat gain/loss from conduction and leakage losses through supply/return ducts outside conditioned space
   Component Load: \*: Internal Gains (MBtu)          Heat gain/loss from appliances, plug loads, water heater tank losses, etc. in the conditioned space
@@ -626,7 +630,6 @@ Outputs for individual geothermal loops can be found in the ``in.xml`` file.
   HVAC Geothermal Loop: Borehole/Trench Length (ft)                      Length (i.e., average depth) of each borehole
   =====================================================================  ====================
 
-
 .. _timeseries_outputs:
 
 Timeseries Outputs
@@ -656,10 +659,11 @@ Depending on the outputs requested, the file may include:
   Component Loads                     ``componentloads``   Heating and cooling loads (in kBtu) disaggregated by component (e.g., Walls, Windows, Infiltration, Ducts, etc.).
   Unmet Hours                         ``unmethours``       Heating, cooling, and EV driving unmet hours.
   Zone Temperatures                   ``temperatures``     Zone temperatures (in deg-F) for each space (e.g., conditioned space, attic, garage, basement, crawlspace, etc.) plus heating/cooling setpoints.
-  Zone Conditions                     ``conditions``       Zone conditions (humidity ratio and relative humidity and dewpoint, radiant, and operative temperatures)
+  Zone Conditions                     ``conditions``       Zone conditions (humidity ratio and relative humidity and dewpoint, radiant, and operative temperatures).
   Airflows                            ``airflows``         Airflow rates (in cfm) for infiltration, mechanical ventilation (including clothes dryer exhaust), natural ventilation, whole house fans.
   Weather                             ``weather``          Weather file data including outdoor temperatures, relative humidity, wind speed, and solar.
   Resilience                          ``resilience``       Resilience outputs (currently only average resilience hours for battery storage).
+  Dwelling Units                      ``dwellingunits``    Outputs for each dwelling unit for whole SFA/MF building simulations. Only applies when total and/or fuel consumptions are also requested.
   EnergyPlus Output Variables/Meters                       Any user-specified EnergyPlus output variables/meters (e.g., 'Zone People Occupant Count', 'MainsWater:Facility').
   ==================================  ===================  ==================================================================================================================================
 
@@ -764,13 +768,15 @@ End use categories (e.g., Heating, Cooling, Hot Water) report occupied spaces fo
   Electric Panel Breaker Spaces: Other Count                                        Sum of other occupied spaces
   Electric Panel Breaker Spaces: Total Count                                        Total number of spaces on the panel
   Electric Panel Breaker Spaces: Occupied Count                                     Total number of occupied spaces on the panel
-  Electric Panel Breaker Spaces: Headroom Count                                     Total number of available (unoccupied) spaces on the panel
+  Electric Panel Breaker Spaces: Headroom Count                                     Total number of available (unoccupied) spaces on the panel [#]_
   ================================================================================  ====================
+
+  .. [#] A positive value indicates panel availability whereas a negative value indicates panel constraint.
 
 Loads
 ~~~~~
 
-Electric panel loads, as well as calculated total loads and capacities for each calculation type (see :ref:`hpxml_electric_panel_calculations`), are available as listed below.
+Electric panel loads, as well as calculated total loads and capacities for each NEC calculation type (see :ref:`hpxml_electric_panel_calculations`), are available as listed below.
 
   ================================================================================  ====================
   Type                                                                              Notes
@@ -789,15 +795,14 @@ Electric panel loads, as well as calculated total loads and capacities for each 
   Electric Panel Load: Well Pump (W)                                                Sum of well pump loads
   Electric Panel Load: Electric Vehicle Charging (W)                                Sum of electric vehicle charging loads
   Electric Panel Load: Other (W)                                                    Sum of other loads
+  Electric Panel Load: Max Current Rating (A)
   Electric Panel Load: <Type>: Total Load (W)                                       Calculated NEC total load
-  Electric Panel Load: <Type>: Total Capacity (A)                                   Total panel capacity
-  Electric Panel Load: <Type>: Headroom Capacity (A)                                Available panel capacity
+  Electric Panel Load: <Type>: Total Capacity (A)                                   Calculated NEC total capacity
+  Electric Panel Load: <Type>: Headroom Capacity (A)                                Available panel capacity [#]_
   ================================================================================  ====================
 
-.. note::
-
-  Headroom is calculated as the panel's maximum current rating minus calculated capacity.
-  A positive value indicates panel availability whereas a negative value indicates panel constraint.
+  .. [#] Headroom Capacity is the Max Current Rating minus the calculated NEC Total Capacity.
+         A positive value indicates panel availability whereas a negative value indicates panel constraint.
 
 .. _design_load_details:
 

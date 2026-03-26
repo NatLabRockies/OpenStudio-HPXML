@@ -239,7 +239,7 @@ def apply_hpxml_modification_ashrae_140(hpxml)
   hpxml_bldg.foundation_walls.each do |fwall|
     fwall.thickness = 6.0
     if fwall.insulation_interior_r_value == 0
-      fwall.interior_finish_type = HPXML::InteriorFinishNone
+      fwall.interior_finish_type = HPXML::InteriorFinishNotPresent
     else
       fwall.interior_finish_type = HPXML::InteriorFinishGypsumBoard
       fwall.interior_finish_thickness = 0.5
@@ -524,6 +524,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         'USA_MD_Baltimore-Washington.Intl.AP.724060_TMY3.epw' => '4A',
         'USA_OR_Portland.Intl.AP.726980_TMY3.epw' => '4C',
         'US_CO_Boulder_AMY_2012.epw' => '5B',
+        'USA_CO_Boulder.Muni.AP.720533_TMYx.2009-2023.epw' => '5B',
         'USA_CO_Denver.Intl.AP.725650_TMY3.epw' => '5B',
         'USA_MT_Helena.Rgnl.AP.727720_TMY3.epw' => '6B',
         'USA_MN_Duluth.Intl.AP.727450_TMY3.epw' => '7',
@@ -1116,7 +1117,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         window.exterior_shading_factor_winter = nil
       end
       # Interior shading
-      hpxml_bldg.windows[0].interior_shading_type = HPXML::InteriorShadingTypeNone
+      hpxml_bldg.windows[0].interior_shading_type = HPXML::InteriorShadingTypeNotPresent
       hpxml_bldg.windows[1].interior_shading_type = HPXML::InteriorShadingTypeOther
       hpxml_bldg.windows[2].interior_shading_type = HPXML::InteriorShadingTypeMediumCurtains
       hpxml_bldg.windows[2].interior_shading_coverage_summer = 0.5
@@ -1472,7 +1473,8 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                       [HPXML::SidingTypeStucco, HPXML::ColorMedium],
                       [HPXML::SidingTypeSyntheticStucco, HPXML::ColorMediumDark],
                       [HPXML::SidingTypeVinyl, HPXML::ColorLight],
-                      [HPXML::SidingTypeNone, HPXML::ColorMedium]]
+                      [HPXML::SidingTypeNotPresent, HPXML::ColorMedium],
+                      [HPXML::SidingTypeStone, HPXML::ColorMediumLight]]
       siding_types.each do |siding_type|
         hpxml_bldg.rim_joists.add(id: "RimJoist#{hpxml_bldg.rim_joists.size + 1}",
                                   exterior_adjacent_to: HPXML::LocationOutside,
@@ -1507,13 +1509,14 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                       [HPXML::SidingTypeStucco, HPXML::ColorLight],
                       [HPXML::SidingTypeSyntheticStucco, HPXML::ColorMedium],
                       [HPXML::SidingTypeVinyl, HPXML::ColorDark],
-                      [HPXML::SidingTypeNone, HPXML::ColorMedium]]
+                      [HPXML::SidingTypeNotPresent, HPXML::ColorMedium],
+                      [HPXML::SidingTypeStone, HPXML::ColorMediumLight]]
       int_finish_types = [[HPXML::InteriorFinishGypsumBoard, 0.5],
                           [HPXML::InteriorFinishGypsumBoard, 1.0],
                           [HPXML::InteriorFinishGypsumCompositeBoard, 0.5],
                           [HPXML::InteriorFinishPlaster, 0.5],
                           [HPXML::InteriorFinishWood, 0.5],
-                          [HPXML::InteriorFinishNone, nil]]
+                          [HPXML::InteriorFinishNotPresent, nil]]
       walls_map.each_with_index do |(wall_type, assembly_r), i|
         hpxml_bldg.walls.add(id: "Wall#{hpxml_bldg.walls.size + 1}",
                              exterior_adjacent_to: HPXML::LocationOutside,
@@ -1584,7 +1587,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                     [HPXML::RoofTypeMetal, HPXML::ColorReflective],
                     [HPXML::RoofTypeWoodShingles, HPXML::ColorDark],
                     [HPXML::RoofTypeShingles, HPXML::ColorMediumDark],
-                    [HPXML::RoofTypePlasticRubber, HPXML::ColorLight],
+                    [HPXML::RoofTypePlasticRubber, HPXML::ColorMediumLight],
                     [HPXML::RoofTypeEPS, HPXML::ColorMedium],
                     [HPXML::RoofTypeConcrete, HPXML::ColorLight],
                     [HPXML::RoofTypeCool, HPXML::ColorReflective]]
@@ -1605,7 +1608,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         hpxml_bldg.attics[0].attached_to_roof_idrefs << hpxml_bldg.roofs[-1].id
       end
     elsif ['base-enclosure-overhangs.xml'].include? hpxml_file
-      # Test relaxed overhangs validation; https://github.com/NREL/OpenStudio-HPXML/issues/866
+      # Test relaxed overhangs validation; https://github.com/NatLabRockies/OpenStudio-HPXML/issues/866
       hpxml_bldg.windows.each do |window|
         next unless window.overhangs_depth.nil?
 
@@ -1797,7 +1800,8 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.hvac_controls[0].cooling_setup_start_hour = 9 # 9am
     elsif ['base-hvac-dse.xml',
            'base-dhw-indirect-dse.xml',
-           'base-mechvent-cfis-dse.xml'].include? hpxml_file
+           'base-mechvent-cfis-dse.xml',
+           'base-hvac-dual-fuel-air-to-air-heat-pump-var-speed-dse.xml'].include? hpxml_file
       hpxml_bldg.hvac_distributions[0].distribution_system_type = HPXML::HVACDistributionTypeDSE
       hpxml_bldg.hvac_distributions[0].annual_heating_dse = 0.8
       hpxml_bldg.hvac_distributions[0].annual_cooling_dse = 0.7
@@ -2214,6 +2218,8 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
           hpxml_bldg.heat_pumps[0].pan_heater_control_type = HPXML::HVACPanHeaterControlTypeContinuous
         elsif hpxml_file.include? 'pan-heater-defrost-mode'
           hpxml_bldg.heat_pumps[0].pan_heater_control_type = HPXML::HVACPanHeaterControlTypeDefrost
+        elsif hpxml_file.include? 'pan-heater-heat-pump-mode'
+          hpxml_bldg.heat_pumps[0].pan_heater_control_type = HPXML::HVACPanHeaterControlTypeHeatPump
         end
       end
     end
@@ -2427,7 +2433,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.water_heating_systems[0].backup_heating_capacity = 0
     end
     if ['base-dhw-tank-heat-pump-operating-mode-heat-pump-only.xml'].include? hpxml_file
-      hpxml_bldg.water_heating_systems[0].operating_mode = HPXML::WaterHeaterOperatingModeHeatPumpOnly
+      hpxml_bldg.water_heating_systems[0].hpwh_operating_mode = HPXML::WaterHeaterHPWHOperatingModeHeatPumpOnly
     end
     if hpxml_file.include? 'base-dhw-tank-model-type-stratified'
       hpxml_bldg.water_heating_systems[0].tank_model_type = HPXML::WaterHeaterTankModelTypeStratified
@@ -2450,6 +2456,9 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
 
         hpxml_bldg.water_heating_systems[0].related_hvac_idref = heat_pump.id
       end
+    end
+    if ['base-dhw-tank-heat-pump-ducting.xml'].include? hpxml_file
+      hpxml_bldg.water_heating_systems[0].hpwh_ducting_exhaust = HPXML::LocationOutside
     end
 
     # -------------------- #
@@ -2485,11 +2494,9 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         hpxml_bldg.ventilation_fans[0].sensible_recovery_efficiency = nil
       end
     elsif hpxml_file.include? 'base-mechvent-cfis'
-      if not hpxml_bldg.ventilation_fans.empty? # FIXME: Temporary
-        hpxml_bldg.ventilation_fans[0].rated_flow_rate = 330.0
-        hpxml_bldg.ventilation_fans[0].hours_in_operation = 8
-        hpxml_bldg.ventilation_fans[0].fan_power = 300.0
-      end
+      hpxml_bldg.ventilation_fans[0].rated_flow_rate = 330.0
+      hpxml_bldg.ventilation_fans[0].hours_in_operation = 8
+      hpxml_bldg.ventilation_fans[0].fan_power = 300.0
     elsif ['base-hvac-ptac-cfis.xml',
            'base-hvac-pthp-cfis.xml'].include? hpxml_file
       hpxml_bldg.ventilation_fans[0].rated_flow_rate = 100.0
@@ -2862,9 +2869,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     # HPXML Battery #
     # ------------- #
 
-    if ['base-pv-battery-lifetime-model.xml'].include? hpxml_file
-      hpxml_bldg.batteries[0].lifetime_model = HPXML::BatteryLifetimeModelKandlerSmith
-    elsif ['base-pv-battery-ah.xml'].include? hpxml_file
+    if ['base-pv-battery-ah.xml'].include? hpxml_file
       default_values = Defaults.get_battery_values(false)
       hpxml_bldg.batteries[0].nominal_capacity_ah = Battery.get_Ah_from_kWh(hpxml_bldg.batteries[0].nominal_capacity_kwh,
                                                                             default_values[:nominal_voltage])
@@ -2880,6 +2885,16 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     elsif ['base-misc-defaults.xml',
            'base-residents-5-5.xml'].include? hpxml_file
       hpxml_bldg.batteries[0].nominal_capacity_kwh = nil
+    end
+    if ['base-bldgtype-mf-whole-building-pv-battery.xml'].include? hpxml_file
+      if hpxml_bldg_index > 0 # intentionally not all buildings have a battery
+        hpxml_bldg.pv_systems.add(id: "PVSystem#{hpxml_bldg.pv_systems.size + 1}_#{hpxml_bldg_index + 1}",
+                                  array_azimuth: 270,
+                                  array_tilt: 10,
+                                  max_power_output: 4000)
+        hpxml_bldg.batteries.add(id: "Battery#{hpxml_bldg.batteries.size + 1}_#{hpxml_bldg_index + 1}",
+                                 type: HPXML::BatteryTypeLithiumIon)
+      end
     end
 
     # ------------- #

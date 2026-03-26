@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <measure>
   <schema_version>3.1</schema_version>
+  <error>Failed to infer measure name from '/mnt/c/git/openstudio-hpxml/ReportUtilityBills/measure.rb'</error>
   <name>report_utility_bills</name>
   <uid>ca88a425-e59a-4bc4-af51-c7e7d1e960fe</uid>
-  <version_id>c416e5a4-a1d8-442a-a26a-6f107ab47dc8</version_id>
-  <version_modified>2025-10-29T23:32:35Z</version_modified>
+  <version_id>ef1c155c-852e-4dcf-8cd4-cf2029e7c3c5</version_id>
+  <version_modified>2026-03-19T22:48:22Z</version_modified>
   <xml_checksum>15BF4E57</xml_checksum>
   <class_name>ReportUtilityBills</class_name>
   <display_name>Utility Bills Report</display_name>
@@ -163,13 +164,13 @@
       <filename>README.md</filename>
       <filetype>md</filetype>
       <usage_type>readme</usage_type>
-      <checksum>13D965BE</checksum>
+      <checksum>2B4C57DC</checksum>
     </file>
     <file>
       <filename>README.md.erb</filename>
       <filetype>erb</filetype>
       <usage_type>readmeerb</usage_type>
-      <checksum>513F28E9</checksum>
+      <checksum>5238CEA2</checksum>
     </file>
     <file>
       <version>
@@ -180,7 +181,7 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>26A6E541</checksum>
+      <checksum>ED3188F5</checksum>
     </file>
     <file>
       <filename>detailed_rates/README.md</filename>
@@ -312,7 +313,7 @@
       <filename>simple_rates/pr_all_update.csv</filename>
       <filetype>csv</filetype>
       <usage_type>resource</usage_type>
-      <checksum>CF6409BD</checksum>
+      <checksum>C6074A83</checksum>
     </file>
     <file>
       <filename>util.rb</filename>
@@ -360,7 +361,7 @@
       <filename>test_report_utility_bills.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>94348A13</checksum>
+      <checksum>95CFA2CF</checksum>
     </file>
   </files>
 </measure>

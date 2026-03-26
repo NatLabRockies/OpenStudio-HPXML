@@ -1,23 +1,11 @@
 # frozen_string_literal: true
 
 require 'oga'
-require_relative '../../HPXMLtoOpenStudio/resources/calendar'
-require_relative '../../HPXMLtoOpenStudio/resources/constants'
-require_relative '../../HPXMLtoOpenStudio/resources/energyplus'
-require_relative '../../HPXMLtoOpenStudio/resources/hpxml'
-require_relative '../../HPXMLtoOpenStudio/resources/defaults'
-require_relative '../../HPXMLtoOpenStudio/resources/materials'
-require_relative '../../HPXMLtoOpenStudio/resources/minitest_helper'
-require_relative '../../HPXMLtoOpenStudio/resources/psychrometrics'
-require_relative '../../HPXMLtoOpenStudio/resources/schedules'
-require_relative '../../HPXMLtoOpenStudio/resources/unit_conversions'
-require_relative '../../HPXMLtoOpenStudio/resources/utility_bills'
-require_relative '../../HPXMLtoOpenStudio/resources/version'
-require_relative '../../HPXMLtoOpenStudio/resources/weather'
-require_relative '../../HPXMLtoOpenStudio/resources/xmlhelper'
+Dir["#{File.dirname(__FILE__)}/../../HPXMLtoOpenStudio/resources/*.rb"].each do |resource_file|
+  require resource_file
+end
 require_relative '../resources/util.rb'
 require 'openstudio'
-require 'openstudio/measure/ShowRunnerOutput'
 require_relative '../measure.rb'
 require 'csv'
 
@@ -268,7 +256,7 @@ class ReportUtilityBillsTest < Minitest::Test
 
   def test_workflow_detailed_calculations
     # Detailed Rate.json was renamed from Jackson Electric Member Corp - A Residential Service Senior Citizen Low Income Assistance (Effective 2017-01-01).json
-    # See https://github.com/NREL/OpenStudio-HPXML/issues/1444
+    # See https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1444
     @args_hash['hpxml_path'] = File.absolute_path(@tmp_hpxml_path)
     hpxml = HPXML.new(hpxml_path: File.join(@sample_files_path, 'base.xml'))
     hpxml.header.utility_bill_scenarios.add(name: 'Test 1', elec_tariff_filepath: '../../ReportUtilityBills/tests/Detailed Rate.json')
@@ -280,7 +268,7 @@ class ReportUtilityBillsTest < Minitest::Test
 
   def test_workflow_detailed_calculations_scheduled_battery
     # Detailed Rate.json was renamed from Jackson Electric Member Corp - A Residential Service Senior Citizen Low Income Assistance (Effective 2017-01-01).json
-    # See https://github.com/NREL/OpenStudio-HPXML/issues/1444
+    # See https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1444
     @args_hash['hpxml_path'] = File.absolute_path(@tmp_hpxml_path)
     hpxml = HPXML.new(hpxml_path: File.join(@sample_files_path, 'base-battery-scheduled.xml'))
     hpxml.header.utility_bill_scenarios.add(name: 'Test 1', elec_tariff_filepath: '../../ReportUtilityBills/tests/Detailed Rate.json')
@@ -292,7 +280,7 @@ class ReportUtilityBillsTest < Minitest::Test
 
   def test_workflow_detailed_calculations_all_electric
     # Detailed Rate.json was renamed from Jackson Electric Member Corp - A Residential Service Senior Citizen Low Income Assistance (Effective 2017-01-01).json
-    # See https://github.com/NREL/OpenStudio-HPXML/issues/1444
+    # See https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1444
     @args_hash['hpxml_path'] = File.absolute_path(@tmp_hpxml_path)
     hpxml = HPXML.new(hpxml_path: File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-1-speed.xml'))
     hpxml.header.utility_bill_scenarios.add(name: 'Test 1', elec_tariff_filepath: '../../ReportUtilityBills/tests/Detailed Rate.json')
@@ -362,15 +350,6 @@ class ReportUtilityBillsTest < Minitest::Test
         assert_nil(average_rate)
       end
     end
-  end
-
-  def test_warning_dse
-    @args_hash['hpxml_path'] = File.absolute_path(@tmp_hpxml_path)
-    hpxml = HPXML.new(hpxml_path: File.join(@sample_files_path, 'base-hvac-dse.xml'))
-    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
-    expected_warnings = ['DSE is not currently supported when calculating utility bills.']
-    actual_bills, _actual_monthly_bills = _test_measure(expected_warnings: expected_warnings)
-    assert_nil(actual_bills)
   end
 
   def test_warning_no_rates
