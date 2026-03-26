@@ -39,7 +39,7 @@ def create_hpxmls
 
   json_inputs.keys.each_with_index do |hpxml_filename, hpxml_i|
     # Uncomment following line to debug single file
-    # next unless hpxml_filename.include? 'base-mechvent-cfis-evap-cooler-only-ducted.xml'
+    # next unless hpxml_filename.include? 'base-atticroof-conditioned.xml'
 
     puts "[#{hpxml_i + 1}/#{json_inputs.size}] Generating #{hpxml_filename}..."
     hpxml_path = File.join(workflow_dir, hpxml_filename)
@@ -166,6 +166,7 @@ def create_hpxmls
     else
       apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     end
+    check_hpxml(hpxml_path, hpxml)
     hpxml_doc = hpxml.to_doc()
 
     XMLHelper.write_file(hpxml_doc, hpxml_path)
@@ -217,9 +218,6 @@ def apply_hpxml_modification_ashrae_140(hpxml)
   # --------------- #
 
   hpxml_bldg.attics[0].vented_attic_ach = 2.4
-  hpxml_bldg.foundations.reverse_each do |foundation|
-    foundation.delete
-  end
   (hpxml_bldg.walls + hpxml_bldg.rim_joists).each do |wall|
     if wall.is_a?(HPXML::Wall)
       if wall.attic_wall_type == HPXML::AtticWallTypeGable
@@ -883,6 +881,9 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                             area: 150,
                             insulation_assembly_r_value: 5.3,
                             floor_or_ceiling: HPXML::FloorOrCeilingFloor)
+      hpxml_bldg.foundations[0].foundation_type = HPXML::FoundationTypeCombination
+      hpxml_bldg.foundations[0].attached_to_floor_idrefs = hpxml_bldg.floors.select { |f| f.floor_or_ceiling == HPXML::FloorOrCeilingFloor }.map { |f| f.id }
+      hpxml_bldg.attics[0].attached_to_floor_idrefs = hpxml_bldg.floors.select { |f| f.floor_or_ceiling == HPXML::FloorOrCeilingCeiling }.map { |f| f.id }
       wall = hpxml_bldg.walls.select { |w|
                w.interior_adjacent_to == HPXML::LocationConditionedSpace &&
                  w.exterior_adjacent_to == HPXML::LocationOtherMultifamilyBufferSpace
@@ -934,7 +935,8 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     elsif ['base-atticroof-conditioned.xml'].include? hpxml_file
       hpxml_bldg.attics.add(id: "Attic#{hpxml_bldg.attics.size + 1}",
                             attic_type: HPXML::AtticTypeUnvented,
-                            within_infiltration_volume: false)
+                            within_infiltration_volume: false,
+                            attached_to_wall_idrefs: [])
       hpxml_bldg.roofs.each do |roof|
         roof.area = 1006.0 / hpxml_bldg.roofs.size
         roof.insulation_assembly_r_value = 25.8
@@ -946,6 +948,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                            pitch: hpxml_bldg.roofs[0].pitch,
                            roof_color: hpxml_bldg.roofs[0].roof_color,
                            insulation_assembly_r_value: 2.3)
+      hpxml_bldg.attics[-1].attached_to_roof_idrefs = [hpxml_bldg.roofs[-1].id]
       hpxml_bldg.rim_joists.each do |rim_joist|
         rim_joist.area = 116.0 / hpxml_bldg.rim_joists.size
       end
@@ -958,6 +961,8 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                            wall_type: HPXML::WallTypeWoodStud,
                            area: 316,
                            insulation_assembly_r_value: 23.0)
+      hpxml_bldg.attics[0].attached_to_wall_idrefs << hpxml_bldg.walls[-1].id
+      hpxml_bldg.attics[1].attached_to_wall_idrefs << hpxml_bldg.walls[-1].id
       hpxml_bldg.walls.add(id: "Wall#{hpxml_bldg.walls.size + 1}",
                            exterior_adjacent_to: HPXML::LocationOutside,
                            interior_adjacent_to: HPXML::LocationConditionedSpace,
@@ -966,6 +971,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                            color: hpxml_bldg.walls[0].color,
                            area: 240,
                            insulation_assembly_r_value: 22.3)
+      hpxml_bldg.attics[0].attached_to_wall_idrefs << hpxml_bldg.walls[-1].id
       hpxml_bldg.walls.add(id: "Wall#{hpxml_bldg.walls.size + 1}",
                            exterior_adjacent_to: HPXML::LocationOutside,
                            interior_adjacent_to: HPXML::LocationAtticUnvented,
@@ -975,6 +981,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                            color: hpxml_bldg.walls[0].color,
                            area: 50,
                            insulation_assembly_r_value: 4.0)
+      hpxml_bldg.attics[1].attached_to_wall_idrefs << hpxml_bldg.walls[-1].id
       hpxml_bldg.foundation_walls.each do |foundation_wall|
         foundation_wall.area = 1200.0 / hpxml_bldg.foundation_walls.size
       end
@@ -985,6 +992,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                             area: 450,
                             insulation_assembly_r_value: 39.3,
                             floor_or_ceiling: HPXML::FloorOrCeilingCeiling)
+      hpxml_bldg.attics[-1].attached_to_floor_idrefs = [hpxml_bldg.floors[-1].id]
       hpxml_bldg.slabs[0].area = 1350
       hpxml_bldg.slabs[0].exposed_perimeter = 150
       hpxml_bldg.windows[1].area = 108
@@ -1260,6 +1268,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                 siding: HPXML::SidingTypeWood,
                                 area: 81,
                                 insulation_assembly_r_value: 4.0)
+      hpxml_bldg.foundations[-1].attached_to_rim_joist_idrefs = [hpxml_bldg.rim_joists[-1].id]
       hpxml_bldg.foundation_walls.each do |foundation_wall|
         foundation_wall.area /= 2.0
       end
@@ -1272,6 +1281,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                       depth_below_grade: 4,
                                       insulation_interior_r_value: 0,
                                       insulation_exterior_r_value: 0)
+      hpxml_bldg.foundations[0].attached_to_foundation_wall_idrefs << hpxml_bldg.foundation_walls[-1].id
       hpxml_bldg.foundation_walls.add(id: "FoundationWall#{hpxml_bldg.foundation_walls.size + 1}",
                                       exterior_adjacent_to: HPXML::LocationGround,
                                       interior_adjacent_to: HPXML::LocationCrawlspaceUnvented,
@@ -1300,6 +1310,11 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                            under_slab_insulation_width: 0,
                            perimeter_insulation_r_value: 0,
                            under_slab_insulation_r_value: 0)
+      hpxml_bldg.foundations.add(id: "Foundation#{hpxml_bldg.foundations.size + 1}",
+                                 foundation_type: HPXML::FoundationTypeCrawlspaceUnvented,
+                                 attached_to_floor_idrefs: [hpxml_bldg.floors[-1].id],
+                                 attached_to_slab_idrefs: [hpxml_bldg.slabs[-1].id],
+                                 attached_to_foundation_wall_idrefs: hpxml_bldg.foundation_walls[-2..-1].map { |fw| fw.id })
     elsif ['base-foundation-complex.xml'].include? hpxml_file
       hpxml_bldg.foundation_walls.reverse_each do |foundation_wall|
         foundation_wall.delete
@@ -1372,6 +1387,9 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         hpxml_bldg.foundations[0].attached_to_slab_idrefs << slab.id
       end
     elsif ['base-foundation-basement-garage.xml'].include? hpxml_file
+      hpxml_bldg.foundations.add(id: "Foundation#{hpxml_bldg.foundations.size + 1}",
+                                 foundation_type: HPXML::FoundationTypeGarage,
+                                 attached_to_wall_idrefs: [])
       hpxml_bldg.roofs[0].area += 670
       hpxml_bldg.walls.add(id: "Wall#{hpxml_bldg.walls.size + 1}",
                            exterior_adjacent_to: HPXML::LocationGarage,
@@ -1380,6 +1398,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                            area: 320,
                            insulation_assembly_r_value: 23)
       hpxml_bldg.foundations[0].attached_to_wall_idrefs << hpxml_bldg.walls[-1].id
+      hpxml_bldg.foundations[1].attached_to_wall_idrefs << hpxml_bldg.walls[-1].id
       hpxml_bldg.walls.add(id: "Wall#{hpxml_bldg.walls.size + 1}",
                            exterior_adjacent_to: HPXML::LocationOutside,
                            interior_adjacent_to: HPXML::LocationGarage,
@@ -1388,6 +1407,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                            color: hpxml_bldg.walls[0].color,
                            area: 320,
                            insulation_assembly_r_value: 4)
+      hpxml_bldg.foundations[1].attached_to_wall_idrefs << hpxml_bldg.walls[-1].id
       hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                             exterior_adjacent_to: HPXML::LocationGarage,
                             interior_adjacent_to: HPXML::LocationConditionedSpace,
@@ -1395,6 +1415,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                             area: 400,
                             insulation_assembly_r_value: 39.3,
                             floor_or_ceiling: HPXML::FloorOrCeilingFloor)
+      hpxml_bldg.foundations[-1].attached_to_floor_idrefs = [hpxml_bldg.floors[-1].id]
       hpxml_bldg.slabs[0].area -= 400
       hpxml_bldg.slabs[0].exposed_perimeter -= 40
       hpxml_bldg.slabs.add(id: "Slab#{hpxml_bldg.slabs.size + 1}",
@@ -1406,6 +1427,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                            under_slab_insulation_width: 0,
                            perimeter_insulation_r_value: 0,
                            under_slab_insulation_r_value: 0)
+      hpxml_bldg.foundations[1].attached_to_slab_idrefs = [hpxml_bldg.slabs[-1].id]
       hpxml_bldg.doors.add(id: "Door#{hpxml_bldg.doors.size + 1}",
                            attached_to_wall_idref: hpxml_bldg.walls[-3].id,
                            area: 70,
@@ -1433,6 +1455,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                               area: area / floors_map.size,
                               insulation_assembly_r_value: assembly_r,
                               floor_or_ceiling: HPXML::FloorOrCeilingCeiling)
+        hpxml_bldg.attics[0].attached_to_floor_idrefs << hpxml_bldg.floors[-1].id
       end
     elsif ['base-enclosure-floortypes.xml'].include? hpxml_file
       exterior_adjacent_to = hpxml_bldg.floors[0].exterior_adjacent_to
@@ -1453,9 +1476,11 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                               insulation_assembly_r_value: assembly_r,
                               floor_or_ceiling: HPXML::FloorOrCeilingFloor)
       end
+      hpxml_bldg.foundations[0].attached_to_floor_idrefs = hpxml_bldg.floors.map { |f| f.id }
       hpxml_bldg.floors << ceiling
       hpxml_bldg.floors[-1].id = "Floor#{hpxml_bldg.floors.size}"
       hpxml_bldg.floors[-1].insulation_id = "Floor#{hpxml_bldg.floors.size}Insulation"
+      hpxml_bldg.attics[0].attached_to_floor_idrefs = [hpxml_bldg.floors[-1].id]
     elsif ['base-enclosure-walltypes.xml'].include? hpxml_file
       window_ufactor = hpxml_bldg.windows[0].ufactor
       window_shgc = hpxml_bldg.windows[0].shgc
@@ -3198,13 +3223,17 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     hpxml.buildings[1].building_id = 'UnconditionedBasement'
     hpxml.buildings[0].foundation_walls[1].exterior_adjacent_to = HPXML::LocationOtherMultifamilyBufferSpace
     hpxml.buildings[1].foundation_walls[-1].delete
-    hpxml.buildings[1].foundation_walls.add(id: "FoundationWall#{hpxml.buildings[1].foundation_walls.size + 1}_2", sameas_id: hpxml.buildings[0].foundation_walls[1].id)
+    hpxml.buildings[1].foundation_walls.add(id: "FoundationWall#{hpxml.buildings[1].foundation_walls.size + 1}_2",
+                                            sameas_id: hpxml.buildings[0].foundation_walls[1].id)
     hpxml.buildings[0].rim_joists[1].exterior_adjacent_to = HPXML::LocationOtherMultifamilyBufferSpace
     hpxml.buildings[1].rim_joists[-1].delete
-    hpxml.buildings[1].rim_joists.add(id: "RimJoist#{hpxml.buildings[1].rim_joists.size + 1}_2", sameas_id: hpxml.buildings[0].rim_joists[1].id)
+    hpxml.buildings[1].rim_joists.add(id: "RimJoist#{hpxml.buildings[1].rim_joists.size + 1}_2",
+                                      sameas_id: hpxml.buildings[0].rim_joists[1].id)
     # Add two ceilings
-    hpxml.buildings[0].floors.add(id: "Floor#{hpxml.buildings[0].floors.size + 1}_1", sameas_id: hpxml.buildings[2].floors[0].id)
-    hpxml.buildings[1].floors.add(id: "Floor#{hpxml.buildings[1].floors.size + 1}_2", sameas_id: hpxml.buildings[3].floors[0].id)
+    hpxml.buildings[0].floors.add(id: "Floor#{hpxml.buildings[0].floors.size + 1}_1",
+                                  sameas_id: hpxml.buildings[2].floors[0].id)
+    hpxml.buildings[1].floors.add(id: "Floor#{hpxml.buildings[1].floors.size + 1}_2",
+                                  sameas_id: hpxml.buildings[3].floors[0].id)
     # first floor, building2: unconditioned, building3: conditioned
     # First floor is floor, second floor is ceiling
     for i in 2..3
@@ -3212,13 +3241,15 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml.buildings[i].floors[0].exterior_adjacent_to = (i == 2) ? HPXML::LocationOtherHousingUnit : HPXML::LocationOtherMultifamilyBufferSpace
       # Ceiling
       hpxml.buildings[i].floors[-1].delete
-      hpxml.buildings[i].floors.add(id: "Floor#{hpxml.buildings[i].floors.size + 1}_#{i + 1}", sameas_id: hpxml.buildings[i + 2].floors[0].id)
+      hpxml.buildings[i].floors.add(id: "Floor#{hpxml.buildings[i].floors.size + 1}_#{i + 1}",
+                                    sameas_id: hpxml.buildings[i + 2].floors[0].id)
     end
     # Interior walls
     hpxml.buildings[2].building_id = 'F1UnconditionedHall'
     hpxml.buildings[3].building_id = 'F1ConditionedUnit'
     hpxml.buildings[2].walls[-1].delete
-    hpxml.buildings[2].walls.add(id: "Wall#{hpxml.buildings[2].walls.size + 1}_3", sameas_id: hpxml.buildings[3].walls[-1].id)
+    hpxml.buildings[2].walls.add(id: "Wall#{hpxml.buildings[2].walls.size + 1}_3",
+                                 sameas_id: hpxml.buildings[3].walls[-1].id)
     hpxml.buildings[3].walls[-1].exterior_adjacent_to = HPXML::LocationOtherMultifamilyBufferSpace
     # second floor, building4: unconditioned, building5: conditioned
     # First floor is floor, second floor is ceiling
@@ -3227,13 +3258,15 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml.buildings[i].floors[0].exterior_adjacent_to = (i == 4) ? HPXML::LocationOtherMultifamilyBufferSpace : HPXML::LocationOtherHousingUnit
       # Ceiling
       hpxml.buildings[i].floors[-1].delete
-      hpxml.buildings[i].floors.add(id: "Floor#{hpxml.buildings[i].floors.size + 1}_#{i + 1}", sameas_id: hpxml.buildings[i + 2].floors[0].id)
+      hpxml.buildings[i].floors.add(id: "Floor#{hpxml.buildings[i].floors.size + 1}_#{i + 1}",
+                                    sameas_id: hpxml.buildings[i + 2].floors[0].id)
     end
     hpxml.buildings[4].building_id = 'F2UnconditionedHall'
     hpxml.buildings[5].building_id = 'F2ConditionedUnit'
     hpxml.buildings[5].walls[-1].exterior_adjacent_to = HPXML::LocationOtherMultifamilyBufferSpace
     hpxml.buildings[4].walls[-1].delete
-    hpxml.buildings[4].walls.add(id: "Wall#{hpxml.buildings[5].walls.size + 1}_5", sameas_id: hpxml.buildings[5].walls[-1].id)
+    hpxml.buildings[4].walls.add(id: "Wall#{hpxml.buildings[5].walls.size + 1}_5",
+                                 sameas_id: hpxml.buildings[5].walls[-1].id)
     # attic, building6: unconditioned, building7: unconditioned
     # First floor is floor, second floor is ceiling
     hpxml.buildings[6].building_id = 'F3Attic1'
@@ -3252,7 +3285,8 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         hpxml.buildings[i].walls[1].exterior_adjacent_to = HPXML::LocationOtherMultifamilyBufferSpace
       else
         hpxml.buildings[i].walls[-1].delete
-        hpxml.buildings[i].walls.add(id: "Wall#{hpxml.buildings[i].walls.size + 1}_#{i + 1}", sameas_id: hpxml.buildings[i - 1].walls[-1].id)
+        hpxml.buildings[i].walls.add(id: "Wall#{hpxml.buildings[i].walls.size + 1}_#{i + 1}",
+                                     sameas_id: hpxml.buildings[i - 1].walls[-1].id)
       end
       # Floor exterior adjacent to
       hpxml.buildings[i].floors[0].exterior_adjacent_to = (i == 6) ? HPXML::LocationOtherMultifamilyBufferSpace : HPXML::LocationOtherHousingUnit
@@ -3281,16 +3315,21 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     hpxml.buildings[1].building_id = 'HallWithUnconditionedBasement'
     hpxml.buildings[0].foundation_walls[1].exterior_adjacent_to = HPXML::LocationOtherMultifamilyBufferSpace
     hpxml.buildings[1].foundation_walls[-1].delete
-    hpxml.buildings[1].foundation_walls.add(id: "FoundationWall#{hpxml.buildings[1].foundation_walls.size + 1}_2", sameas_id: hpxml.buildings[0].foundation_walls[1].id)
+    hpxml.buildings[1].foundation_walls.add(id: "FoundationWall#{hpxml.buildings[1].foundation_walls.size + 1}_2",
+                                            sameas_id: hpxml.buildings[0].foundation_walls[1].id)
     hpxml.buildings[0].walls[1].exterior_adjacent_to = HPXML::LocationOtherMultifamilyBufferSpace
     hpxml.buildings[1].walls[1].delete
-    hpxml.buildings[1].walls.add(id: "Wall#{hpxml.buildings[1].walls.size + 1}_2", sameas_id: hpxml.buildings[0].walls[1].id)
+    hpxml.buildings[1].walls.add(id: "Wall#{hpxml.buildings[1].walls.size + 1}_2",
+                                 sameas_id: hpxml.buildings[0].walls[1].id)
     hpxml.buildings[0].rim_joists[1].exterior_adjacent_to = HPXML::LocationOtherMultifamilyBufferSpace
     hpxml.buildings[1].rim_joists[-1].delete
-    hpxml.buildings[1].rim_joists.add(id: "RimJoist#{hpxml.buildings[1].rim_joists.size + 1}_2", sameas_id: hpxml.buildings[0].rim_joists[1].id)
+    hpxml.buildings[1].rim_joists.add(id: "RimJoist#{hpxml.buildings[1].rim_joists.size + 1}_2",
+                                      sameas_id: hpxml.buildings[0].rim_joists[1].id)
     # Add two ceilings
-    hpxml.buildings[0].floors.add(id: "Floor#{hpxml.buildings[0].floors.size + 1}_1", sameas_id: hpxml.buildings[2].floors[0].id)
-    hpxml.buildings[1].floors.add(id: "Floor#{hpxml.buildings[1].floors.size + 1}_2", sameas_id: hpxml.buildings[3].floors[0].id)
+    hpxml.buildings[0].floors.add(id: "Floor#{hpxml.buildings[0].floors.size + 1}_1",
+                                  sameas_id: hpxml.buildings[2].floors[0].id)
+    hpxml.buildings[1].floors.add(id: "Floor#{hpxml.buildings[1].floors.size + 1}_2",
+                                  sameas_id: hpxml.buildings[3].floors[0].id)
     # first floor, building2: unconditioned, building3: conditioned
     # First floor is floor, second floor is ceiling
     for i in 2..3
@@ -3298,14 +3337,16 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml.buildings[i].floors[0].exterior_adjacent_to = (i == 2) ? HPXML::LocationOtherHousingUnit : HPXML::LocationOtherMultifamilyBufferSpace
       # Ceiling
       hpxml.buildings[i].floors[-1].delete
-      hpxml.buildings[i].floors.add(id: "Floor#{hpxml.buildings[i].floors.size + 1}_#{i + 1}", sameas_id: hpxml.buildings[i + 2].floors[0].id)
+      hpxml.buildings[i].floors.add(id: "Floor#{hpxml.buildings[i].floors.size + 1}_#{i + 1}",
+                                    sameas_id: hpxml.buildings[i + 2].floors[0].id)
     end
     # Interior walls
     hpxml.buildings[2].building_id = 'F1ConditionedUnit'
     hpxml.buildings[3].building_id = 'F1UnconditionedHall'
     hpxml.buildings[2].walls[-1].exterior_adjacent_to = HPXML::LocationOtherMultifamilyBufferSpace
     hpxml.buildings[3].walls[-1].delete
-    hpxml.buildings[3].walls.add(id: "Wall#{hpxml.buildings[3].walls.size + 1}_4", sameas_id: hpxml.buildings[2].walls[-1].id)
+    hpxml.buildings[3].walls.add(id: "Wall#{hpxml.buildings[3].walls.size + 1}_4",
+                                 sameas_id: hpxml.buildings[2].walls[-1].id)
     # second floor, building4: conditioned with attic, building5: unconditioned with attic
     # First floor is floor, second floor is ceiling
     for i in 4..5
@@ -3319,8 +3360,134 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     hpxml.buildings[5].walls[3].delete
     hpxml.buildings[5].walls[1].delete
     hpxml.buildings[5].walls[1].id = "Wall#{hpxml.buildings[5].walls.size}_6"
-    hpxml.buildings[5].walls.add(id: "Wall#{hpxml.buildings[5].walls.size + 1}_6", sameas_id: hpxml.buildings[4].walls[1].id)
-    hpxml.buildings[5].walls.add(id: "Wall#{hpxml.buildings[5].walls.size + 1}_6", sameas_id: hpxml.buildings[4].walls[3].id)
+    hpxml.buildings[5].walls.add(id: "Wall#{hpxml.buildings[5].walls.size + 1}_6",
+                                 sameas_id: hpxml.buildings[4].walls[1].id)
+    hpxml.buildings[5].walls.add(id: "Wall#{hpxml.buildings[5].walls.size + 1}_6",
+                                 sameas_id: hpxml.buildings[4].walls[3].id)
+  end
+end
+
+def check_hpxml(hpxml_path, hpxml)
+  return if hpxml_path.include? 'base-misc-defaults' # Intentionally no attics/foundations in this file
+  return if hpxml_path.include? 'base-bldgtype-mf-whole-building' # Too complicated, address in the future
+
+  hpxml.buildings.each do |hpxml_bldg|
+    # Check every floor is attached to an appropriate foundation or attic
+    hpxml_bldg.floors.each do |floor|
+      next if floor.exterior_adjacent_to == HPXML::LocationGarage # Exclude floors adjacent to garage
+
+      found_floor = false
+      (hpxml_bldg.attics + hpxml_bldg.foundations).each do |attic_or_fnd|
+        next unless [floor.interior_adjacent_to, floor.exterior_adjacent_to].include?(attic_or_fnd.to_location) || (attic_or_fnd.is_a?(HPXML::Foundation) && attic_or_fnd.foundation_type == HPXML::FoundationTypeCombination)
+        next if attic_or_fnd.attached_to_floor_idrefs.nil?
+        next unless attic_or_fnd.attached_to_floor_idrefs.include? floor.id
+
+        found_floor = true
+      end
+      next if found_floor
+
+      fail "Floor id '#{floor.id}' not referenced by an appropriate attic or foundation"
+    end
+
+    # Check every slab is attached to an appropriate foundation
+    hpxml_bldg.slabs.each do |slab|
+      next if slab.interior_adjacent_to == HPXML::LocationGarage # Exclude garage slab
+
+      found_slab = false
+      hpxml_bldg.foundations.each do |fnd|
+        next unless slab.interior_adjacent_to == fnd.to_location
+        next if fnd.attached_to_slab_idrefs.nil?
+        next unless fnd.attached_to_slab_idrefs.include? slab.id
+
+        found_slab = true
+      end
+
+      next if found_slab
+
+      fail "Slab id '#{slab.id}' not referenced by an appropriate foundation"
+    end
+
+    # Check every foundation wall is attached to an appropriate foundation
+    hpxml_bldg.foundation_walls.each do |fwall|
+      found_fwall = false
+      hpxml_bldg.foundations.each do |fnd|
+        next unless fwall.interior_adjacent_to == fnd.to_location
+        next if fnd.attached_to_foundation_wall_idrefs.nil?
+        next unless fnd.attached_to_foundation_wall_idrefs.include? fwall.id
+
+        found_fwall = true
+      end
+
+      next if found_fwall
+
+      fail "FoundationWall id '#{fwall.id}' not referenced by an appropriate foundation"
+    end
+
+    # Check every roof is attached to an appropriate attic
+    hpxml_bldg.roofs.each do |roof|
+      found_roof = false
+      hpxml_bldg.attics.each do |attic|
+        next unless roof.interior_adjacent_to == attic.to_location
+        next if attic.attached_to_roof_idrefs.nil?
+        next unless attic.attached_to_roof_idrefs.include? roof.id
+
+        found_roof = true
+      end
+
+      next if found_roof
+
+      fail "Roof id '#{roof.id}' not referenced by an appropriate attic"
+    end
+
+    # Check every attic wall is attached to an appropriate attic
+    hpxml_bldg.walls.each do |wall|
+      next unless [HPXML::LocationAtticUnvented,
+                   HPXML::LocationAtticVented].include? wall.interior_adjacent_to
+
+      found_wall = false
+      hpxml_bldg.attics.each do |attic|
+        next unless wall.interior_adjacent_to == attic.to_location
+        next if attic.attached_to_wall_idrefs.nil?
+        next unless attic.attached_to_wall_idrefs.include? wall.id
+
+        found_wall = true
+      end
+
+      next if found_wall
+
+      fail "Attic Wall id '#{wall.id}' not referenced by an appropriate attic"
+    end
+
+    # Check every below-grade wall/rim joist is attached to an appropriate foundation
+    (hpxml_bldg.walls + hpxml_bldg.rim_joists).each do |wall|
+      next unless [HPXML::LocationBasementConditioned,
+                   HPXML::LocationBasementUnconditioned,
+                   HPXML::LocationCrawlspaceUnvented,
+                   HPXML::LocationCrawlspaceVented,
+                   HPXML::LocationCrawlspaceConditioned].include? wall.interior_adjacent_to
+
+      found_wall = false
+      hpxml_bldg.foundations.each do |fnd|
+        next unless wall.interior_adjacent_to == fnd.to_location
+
+        if wall.is_a? HPXML::Wall
+          next if fnd.attached_to_wall_idrefs.nil?
+          next unless fnd.attached_to_wall_idrefs.include? wall.id
+        elsif wall.is_a? HPXML::RimJoist
+          next if fnd.attached_to_rim_joist_idrefs.nil?
+          next unless fnd.attached_to_rim_joist_idrefs.include? wall.id
+        end
+
+        found_wall = true
+      end
+
+      next if found_wall
+      if wall.is_a? HPXML::Wall
+        fail "Below-grade Wall id '#{wall.id}' not referenced by an appropriate foundation"
+      elsif wall.is_a? HPXML::RimJoist
+        fail "Below-grade RimJoist id '#{wall.id}' not referenced by an appropriate foundation"
+      end
+    end
   end
 end
 
