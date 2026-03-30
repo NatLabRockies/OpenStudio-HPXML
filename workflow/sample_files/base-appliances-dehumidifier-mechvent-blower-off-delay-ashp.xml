@@ -56,13 +56,13 @@
       <ClimateandRiskZones>
         <ClimateZoneIECC>
           <Year>2006</Year>
-          <ClimateZone>3A</ClimateZone>
+          <ClimateZone>2A</ClimateZone>
         </ClimateZoneIECC>
         <WeatherStation>
           <SystemIdentifier id='WeatherStation'/>
-          <Name>USA_TX_Dallas-Fort.Worth.Intl.AP.722590_TMY3</Name>
+          <Name>USA_TX_Houston-Bush.Intercontinental.AP.722430_TMY3</Name>
           <extension>
-            <EPWFilePath>USA_TX_Dallas-Fort.Worth.Intl.AP.722590_TMY3.epw</EPWFilePath>
+            <EPWFilePath>USA_TX_Houston-Bush.Intercontinental.AP.722430_TMY3.epw</EPWFilePath>
           </extension>
         </WeatherStation>
       </ClimateandRiskZones>
@@ -256,36 +256,28 @@
         <HVAC>
           <HVACPlant>
             <PrimarySystems>
-              <PrimaryHeatingSystem idref='HeatingSystem1'/>
-              <PrimaryCoolingSystem idref='CoolingSystem1'/>
+              <PrimaryHeatingSystem idref='HeatPump1'/>
+              <PrimaryCoolingSystem idref='HeatPump1'/>
             </PrimarySystems>
-            <HeatingSystem>
-              <SystemIdentifier id='HeatingSystem1'/>
+            <HeatPump>
+              <SystemIdentifier id='HeatPump1'/>
               <DistributionSystem idref='HVACDistribution1'/>
-              <HeatingSystemType>
-                <Furnace/>
-              </HeatingSystemType>
-              <HeatingSystemFuel>natural gas</HeatingSystemFuel>
-              <HeatingCapacity>25000.0</HeatingCapacity>
-              <AnnualHeatingEfficiency>
-                <Units>AFUE</Units>
-                <Value>0.92</Value>
-              </AnnualHeatingEfficiency>
-              <FractionHeatLoadServed>1.0</FractionHeatLoadServed>
-            </HeatingSystem>
-            <CoolingSystem>
-              <SystemIdentifier id='CoolingSystem1'/>
-              <DistributionSystem idref='HVACDistribution1'/>
-              <CoolingSystemType>central air conditioner</CoolingSystemType>
-              <CoolingSystemFuel>electricity</CoolingSystemFuel>
+              <HeatPumpType>air-to-air</HeatPumpType>
+              <HeatPumpFuel>electricity</HeatPumpFuel>
+              <HeatingCapacity>24000.0</HeatingCapacity>
               <CoolingCapacity>24000.0</CoolingCapacity>
-              <CompressorType>single stage</CompressorType>
+              <CompressorType>variable speed</CompressorType>
+              <FractionHeatLoadServed>1.0</FractionHeatLoadServed>
               <FractionCoolLoadServed>1.0</FractionCoolLoadServed>
               <AnnualCoolingEfficiency>
                 <Units>SEER2</Units>
-                <Value>13.4</Value>
+                <Value>21.0</Value>
               </AnnualCoolingEfficiency>
-            </CoolingSystem>
+              <AnnualHeatingEfficiency>
+                <Units>HSPF2</Units>
+                <Value>9.2</Value>
+              </AnnualHeatingEfficiency>
+            </HeatPump>
           </HVACPlant>
           <HVACControl>
             <SystemIdentifier id='HVACControl1'/>
@@ -332,6 +324,15 @@
             <ConditionedFloorAreaServed>1350.0</ConditionedFloorAreaServed>
           </HVACDistribution>
         </HVAC>
+        <MechanicalVentilation>
+          <VentilationFans>
+            <VentilationFan>
+              <SystemIdentifier id='VentilationFan1'/>
+              <FanType>supply only</FanType>
+              <UsedForWholeBuildingVentilation>true</UsedForWholeBuildingVentilation>
+            </VentilationFan>
+          </VentilationFans>
+        </MechanicalVentilation>
         <WaterHeating>
           <WaterHeatingSystem>
             <SystemIdentifier id='WaterHeatingSystem1'/>

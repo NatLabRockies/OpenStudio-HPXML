@@ -517,6 +517,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       iecc_zone = {
         'USA_HI_Honolulu.Intl.AP.911820_TMY3.epw' => '1A',
         'USA_FL_Miami.Intl.AP.722020_TMY3.epw' => '1A',
+        'USA_TX_Houston-Bush.Intercontinental.AP.722430_TMY3.epw' => '2A',
         'USA_AZ_Phoenix-Sky.Harbor.Intl.AP.722780_TMY3.epw' => '2B',
         'USA_TX_Dallas-Fort.Worth.Intl.AP.722590_TMY3.epw' => '3A',
         'USA_MD_Baltimore-Washington.Intl.AP.724060_TMY3.epw' => '4A',
