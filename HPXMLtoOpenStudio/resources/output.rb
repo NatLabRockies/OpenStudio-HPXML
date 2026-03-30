@@ -882,12 +882,17 @@ module Outputs
         program.addLine('  EndIf')
       end
       if not thermostat.nil?
-        # Indoor temperature floating between setpoints; determine assignment by comparing to average of heating/cooling setpoints
-        program.addLine("  Set Tmid_setpoint = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
-        program.addLine("  If (#{tin_sensor.name} > Tmid_setpoint) && (clg_season == 1)")
-        program.addLine("    Set clg_mode = #{total_cool_load_serveds[unit]}")
-        program.addLine("  ElseIf (#{tin_sensor.name} < Tmid_setpoint) && (htg_season == 1)")
+        program.addLine("  If (#{natvent_sensors[0].name} <> 0)") # Heat gain from natural ventilation
         program.addLine("    Set htg_mode = #{total_heat_load_serveds[unit]}")
+        program.addLine("  ElseIf (#{natvent_sensors[1].name} <> 0) || (#{whf_sensors[1].name} <> 0)") # Heat loss from natural ventilation or whole house fan
+        program.addLine("    Set clg_mode = #{total_cool_load_serveds[unit]}")
+        program.addLine('  Else') # Indoor temperature floating between setpoints; determine assignment by comparing to average of heating/cooling setpoints
+        program.addLine("    Set Tmid_setpoint = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
+        program.addLine("    If (#{tin_sensor.name} > Tmid_setpoint) && (clg_season == 1)")
+        program.addLine("      Set clg_mode = #{total_cool_load_serveds[unit]}")
+        program.addLine("    ElseIf (#{tin_sensor.name} < Tmid_setpoint) && (htg_season == 1)")
+        program.addLine("      Set htg_mode = #{total_heat_load_serveds[unit]}")
+        program.addLine('    EndIf')
         program.addLine('  EndIf')
       end
       program.addLine('EndIf')
