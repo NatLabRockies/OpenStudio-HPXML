@@ -580,7 +580,7 @@ module Airflow
     end
 
     # Whole-house fan constraints (cooling only)
-    whf_constraints = "(Tout < Tin) && (Tin > Tmidsp) && (#{sensors[:clg_ssn].name} == 1)"
+    whf_constraints = '(Tout < Tin) && (Tin > Tmidsp)'
 
     vent_program.addLine('Set WHF_Flow = 0')
     vent_fans[:whf].each do |vent_whf|
