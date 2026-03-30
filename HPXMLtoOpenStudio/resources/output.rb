@@ -882,9 +882,11 @@ module Outputs
         program.addLine('  EndIf')
       end
       if not thermostat.nil?
-        program.addLine("  If (#{natvent_sensors[0].name} <> 0)") # Heat gain from natural ventilation
+        program.addLine("  If (#{whf_sensors[0].name} <> 0) || (#{whf_sensors[1].name} <> 0)") # Whole-house fan, assign to cooling
+        program.addLine("    Set clg_mode = #{total_cool_load_serveds[unit]}")
+        program.addLine("  ElseIf (#{natvent_sensors[0].name} <> 0)") # Heat gain from natural ventilation, assign to heating
         program.addLine("    Set htg_mode = #{total_heat_load_serveds[unit]}")
-        program.addLine("  ElseIf (#{natvent_sensors[1].name} <> 0) || (#{whf_sensors[1].name} <> 0)") # Heat loss from natural ventilation or whole house fan
+        program.addLine("  ElseIf (#{natvent_sensors[1].name} <> 0)") # Heat loss from natural ventilation, assign to cooling
         program.addLine("    Set clg_mode = #{total_cool_load_serveds[unit]}")
         program.addLine('  Else') # Indoor temperature floating between setpoints; determine assignment by comparing to average of heating/cooling setpoints
         program.addLine("    Set Tmid_setpoint = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
