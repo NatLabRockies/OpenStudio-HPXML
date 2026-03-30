@@ -858,9 +858,9 @@ Additional inputs for ACCA Manual J design loads, used for sizing HVAC equipment
 .. _natvent_control:
 
 HPXML Natural Ventilation Control
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*********************************
 
-If operable windows are defined, the availability of natural ventilation is entered in ``/HPXML/Building/BuildingDetails/BuildingSummary/extension/NaturalVentilationControl``.
+If operable windows are defined (see :ref:`windowinputs`), the availability of natural ventilation is entered in ``/HPXML/Building/BuildingDetails/BuildingSummary/extension/NaturalVentilationControl``.
 
   =================================  ========  =========  ===========  ========  ==========  ========================================================
   Element                            Type      Units      Constraints  Required  Default     Notes
@@ -871,7 +871,8 @@ If operable windows are defined, the availability of natural ventilation is ente
   =================================  ========  =========  ===========  ========  ==========  ========================================================
 
   .. [#] Seasons choices are "year-round", "cooling", or "heating".
-         The cooling/heating seasons are determined by the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_
+         The cooling season is determined by the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_, using monthly average temperatures.
+         The remainder of the year is considered the heating season.
          Natural ventilation will be available when the outdoor humidity ratio is less than 0.0115 and either A) outdoor temperature is below the indoor temperature and the indoor temperature is above the average of the heating and cooling setpoints, or B) outdoor temperature is above the indoor temperature and the indoor temperature is below the average of the heating and cooling setpoints, per ANSI/RESNET/ICC 301-2025.
   .. [#] OpenFractionofOperableArea defaults to 10% per ANSI/RESNET/ICC 301-2025, which is based on the assumption that 50% of the area of operable windows can be open and that 20% of that openable area is actually opened by occupants.
 
@@ -880,7 +881,7 @@ If operable windows are defined, the availability of natural ventilation is ente
 HPXML Shading Control
 *********************
 
-Shading controls for window and skylight summer/winter shading coefficients are entered in ``/HPXML/Building/BuildingDetails/BuildingSummary/extension/ShadingControl``.
+Shading controls for window and skylight summer/winter shading coefficients can be entered in ``/HPXML/Building/BuildingDetails/BuildingSummary/extension/ShadingControl``.
 If not provided, summer will be default based on the cooling season defined in the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_, using monthly average temperatures.
 The remainder of the year is winter.
 

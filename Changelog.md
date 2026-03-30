@@ -5,10 +5,9 @@ __New Features__
   - Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
   - Improves handling of duct leakage specified using cfm25/cfm50.
 - Natural ventilation updates:
-  - **Breaking change**: Replaces `NaturalVentilationAvailabilityDaysperWeek` with `NaturalVentilationControl/DaysperWeek`.
+  - **Breaking change**: Replaces `NaturalVentilationAvailabilityDaysperWeek` with `NaturalVentilationControl/DaysperWeek`; now defaults to 7 instead of 3 to align with ANSI 301.
   - Adds `NaturalVentilationControl/Seasons` ("year-round", "cooling", or "heating") to control seasonal natural ventilation availability; now defaults to year-round instead of cooling.
-  - Adds `NaturalVentilationControl/OpenFractionofOperableArea` to control the fraction of operable window area that is open during ventilation.
-  - Updates the default days/week assumption from 3 to 7 to align with ANSI 301.
+  - Adds `NaturalVentilationControl/OpenFractionofOperableArea` to control the fraction of operable window area that is open during natural ventilation periods.
 - Allows "other" for `SoilType`; adds variation to dry/wet soil conductivity and diffusivity values for unknown/other/loam soil types.
 - Output updates:
   - **Breaking change**: Annual peak load outputs for heating and cooling now use units of Btu/h instead of kBtu/h for consistency with other outputs.

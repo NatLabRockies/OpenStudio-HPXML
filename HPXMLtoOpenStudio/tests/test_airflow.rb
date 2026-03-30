@@ -220,7 +220,7 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     assert_in_epsilon(0.000071, program_values['Cw'].sum, 0.01)
     assert_in_epsilon(0.0, UnitConversions.convert(program_values['WHF_Flow'].sum, 'm^3/s', 'cfm'), 0.01)
 
-    # Check natural ventilation is available 3 days/wk
+    # Check natural ventilation is available 7 days/wk
     nv_sched = model.getScheduleRulesets.find { |s| s.name.to_s.start_with? Constants::ObjectTypeNaturalVentilation }
     assert_equal(8760, Schedule.annual_equivalent_full_load_hrs(2007, nv_sched))
   end
@@ -237,7 +237,7 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     assert_in_epsilon(0.000071, program_values['Cw'].sum, 0.01)
     assert_in_epsilon(0.0, UnitConversions.convert(program_values['WHF_Flow'].sum, 'm^3/s', 'cfm'), 0.01)
 
-    # Check natural ventilation is available 7 days/wk
+    # Check natural ventilation is available 3 days/wk
     nv_sched = model.getScheduleRulesets.find { |s| s.name.to_s.start_with? Constants::ObjectTypeNaturalVentilation }
     assert_equal(3768, Schedule.annual_equivalent_full_load_hrs(2007, nv_sched))
   end
