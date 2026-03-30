@@ -874,7 +874,7 @@ If operable windows are defined (see :ref:`windowinputs`), the availability of n
          The cooling season is determined by the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_, using monthly average temperatures.
          The remainder of the year is considered the heating season.
          Natural ventilation will be available when the outdoor humidity ratio is less than 0.0115 and either A) outdoor temperature is below the indoor temperature and the indoor temperature is above the average of the heating and cooling setpoints, or B) outdoor temperature is above the indoor temperature and the indoor temperature is below the average of the heating and cooling setpoints, per ANSI/RESNET/ICC 301-2025.
-  .. [#] OpenFractionofOperableArea defaults to 10% per ANSI/RESNET/ICC 301-2025, which is based on the assumption that 50% of the area of operable windows can be open and that 20% of that openable area is actually opened by occupants.
+  .. [#] OpenFractionofOperableArea defaults to 10% per ANSI/RESNET/ICC 301-2025, which is based on the assumption that 50% of the area of operable windows can be open (e.g., double-hung windows) and that 20% of that openable area is actually opened by occupants.
 
 .. _shadingcontrol:
 
