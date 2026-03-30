@@ -533,7 +533,7 @@ module Airflow
     vent_program.addLine("Set MaxHR = #{max_oa_hr}")
     if not thermostat.nil?
       # Home has HVAC system (though setpoints may be defaulted); use the average of heating/cooling setpoints to minimize incurring additional heating energy.
-      vent_program.addLine("Set Tnvsp = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
+      vent_program.addLine("Set Tmidsp = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
     else
       # No HVAC system; use the average of defaulted heating/cooling setpoints.
       htg_weekday_setpoints, htg_weekend_setpoints = Defaults.get_heating_setpoint(HPXML::HVACControlTypeManual, hpxml_header.eri_calculation_versions[0])
@@ -548,7 +548,7 @@ module Airflow
       else
         fail 'Unexpected cooling setpoints.'
       end
-      vent_program.addLine("Set Tnvsp = (#{default_htg_sp} + #{default_clg_sp}) / 2")
+      vent_program.addLine("Set Tmidsp = (#{default_htg_sp} + #{default_clg_sp}) / 2")
     end
     vent_program.addLine("Set NVavailDayofWeek = #{nv_avail_sensor.name}")
     if hpxml_bldg.header.natvent_seasons == HPXML::NatVentSeasonsYearRound
@@ -565,56 +565,63 @@ module Airflow
     vent_program.addLine('Set Qwhf = 0') # Init
     vent_program.addLine("Set #{cond_to_zone_flow_rate_actuator.name} = 0") unless whf_zone.nil? # Init
     vent_program.addLine("Set #{whf_elec_actuator.name} = 0") # Init
+
+    # Natural ventilation constraints
     # From ANSI 301
     # allow natural ventilation when the outdoor humidity ratio is less than 0.0115 lb_w/lb_da and either:
     # A) outdoor temperature is below the indoor temperature and the indoor temperature is above the average of the heating and cooling setpoints, or
     # B) outdoor temperature is above the indoor temperature and the indoor temperature is below the average of the heating and cooling setpoints
-    infil_constraints = 'If (((Tout < Tin) && (Tin > Tnvsp) && (NVavailSeasonClg == 1)) || ((Tout > Tin) && (Tin < Tnvsp) && (NVavailSeasonHtg == 1)))'
+    natvent_constraints = '(((Tout < Tin) && (Tin > Tmidsp) && (NVavailSeasonClg == 1)) || ((Tout > Tin) && (Tin < Tmidsp) && (NVavailSeasonHtg == 1)))'
     if not clg_avail_sensor.nil?
       # Ignore the humidity constraint when space cooling is not available (e.g., power outage), in order to allow as much natural ventilation as possible
-      infil_constraints += " && ((Wout < MaxHR) || (#{clg_avail_sensor.name} == 0))"
+      natvent_constraints += " && ((Wout < MaxHR) || (#{clg_avail_sensor.name} == 0))"
     else
-      infil_constraints += ' && (Wout < MaxHR)'
+      natvent_constraints += ' && (Wout < MaxHR)'
     end
-    vent_program.addLine(infil_constraints)
-    vent_program.addLine('  Set WHF_Flow = 0')
+
+    # Whole-house fan constraints (cooling only)
+    whf_constraints = "(Tout < Tin) && (Tin > Tmidsp) && (#{sensors[:clg_ssn].name} == 1)"
+
+    vent_program.addLine('Set WHF_Flow = 0')
     vent_fans[:whf].each do |vent_whf|
-      vent_program.addLine("  Set WHF_Flow = WHF_Flow + #{UnitConversions.convert(vent_whf.flow_rate, 'cfm', 'm^3/s')} * #{whf_avail_sensors[vent_whf.id].name}")
+      vent_program.addLine("Set WHF_Flow = WHF_Flow + #{UnitConversions.convert(vent_whf.flow_rate, 'cfm', 'm^3/s')} * #{whf_avail_sensors[vent_whf.id].name}")
     end
-    vent_program.addLine('  If Tin > Tout')
-    vent_program.addLine('    Set Adj = (Tin-Tnvsp)/(Tin-Tout)')
-    vent_program.addLine('  Else')
-    vent_program.addLine('    Set Adj = (Tnvsp-Tin)/(Tout-Tin)')
-    vent_program.addLine('  EndIf')
-    vent_program.addLine('  Set Adj = (@Min Adj 1)')
-    vent_program.addLine('  Set Adj = (@Max Adj 0)')
-    vent_program.addLine('  If (WHF_Flow > 0)') # If available, prioritize whole house fan
-    vent_program.addLine('    Set Qwhf = WHF_Flow*Adj')
-    vent_program.addLine("    Set #{cond_to_zone_flow_rate_actuator.name} = WHF_Flow*Adj") unless whf_zone.nil?
-    vent_program.addLine('    Set WHF_W = 0')
+    vent_program.addLine('If Tin > Tout')
+    vent_program.addLine('  Set Adj = (Tin-Tmidsp)/(Tin-Tout)')
+    vent_program.addLine('ElseIf Tout > Tin')
+    vent_program.addLine('  Set Adj = (Tmidsp-Tin)/(Tout-Tin)')
+    vent_program.addLine('EndIf')
+    vent_program.addLine('Set Adj = (@Min Adj 1)')
+    vent_program.addLine('Set Adj = (@Max Adj 0)')
+
+    vent_program.addLine("If (WHF_Flow > 0) && #{whf_constraints}") # If available, prioritize whole house fan
+    vent_program.addLine('  Set Qwhf = WHF_Flow*Adj')
+    vent_program.addLine("  Set #{cond_to_zone_flow_rate_actuator.name} = WHF_Flow*Adj") unless whf_zone.nil?
+    vent_program.addLine('  Set WHF_W = 0')
     if hpxml_bldg.building_occupancy.number_of_residents != 0 # If operational calculation w/ zero occupants, zero out whole house fan
       vent_fans[:whf].each do |vent_whf|
-        vent_program.addLine("    Set WHF_W = WHF_W + #{vent_whf.fan_power} * #{whf_avail_sensors[vent_whf.id].name}")
+        vent_program.addLine("  Set WHF_W = WHF_W + #{vent_whf.fan_power} * #{whf_avail_sensors[vent_whf.id].name}")
       end
     end
-    vent_program.addLine("    Set #{whf_elec_actuator.name} = WHF_W*Adj")
-    vent_program.addLine('  ElseIf NVavailDayofWeek > 0') # Natural ventilation
+    vent_program.addLine("  Set #{whf_elec_actuator.name} = WHF_W*Adj")
+
+    vent_program.addLine("ElseIf (NVavailDayofWeek > 0) && #{natvent_constraints}") # Natural ventilation
     if hpxml_bldg.building_occupancy.number_of_residents == 0
       # Operational calculation w/ zero occupants, zero out natural ventilation
-      vent_program.addLine('    Set NVArea = 0')
+      vent_program.addLine('  Set NVArea = 0')
     else
-      vent_program.addLine("    Set NVArea = #{UnitConversions.convert(area, 'ft^2', 'cm^2')}")
+      vent_program.addLine("  Set NVArea = #{UnitConversions.convert(area, 'ft^2', 'cm^2')}")
     end
-    vent_program.addLine("    Set Cs = #{UnitConversions.convert(c_s, 'ft^2/(s^2*R)', 'L^2/(s^2*cm^4*K)')}")
-    vent_program.addLine("    Set Cw = #{c_w * 0.01}")
-    vent_program.addLine('    Set Tdiff = Tin-Tout')
-    vent_program.addLine('    Set dT = (@Abs Tdiff)')
-    vent_program.addLine("    Set Vwind = #{sensors[:v_wind].name}")
-    vent_program.addLine('    Set SGNV = NVArea*Adj*((((Cs*dT)+(Cw*(Vwind^2)))^0.5)/1000)')
-    vent_program.addLine("    Set MaxNV = #{UnitConversions.convert(max_flow_rate, 'cfm', 'm^3/s')}")
-    vent_program.addLine('    Set Qnv = (@Min SGNV MaxNV)')
-    vent_program.addLine('  EndIf')
+    vent_program.addLine("  Set Cs = #{UnitConversions.convert(c_s, 'ft^2/(s^2*R)', 'L^2/(s^2*cm^4*K)')}")
+    vent_program.addLine("  Set Cw = #{c_w * 0.01}")
+    vent_program.addLine('  Set Tdiff = Tin-Tout')
+    vent_program.addLine('  Set dT = (@Abs Tdiff)')
+    vent_program.addLine("  Set Vwind = #{sensors[:v_wind].name}")
+    vent_program.addLine('  Set SGNV = NVArea*Adj*((((Cs*dT)+(Cw*(Vwind^2)))^0.5)/1000)')
+    vent_program.addLine("  Set MaxNV = #{UnitConversions.convert(max_flow_rate, 'cfm', 'm^3/s')}")
+    vent_program.addLine('  Set Qnv = (@Min SGNV MaxNV)')
     vent_program.addLine('EndIf')
+
     vent_program.addLine("Set #{nv_flow_actuator.name} = Qnv")
     vent_program.addLine("Set #{whf_flow_actuator.name} = Qwhf")
 
