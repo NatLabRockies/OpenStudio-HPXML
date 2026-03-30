@@ -48,7 +48,11 @@
           <ConditionedBuildingVolume>21600.0</ConditionedBuildingVolume>
         </BuildingConstruction>
         <extension>
-          <NaturalVentilationAvailabilityDaysperWeek>7</NaturalVentilationAvailabilityDaysperWeek>
+          <NaturalVentilationControl>
+            <Seasons>cooling</Seasons>
+            <DaysperWeek>3</DaysperWeek>
+            <OpenFractionofOperableArea>0.2</OpenFractionofOperableArea>
+          </NaturalVentilationControl>
         </extension>
       </BuildingSummary>
       <ClimateandRiskZones>

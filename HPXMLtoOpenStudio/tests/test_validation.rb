@@ -219,8 +219,11 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                            'Expected ../LightingGroup[LightingType[CompactFluorescent] and Location="garage"]/FractionofUnitsInLocation or Load[Units="kWh/year"]/Value but not both',
                                                            'Expected ../LightingGroup[LightingType[CompactFluorescent] and Location="garage"]/FractionofUnitsInLocation or Load[Units="kWh/year"]/Value but not both',
                                                            'Expected ../LightingGroup[LightingType[CompactFluorescent] and Location="garage"]/FractionofUnitsInLocation or Load[Units="kWh/year"]/Value but not both'],
-                            'invalid-natvent-availability' => ['Expected extension/NaturalVentilationAvailabilityDaysperWeek to be less than or equal to 7'],
-                            'invalid-natvent-availability2' => ['Expected extension/NaturalVentilationAvailabilityDaysperWeek to be greater than or equal to 0'],
+                            'invalid-natvent-daysperweek' => ['Expected DaysperWeek to be less than or equal to 7'],
+                            'invalid-natvent-daysperweek2' => ['Expected DaysperWeek to be greater than or equal to 0'],
+                            'invalid-natvent-openfrac' => ['Expected OpenFractionofOperableArea to be greater than or equal to 0'],
+                            'invalid-natvent-openfrac2' => ['Expected OpenFractionofOperableArea to be less than or equal to 1'],
+                            'invalid-natvent-seasons' => ["Expected Seasons to be 'year-round' or 'cooling' or 'heating'"],
                             'invalid-number-of-bedrooms-served-pv' => ['Expected extension/NumberofBedroomsServed to be greater than ../../../BuildingSummary/BuildingConstruction/NumberofBedrooms [context: /HPXML/Building/BuildingDetails/Systems/Photovoltaics/PVSystem[IsSharedSystem="true"], id: "PVSystem1"]'],
                             'invalid-number-of-bedrooms-served-recirc' => ['Expected NumberofBedroomsServed to be greater than ../../../../../BuildingSummary/BuildingConstruction/NumberofBedrooms [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/HotWaterDistribution/extension/SharedRecirculation, id: "HotWaterDistribution1"]'],
                             'invalid-number-of-bedrooms-served-water-heater' => ['Expected extension/NumberofBedroomsServed to be greater than ../../../BuildingSummary/BuildingConstruction/NumberofBedrooms [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[IsSharedSystem="true"], id: "WaterHeatingSystem1"]'],
@@ -735,12 +738,21 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
             break
           end
         end
-      when 'invalid-natvent-availability'
+      when 'invalid-natvent-daysperweek'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.header.natvent_days_per_week = 8
-      when 'invalid-natvent-availability2'
+      when 'invalid-natvent-daysperweek2'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.header.natvent_days_per_week = -1
+      when 'invalid-natvent-openfrac'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.header.natvent_open_frac_of_operable_area = -1
+      when 'invalid-natvent-openfrac2'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.header.natvent_open_frac_of_operable_area = 10
+      when 'invalid-natvent-seasons'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.header.natvent_seasons = 'foo'
       when 'invalid-number-of-bedrooms-served-pv'
         hpxml, hpxml_bldg = _create_hpxml('base-bldgtype-mf-unit-shared-pv.xml')
         hpxml_bldg.pv_systems[0].number_of_bedrooms_served = 3

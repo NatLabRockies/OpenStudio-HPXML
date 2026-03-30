@@ -136,10 +136,10 @@ module Airflow
       key_name: conditioned_zone.name
     )
 
-    # Create cooling season schedule sensor (applies only to natural ventilation, not HVAC equipment).
-    # Uses BAHSP cooling season, not user-specified cooling season (which may be, e.g., year-round).
-    _, default_cooling_months = HVAC.get_building_america_hvac_seasons(weather, hpxml_bldg.latitude)
-    clg_season_sch = MonthWeekdayWeekendSchedule.new(model, 'cooling season schedule', Array.new(24, 1), Array.new(24, 1), default_cooling_months, EPlus::ScheduleTypeLimitsFraction)
+    # Create cooling season schedule sensors (applies only to natural ventilation, not HVAC equipment).
+    # Uses BAHSP cooling season, not user-specified cooling season (which is typically year-round).
+    _, bahsp_cooling_months = HVAC.get_building_america_hvac_seasons(weather, hpxml_bldg.latitude)
+    clg_season_sch = MonthWeekdayWeekendSchedule.new(model, 'cooling season schedule', Array.new(24, 1), Array.new(24, 1), bahsp_cooling_months, EPlus::ScheduleTypeLimitsFraction)
     sensors[:clg_ssn] = Model.add_ems_sensor(
       model,
       name: 'cool_season',
@@ -395,7 +395,6 @@ module Airflow
 
     # Natural Ventilation availability schedule and sensor
     nv_avail_sch = create_sched_from_num_days_per_week(model, Constants::ObjectTypeNaturalVentilation, hpxml_bldg.header.natvent_days_per_week, hpxml_header.unavailable_periods)
-
     nv_avail_sensor = Model.add_ems_sensor(
       model,
       name: "#{Constants::ObjectTypeNaturalVentilation} s",
@@ -507,9 +506,8 @@ module Airflow
       )
     end
 
-    # Assume A) 50% of the area of an operable window can be open, and B) 20% of openable window area is actually open
     window_area = hpxml_bldg.windows.map { |w| w.area }.sum(0.0)
-    open_window_area = window_area * hpxml_bldg.additional_properties.initial_frac_windows_operable * 0.5 * 0.2
+    open_window_area = window_area * hpxml_bldg.additional_properties.initial_frac_windows_operable * hpxml_bldg.header.natvent_open_frac_of_operable_area
 
     area = 0.6 * open_window_area # ft^2, for Sherman-Grimsrud (ASHRAE Basic Model)
     max_rate = 20.0 # Air Changes per hour
@@ -535,7 +533,7 @@ module Airflow
     vent_program.addLine("Set MaxHR = #{max_oa_hr}")
     if not thermostat.nil?
       # Home has HVAC system (though setpoints may be defaulted); use the average of heating/cooling setpoints to minimize incurring additional heating energy.
-      vent_program.addLine("Set Tnvsp = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
+      vent_program.addLine("Set Tmidsp = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
     else
       # No HVAC system; use the average of defaulted heating/cooling setpoints.
       htg_weekday_setpoints, htg_weekend_setpoints = Defaults.get_heating_setpoint(HPXML::HVACControlTypeManual, hpxml_header.eri_calculation_versions[0])
@@ -550,56 +548,80 @@ module Airflow
       else
         fail 'Unexpected cooling setpoints.'
       end
-      vent_program.addLine("Set Tnvsp = (#{default_htg_sp} + #{default_clg_sp}) / 2")
+      vent_program.addLine("Set Tmidsp = (#{default_htg_sp} + #{default_clg_sp}) / 2")
     end
-    vent_program.addLine("Set NVavail = #{nv_avail_sensor.name}")
-    vent_program.addLine("Set ClgSsnAvail = #{sensors[:clg_ssn].name}")
+    vent_program.addLine("Set NVavailDayofWeek = #{nv_avail_sensor.name}")
+    if hpxml_bldg.header.natvent_seasons == HPXML::NatVentSeasonsYearRound
+      vent_program.addLine('Set NVavailSeasonHtg = 1')
+      vent_program.addLine('Set NVavailSeasonClg = 1')
+    elsif hpxml_bldg.header.natvent_seasons == HPXML::NatVentSeasonsCooling
+      vent_program.addLine("Set NVavailSeasonClg = #{sensors[:clg_ssn].name}")
+      vent_program.addLine('Set NVavailSeasonHtg = 0')
+    elsif hpxml_bldg.header.natvent_seasons == HPXML::NatVentSeasonsHeating
+      vent_program.addLine("Set NVavailSeasonHtg = 1 - #{sensors[:clg_ssn].name}")
+      vent_program.addLine('Set NVavailSeasonClg = 0')
+    end
     vent_program.addLine('Set Qnv = 0') # Init
     vent_program.addLine('Set Qwhf = 0') # Init
     vent_program.addLine("Set #{cond_to_zone_flow_rate_actuator.name} = 0") unless whf_zone.nil? # Init
     vent_program.addLine("Set #{whf_elec_actuator.name} = 0") # Init
-    infil_constraints = 'If ((Wout < MaxHR) && (Tin > Tout) && (Tin > Tnvsp) && (ClgSsnAvail > 0))'
+
+    # Natural ventilation constraints
+    # From ANSI 301
+    # allow natural ventilation when the outdoor humidity ratio is less than 0.0115 lb_w/lb_da and either:
+    # A) outdoor temperature is below the indoor temperature and the indoor temperature is above the average of the heating and cooling setpoints, or
+    # B) outdoor temperature is above the indoor temperature and the indoor temperature is below the average of the heating and cooling setpoints
+    natvent_constraints = '(((Tout < Tin) && (Tin > Tmidsp) && (NVavailSeasonClg == 1)) || ((Tout > Tin) && (Tin < Tmidsp) && (NVavailSeasonHtg == 1)))'
     if not clg_avail_sensor.nil?
-      # We are using the availability schedule, but we also constrain the window opening based on temperatures and humidity.
-      # We're assuming that if the HVAC is not available, you'd ignore the humidity constraints we normally put on window opening per the old HSP guidance (RH < 70% and w < 0.015).
-      # Without, the humidity constraints prevent the window from opening during the entire period even though the sensible cooling would have really helped.
-      infil_constraints += "|| ((Tin > Tout) && (Tin > Tnvsp) && (#{clg_avail_sensor.name} == 0))"
+      # Ignore the humidity constraint when space cooling is not available (e.g., power outage), in order to allow as much natural ventilation as possible
+      natvent_constraints += " && ((Wout < MaxHR) || (#{clg_avail_sensor.name} == 0))"
+    else
+      natvent_constraints += ' && (Wout < MaxHR)'
     end
-    vent_program.addLine(infil_constraints)
-    vent_program.addLine('  Set WHF_Flow = 0')
+
+    # Whole-house fan constraints (cooling only)
+    whf_constraints = '(Tout < Tin) && (Tin > Tmidsp)'
+
+    vent_program.addLine('Set WHF_Flow = 0')
     vent_fans[:whf].each do |vent_whf|
-      vent_program.addLine("  Set WHF_Flow = WHF_Flow + #{UnitConversions.convert(vent_whf.flow_rate, 'cfm', 'm^3/s')} * #{whf_avail_sensors[vent_whf.id].name}")
+      vent_program.addLine("Set WHF_Flow = WHF_Flow + #{UnitConversions.convert(vent_whf.flow_rate, 'cfm', 'm^3/s')} * #{whf_avail_sensors[vent_whf.id].name}")
     end
-    vent_program.addLine('  Set Adj = (Tin-Tnvsp)/(Tin-Tout)')
-    vent_program.addLine('  Set Adj = (@Min Adj 1)')
-    vent_program.addLine('  Set Adj = (@Max Adj 0)')
-    vent_program.addLine('  If (WHF_Flow > 0)') # If available, prioritize whole house fan
-    vent_program.addLine('    Set Qwhf = WHF_Flow*Adj')
-    vent_program.addLine("    Set #{cond_to_zone_flow_rate_actuator.name} = WHF_Flow*Adj") unless whf_zone.nil?
-    vent_program.addLine('    Set WHF_W = 0')
+    vent_program.addLine('If Tin > Tout')
+    vent_program.addLine('  Set Adj = (Tin-Tmidsp)/(Tin-Tout)')
+    vent_program.addLine('ElseIf Tout > Tin')
+    vent_program.addLine('  Set Adj = (Tmidsp-Tin)/(Tout-Tin)')
+    vent_program.addLine('EndIf')
+    vent_program.addLine('Set Adj = (@Min Adj 1)')
+    vent_program.addLine('Set Adj = (@Max Adj 0)')
+
+    vent_program.addLine("If (WHF_Flow > 0) && #{whf_constraints}") # If available, prioritize whole house fan
+    vent_program.addLine('  Set Qwhf = WHF_Flow*Adj')
+    vent_program.addLine("  Set #{cond_to_zone_flow_rate_actuator.name} = WHF_Flow*Adj") unless whf_zone.nil?
+    vent_program.addLine('  Set WHF_W = 0')
     if hpxml_bldg.building_occupancy.number_of_residents != 0 # If operational calculation w/ zero occupants, zero out whole house fan
       vent_fans[:whf].each do |vent_whf|
-        vent_program.addLine("    Set WHF_W = WHF_W + #{vent_whf.fan_power} * #{whf_avail_sensors[vent_whf.id].name}")
+        vent_program.addLine("  Set WHF_W = WHF_W + #{vent_whf.fan_power} * #{whf_avail_sensors[vent_whf.id].name}")
       end
     end
-    vent_program.addLine("    Set #{whf_elec_actuator.name} = WHF_W*Adj")
-    vent_program.addLine('  ElseIf (NVavail > 0)') # Natural ventilation
+    vent_program.addLine("  Set #{whf_elec_actuator.name} = WHF_W*Adj")
+
+    vent_program.addLine("ElseIf (NVavailDayofWeek > 0) && #{natvent_constraints}") # Natural ventilation
     if hpxml_bldg.building_occupancy.number_of_residents == 0
       # Operational calculation w/ zero occupants, zero out natural ventilation
-      vent_program.addLine('    Set NVArea = 0')
+      vent_program.addLine('  Set NVArea = 0')
     else
-      vent_program.addLine("    Set NVArea = #{UnitConversions.convert(area, 'ft^2', 'cm^2')}")
+      vent_program.addLine("  Set NVArea = #{UnitConversions.convert(area, 'ft^2', 'cm^2')}")
     end
-    vent_program.addLine("    Set Cs = #{UnitConversions.convert(c_s, 'ft^2/(s^2*R)', 'L^2/(s^2*cm^4*K)')}")
-    vent_program.addLine("    Set Cw = #{c_w * 0.01}")
-    vent_program.addLine('    Set Tdiff = Tin-Tout')
-    vent_program.addLine('    Set dT = (@Abs Tdiff)')
-    vent_program.addLine("    Set Vwind = #{sensors[:v_wind].name}")
-    vent_program.addLine('    Set SGNV = NVArea*Adj*((((Cs*dT)+(Cw*(Vwind^2)))^0.5)/1000)')
-    vent_program.addLine("    Set MaxNV = #{UnitConversions.convert(max_flow_rate, 'cfm', 'm^3/s')}")
-    vent_program.addLine('    Set Qnv = (@Min SGNV MaxNV)')
-    vent_program.addLine('  EndIf')
+    vent_program.addLine("  Set Cs = #{UnitConversions.convert(c_s, 'ft^2/(s^2*R)', 'L^2/(s^2*cm^4*K)')}")
+    vent_program.addLine("  Set Cw = #{c_w * 0.01}")
+    vent_program.addLine('  Set Tdiff = Tin-Tout')
+    vent_program.addLine('  Set dT = (@Abs Tdiff)')
+    vent_program.addLine("  Set Vwind = #{sensors[:v_wind].name}")
+    vent_program.addLine('  Set SGNV = NVArea*Adj*((((Cs*dT)+(Cw*(Vwind^2)))^0.5)/1000)')
+    vent_program.addLine("  Set MaxNV = #{UnitConversions.convert(max_flow_rate, 'cfm', 'm^3/s')}")
+    vent_program.addLine('  Set Qnv = (@Min SGNV MaxNV)')
     vent_program.addLine('EndIf')
+
     vent_program.addLine("Set #{nv_flow_actuator.name} = Qnv")
     vent_program.addLine("Set #{whf_flow_actuator.name} = Qwhf")
 

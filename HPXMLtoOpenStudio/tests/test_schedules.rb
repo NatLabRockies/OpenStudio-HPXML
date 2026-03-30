@@ -654,7 +654,7 @@ class HPXMLtoOpenStudioSchedulesTest < Minitest::Test
 
   def test_set_unavailable_periods_natvent
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-enclosure-windows-natural-ventilation-availability.xml'))
 
     # normal availability
     begin_month = 1
