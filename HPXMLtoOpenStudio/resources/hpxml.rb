@@ -153,6 +153,7 @@ class HPXML < Object
   FoundationTypeBasementConditioned = 'ConditionedBasement'
   FoundationTypeBasementUnconditioned = 'UnconditionedBasement'
   FoundationTypeBasementUnknown = 'UnknownBasement'
+  FoundationTypeCombination = 'Combination'
   FoundationTypeCrawlspaceConditioned = 'ConditionedCrawlspace'
   FoundationTypeCrawlspaceUnvented = 'UnventedCrawlspace'
   FoundationTypeCrawlspaceUnknown = 'UnknownCrawlspace'
@@ -3686,7 +3687,8 @@ class HPXML < Object
            FoundationTypeCrawlspaceUnknown,
            FoundationTypeGarage,
            FoundationTypeRubbleStone,
-           FoundationTypeOther
+           FoundationTypeOther,
+           FoundationTypeCombination
         return # Not currently used
       else
         fail "Unexpected foundation type: '#{@foundation_type}'."
@@ -3757,6 +3759,8 @@ class HPXML < Object
           XMLHelper.add_element(basement, 'Conditioned', false, :boolean)
         when FoundationTypeBasementUnknown
           XMLHelper.add_element(foundation_type_el, 'Basement')
+        when FoundationTypeCombination
+          XMLHelper.add_element(foundation_type_el, 'Combination')
         when FoundationTypeCrawlspaceVented
           crawlspace = XMLHelper.add_element(foundation_type_el, 'Crawlspace')
           XMLHelper.add_element(crawlspace, 'Vented', true, :boolean)
@@ -3837,6 +3841,8 @@ class HPXML < Object
         @foundation_type = FoundationTypeBasementConditioned
       elsif XMLHelper.has_element(foundation, 'FoundationType/Basement')
         @foundation_type = FoundationTypeBasementUnknown
+      elsif XMLHelper.has_element(foundation, 'FoundationType/Combination')
+        @foundation_type = FoundationTypeCombination
       elsif XMLHelper.has_element(foundation, "FoundationType/Crawlspace[Vented='false']")
         @foundation_type = FoundationTypeCrawlspaceUnvented
       elsif XMLHelper.has_element(foundation, "FoundationType/Crawlspace[Vented='true']")

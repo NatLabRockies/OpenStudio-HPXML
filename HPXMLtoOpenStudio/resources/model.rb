@@ -950,6 +950,8 @@ module Model
   # @param reporting_frequency [String] Output reporting frequency ('detailed', 'timestep', 'hourly', 'daily', 'monthly', 'runperiod', or 'annual')
   # @return [OpenStudio::Model::OutputMeter] The model object
   def self.add_output_meter(model, meter_name:, reporting_frequency:)
+    return if reporting_frequency.downcase == 'none'
+
     model.getOutputMeters.each do |om|
       next unless om.name == meter_name
       next unless om.reportingFrequency == reporting_frequency
@@ -1193,6 +1195,14 @@ module Model
   # @param unit_number [Integer] index number corresponding to an HPXML Building object
   # @return [String] the new OpenStudio object name with unique unit prefix
   def self.make_unit_variable_name(obj_name, unit_number)
+    if obj_name.to_s.include?(':Zone:')
+      obj_name = obj_name.split(':')
+      prefix = obj_name[0..-2].join(':')
+      zone_name = make_unit_variable_name(obj_name[-1], unit_number)
+      new_name = "#{prefix}:#{zone_name}"
+      return new_name
+    end
+
     new_name = ems_friendly_name("unit#{unit_number + 1}_#{obj_name}")
 
     # Need to fix HWPH outlet node name
@@ -1212,7 +1222,7 @@ module Model
     return obj_name if hpxml_bldgs_size == 1
 
     new_name = make_unit_variable_name(obj_name, unit_number)
-    new_name = new_name.gsub('Facility', 'DwellingUnit')
+    new_name.gsub!('Facility', 'DwellingUnit')
     return new_name
   end
 
@@ -1223,20 +1233,15 @@ module Model
   # cooking range:InteriorEquipment:Electricity:Zone:unit1_CONDITIONED_SPACE).
   # Additionally, variables with the EMS key get updated.
   #
-  # @param key_var_group
+  # @param key [String] Key Name
+  # @param var [String] Output Variable or Meter Name
   # @param unit_number [Integer] index number corresponding to an HPXML Building object
   # @return [String, String] The key and variable updated with prefixes and friendly strings.
-  def self.update_key_variable_group(key_var_group, unit_number)
-    key, var = key_var_group
-    if (not key.empty?) && (key != 'EMS')
+  def self.update_key_variable_group(key, var, unit_number)
+    if (not key.empty?) && (key.downcase != 'ems') && (key.downcase != 'environment')
       key = make_unit_variable_name(key, unit_number)
     end
-    if var.include?(':Zone:')
-      var = var.split(':')
-      prefix = var[0..-2].join(':')
-      zone_name = make_unit_variable_name(var[-1], unit_number)
-      var = "#{prefix}:#{zone_name}"
-    elsif key == 'EMS'
+    if var.include?(':Zone:') || key.downcase == 'ems'
       var = make_unit_variable_name(var, unit_number)
     end
     return key, var
@@ -1249,6 +1254,7 @@ module Model
   # @return [nil]
   def self.prefix_object_names(unit_model, unit_number)
     # FUTURE: Create objects with unique names up front so we don't have to do this
+    # Although it may be challenging for objects that OpenStudio automatically creates/names.
 
     # Custom meter objects
     (unit_model.getMeterCustoms + unit_model.getMeterCustomDecrements).each do |meter|
@@ -1261,7 +1267,7 @@ module Model
       key_var_groups = meter.keyVarGroups
       meter.removeAllKeyVarGroups
       key_var_groups.each do |key_var_group|
-        key, var = update_key_variable_group(key_var_group, unit_number)
+        key, var = update_key_variable_group(key_var_group[0], key_var_group[1], unit_number)
         meter.addKeyVarGroup(key, var)
       end
     end
@@ -1271,7 +1277,9 @@ module Model
 
     unit_model.getEnergyManagementSystemSensors.each do |sensor|
       ems_map[sensor.name.to_s] = make_unit_variable_name(sensor.name, unit_number)
-      sensor.setKeyName(make_unit_variable_name(sensor.keyName, unit_number)) unless sensor.keyName.empty? || sensor.keyName.downcase == 'environment'
+      key, var = update_key_variable_group(sensor.keyName, sensor.outputVariableOrMeterName, unit_number)
+      sensor.setKeyName(key)
+      sensor.setOutputVariableOrMeterName(var)
     end
 
     unit_model.getEnergyManagementSystemActuators.each do |actuator|

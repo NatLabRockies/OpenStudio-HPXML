@@ -352,15 +352,6 @@ class ReportUtilityBillsTest < Minitest::Test
     end
   end
 
-  def test_warning_dse
-    @args_hash['hpxml_path'] = File.absolute_path(@tmp_hpxml_path)
-    hpxml = HPXML.new(hpxml_path: File.join(@sample_files_path, 'base-hvac-dse.xml'))
-    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
-    expected_warnings = ['DSE is not currently supported when calculating utility bills.']
-    actual_bills, _actual_monthly_bills = _test_measure(expected_warnings: expected_warnings)
-    assert_nil(actual_bills)
-  end
-
   def test_warning_no_rates
     @args_hash['hpxml_path'] = File.absolute_path(@tmp_hpxml_path)
     hpxml = HPXML.new(hpxml_path: File.join(@sample_files_path, 'base-location-capetown-zaf.xml'))

@@ -40,7 +40,7 @@ Basic Run
 | ``openstudio workflow/run_simulation.rb -x workflow/sample_files/base.xml --monthly fuels --hourly temperatures --hourly 'Zone People Occupant Count'``
 | ``openstudio workflow/run_simulation.rb -x workflow/sample_files/base.xml --monthly fuels --hourly temperatures --hourly 'MainsWater:Facility'``
 | ``openstudio workflow/run_simulation.rb -x workflow/sample_files/base.xml --hourly ALL --output-format csv_dview``
-| The last command will create a timeseries CSV output file that can be visualized by `DView <https://github.com/NatLabRockies/wex/wiki/DView>`_ (available for download `here <https://beopt.nrel.gov>`_).
+| The last command will create a timeseries CSV output file that can be visualized by `DView <https://github.com/NatLabRockies/wex/wiki/DView>`_ (available for download `here <https://www.nlr.gov/buildings/beopt>`_).
 
 | You can also add stochastic occupancy schedules as part of the simulation:
 | ``openstudio workflow/run_simulation.rb -x workflow/sample_files/base.xml --add-stochastic-schedules``

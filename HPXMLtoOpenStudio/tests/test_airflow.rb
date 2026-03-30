@@ -917,7 +917,7 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
       assert_in_epsilon(expected_r, effective_r, 0.1)
     end
 
-    # Buried duct expected values below from Table 13 in https://www.nrel.gov/docs/fy13osti/55876.pdf
+    # Buried duct expected values below from Table 13 in https://docs.nlr.gov/docs/fy13osti/55876.pdf
     # Assuming 6-inch supply ducts and 14-inch return ducts
 
     # Supply, partially buried

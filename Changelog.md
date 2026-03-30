@@ -11,10 +11,13 @@ __New Features__
   - Updates the default days/week assumption from 3 to 7 to align with ANSI 301.
 - Allows "other" for `SoilType`; adds variation to dry/wet soil conductivity and diffusivity values for unknown/other/loam soil types.
 - Output updates:
+  - **Breaking change**: Annual peak load outputs for heating and cooling now use units of Btu/h instead of kBtu/h for consistency with other outputs.
   - **Breaking change**: Replaces "UnitX" prefixes with Building IDs in whole SFA/MF building timeseries outputs.
   - For whole SFA/MF building simulations, reports energy/fuel use by dwelling unit (i.e., "Dwelling Unit Energy Use: \*" and "Dwelling Unit Fuel Use: \*"). Timeseries outputs are also available.
+  - Allows calculating utility bills for homes with HVAC distribution systems using simplified heating/cooling DSE values (previously unsupported).
 - Whole SFA/MF buildings:
   - Allows modeling batteries in individual dwelling units (previously unsupported).
+- Updates schematron validation error messages to be more user friendly.
 - Adds a `run_simulation.rb --ems-debug` argument to generate the EnergyPlus EDD file for debugging EMS programs.
 
 __Bugfixes__

@@ -105,7 +105,7 @@ For each scenario, electricity emissions factors must be entered as an ``/HPXML/
 
   .. [#] Units choices are "lb/MWh" and "kg/MWh".
   .. [#] ScheduleFilePath must point to a CSV file with 8760 numeric hourly values.
-         Sources of electricity emissions data include `NREL's Cambium database <https://www.nrel.gov/analysis/cambium.html>`_ and `EPA's eGRID <https://www.epa.gov/egrid>`_.
+         Sources of electricity emissions data include `NLR's Cambium database <https://www.nlr.gov/analysis/cambium>`_ and `EPA's eGRID <https://www.epa.gov/egrid>`_.
 
 If an electricity schedule file is used, additional information can be entered in the ``/HPXML/SoftwareInfo/extension/EmissionsScenarios/EmissionsScenario/EmissionsFactor``.
 
@@ -186,8 +186,8 @@ For simple utility rate structures, inputs can be entered using a fixed charge a
   Element                           Type      Units    Constraints  Required  Default   Notes
   ================================  ========  =======  ===========  ========  ========  ====================
   ``FuelType``                      string             electricity  Yes                 Fuel type
-  ``FixedCharge``                   double    $/month               No        12.0      Monthly fixed charge [#]_
-  ``MarginalRate``                  double    $/kWh                 No        See [#]_  Marginal flat rate
+  ``FixedCharge``                   double    $/month  >= 0         No        12.0      Monthly fixed charge [#]_
+  ``MarginalRate``                  double    $/kWh    >= 0         No        See [#]_  Marginal flat rate
   ================================  ========  =======  ===========  ========  ========  ====================
 
   .. [#] If running :ref:`bldg_type_whole_mf_buildings`, the fixed charge will apply to every dwelling unit in the building.
@@ -220,8 +220,8 @@ For each scenario, fuel rates can be optionally entered as an ``/HPXML/SoftwareI
   Element                           Type      Units     Constraints  Required  Default   Notes
   ================================  ========  ========  ===========  ========  ========  ====================
   ``FuelType``                      string              See [#]_     Yes                 Fuel type
-  ``FixedCharge``                   double    $/month                No        See [#]_  Monthly fixed charge
-  ``MarginalRate``                  double    See [#]_               No        See [#]_  Marginal flat rate
+  ``FixedCharge``                   double    $/month   >= 0         No        See [#]_  Monthly fixed charge
+  ``MarginalRate``                  double    See [#]_  >= 0         No        See [#]_  Marginal flat rate
   ================================  ========  ========  ===========  ========  ========  ====================
 
   .. [#] FuelType choices are "natural gas", "propane", "fuel oil", "coal", "wood", and "wood pellets".
@@ -249,7 +249,7 @@ If the PV compensation type is net-metering, additional information can be enter
   Element                           Type      Units    Constraints  Required  Default         Notes
   ================================  ========  =======  ===========  ========  ==============  =============================================================
   ``AnnualExcessSellbackRateType``  string             See [#]_     No        User-Specified  Net metering annual excess sellback rate type [#]_
-  ``AnnualExcessSellbackRate``      double    $/kWh                 No [#]_   0.03            User-specified net metering annual excess sellback rate [#]_
+  ``AnnualExcessSellbackRate``      double    $/kWh    >= 0         No [#]_   0.03            User-specified net metering annual excess sellback rate [#]_
   ================================  ========  =======  ===========  ========  ==============  =============================================================
 
   .. [#] AnnualExcessSellbackRateType choices are "User-Specified" and "Retail Electricity Cost".
@@ -265,7 +265,7 @@ If the PV compensation type is feed-in tariff, additional information can be ent
   ============================  ========  =======  ===========  ========  ==============  ========================
   Element                       Type      Units    Constraints  Required  Default         Notes
   ============================  ========  =======  ===========  ========  ==============  ========================
-  ``FeedInTariffRate``          double    $/kWh                 No        0.12            Feed-in tariff rate [#]_
+  ``FeedInTariffRate``          double    $/kWh    >= 0         No        0.12            Feed-in tariff rate [#]_
   ============================  ========  =======  ===========  ========  ==============  ========================
 
   .. [#] FeedInTariffRate applies to full (not excess) PV production.
@@ -979,7 +979,7 @@ Weather information is entered in ``/HPXML/Building/BuildingDetails/ClimateandRi
   .. [#] Either EPWFilePath or Address/ZipCode (see :ref:`building_site`) must be provided.
   .. [#] If EPWFilePath not provided, defaults based on the U.S. TMY3 weather station closest to the zip code centroid.
          The mapping can be found at ``HPXMLtoOpenStudio/resources/data/zipcode_weather_stations.csv``.
-  .. [#] The full set of U.S. TMY3 EPW weather files can be `downloaded here <https://data.nrel.gov/system/files/128/tmy3s-cache-csv.zip>`_.
+  .. [#] The full set of U.S. TMY3 EPW weather files can be `downloaded here <https://data.nlr.gov/system/files/128/tmy3s-cache-csv.zip>`_.
 
 .. _enclosure:
 
@@ -4649,7 +4649,7 @@ A simple solar hot water system is entered as a ``/HPXML/Building/BuildingDetail
   ====================  =======  =====  ============  ========  ========  ======================
 
   .. [#] Portion of total conventional hot water heating load (delivered energy plus tank standby losses).
-         Can be obtained from `Directory of SRCC OG-300 Solar Water Heating System Ratings <https://solar-rating.org/programs/og-300-program/>`_ or NLR's `System Advisor Model <https://sam.nrel.gov/>`_ or equivalent.
+         Can be obtained from `Directory of SRCC OG-300 Solar Water Heating System Ratings <https://solar-rating.org/programs/og-300-program/>`_ or NLR's `System Advisor Model <https://sam.nlr.gov/>`_ or equivalent.
   .. [#] ConnectedTo must reference a ``WaterHeatingSystem``.
          The referenced water heater cannot be a space-heating boiler nor attached to a desuperheater.
   .. [#] If ConnectedTo not provided, solar fraction will apply to all water heaters in the building.
@@ -4695,7 +4695,7 @@ HPXML Photovoltaics
 Each solar electric photovoltaic (PV) system is entered as a ``/HPXML/Building/BuildingDetails/Systems/Photovoltaics/PVSystem``.
 If not entered, the simulation will not include photovoltaics.
 
-Many of the inputs are adopted from the `PVWatts model <https://pvwatts.nrel.gov>`_.
+Many of the inputs are adopted from the `PVWatts model <https://pvwatts.nlr.gov/>`_.
 
   =======================================================  =================  ================  ========================  ========  =========  ============================================
   Element                                                  Type               Units             Constraints               Required  Default    Notes
@@ -4717,7 +4717,7 @@ Many of the inputs are adopted from the `PVWatts model <https://pvwatts.nrel.gov
   .. [#] ModuleType choices are "standard", "premium", or "thin film".
   .. [#] Tracking choices are "fixed", "1-axis", "1-axis backtracked", or "2-axis".
   .. [#] ArrayOrientation choices are "northeast", "east", "southeast", "south", "southwest", "west", "northwest", or "north"
-  .. [#] SystemLossesFraction default is derived from the `PVWatts documentation <https://www.nrel.gov/docs/fy14osti/62641.pdf>`_, which breaks down the losses as follows.
+  .. [#] SystemLossesFraction default is derived from the `PVWatts documentation <https://www.nlr.gov/docs/fy14osti/62641.pdf>`_, which breaks down the losses as follows.
          Note that the total loss (14%) is not the sum of the individual losses but is calculated by multiplying the reduction due to each loss.
 
          \- **Soiling**: 2%
