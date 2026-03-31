@@ -1645,7 +1645,7 @@ module Outputs
       next unless obj_id.is_initialized
       next if sys_id != obj_id.get
 
-      vars_by_key = get_object_outputs_by_key(model, object, EUT)
+      vars_by_key = get_object_outputs_by_key(object, EUT)
       vars_by_key.each do |key, object_vars|
         if eut_filter.nil? || eut_filter.include?(key[1])
           vars[key] = {} if vars[key].nil?
