@@ -4,7 +4,7 @@
 [![ci](https://github.com/NatLabRockies/OpenStudio-HPXML/actions/workflows/config.yml/badge.svg?branch=master)](https://github.com/NatLabRockies/OpenStudio-HPXML/actions/workflows/config.yml)
 [![Documentation Status](https://readthedocs.org/projects/openstudio-hpxml/badge/?version=latest)](https://openstudio-hpxml.readthedocs.io/en/latest/?badge=latest)
 
-OpenStudio-HPXML allows running residential [EnergyPlus™ simulations](https://energyplus.net/) using an [HPXML file](https://hpxml.nrel.gov/) for the building description.
+OpenStudio-HPXML allows running residential [EnergyPlus™ simulations](https://energyplus.net/) using an [HPXML file](https://hpxml.nlr.gov/) for the building description.
 It is primarily intended to be used by user interfaces or other automated software workflows that automatically produce the HPXML file.
 
 OpenStudio-HPXML can accommodate a wide range of different building technologies and geometries.
@@ -49,7 +49,7 @@ This repository contains several OpenStudio measures:
 
 OpenStudio-HPXML is used by a number of software products or organizations, including:
 
-- [BEopt](https://www.nrel.gov/buildings/beopt)
+- [BEopt](https://www.nlr.gov/buildings/beopt)
 - [Clarity Heat Pump Toolkit](https://psdconsulting.com/solutions/)
 - [Energy Rating Index (ERI)](https://github.com/NatLabRockies/OpenStudio-ERI)
 - [Home Energy Score](https://www.homeenergyscore.gov)
@@ -58,8 +58,8 @@ OpenStudio-HPXML is used by a number of software products or organizations, incl
 - [OptiMiser](https://optimiserenergy.com)
 - [Pearl](https://pearlscore.com)
 - [Radiant Labs](https://www.radiantlabs.co)
-- [ResStock](https://resstock.nrel.gov/)
-- [URBANopt](https://www.nrel.gov/buildings/urbanopt.html)
+- [ResStock](https://resstock.nlr.gov/)
+- [URBANopt](https://www.nlr.gov/buildings/urbanopt)
 - [VEIC](https://www.veic.org)
 - [Weatherization Assistant](https://weatherization.ornl.gov/softwaredescription/) (pending)
 - [XeroHome](https://about.xerohome.com/)

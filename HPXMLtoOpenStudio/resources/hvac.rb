@@ -186,12 +186,12 @@ module HVAC
         airloop_map[sys_id] = apply_air_source_hvac_systems(runner, model, weather, hpxml_bldg, hpxml_header, nil, heating_system,
                                                             hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods, schedules_file)
       when HPXML::HVACTypeBoiler
-        airloop_map[sys_id] = apply_boiler(runner, model, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
+        airloop_map[sys_id] = apply_boiler(runner, model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
       when HPXML::HVACTypeElectricResistance
-        apply_electric_baseboard(model, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
+        apply_electric_baseboard(model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
       when HPXML::HVACTypeStove, HPXML::HVACTypeSpaceHeater, HPXML::HVACTypeWallFurnace,
            HPXML::HVACTypeFloorFurnace, HPXML::HVACTypeFireplace
-        apply_unit_heater(model, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
+        apply_unit_heater(model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
       end
 
       next unless heating_system.is_heat_pump_backup_system
@@ -242,7 +242,7 @@ module HVAC
       sys_id = heat_pump.id
       case heat_pump.heat_pump_type
       when HPXML::HVACTypeHeatPumpWaterLoopToAir
-        airloop_map[sys_id] = apply_water_loop_to_air_heat_pump(model, heat_pump, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
+        airloop_map[sys_id] = apply_water_loop_to_air_heat_pump(model, hpxml_bldg, heat_pump, hvac_sequential_load_fracs, conditioned_zone, hvac_unavailable_periods)
       when HPXML::HVACTypeHeatPumpAirToAir, HPXML::HVACTypeHeatPumpMiniSplit,
            HPXML::HVACTypeHeatPumpPTHP, HPXML::HVACTypeHeatPumpRoom
         airloop_map[sys_id] = apply_air_source_hvac_systems(runner, model, weather, hpxml_bldg, hpxml_header, heat_pump, heat_pump,
@@ -473,7 +473,7 @@ module HVAC
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, [htg_cfm.to_f, clg_cfm.to_f].max, heating_system, hvac_unavailable_periods)
 
     add_backup_staging_ems_program(model, air_loop_unitary, htg_supp_coil, control_zone, htg_coil)
-    apply_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
+    add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
 
     # supp coil control in staging EMS
     add_two_speed_staging_ems_program(model, air_loop_unitary, htg_supp_coil, control_zone, has_deadband_control, cooling_system)
@@ -499,6 +499,10 @@ module HVAC
       end
       apply_crankcase_heater_ems_program(model, htg_coil, clg_coil, control_zone.spaces[0], cooling_system, air_loop_unitary)
     end
+
+    add_dse_ems_program(:clg, model, hpxml_bldg, cooling_system, obj_name)
+    add_dse_ems_program(:htg, model, hpxml_bldg, heating_system, obj_name)
+
     return air_loop
   end
 
@@ -556,6 +560,8 @@ module HVAC
     evap_stpt_manager.setReferenceTemperatureType('OutdoorAirWetBulb')
     evap_stpt_manager.setOffsetTemperatureDifference(0.0)
     evap_stpt_manager.addToNode(air_loop.supplyOutletNode)
+
+    add_dse_ems_program(:clg, model, hpxml_bldg, cooling_system, obj_name)
 
     return air_loop
   end
@@ -923,7 +929,10 @@ module HVAC
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, [htg_cfm, clg_cfm].max, heat_pump, hvac_unavailable_periods)
 
     # HVAC Installation Quality
-    apply_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil, control_zone)
+    add_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil, control_zone)
+
+    add_dse_ems_program(:clg, model, hpxml_bldg, heat_pump, obj_name)
+    add_dse_ems_program(:htg, model, hpxml_bldg, heat_pump, obj_name)
 
     return air_loop
   end
@@ -931,12 +940,13 @@ module HVAC
   # Adds the HPXML water-loop heat pump system to the OpenStudio model.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heat_pump [HPXML::HeatPump] The HPXML heat pump of interest
   # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [OpenStudio::Model::AirLoopHVAC] The newly created air loop hvac object
-  def self.apply_water_loop_to_air_heat_pump(model, heat_pump, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
+  def self.apply_water_loop_to_air_heat_pump(model, hpxml_bldg, heat_pump, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
     if heat_pump.fraction_cool_load_served > 0
       # WLHPs connected to chillers or cooling towers should have already been converted to
       # central air conditioners
@@ -985,17 +995,22 @@ module HVAC
     # Air Loop
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, htg_cfm, heat_pump, hvac_unavailable_periods)
 
+    add_dse_ems_program(:clg, model, hpxml_bldg, heat_pump, obj_name)
+    add_dse_ems_program(:htg, model, hpxml_bldg, heat_pump, obj_name)
+
     return air_loop
   end
 
   # Get the outdoor unit (compressor) power (W) using regression based on (output) capacity.
-  # The equation is a derived regression for the minimum circuit amp (MCA) of direct expansion compressor from 201 product datapoints (including central ACs, room ACs, and ASHPs) collected between 2023-2024.
+  # The equation is a derived regression for the minimum circuit amp (MCA) of direct expansion
+  # compressor from 201 product datapoints (including central ACs, room ACs, and ASHPs)
+  # collected between 2023-2024.
   #
-  # @param capacity [Double] Direct expansion coil rated (output) capacity [kBtu/hr].
+  # @param capacity [Double] Direct expansion coil rated (output) capacity (Btu/hr)
   # @param voltage [String] '120' or '240'
   # @return [Double] Direct expansion coil rated (input) capacity (W)
   def self.get_dx_coil_power_watts_from_capacity(capacity, voltage)
-    required_amperage = 0.631 * capacity + 1.615
+    required_amperage = 0.631 * UnitConversions.convert(capacity, 'Btu/hr', 'kBtu/hr') + 1.615
     power = required_amperage * Float(voltage)
     return power
   end
@@ -1049,12 +1064,13 @@ module HVAC
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [OpenStudio::Model::ZoneHVACFourPipeFanCoil or OpenStudio::Model::ZoneHVACBaseboardConvectiveWater] The newly created zone hvac object
-  def self.apply_boiler(runner, model, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
+  def self.apply_boiler(runner, model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
     obj_name = Constants::ObjectTypeBoiler
     is_condensing = false # FUTURE: Expose as input; default based on AFUE
     oat_reset_enabled = false
@@ -1240,18 +1256,21 @@ module HVAC
 
     set_sequential_load_fractions(model, control_zone, zone_hvac, hvac_sequential_load_fracs, hvac_unavailable_periods, heating_system)
 
+    add_dse_ems_program(:htg, model, hpxml_bldg, heating_system, obj_name)
+
     return zone_hvac
   end
 
   # Adds the HPXML electric baseboard system to the OpenStudio model.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [nil]
-  def self.apply_electric_baseboard(model, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
+  def self.apply_electric_baseboard(model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
     obj_name = Constants::ObjectTypeElectricBaseboard
 
     # Baseboard
@@ -1264,17 +1283,20 @@ module HVAC
     zone_hvac.additionalProperties.setFeature('IsHeatPumpBackup', heating_system.is_heat_pump_backup_system) # Used by reporting measure
 
     set_sequential_load_fractions(model, control_zone, zone_hvac, hvac_sequential_load_fracs, hvac_unavailable_periods, heating_system)
+
+    add_dse_ems_program(:htg, model, hpxml_bldg, heating_system, obj_name)
   end
 
   # Adds the HPXML unit heater system (wall/floor furnace, space heater, stove, fireplace, etc.) to the OpenStudio model.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [nil]
-  def self.apply_unit_heater(model, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
+  def self.apply_unit_heater(model, hpxml_bldg, heating_system, hvac_sequential_load_fracs, control_zone, hvac_unavailable_periods)
     obj_name = Constants::ObjectTypeUnitHeater
 
     htg_ap = heating_system.additional_properties
@@ -1305,6 +1327,8 @@ module HVAC
     unitary_system.addToThermalZone(control_zone)
 
     set_sequential_load_fractions(model, control_zone, unitary_system, hvac_sequential_load_fracs, hvac_unavailable_periods, heating_system)
+
+    add_dse_ems_program(:htg, model, hpxml_bldg, heating_system, obj_name)
   end
 
   # Adds ideal air systems as needed to meet the load under certain circumstances:
@@ -4611,7 +4635,7 @@ module HVAC
   # @param clg_coil [OpenStudio::Model::CoilCoolingXXX] Cooling coil model object
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @return [nil]
-  def self.apply_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
+  def self.add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
     if not cooling_system.nil?
       charge_defect_ratio = cooling_system.charge_defect_ratio
       cool_airflow_defect_ratio = cooling_system.airflow_defect_ratio
@@ -5020,6 +5044,141 @@ module HVAC
       ems_programs: [program]
     )
     return program
+  end
+
+  # Adds an EMS program to model the simplified distribution system efficiency (DSE)
+  # for the given HVAC system, as appropriate.
+  #
+  # @param mode [Symbol] Heating (:htg) or cooling (:clg)
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
+  # @param obj_name [String] Name for the OpenStudio object
+  # @return [nil]
+  def self.add_dse_ems_program(mode, model, hpxml_bldg, hvac_system, obj_name)
+    return if hvac_system.nil?
+
+    # Get DSE value (if we're modeling distribution losses using the DSE type)
+    hvac_dse = 1.0
+    if mode == :htg
+      if hvac_system.fraction_heat_load_served.to_f > 0 || (hvac_system.is_a?(HPXML::HeatingSystem) && hvac_system.is_heat_pump_backup_system)
+        if (not hvac_system.distribution_system_idref.nil?) && hvac_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
+          hvac_dse = hvac_system.distribution_system.annual_heating_dse
+        end
+      end
+    else
+      if hvac_system.fraction_cool_load_served.to_f > 0
+        if (not hvac_system.distribution_system_idref.nil?) && hvac_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
+          hvac_dse = hvac_system.distribution_system.annual_cooling_dse
+        end
+      end
+    end
+
+    return if (hvac_dse - 1).abs < Constants::Small
+
+    # Converts the [ft, eut] key to an ems-friendly name
+    def self.key_name(key)
+      return Model.ems_friendly_name(key.join('_')).downcase
+    end
+
+    # Get HPXML heating/cooling IDs
+    sys_id = nil
+    if not hvac_system.nil?
+      sys_id = hvac_system.id
+    elsif hvac_system.is_a?(HPXML::CoolingSystem) && hvac_system.has_integrated_heating
+      sys_id = hvac_system.id
+    end
+
+    if mode == :htg
+      eut_map = { EUT::Heating => Constants::ObjectTypeDSEHeating,
+                  EUT::HeatingHeatPumpBackup => Constants::ObjectTypeDSEHeatingHeatPumpBackup,
+                  EUT::HeatingFanPump => Constants::ObjectTypeDSEHeatingFanPump,
+                  EUT::HeatingHeatPumpBackupFanPump => Constants::ObjectTypeDSEHeatingHeatPumpBackupFanPump }
+    else
+      eut_map = { EUT::Cooling => Constants::ObjectTypeDSECooling,
+                  EUT::CoolingFanPump => Constants::ObjectTypeDSECoolingFanPump }
+    end
+
+    # Get output vars/meters associated with the HVAC object
+    hvac_vars = Outputs.get_object_outputs_for_hpxml_system(model, sys_id, eut_map.keys)
+
+    # OtherEquipment objects to add electricity/fuel use
+    dse_objects = {}
+    hvac_vars.keys.uniq.each do |key|
+      end_use = eut_map[key[1]]
+      cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? end_use } # Ensure unique name
+      dse_objects[key] = Model.add_other_equipment(
+        model,
+        name: "#{sys_id} dse #{key_name(key)} adjustment",
+        end_use: "#{end_use}#{cnt}",
+        space: model.getSpaces[0],
+        design_level: 0.01,
+        frac_radiant: 0,
+        frac_latent: 0,
+        frac_lost: 1,
+        schedule: model.alwaysOnDiscreteSchedule,
+        fuel_type: Outputs::FT_to_HPXML_fuel_map[key[0]]
+      )
+      dse_objects[key].additionalProperties.setFeature('HPXML_ID', sys_id) # Used by reporting measure
+    end
+
+    # EMS Actuators
+    dse_acts = {}
+    dse_objects.each do |key, obj|
+      dse_acts[key] = Model.add_ems_actuator(
+        name: "#{sys_id} dse #{key_name(key)} actuator",
+        model_object: obj,
+        comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
+      )
+    end
+
+    # EMS Sensors
+    dse_sensors = {}
+    hvac_vars.each do |key, values|
+      values.each do |object, vars|
+        vars.each do |var|
+          if object.to_EnergyManagementSystemOutputVariable.is_initialized
+            varkey = 'EMS'
+          elsif not var.include?(':') # If not a meter
+            varkey = object.name.to_s.upcase
+          end
+          dse_sensors[key] = [] if dse_sensors[key].nil?
+          dse_sensors[key] << Model.add_ems_sensor(
+            model,
+            name: "#{sys_id} #{key_name(key)} energy",
+            output_var_or_meter_name: var,
+            key_name: varkey
+          )
+        end
+      end
+    end
+
+    # EMS Program
+    unit_multiplier = hpxml_bldg.building_construction.number_of_units
+    dse_program = Model.add_ems_program(
+      model,
+      name: "#{obj_name} dse program"
+    )
+    dse_program.addLine('If WarmupFlag == 0') # Prevent a non-zero adjustment in the first hour because of the warmup period
+    hvac_vars.keys.uniq.each do |key|
+      dse_program.addLine("Set #{mode}_#{key_name(key)} = 0")
+    end
+    dse_sensors.each do |key, sensors|
+      sensors.each do |sensor|
+        dse_program.addLine("Set #{mode}_#{key_name(key)} = #{mode}_#{key_name(key)} + (#{sensor.name} * ((1.0 / #{hvac_dse}) - 1.0))")
+      end
+    end
+    dse_acts.each do |key, dse_act|
+      dse_program.addLine("Set #{dse_act.name} = #{mode}_#{key_name(key)} / ( #{unit_multiplier} * 3600 * SystemTimeStep )")
+    end
+    dse_program.addLine('EndIf')
+
+    # EMS Program Calling Point
+    Model.add_ems_program_calling_manager(
+      model,
+      name: "#{dse_program.name} calling manager",
+      calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
+      ems_programs: [dse_program]
+    )
   end
 
   # Calculates the rated airflow rate for a given speed.

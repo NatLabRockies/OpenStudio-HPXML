@@ -3,7 +3,7 @@
 HPXML Files
 ===========
 
-OpenStudio-HPXML requires a building description in an `HPXML file <https://hpxml.nrel.gov/>`_ format.
+OpenStudio-HPXML requires a building description in an `HPXML file <https://hpxml.nlr.gov/>`_ format.
 HPXML is an open data standard for collecting and transferring home energy data.
 Using HPXML files reduces the complexity and effort for software developers to leverage the EnergyPlus simulation engine.
 

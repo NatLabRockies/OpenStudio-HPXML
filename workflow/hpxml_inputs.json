@@ -1651,6 +1651,9 @@
     "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp",
     "hvac_heat_pump_backup_capacity": "60 kBtu/hr"
   },
+  "sample_files/base-hvac-dual-fuel-air-to-air-heat-pump-var-speed-dse.xml": {
+    "parent_hpxml": "sample_files/base-hvac-dual-fuel-air-to-air-heat-pump-var-speed.xml"
+  },
   "sample_files/base-hvac-dual-fuel-mini-split-heat-pump-ducted.xml": {
     "parent_hpxml": "sample_files/base-hvac-mini-split-heat-pump-ducted.xml",
     "hvac_heat_pump": "Central HP, SEER2 18.0, HSPF2 8.5",

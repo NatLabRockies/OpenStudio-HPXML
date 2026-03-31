@@ -178,6 +178,12 @@ denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-2-speed-sizing-methodology-H
 denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-2-speed-sizing-methodology-HERS-backup-supplemental.xml,36049.0,36049.0,39371.0,1081.0,1081.0
 denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-2-speed-sizing-methodology-MaxLoad-backup-emergency.xml,50226.0,50226.0,39371.0,1507.0,1507.0
 denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-2-speed-sizing-methodology-MaxLoad-backup-supplemental.xml,50226.0,50226.0,39371.0,1507.0,1507.0
+denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-ACCA-backup-emergency.xml,20507.0,20507.0,23884.0,615.0,615.0
+denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-ACCA-backup-supplemental.xml,20507.0,20507.0,23884.0,615.0,615.0
+denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-HERS-backup-emergency.xml,20507.0,20507.0,23884.0,615.0,615.0
+denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-HERS-backup-supplemental.xml,20507.0,20507.0,23884.0,615.0,615.0
+denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-MaxLoad-backup-emergency.xml,32615.0,32615.0,23884.0,978.0,978.0
+denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-MaxLoad-backup-supplemental.xml,32615.0,32615.0,23884.0,978.0,978.0
 denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-sizing-methodology-ACCA-backup-emergency.xml,38589.0,38589.0,39371.0,1158.0,1158.0
 denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-sizing-methodology-ACCA-backup-supplemental.xml,38589.0,38589.0,39371.0,1158.0,1158.0
 denver-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-sizing-methodology-HERS-backup-emergency.xml,38589.0,38589.0,39371.0,1158.0,1158.0
@@ -602,6 +608,12 @@ houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-2-speed-sizing-methodology-
 houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-2-speed-sizing-methodology-HERS-backup-supplemental.xml,41016.0,41016.0,0.0,1230.0,1230.0
 houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-2-speed-sizing-methodology-MaxLoad-backup-emergency.xml,41987.0,41987.0,24741.0,1260.0,1259.0
 houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-2-speed-sizing-methodology-MaxLoad-backup-supplemental.xml,41987.0,41987.0,0.0,1260.0,1259.0
+houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-ACCA-backup-emergency.xml,21335.0,21335.0,14182.0,640.0,640.0
+houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-ACCA-backup-supplemental.xml,21335.0,21335.0,0.0,640.0,640.0
+houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-HERS-backup-emergency.xml,21335.0,21335.0,14182.0,640.0,640.0
+houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-HERS-backup-supplemental.xml,21335.0,21335.0,0.0,640.0,640.0
+houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-MaxLoad-backup-emergency.xml,21335.0,21335.0,14182.0,640.0,640.0
+houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-dse-sizing-methodology-MaxLoad-backup-supplemental.xml,21335.0,21335.0,0.0,640.0,640.0
 houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-sizing-methodology-ACCA-backup-emergency.xml,41016.0,41016.0,24741.0,1230.0,1230.0
 houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-sizing-methodology-ACCA-backup-supplemental.xml,41016.0,41016.0,0.0,1230.0,1230.0
 houston-hvac-autosize-dual-fuel-air-to-air-heat-pump-var-speed-sizing-methodology-HERS-backup-emergency.xml,41016.0,41016.0,24741.0,1230.0,1230.0

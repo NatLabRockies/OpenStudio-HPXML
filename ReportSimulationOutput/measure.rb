@@ -430,6 +430,10 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         end
         for unit_num in 0..(hpxml_bldgs_size - 1)
           Model.add_output_meter(model, meter_name: Model.make_unit_meter_name(Outputs::MeterCustomElectricityNetCritical, unit_num, hpxml_bldgs_size), reporting_frequency: resilience_frequency)
+          if unit_num == 0 && args[:timeseries_frequency] != resilience_frequency
+            # Add one meter using args[:timeseries_frequency] so we can get E+ timestamps that correspond to that frequency
+            Model.add_output_meter(model, meter_name: Model.make_unit_meter_name(Outputs::MeterCustomElectricityNetCritical, unit_num, hpxml_bldgs_size), reporting_frequency: args[:timeseries_frequency])
+          end
         end
 
         @resilience.values.each do |resilience|
@@ -951,44 +955,6 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     end
 
     @hpxml_bldgs.each do |hpxml_bldg|
-      # Apply Heating/Cooling DSEs
-      (hpxml_bldg.heating_systems + hpxml_bldg.heat_pumps).each do |htg_system|
-        next unless (htg_system.is_a?(HPXML::HeatingSystem) && htg_system.is_heat_pump_backup_system) || htg_system.fraction_heat_load_served > 0
-        next if htg_system.distribution_system_idref.nil?
-        next unless htg_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
-        next if htg_system.distribution_system.annual_heating_dse.nil?
-
-        dse = htg_system.distribution_system.annual_heating_dse
-        @unique_fuel_types.each do |fuel_type|
-          [EUT::Heating, EUT::HeatingHeatPumpBackup, EUT::HeatingFanPump, EUT::HeatingHeatPumpBackupFanPump].each do |end_use_type|
-            end_use = @end_uses[[fuel_type, end_use_type]]
-            next if end_use.nil?
-            next if end_use.annual_output_by_system[htg_system.id].nil?
-
-            fuels = @fuels.select { |k, _v| k[0] == fuel_type }.values
-            apply_multiplier_to_output(end_use, fuels, htg_system.id, hpxml_bldg.building_id, 1.0 / dse)
-          end
-        end
-      end
-      (hpxml_bldg.cooling_systems + hpxml_bldg.heat_pumps).each do |clg_system|
-        next unless clg_system.fraction_cool_load_served > 0
-        next if clg_system.distribution_system_idref.nil?
-        next unless clg_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
-        next if clg_system.distribution_system.annual_cooling_dse.nil?
-
-        dse = clg_system.distribution_system.annual_cooling_dse
-        @unique_fuel_types.each do |fuel_type|
-          [EUT::Cooling, EUT::CoolingFanPump].each do |end_use_type|
-            end_use = @end_uses[[fuel_type, end_use_type]]
-            next if end_use.nil?
-            next if end_use.annual_output_by_system[clg_system.id].nil?
-
-            fuels = @fuels.select { |k, _v| k[0] == fuel_type }.values
-            apply_multiplier_to_output(end_use, fuels, clg_system.id, hpxml_bldg.building_id, 1.0 / dse)
-          end
-        end
-      end
-
       # Apply solar fraction to load for simple solar water heating systems
       hpxml_bldg.solar_thermal_systems.each do |solar_system|
         next if solar_system.solar_fraction.nil?
@@ -1742,7 +1708,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     # Peak loads
     if args[:include_annual_peak_loads]
       @peak_loads.each do |_load_type, peak_load|
-        results_out << ["#{peak_load.name} (#{peak_load.annual_units})", peak_load.annual_output.to_f.round(n_digits)]
+        results_out << ["#{peak_load.name} (#{peak_load.annual_units})", peak_load.annual_output.to_f.round]
       end
       results_out << [line_break]
     end
@@ -2220,18 +2186,20 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     shift_values = {}
     indexes.each_with_index do |_i, idx|
       shift_values[idx] = false
-      if apply_ems_shift(timeseries_frequency)
-        if meter_names[idx].include? Constants::ObjectTypeWaterHeaterAdjustment
-          # Shift energy use adjustment to align with hot water energy use
-          shift_values[idx] = true
-        elsif meter_names[idx].include? Constants::ObjectTypeCrankcaseHeater
-          # Shift energy use adjustment to align with HVAC operation and weather
-          shift_values[idx] = true
-        elsif meter_names[idx].include? Constants::ObjectTypePanHeater
-          # Shift energy use adjustment to align with HVAC operation and weather
-          shift_values[idx] = true
-        elsif meter_names[idx].include? Constants::ObjectTypeHPDefrostSupplHeat
-          # Shift energy use adjustment to align with HVAC operation and weather
+      next unless apply_ems_shift(timeseries_frequency)
+
+      # Shift energy use adjustments that lag due to EMS
+      [Constants::ObjectTypeWaterHeaterAdjustment,
+       Constants::ObjectTypeCrankcaseHeater,
+       Constants::ObjectTypePanHeater,
+       Constants::ObjectTypeHPDefrostSupplHeat,
+       Constants::ObjectTypeDSEHeating,
+       Constants::ObjectTypeDSEHeatingHeatPumpBackup,
+       Constants::ObjectTypeDSEHeatingFanPump,
+       Constants::ObjectTypeDSEHeatingHeatPumpBackupFanPump,
+       Constants::ObjectTypeDSECooling,
+       Constants::ObjectTypeDSECoolingFanPump].each do |obj_type|
+        if meter_names[idx].include? obj_type
           shift_values[idx] = true
         end
       end
@@ -2962,7 +2930,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     @peak_loads.each do |load_type, peak_load|
       peak_load.name = "Peak Load: #{load_type}"
-      peak_load.annual_units = 'kBtu/hr'
+      peak_load.annual_units = 'Btu/hr'
     end
 
     # Zone Temperatures
@@ -3003,12 +2971,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     @output_meters_requests = args[:user_output_meters].to_s.split(',').map(&:strip)
   end
 
-  # Sets timeseries output requests for EnergyPlus needed to support performing emissions calculations.
-  # To calculate timeseries emissions or timeseries fuel consumption, we also need to select timeseries
-  # end use consumption because EnergyPlus results may be post-processed due to HVAC DSE.
-  #
-  # NOTE: We might be able to avoid this if we could account for DSE inside EnergyPlus instead of
-  # applying the DSE impact during post-processing.
+  # Sets E+ timeseries output requests needed to support various calculations.
   #
   # @param args [Hash] Map of :argument_name => value
   # @return [Hash] New map of :argument_name => value
@@ -3016,18 +2979,18 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     args = args.dup # We don't want to modify the original arguments
     args[:include_hourly_electric_end_use_consumptions] = false
     if not @emissions.empty?
-      args[:include_hourly_electric_end_use_consumptions] = true # Need hourly electricity values for Cambium
+      # We use hourly electricity values for Cambium and end use consumption data to do emissions calculations
+      args[:include_hourly_electric_end_use_consumptions] = true
       if args[:include_timeseries_emissions] || args[:include_timeseries_emission_end_uses] || args[:include_timeseries_emission_fuels]
-        args[:include_timeseries_fuel_consumptions] = true
+        args[:include_timeseries_end_use_consumptions] = true
       end
     end
-    if args[:include_timeseries_total_consumptions] || args[:include_timeseries_resilience]
+    if args[:include_timeseries_total_consumptions]
+      # Total/net consumptions are rolled up from each fuel consumption
       args[:include_timeseries_fuel_consumptions] = true
     end
-    if args[:include_timeseries_fuel_consumptions]
-      args[:include_timeseries_end_use_consumptions] = true
-    end
     if args[:include_timeseries_system_use_consumptions]
+      # System uses are obtained while getting end use consumption data
       args[:include_timeseries_end_use_consumptions] = true
     end
     return args

@@ -29,7 +29,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.95, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 3.37
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -60,7 +60,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.95, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 4.12
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -91,7 +91,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.95, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 3.16
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -122,7 +122,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.95, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 3.375
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -153,7 +153,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.95, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 3.37
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -184,7 +184,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.97
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -215,7 +215,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 1.30
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -246,7 +246,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(1.0, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(100000000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(100000000000.0, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.0
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C')
@@ -277,7 +277,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(1.0, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(100000000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(100000000000.0, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.0
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C')
@@ -308,7 +308,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(1.0, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(100000000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(100000000000.0, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.0
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C')
@@ -339,7 +339,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.95, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 3.37
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -368,7 +368,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.97
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -406,7 +406,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.97
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -446,7 +446,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
       # Expected value
       tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-      cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+      cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
       fuel = EPlus.fuel_type(water_heating_system.fuel_type)
       ua = 0.97
       t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -490,7 +490,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.97
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -563,7 +563,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.97
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -636,7 +636,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.97
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -709,7 +709,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.97
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -782,7 +782,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.97
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -849,7 +849,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.34
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -1102,7 +1102,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.56
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -1133,7 +1133,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.95, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.56
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -1212,7 +1212,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
 
     # Expected value
     tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.95, 'gal', 'm^3') # convert to actual volume
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     fuel = EPlus.fuel_type(water_heating_system.fuel_type)
     ua = 0.69
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
@@ -1285,7 +1285,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
     t_set = UnitConversions.convert(water_heating_system.temperature, 'F', 'C') + 1 # setpoint + 1/2 deadband
     ther_eff = 1.0
     tank_height = 1.2192
-    cap = UnitConversions.convert(water_heating_system.heating_capacity / 1000.0, 'kBtu/hr', 'W')
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W')
     loc = water_heating_system.location
 
     # Check water heater

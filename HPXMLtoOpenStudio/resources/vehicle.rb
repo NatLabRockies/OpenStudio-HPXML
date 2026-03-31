@@ -106,7 +106,7 @@ module Vehicle
       key_name: 'Environment'
     )
 
-    # Power adjustment vs ambient temperature curve; derived from most recent data in Figure 9 of https://www.nrel.gov/docs/fy23osti/83916.pdf
+    # Power adjustment vs ambient temperature curve; derived from most recent data in Figure 9 of https://docs.nlr.gov/docs/fy23osti/83916.pdf
     # This adjustment scales power demand based on ambient temperature, and encompasses losses due to battery and space conditioning (i.e., discharging losses), as well as charging losses.
     coefs = [1.412768, -3.910397E-02, 9.408235E-04, 8.971560E-06, -7.699244E-07, 1.265614E-08]
     power_curve = ''
