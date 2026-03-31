@@ -959,7 +959,7 @@ Weather information is entered in ``/HPXML/Building/BuildingDetails/ClimateandRi
   .. [#] Either EPWFilePath or Address/ZipCode (see :ref:`building_site`) must be provided.
   .. [#] If EPWFilePath not provided, defaults based on the U.S. TMY3 weather station closest to the zip code centroid.
          The mapping can be found at ``HPXMLtoOpenStudio/resources/data/zipcode_weather_stations.csv``.
-  .. [#] The full set of U.S. TMY3 EPW weather files can be `downloaded here <https://data.nlr.gov/system/files/128/tmy3s-cache-csv.zip>`_.
+  .. [#] The full set of U.S. TMY3 EPW weather files can be `downloaded here <https://data.nlr.gov/system/files/128/1774980365-USA-TMY3-EPW.zip>`_.
 
 .. _enclosure:
 
