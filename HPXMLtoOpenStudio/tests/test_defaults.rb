@@ -40,8 +40,8 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml.header.sim_calendar_year = 2009
     hpxml.header.temperature_capacitance_multiplier = 1.5
     hpxml.header.unavailable_periods.add(column_name: 'Power Outage', begin_month: 1, begin_day: 1, begin_hour: 3, end_month: 12, end_day: 31, end_hour: 4, natvent_availability: HPXML::ScheduleUnavailable)
-    hpxml.header.latent_degradation_enabled = true
-    hpxml.header.hvac_blower_off_delay = 22
+    hpxml.header.latent_degradation_model_enabled = true
+    hpxml.header.latent_degradation_model_blower_off_delay = 22
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     default_hpxml, _default_hpxml_bldg = _test_measure()
     _test_default_header_values(default_hpxml, 30, 2, 2, 11, 11, 2009, 1.5, 3, 4, HPXML::ScheduleUnavailable, true, 22)
@@ -55,7 +55,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml.header.sim_end_day = nil
     hpxml.header.temperature_capacitance_multiplier = nil
     hpxml.header.sim_calendar_year = 2020
-    hpxml.header.latent_degradation_enabled = nil
+    hpxml.header.latent_degradation_model_enabled = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     default_hpxml, _default_hpxml_bldg = _test_measure()
     _test_default_header_values(default_hpxml, 60, 1, 1, 12, 31, 2012, 7.0, nil, nil, nil, false, nil)
@@ -69,8 +69,8 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml.header.sim_end_day = nil
     hpxml.header.sim_calendar_year = nil
     hpxml.header.temperature_capacitance_multiplier = nil
-    hpxml.header.latent_degradation_enabled = true
-    hpxml.header.hvac_blower_off_delay = nil
+    hpxml.header.latent_degradation_model_enabled = true
+    hpxml.header.latent_degradation_model_blower_off_delay = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     default_hpxml, _default_hpxml_bldg = _test_measure()
     _test_default_header_values(default_hpxml, 60, 1, 1, 12, 31, 2007, 7.0, nil, nil, nil, true, 45)
@@ -5214,7 +5214,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
 
   def _test_default_header_values(hpxml, tstep, sim_begin_month, sim_begin_day, sim_end_month, sim_end_day, sim_calendar_year,
                                   temperature_capacitance_multiplier, unavailable_period_begin_hour, unavailable_period_end_hour,
-                                  unavailable_period_natvent_availability, latent_degradation_enabled, hvac_blower_off_delay)
+                                  unavailable_period_natvent_availability, latent_degradation_model_enabled, latent_degradation_model_blower_off_delay)
     assert_equal(tstep, hpxml.header.timestep)
     assert_equal(sim_begin_month, hpxml.header.sim_begin_month)
     assert_equal(sim_begin_day, hpxml.header.sim_begin_day)
@@ -5229,11 +5229,11 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
       assert_equal(unavailable_period_end_hour, hpxml.header.unavailable_periods[-1].end_hour)
       assert_equal(unavailable_period_natvent_availability, hpxml.header.unavailable_periods[-1].natvent_availability)
     end
-    assert_equal(latent_degradation_enabled, hpxml.header.latent_degradation_enabled)
-    if hvac_blower_off_delay.nil?
-      assert_nil(hpxml.header.hvac_blower_off_delay)
+    assert_equal(latent_degradation_model_enabled, hpxml.header.latent_degradation_model_enabled)
+    if latent_degradation_model_blower_off_delay.nil?
+      assert_nil(hpxml.header.latent_degradation_model_blower_off_delay)
     else
-      assert_equal(hvac_blower_off_delay, hpxml.header.hvac_blower_off_delay)
+      assert_equal(latent_degradation_model_blower_off_delay, hpxml.header.latent_degradation_model_blower_off_delay)
     end
   end
 

@@ -4280,12 +4280,16 @@ module HVAC
   # @param unit_multiplier [Integer] Number of similar dwelling units
   # @return [nil]
   def self.add_latent_degradation_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, conditioned_space, unit_multiplier)
-    return unless hpxml_header.latent_degradation_enabled
+    return unless hpxml_header.latent_degradation_model_enabled
     return if cooling_system.nil?
 
     # Check that it's a central AC/HP
     is_ducted = !cooling_system.distribution_system.nil?
-    cooling_type = cooling_system.cooling_system_type
+    if cooling_system.is_a? HPXML::CoolingSystem
+      cooling_type = cooling_system.cooling_system_type
+    else
+      cooling_type = cooling_system.heat_pump_type
+    end
     if not ([HPXML::HVACTypeCentralAirConditioner,
              HPXML::HVACTypeHeatPumpAirToAir].include?(cooling_type) ||
             ([HPXML::HVACTypeMiniSplitAirConditioner,
@@ -4296,12 +4300,12 @@ module HVAC
     m3s_to_cfm = UnitConversions.convert(1, 'm^3/s', 'cfm').round(2)
     w_to_ton = UnitConversions.convert(1, 'W', 'ton').round(4)
     is_single_stage = (cooling_system.compressor_type == HPXML::HVACCompressorTypeSingleStage)
-
     if is_single_stage
       cool_cap_tons = UnitConversions.convert(clg_coil.ratedTotalCoolingCapacity.get, 'W', 'ton')
     else
       cool_cap_tons = UnitConversions.convert(clg_coil.stages[-1].grossRatedTotalCoolingCapacity.get, 'W', 'ton')
     end
+    blower_off_delay = hpxml_header.latent_degradation_model_blower_off_delay
 
     # Sensors
     clg_rtf_sensor = Model.add_ems_sensor(
@@ -4456,7 +4460,7 @@ module HVAC
     latdeg_program.addLine('Set tau = 60')
     latdeg_program.addLine('Set K1Per1000ft2 = 8')
     latdeg_program.addLine('Set K2 = 0.03')
-    latdeg_program.addLine("Set BlowerOffDelay = #{hpxml_header.hvac_blower_off_delay}")
+    latdeg_program.addLine("Set BlowerOffDelay = #{blower_off_delay}")
     latdeg_program.addLine('Set OffCycleFlowFraction = 0.001')
     latdeg_program.addLine('Set MaxCyclesPerHour = 3')
     latdeg_program.addLine('Set AfacePerTon = 1.57')
@@ -4520,7 +4524,7 @@ module HVAC
     latdeg_program.addLine('Set Qlnew = Qt - Qsnew')
     latdeg_program.addLine("Set #{latent_heat_act.name} = ((Ql - Qlnew) * RTF / 3.4121) / #{unit_multiplier}")
     latdeg_program.addLine("Set #{sens_cool_act.name} = ((Qs - Qsnew) * RTF / 3.4121) / #{unit_multiplier}")
-    latdeg_program.addLine("Set #{fan_power_act.name} = (#{hpxml_header.hvac_blower_off_delay} / ton * Qfan) / #{unit_multiplier}")
+    latdeg_program.addLine("Set #{fan_power_act.name} = (#{blower_off_delay} / ton * Qfan) / #{unit_multiplier}")
 
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(

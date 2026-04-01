@@ -1340,11 +1340,11 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     hvac_bod = args[:advanced_feature_hvac_blower_off_delay]
     hvac_bod = args[:advanced_feature_2_hvac_blower_off_delay] if hvac_bod.nil?
     if not hvac_bod.nil?
-      if (not hpxml.header.hvac_blower_off_delay.nil?) && (hpxml.header.hvac_blower_off_delay != hvac_bod)
+      if (not hpxml.header.latent_degradation_model_blower_off_delay.nil?) && (hpxml.header.latent_degradation_model_blower_off_delay != hvac_bod)
         errors << "Advanced feature 'HVAC Blower-Off Delay' cannot vary across dwelling units."
       end
-      hpxml.header.hvac_blower_off_delay = hvac_bod
-      hpxml.header.latent_degradation_enabled = true
+      hpxml.header.latent_degradation_model_blower_off_delay = hvac_bod
+      hpxml.header.latent_degradation_model_enabled = true
     end
 
     hpbak = args[:advanced_feature_heat_pump_backup_capacity_increment]
