@@ -10,7 +10,10 @@
     <extension>
       <SimulationControl>
         <AdvancedResearchFeatures>
-          <HVACBlowerOffDelay>45.0</HVACBlowerOffDelay>
+          <LatentDegradationModel>
+            <Enabled>true</Enabled>
+            <HVACBlowerOffDelay>45.0</HVACBlowerOffDelay>
+          </LatentDegradationModel>
         </AdvancedResearchFeatures>
       </SimulationControl>
       <UtilityBillScenarios>

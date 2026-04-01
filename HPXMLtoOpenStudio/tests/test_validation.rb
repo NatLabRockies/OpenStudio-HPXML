@@ -148,7 +148,8 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'hvac-location-heat-pump' => ['A location is specified as "basement - unconditioned" but no surfaces were found adjacent to this space type.'],
                             'hvac-msac-not-var-speed' => ["Expected CompressorType to be 'variable speed'"],
                             'hvac-mshp-not-var-speed' => ["Expected CompressorType to be 'variable speed'"],
-                            'hvac-research-features-hvac-blower-off-delay-value' => ['Expected HVACBlowerOffDelay to be greater than or equal to 0'],
+                            'hvac-research-features-latdeg-blower-off-delay-value' => ['Expected HVACBlowerOffDelay to be greater than or equal to 0'],
+                            'hvac-research-features-latdeg-enabled' => ["Expected LatentDegradationModel/Enabled to be 'true' or 'false'"],
                             'hvac-research-features-timestep-ten-mins' => ['Expected Timestep to be 1 if OnOffThermostatDeadbandTemperature is specified',
                                                                            'Expected Timestep to be 1 if HeatPumpBackupCapacityIncrement is specified'],
                             'hvac-research-features-timestep-missing' => ['Expected Timestep to be 1 if OnOffThermostatDeadbandTemperature is specified',
@@ -551,9 +552,12 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.cooling_systems[0].primary_system = true
         hpxml_bldg.heat_pumps[-1].primary_heating_system = false
         hpxml_bldg.heat_pumps[-1].primary_cooling_system = false
-      when 'hvac-research-features-hvac-blower-off-delay-value'
+      when 'hvac-research-features-latdeg-blower-off-delay-value'
         hpxml, _hpxml_bldg = _create_hpxml('base.xml')
         hpxml.header.hvac_blower_off_delay = -1
+      when 'hvac-research-features-latdeg-enabled'
+        hpxml, _hpxml_bldg = _create_hpxml('base.xml')
+        hpxml.header.hvac_latent_degradation_enabled = 'foo'
       when 'hvac-research-features-timestep-ten-mins'
         hpxml, _hpxml_bldg = _create_hpxml('base-hvac-air-to-air-heat-pump-1-speed-research-features.xml')
         hpxml.header.timestep = 10

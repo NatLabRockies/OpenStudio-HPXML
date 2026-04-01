@@ -240,6 +240,16 @@ module Defaults
         unavailable_period.natvent_availability_isdefaulted = true
       end
     end
+
+    if hpxml_header.latent_degradation_enabled.nil?
+      hpxml_header.latent_degradation_enabled = false
+      hpxml_header.latent_degradation_enabled_isdefaulted = true
+    end
+
+    if hpxml_header.latent_degradation_enabled && hpxml_header.hvac_blower_off_delay.nil?
+      hpxml_header.hvac_blower_off_delay = 45.0
+      hpxml_header.hvac_blower_off_delay_isdefaulted = true
+    end
   end
 
   # Assigns default values for omitted optional inputs in the HPXML::BuildingHeader object

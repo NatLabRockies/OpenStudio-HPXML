@@ -434,13 +434,17 @@
     "location_epw_path": "USA_TX_Houston-Bush.Intercontinental.AP.722430_TMY3.epw",
     "ventilation_mechanical": "Supply Only"
   },
-  "sample_files/base-appliances-dehumidifier-mechvent-blower-off-delay.xml": {
+  "sample_files/base-appliances-dehumidifier-mechvent-latent-degradation-model-0s.xml": {
     "parent_hpxml": "sample_files/base-appliances-dehumidifier-mechvent.xml",
-    "advanced_feature_2": "HVAC Blower-Off Delay, 45 sec"
+    "advanced_feature_2": "Latent Degradation Model w/ Blower-Off Delay, 0 sec"
   },
-  "sample_files/base-appliances-dehumidifier-mechvent-blower-off-delay-ashp.xml": {
+  "sample_files/base-appliances-dehumidifier-mechvent-latent-degradation-model-45s.xml": {
     "parent_hpxml": "sample_files/base-appliances-dehumidifier-mechvent.xml",
-    "advanced_feature_2": "HVAC Blower-Off Delay, 45 sec",
+    "advanced_feature_2": "Latent Degradation Model w/ Blower-Off Delay, 45 sec"
+  },
+  "sample_files/base-appliances-dehumidifier-mechvent-latent-degradation-model-ashp.xml": {
+    "parent_hpxml": "sample_files/base-appliances-dehumidifier-mechvent.xml",
+    "advanced_feature_2": "Latent Degradation Model w/ Blower-Off Delay, 45 sec",
     "hvac_heating_system": "None",
     "hvac_cooling_system": "None",
     "hvac_heat_pump": "Central HP, SEER2 21.0, HSPF2 9.2",

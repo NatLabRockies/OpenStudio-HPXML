@@ -484,9 +484,7 @@ module HVAC
 
     add_variable_speed_power_ems_program(runner, model, air_loop_unitary, control_zone, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
 
-    if not cooling_system.nil?
-      add_blower_off_delay_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, control_zone.spaces[0], hpxml_bldg.building_construction.number_of_units)
-    end
+    add_latent_degradation_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, control_zone.spaces[0], hpxml_bldg.building_construction.number_of_units)
 
     if is_heatpump
       ems_program = apply_defrost_ems_program(model, htg_coil, control_zone.spaces[0], cooling_system, hpxml_bldg.building_construction.number_of_units)
@@ -4268,13 +4266,9 @@ module HVAC
     )
   end
 
-  # Adds an EMS program to model the HVAC blower-off delay, where the indoor supply fan is
-  # operated for a short period following the end of a cooling cycle. It increases the
-  # overall efficiency of the system by using the thermal mass of the evaporator coil to
-  # extract additional heat from the air. It will also re-evaporate condensate on the coil
-  # surface; this adds humidity back into the home but also provides sensible cooling via
-  # evaporative cooling. See "Effect of occupant behavior and air-conditioner controls on
-  # humidity in typical and high-efficiency homes" by Winkler, Munk, and Woods.
+  # Adds an EMS program to model latent degradation. The model includes latent degradation during
+  # the equipment startup transient period, as well as an HVAC blower-off delay, where the indoor
+  # supply fan is operated for a short period following the end of a cooling cycle.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
@@ -4285,9 +4279,19 @@ module HVAC
   # @param conditioned_space [OpenStudio::Model::Space] OpenStudio Space object for conditioned zone
   # @param unit_multiplier [Integer] Number of similar dwelling units
   # @return [nil]
-  def self.add_blower_off_delay_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, conditioned_space, unit_multiplier)
-    blower_off_delay = hpxml_header.hvac_blower_off_delay
-    return if blower_off_delay.nil?
+  def self.add_latent_degradation_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, conditioned_space, unit_multiplier)
+    return unless hpxml_header.latent_degradation_enabled
+    return if cooling_system.nil?
+
+    # Check that it's a central AC/HP
+    is_ducted = !cooling_system.distribution_system.nil?
+    cooling_type = cooling_system.cooling_system_type
+    if not ([HPXML::HVACTypeCentralAirConditioner,
+             HPXML::HVACTypeHeatPumpAirToAir].include?(cooling_type) ||
+            ([HPXML::HVACTypeMiniSplitAirConditioner,
+              HPXML::HVACTypeHeatPumpMiniSplit].include?(cooling_type) && is_ducted))
+      return
+    end
 
     m3s_to_cfm = UnitConversions.convert(1, 'm^3/s', 'cfm').round(2)
     w_to_ton = UnitConversions.convert(1, 'W', 'ton').round(4)
@@ -4302,21 +4306,21 @@ module HVAC
     # Sensors
     clg_rtf_sensor = Model.add_ems_sensor(
       model,
-      name: "#{air_loop_unitary.name} bod clg rtf s",
+      name: "#{air_loop_unitary.name} latdeg clg rtf s",
       output_var_or_meter_name: 'Cooling Coil Runtime Fraction',
       key_name: clg_coil.name
     )
 
     clg_qt_sensor = Model.add_ems_sensor(
       model,
-      name: "#{air_loop_unitary.name} bod clg qt s",
+      name: "#{air_loop_unitary.name} latdeg clg qt s",
       output_var_or_meter_name: 'Cooling Coil Total Cooling Rate',
       key_name: clg_coil.name
     )
 
     clg_qs_sensor = Model.add_ems_sensor(
       model,
-      name: "#{air_loop_unitary.name} bod clg qs s",
+      name: "#{air_loop_unitary.name} latdeg clg qs s",
       output_var_or_meter_name: 'Cooling Coil Sensible Cooling Rate',
       key_name: clg_coil.name
     )
@@ -4324,7 +4328,7 @@ module HVAC
     if not is_single_stage
       speed_ratio_sensor = Model.add_ems_sensor(
         model,
-        name: "#{air_loop_unitary.name} bod speed ratio s",
+        name: "#{air_loop_unitary.name} latdeg speed ratio s",
         output_var_or_meter_name: 'Unitary System DX Coil Speed Ratio',
         key_name: air_loop_unitary.name
       )
@@ -4332,7 +4336,7 @@ module HVAC
 
     fan_q_sensor = Model.add_ems_sensor(
       model,
-      name: "#{air_loop_unitary.name} bod fan q s",
+      name: "#{air_loop_unitary.name} latdeg fan q s",
       output_var_or_meter_name: 'Fan Electricity Rate',
       key_name: fan.name
     )
@@ -4343,28 +4347,28 @@ module HVAC
 
     vfr_sensor = Model.add_ems_sensor(
       model,
-      name: "#{air_loop_unitary.name} bod vfr s",
+      name: "#{air_loop_unitary.name} latdeg vfr s",
       output_var_or_meter_name: 'System Node Standard Density Volume Flow Rate',
       key_name: clg_coil_inlet_node_name
     )
 
     p_atm_sensor = Model.add_ems_sensor(
       model,
-      name: "#{air_loop_unitary.name} bod p atm s",
+      name: "#{air_loop_unitary.name} latdeg p atm s",
       output_var_or_meter_name: 'System Node Pressure',
       key_name: clg_coil_inlet_node_name
     )
 
     return_db_sensor = Model.add_ems_sensor(
       model,
-      name: "#{air_loop_unitary.name} bod return db s",
+      name: "#{air_loop_unitary.name} latdeg return db s",
       output_var_or_meter_name: 'System Node Temperature',
       key_name: clg_coil_inlet_node_name
     )
 
     return_hr_sensor = Model.add_ems_sensor(
       model,
-      name: "#{air_loop_unitary.name} bod return db s",
+      name: "#{air_loop_unitary.name} latdeg return db s",
       output_var_or_meter_name: 'System Node Humidity Ratio',
       key_name: clg_coil_inlet_node_name
     )
@@ -4373,7 +4377,7 @@ module HVAC
     cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeBlowerOffDelayFanPower } # Ensure unique name for each cooling system
     fan_power_oe = Model.add_other_equipment(
       model,
-      name: "#{air_loop_unitary.name} bod fan power",
+      name: "#{air_loop_unitary.name} latdeg blower fan power",
       end_use: "#{Constants::ObjectTypeBlowerOffDelayFanPower}#{cnt + 1}",
       space: conditioned_space,
       frac_radiant: 0,
@@ -4386,7 +4390,7 @@ module HVAC
 
     latent_heat_oe = Model.add_other_equipment(
       model,
-      name: "#{air_loop_unitary.name} bod latent heat",
+      name: "#{air_loop_unitary.name} latdeg latent heat",
       space: conditioned_space,
       frac_radiant: 0,
       frac_latent: 1,
@@ -4396,7 +4400,7 @@ module HVAC
 
     sens_cool_oe = Model.add_other_equipment(
       model,
-      name: "#{air_loop_unitary.name} bod sens cool",
+      name: "#{air_loop_unitary.name} latdeg sens cool",
       space: conditioned_space,
       frac_radiant: 0,
       frac_latent: 0,
@@ -4424,106 +4428,106 @@ module HVAC
     )
 
     # EMS Program
-    bod_program = Model.add_ems_program(
+    latdeg_program = Model.add_ems_program(
       model,
       name: "#{air_loop_unitary.name} blower off delay program"
     )
-    bod_program.addLine("Set RTF = #{clg_rtf_sensor.name}")
+    latdeg_program.addLine("Set RTF = #{clg_rtf_sensor.name}")
     if not speed_ratio_sensor.nil?
-      bod_program.addLine("If #{speed_ratio_sensor.name} > 0")
-      bod_program.addLine('  Set RTF = 1')
-      bod_program.addLine('EndIf')
+      latdeg_program.addLine("If #{speed_ratio_sensor.name} > 0")
+      latdeg_program.addLine('  Set RTF = 1')
+      latdeg_program.addLine('EndIf')
     end
-    bod_program.addLine("Set Qt = #{clg_qt_sensor.name}")
-    bod_program.addLine("Set Qs = #{clg_qs_sensor.name}")
-    bod_program.addLine('Set Ql = Qt - Qs')
-    bod_program.addLine("Set Qfan = #{fan_q_sensor.name}")
-    bod_program.addLine('IF (RTF == 0) || (RTF == 1) || (Ql == 0)')
-    bod_program.addLine("  Set #{latent_heat_act.name}=0")
-    bod_program.addLine("  Set #{sens_cool_act.name}=0")
-    bod_program.addLine("  Set #{fan_power_act.name}=0")
-    bod_program.addLine('  Return')
-    bod_program.addLine('EndIf')
-    bod_program.addLine("Set scfm = #{vfr_sensor.name} * #{m3s_to_cfm} / RTF")
-    bod_program.addLine("Set Patm = #{p_atm_sensor.name}")
-    bod_program.addLine("Set ReturnDB = #{return_db_sensor.name}")
-    bod_program.addLine("Set ReturnHumRat = #{return_hr_sensor.name}")
-    bod_program.addLine('Set MinEXP = -15')
-    bod_program.addLine('Set tau = 60')
-    bod_program.addLine('Set K1Per1000ft2 = 8')
-    bod_program.addLine('Set K2 = 0.03')
-    bod_program.addLine("Set BlowerOffDelay = #{blower_off_delay}")
-    bod_program.addLine('Set OffCycleFlowFraction = 0.001')
-    bod_program.addLine('Set MaxCyclesPerHour = 3')
-    bod_program.addLine('Set AfacePerTon = 1.57')
-    bod_program.addLine('Set EvapFPI = 14')
-    bod_program.addLine('Set EvapDepth = 3')
-    bod_program.addLine('Set ReturnWB = (@TwbFnTdbWPb ReturnDB ReturnHumRat Patm)')
-    bod_program.addLine("Set QratedTons = #{cool_cap_tons}")
-    bod_program.addLine('If scfm == 0')
-    bod_program.addLine("  Set scfm = QratedTons * #{RatedCFMPerTonDX}")
-    bod_program.addLine('EndIf')
-    bod_program.addLine('Set Aface = AfacePerTon * QratedTons')
-    bod_program.addLine('Set Ao = 2 * Aface * EvapFPI * EvapDepth')
-    bod_program.addLine('Set Ql = Qt - Qs')
-    bod_program.addLine('Set SHR = Qs / Qt')
-    bod_program.addLine('Set WBDepression = (ReturnDB - ReturnWB) * 1.8')
-    bod_program.addLine('Set K1 = K1Per1000ft2 * Ao / 1000')
-    bod_program.addLine("Set scfmPerTon = scfm / (Qt * #{w_to_ton} / RTF)")
-    bod_program.addLine("Set Mo = K1 * Ao / 1000 * (1 + 0.2 * (#{RatedCFMPerTonDX} - scfmPerTon) / 300)")
-    bod_program.addLine('Set scfmOffCycle = scfm * OffCycleFlowFraction + 0.0000001')
-    bod_program.addLine('Set NTUo = K2 * Ao / (scfmOffCycle^0.2)')
-    bod_program.addLine('Set NTU1o = K2 * Ao / (scfm^0.2)')
-    bod_program.addLine('Set twet = 3600 * Mo * 1060 / (@Max Ql 0.1)')
-    bod_program.addLine('Set tp = Mo * 1060 / 1.08 / scfmOffCycle / WBDepression * 3600')
-    bod_program.addLine('Set t1p = Mo * 1060 / 1.08 / scfm / WBDepression * 3600')
-    bod_program.addLine('Set Cycles = 4 * MaxCyclesPerHour * RTF * (1 - RTF)')
-    bod_program.addLine('Set toff = (@Min (3600 / 4 / MaxCyclesPerHour / RTF) BlowerOffDelay)')
-    bod_program.addLine('Set ton = 3600 / 4 / MaxCyclesPerHour / (1 - RTF)')
-    bod_program.addLine('Set t11off = ton / RTF - ton - BlowerOffDelay')
-    bod_program.addLine('Set fs = 1')
-    bod_program.addLine('Set Deltafs = 1')
-    bod_program.addLine('Set f1s = 1')
-    bod_program.addLine('While (@abs Deltafs) > 0.00001')
-    bod_program.addLine('  Set f1scalcint1 = (@EXP ((-NTU1o) * BlowerOffDelay / t1p))')
-    bod_program.addLine('  Set f1scalcint2 = (@EXP (NTU1o * fs))')
-    bod_program.addLine('  Set f1sCalc = 1 / NTU1o * (@LN (f1scalcint1 * (f1scalcint2 - 1) + 1))')
-    bod_program.addLine('  Set f1s = (@Min f1sCalc 1)')
-    bod_program.addLine('  Set fiint1 = (@EXP (@Max ((-NTUo) * t11off / tp) MinEXP))')
-    bod_program.addLine('  Set fiint2 = (@EXP (NTUo * f1s))')
-    bod_program.addLine('  Set fi = 1 / NTUo * (@LN (fiint1 * (fiint2 - 1) + 1))')
-    bod_program.addLine('  Set fscalcint = (@EXP (@Max ((-ton) / tau) MinEXP))')
-    bod_program.addLine('  Set fsCalc = fi + 1 / twet * (ton + tau * (fsCalcint - 1))')
-    bod_program.addLine('  Set fsCalc = (@Min fsCalc 1)')
-    bod_program.addLine('  Set Deltafs = fs - fsCalc')
-    bod_program.addLine('  Set fs = fsCalc')
-    bod_program.addLine('EndWhile')
-    bod_program.addLine('Set to = ton')
-    bod_program.addLine('Set Deltato = 10')
-    bod_program.addLine('While (@abs Deltato) > 0.01')
-    bod_program.addLine('  Set toCalcint = (@EXP (@Max ((-to) / tau) MinEXP))')
-    bod_program.addLine('  Set toCalc = (1 - fi) * twet - tau * (toCalcint - 1)')
-    bod_program.addLine('  Set toCalc = (@Min toCalc ton)')
-    bod_program.addLine('  Set Deltato = to - toCalc')
-    bod_program.addLine('  Set to = toCalc')
-    bod_program.addLine('EndWhile')
-    bod_program.addLine('Set LHRssint = (@EXP (@Max ((-ton) / tau) MinEXP))')
-    bod_program.addLine('Set LHRss = ton + tau * (LHRssint - 1)')
-    bod_program.addLine('Set LHRint = (@EXP (@Max ((-to) / tau) MinEXP))')
-    bod_program.addLine('Set LHR= (@Abs (ton - to + tau * (LHRssint - LHRint)))')
-    bod_program.addLine('Set SHRnew = 1 - (1 - SHR) * LHR / LHRss')
-    bod_program.addLine('Set Qsnew = Qt * SHRnew')
-    bod_program.addLine('Set Qlnew = Qt - Qsnew')
-    bod_program.addLine("Set #{latent_heat_act.name} = ((Ql - Qlnew) * RTF / 3.4121) / #{unit_multiplier}")
-    bod_program.addLine("Set #{sens_cool_act.name} = ((Qs - Qsnew) * RTF / 3.4121) / #{unit_multiplier}")
-    bod_program.addLine("Set #{fan_power_act.name} = (#{blower_off_delay} / ton * Qfan) / #{unit_multiplier}")
+    latdeg_program.addLine("Set Qt = #{clg_qt_sensor.name}")
+    latdeg_program.addLine("Set Qs = #{clg_qs_sensor.name}")
+    latdeg_program.addLine('Set Ql = Qt - Qs')
+    latdeg_program.addLine("Set Qfan = #{fan_q_sensor.name}")
+    latdeg_program.addLine('IF (RTF == 0) || (RTF == 1) || (Ql == 0)')
+    latdeg_program.addLine("  Set #{latent_heat_act.name}=0")
+    latdeg_program.addLine("  Set #{sens_cool_act.name}=0")
+    latdeg_program.addLine("  Set #{fan_power_act.name}=0")
+    latdeg_program.addLine('  Return')
+    latdeg_program.addLine('EndIf')
+    latdeg_program.addLine("Set scfm = #{vfr_sensor.name} * #{m3s_to_cfm} / RTF")
+    latdeg_program.addLine("Set Patm = #{p_atm_sensor.name}")
+    latdeg_program.addLine("Set ReturnDB = #{return_db_sensor.name}")
+    latdeg_program.addLine("Set ReturnHumRat = #{return_hr_sensor.name}")
+    latdeg_program.addLine('Set MinEXP = -15')
+    latdeg_program.addLine('Set tau = 60')
+    latdeg_program.addLine('Set K1Per1000ft2 = 8')
+    latdeg_program.addLine('Set K2 = 0.03')
+    latdeg_program.addLine("Set BlowerOffDelay = #{hpxml_header.hvac_blower_off_delay}")
+    latdeg_program.addLine('Set OffCycleFlowFraction = 0.001')
+    latdeg_program.addLine('Set MaxCyclesPerHour = 3')
+    latdeg_program.addLine('Set AfacePerTon = 1.57')
+    latdeg_program.addLine('Set EvapFPI = 14')
+    latdeg_program.addLine('Set EvapDepth = 3')
+    latdeg_program.addLine('Set ReturnWB = (@TwbFnTdbWPb ReturnDB ReturnHumRat Patm)')
+    latdeg_program.addLine("Set QratedTons = #{cool_cap_tons}")
+    latdeg_program.addLine('If scfm == 0')
+    latdeg_program.addLine("  Set scfm = QratedTons * #{RatedCFMPerTonDX}")
+    latdeg_program.addLine('EndIf')
+    latdeg_program.addLine('Set Aface = AfacePerTon * QratedTons')
+    latdeg_program.addLine('Set Ao = 2 * Aface * EvapFPI * EvapDepth')
+    latdeg_program.addLine('Set Ql = Qt - Qs')
+    latdeg_program.addLine('Set SHR = Qs / Qt')
+    latdeg_program.addLine('Set WBDepression = (ReturnDB - ReturnWB) * 1.8')
+    latdeg_program.addLine('Set K1 = K1Per1000ft2 * Ao / 1000')
+    latdeg_program.addLine("Set scfmPerTon = scfm / (Qt * #{w_to_ton} / RTF)")
+    latdeg_program.addLine("Set Mo = K1 * Ao / 1000 * (1 + 0.2 * (#{RatedCFMPerTonDX} - scfmPerTon) / 300)")
+    latdeg_program.addLine('Set scfmOffCycle = scfm * OffCycleFlowFraction + 0.0000001')
+    latdeg_program.addLine('Set NTUo = K2 * Ao / (scfmOffCycle^0.2)')
+    latdeg_program.addLine('Set NTU1o = K2 * Ao / (scfm^0.2)')
+    latdeg_program.addLine('Set twet = 3600 * Mo * 1060 / (@Max Ql 0.1)')
+    latdeg_program.addLine('Set tp = Mo * 1060 / 1.08 / scfmOffCycle / WBDepression * 3600')
+    latdeg_program.addLine('Set t1p = Mo * 1060 / 1.08 / scfm / WBDepression * 3600')
+    latdeg_program.addLine('Set Cycles = 4 * MaxCyclesPerHour * RTF * (1 - RTF)')
+    latdeg_program.addLine('Set toff = (@Min (3600 / 4 / MaxCyclesPerHour / RTF) BlowerOffDelay)')
+    latdeg_program.addLine('Set ton = 3600 / 4 / MaxCyclesPerHour / (1 - RTF)')
+    latdeg_program.addLine('Set t11off = ton / RTF - ton - BlowerOffDelay')
+    latdeg_program.addLine('Set fs = 1')
+    latdeg_program.addLine('Set Deltafs = 1')
+    latdeg_program.addLine('Set f1s = 1')
+    latdeg_program.addLine('While (@abs Deltafs) > 0.00001')
+    latdeg_program.addLine('  Set f1scalcint1 = (@EXP ((-NTU1o) * BlowerOffDelay / t1p))')
+    latdeg_program.addLine('  Set f1scalcint2 = (@EXP (NTU1o * fs))')
+    latdeg_program.addLine('  Set f1sCalc = 1 / NTU1o * (@LN (f1scalcint1 * (f1scalcint2 - 1) + 1))')
+    latdeg_program.addLine('  Set f1s = (@Min f1sCalc 1)')
+    latdeg_program.addLine('  Set fiint1 = (@EXP (@Max ((-NTUo) * t11off / tp) MinEXP))')
+    latdeg_program.addLine('  Set fiint2 = (@EXP (NTUo * f1s))')
+    latdeg_program.addLine('  Set fi = 1 / NTUo * (@LN (fiint1 * (fiint2 - 1) + 1))')
+    latdeg_program.addLine('  Set fscalcint = (@EXP (@Max ((-ton) / tau) MinEXP))')
+    latdeg_program.addLine('  Set fsCalc = fi + 1 / twet * (ton + tau * (fsCalcint - 1))')
+    latdeg_program.addLine('  Set fsCalc = (@Min fsCalc 1)')
+    latdeg_program.addLine('  Set Deltafs = fs - fsCalc')
+    latdeg_program.addLine('  Set fs = fsCalc')
+    latdeg_program.addLine('EndWhile')
+    latdeg_program.addLine('Set to = ton')
+    latdeg_program.addLine('Set Deltato = 10')
+    latdeg_program.addLine('While (@abs Deltato) > 0.01')
+    latdeg_program.addLine('  Set toCalcint = (@EXP (@Max ((-to) / tau) MinEXP))')
+    latdeg_program.addLine('  Set toCalc = (1 - fi) * twet - tau * (toCalcint - 1)')
+    latdeg_program.addLine('  Set toCalc = (@Min toCalc ton)')
+    latdeg_program.addLine('  Set Deltato = to - toCalc')
+    latdeg_program.addLine('  Set to = toCalc')
+    latdeg_program.addLine('EndWhile')
+    latdeg_program.addLine('Set LHRssint = (@EXP (@Max ((-ton) / tau) MinEXP))')
+    latdeg_program.addLine('Set LHRss = ton + tau * (LHRssint - 1)')
+    latdeg_program.addLine('Set LHRint = (@EXP (@Max ((-to) / tau) MinEXP))')
+    latdeg_program.addLine('Set LHR= (@Abs (ton - to + tau * (LHRssint - LHRint)))')
+    latdeg_program.addLine('Set SHRnew = 1 - (1 - SHR) * LHR / LHRss')
+    latdeg_program.addLine('Set Qsnew = Qt * SHRnew')
+    latdeg_program.addLine('Set Qlnew = Qt - Qsnew')
+    latdeg_program.addLine("Set #{latent_heat_act.name} = ((Ql - Qlnew) * RTF / 3.4121) / #{unit_multiplier}")
+    latdeg_program.addLine("Set #{sens_cool_act.name} = ((Qs - Qsnew) * RTF / 3.4121) / #{unit_multiplier}")
+    latdeg_program.addLine("Set #{fan_power_act.name} = (#{hpxml_header.hvac_blower_off_delay} / ton * Qfan) / #{unit_multiplier}")
 
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{bod_program.name} calling manager",
+      name: "#{latdeg_program.name} calling manager",
       calling_point: 'EndOfSystemTimestepAfterHVACReporting',
-      ems_programs: [bod_program]
+      ems_programs: [latdeg_program]
     )
   end
 

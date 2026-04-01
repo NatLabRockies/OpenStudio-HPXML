@@ -7,9 +7,9 @@ None
 "On/Off Thermostat Deadband, 1F"		1				
 "On/Off Thermostat Deadband, 2F"		2				
 "On/Off Thermostat Deadband, 3F"		3				
-"HVAC Blower-Off Delay, 0 sec"			0			
-"HVAC Blower-Off Delay, 45 sec"			45			
-"HVAC Blower-Off Delay, 90 sec"			90			
+"Latent Degradation Model w/ Blower-Off Delay, 0 sec"			0			
+"Latent Degradation Model w/ Blower-Off Delay, 45 sec"			45			
+"Latent Degradation Model w/ Blower-Off Delay, 90 sec"			90			
 "Heat Pump Backup Staging, 5 kW"				17060.71		
 "Heat Pump Backup Staging, 10 kW"				34121.42		
 Experimental Ground-to-Air Heat Pump Model					experimental	
