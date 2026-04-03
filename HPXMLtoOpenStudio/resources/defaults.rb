@@ -1274,7 +1274,11 @@ module Defaults
         roof.radiant_barrier_grade_isdefaulted = true
       end
       if roof.roof_color.nil? && roof.solar_absorptance.nil?
-        roof.roof_color = HPXML::ColorMedium
+        if roof.cool_roof
+          roof.roof_color = HPXML::ColorWhite
+        else
+          roof.roof_color = HPXML::ColorMedium
+        end
         roof.roof_color_isdefaulted = true
       end
       if roof.roof_color.nil?

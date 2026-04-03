@@ -1788,15 +1788,11 @@ class HPXMLtoOpenStudioHVACSizingTest < Minitest::Test
     hpxml_bldg.roofs[0].roof_type = HPXML::RoofTypeClayTile
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _model_mult, _base_hpxml, test_hpxml_bldg_1 = _test_measure(args_hash)
-    hpxml_bldg.roofs[0].roof_type = HPXML::RoofTypeCool
-    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
-    _model_mult, _base_hpxml, test_hpxml_bldg_2 = _test_measure(args_hash)
     hpxml_bldg.roofs[0].roof_type = HPXML::RoofTypeConcrete
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
-    _model_mult, _base_hpxml, test_hpxml_bldg_3 = _test_measure(args_hash)
+    _model_mult, _base_hpxml, test_hpxml_bldg_2 = _test_measure(args_hash)
     # Added roof type in the same category is sized the same as existing roof type in the same category
     assert_equal(test_hpxml_bldg_1.cooling_systems[0].cooling_capacity, test_hpxml_bldg_2.cooling_systems[0].cooling_capacity)
-    assert_equal(test_hpxml_bldg_1.cooling_systems[0].cooling_capacity, test_hpxml_bldg_3.cooling_systems[0].cooling_capacity)
 
     # Metal, PlasticRubber, EPS
     hpxml_bldg.roofs[0].roof_type = HPXML::RoofTypeMetal

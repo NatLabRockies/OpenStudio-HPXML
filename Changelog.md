@@ -1,6 +1,9 @@
 ## OpenStudio-HPXML v1.12.0
 
 __New Features__
+- Updates to HPXML v5.0-rc2.
+  - **Breaking change**: `Roof/RoofType="cool roof"` replaced by `Roof/CoolRoof="true"`.
+  - `Roof/RoofColor` now has an additional option of "white".
 - HVAC updates:
   - Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
   - Improves handling of duct leakage specified using cfm25/cfm50.

@@ -1261,7 +1261,8 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
   ``Area``                                double             ft2               > 0                       Yes                                        Gross area (including skylights)
   ``Azimuth`` or ``Orientation``          integer or string  deg or direction  >= 0, <= 359 or See [#]_  No         See [#]_                        Direction (clockwise from North)
   ``RoofType``                            string                               See [#]_                  No         asphalt or fiberglass shingles  Roof type
-  ``RoofColor`` or ``SolarAbsorptance``   string or double                     See [#]_ or >= 0, <= 1    No         medium                          Roof color or solar absorptance of outermost material [#]_
+  ``CoolRoof``                            boolean                                                        No                                         Only used to default roof color
+  ``RoofColor`` or ``SolarAbsorptance``   string or double                     See [#]_ or >= 0, <= 1    No         medium (or white if cool roof)  Roof color or solar absorptance of outermost material [#]_
   ``Emittance``                           double                               >= 0, <= 1                No         0.90                            Emittance of outermost material
   ``InteriorFinish/Type``                 string                               See [#]_                  No         See [#]_                        Interior finish material
   ``InteriorFinish/Thickness``            double             in                >= 0                      No         0.5                             Interior finish thickness
@@ -1279,27 +1280,40 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
   .. [#] Orientation choices are "northeast", "east", "southeast", "south", "southwest", "west", "northwest", or "north"
   .. [#] If neither Azimuth nor Orientation provided, and it's a *pitched* roof, modeled as four surfaces of equal area facing every direction.
          Azimuth/Orientation is irrelevant for *flat* roofs.
-  .. [#] RoofType choices are "asphalt or fiberglass shingles", "wood shingles or shakes", "shingles", "slate or tile shingles", "metal surfacing", "plastic/rubber/synthetic sheeting", "expanded polystyrene sheathing", "concrete", or "cool roof".
-  .. [#] RoofColor choices are "dark", "medium dark", "medium", "medium light", "light", or "reflective".
-  .. [#] If SolarAbsorptance not provided, defaults based on RoofType and RoofColor:
+  .. [#] RoofType choices are "asphalt or fiberglass shingles", "wood shingles or shakes", "shingles", "slate or tile shingles", "metal surfacing", "plastic/rubber/synthetic sheeting", "expanded polystyrene sheathing", or "concrete".
+  .. [#] RoofColor choices are "dark", "medium dark", "medium", "medium light", "light", "white", or "reflective".
+  .. [#] If SolarAbsorptance not provided, defaults based on RoofType and RoofColor.
+         For **asphalt or fiberglass shingles**, **wood shingles or shakes**, **shingles**, and **expanded polystyrene sheathing**:
 
-         \- **asphalt or fiberglass shingles**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.8, light=0.75, reflective=0.50
+         \- **dark**: 0.92
 
-         \- **wood shingles or shakes**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.8, light=0.75, reflective=0.50
+         \- **medium dark**: 0.89
 
-         \- **shingles**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.8, light=0.75, reflective=0.50
+         \- **medium**: 0.85
 
-         \- **slate or tile shingles**: dark=0.90, medium dark=0.83, medium=0.75, medium light=0.67, light=0.60, reflective=0.30
+         \- **medium light**: 0.80
 
-         \- **metal surfacing**: dark=0.90, medium dark=0.83, medium=0.75, medium light=0.67, light=0.60, reflective=0.30
+         \- **light**: 0.75
 
-         \- **plastic/rubber/synthetic sheeting**: dark=0.90, medium dark=0.83, medium=0.75, medium light=0.67, light=0.60, reflective=0.30
+         \- **white**: 0.70
 
-         \- **expanded polystyrene sheathing**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.8, light=0.75, reflective=0.50
+         \- **reflective**: 0.50
 
-         \- **concrete**: dark=0.90, medium dark=0.83, medium=0.75, medium light=0.7, light=0.65, reflective=0.50
+         For **slate or tile shingles**, **metal surfacing**, **plastic/rubber/synthetic sheeting**, and **concrete**:
 
-         \- **cool roof**: 0.30
+         \- **dark**: 0.90
+
+         \- **medium dark**: 0.80
+
+         \- **medium**: 0.70
+
+         \- **medium light**: 0.60
+
+         \- **light**: 0.45
+
+         \- **white**: 0.35
+
+         \- **reflective**: 0.25
 
   .. [#] InteriorFinish/Type choices are "gypsum board", "gypsum composite board", "plaster", "wood", "other", or "not present".
   .. [#] InteriorFinish/Type defaults to "gypsum board" if InteriorAdjacentTo is conditioned space, otherwise "not present".
@@ -1340,23 +1354,12 @@ Each rim joist surface (i.e., the perimeter of floor joists typically found betw
   .. [#] If neither Azimuth nor Orientation provided, and it's an *exterior* rim joist, modeled as four surfaces of equal area facing every direction.
          Azimuth/Orientation is irrelevant for *interior* rim joists.
   .. [#] Siding choices are "wood siding", "vinyl siding", "stucco", "fiber cement siding", "brick veneer", "stone veneer", "aluminum siding", "masonite siding", "composite shingle siding", "asbestos siding", "synthetic stucco", or "not present".
-  .. [#] Color choices are "dark", "medium dark", "medium", "medium light", "light", or "reflective".
-  .. [#] If SolarAbsorptance not provided, defaults based on Color:
-
-         \- **dark**: 0.95
-
-         \- **medium dark**: 0.85
-
-         \- **medium**: 0.70
-
-         \- **medium light**: 0.60
-
-         \- **light**: 0.50
-
-         \- **reflective**: 0.30
-
+  .. [#] Color choices are "dark", "medium dark", "medium", "medium light", "light", "white", or "reflective".
+  .. [#] If SolarAbsorptance not provided, defaults the same as :ref:`hpxml_walls`.
   .. [#] AssemblyEffectiveRValue includes all material layers and interior/exterior air films.
          It should also include the effects of insulation gaps (installation grading) and/or compressed insulation in cavities per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+
+.. _hpxml_walls:
 
 HPXML Walls
 ***********
@@ -1395,7 +1398,7 @@ Each wall surface is entered as a ``/HPXML/Building/BuildingDetails/Enclosure/Wa
   .. [#] If neither Azimuth nor Orientation provided, and it's an *exterior* wall, modeled as four surfaces of equal area facing every direction.
          Azimuth/Orientation is irrelevant for *interior* walls (e.g., between conditioned space and garage).
   .. [#] Siding choices are "wood siding", "vinyl siding", "stucco", "fiber cement siding", "brick veneer", "stone veneer", "aluminum siding", "masonite siding", "composite shingle siding", "asbestos siding", "synthetic stucco", or "not present".
-  .. [#] Color choices are "dark", "medium dark", "medium", "medium light", "light", or "reflective".
+  .. [#] Color choices are "dark", "medium dark", "medium", "medium light", "light", "white, or "reflective".
   .. [#] If SolarAbsorptance not provided, defaults based on Color:
 
          \- **dark**: 0.95
@@ -1408,7 +1411,9 @@ Each wall surface is entered as a ``/HPXML/Building/BuildingDetails/Enclosure/Wa
 
          \- **light**: 0.50
 
-         \- **reflective**: 0.30
+         \- **white**: 0.35
+
+         \- **reflective**: 0.25
 
   .. [#] InteriorFinish/Type choices are "gypsum board", "gypsum composite board", "plaster", "wood", "other", or "not present".
   .. [#] InteriorFinish/Type defaults to "gypsum board" if InteriorAdjacentTo is conditioned space or basement - conditioned, otherwise "not present".
