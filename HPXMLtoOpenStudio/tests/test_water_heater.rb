@@ -1144,7 +1144,8 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
     assert_equal(1, model.getWaterHeaterMixeds.size)
     wh = model.getWaterHeaterMixeds[0]
     assert_equal(fuel, wh.heaterFuelType)
-    assert_equal(loc, wh.ambientTemperatureThermalZone.get.name.get)
+    assert_equal('Schedule', wh.ambientTemperatureIndicator)
+    assert_equal(loc, wh.ambientTemperatureSchedule.get.name.get)
     assert_in_epsilon(tank_volume, wh.tankVolume.get, 0.01)
     assert_in_epsilon(cap, wh.heaterMaximumCapacity.get, 0.01)
     assert_in_epsilon(ua, wh.onCycleLossCoefficienttoAmbientTemperature.get, 0.01)
@@ -1223,7 +1224,8 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
     assert_equal(1, model.getWaterHeaterMixeds.size)
     wh = model.getWaterHeaterMixeds[0]
     assert_equal(fuel, wh.heaterFuelType)
-    assert_equal(loc, wh.ambientTemperatureThermalZone.get.name.get)
+    assert_equal('Schedule', wh.ambientTemperatureIndicator)
+    assert_equal(loc, wh.ambientTemperatureSchedule.get.name.get)
     assert_in_epsilon(tank_volume, wh.tankVolume.get, 0.01)
     assert_in_epsilon(cap, wh.heaterMaximumCapacity.get, 0.01)
     assert_in_epsilon(ua, wh.onCycleLossCoefficienttoAmbientTemperature.get, 0.01)

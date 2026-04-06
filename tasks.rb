@@ -2356,7 +2356,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                            number_of_bedrooms_served: 18,
                                            fuel_type: HPXML::FuelTypeNaturalGas,
                                            water_heater_type: HPXML::WaterHeaterTypeStorage,
-                                           location: HPXML::LocationConditionedSpace,
+                                           location: HPXML::LocationOtherHeatedSpace,
                                            tank_volume: 120,
                                            fraction_dhw_load_served: 1.0,
                                            heating_capacity: 40000,

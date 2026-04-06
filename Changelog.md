@@ -26,6 +26,7 @@ __Bugfixes__
 - Fixes handling of zero occupants (i.e., unoccupied dwelling unit):
   - Fixes lighting and plug/fuel load energy use to not be zeroed out when a kWh/year or therm/year value is provided.
   - Fixes pool/spa energy use to be zeroed out when a kWh/year or therm/year value is not provided, or when there is a "Vacancy" unavailable period.
+- Fixes incorrect hot water (gallons) output for solar thermal systems using `SolarFraction`.
 
 ## OpenStudio-HPXML v1.11.1
 

@@ -1220,7 +1220,7 @@ The location of the water heater. Defaults based on the foundation/garage type.
 
 - **Required:** ``false``
 
-- **Choices:** <br/>  - `Default`<br/>  - `Conditioned Space`<br/>  - `Basement`<br/>  - `Garage`<br/>  - `Crawlspace`<br/>  - `Attic`<br/>  - `Other Heated Space`<br/>  - `Outside`
+- **Choices:** <br/>  - `Default`<br/>  - `Conditioned Space`<br/>  - `Basement`<br/>  - `Garage`<br/>  - `Crawlspace`<br/>  - `Attic`<br/>  - `SFA/MF Other Heated Space`<br/>  - `Outside`
 
 
 - **Default:** `Default`

@@ -288,7 +288,7 @@
             <SystemIdentifier id='WaterHeatingSystem1'/>
             <FuelType>electricity</FuelType>
             <WaterHeaterType>heat pump water heater</WaterHeaterType>
-            <Location>conditioned space</Location>
+            <Location>other heated space</Location>
             <IsSharedSystem>true</IsSharedSystem>
             <TankVolume>120.0</TankVolume>
             <FractionDHWLoadServed>1.0</FractionDHWLoadServed>

@@ -955,7 +955,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     end
 
     @hpxml_bldgs.each do |hpxml_bldg|
-      # Apply solar fraction to load for simple solar water heating systems
+      # Apply solar fraction to load and hot water uses for simple solar water heating systems
       hpxml_bldg.solar_thermal_systems.each do |solar_system|
         next if solar_system.solar_fraction.nil?
 
@@ -969,6 +969,9 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         end
         dhw_ids.each do |dhw_id|
           apply_multiplier_to_output(@loads[LT::HotWaterDelivered], [@loads[LT::HotWaterSolarThermal]], dhw_id, nil, 1.0 / (1.0 - solar_system.solar_fraction))
+          @hot_water_uses.each do |_hot_water_type, hot_water|
+            apply_multiplier_to_output(hot_water, [], dhw_id, nil, 1.0 / (1.0 - solar_system.solar_fraction))
+          end
         end
       end
     end
