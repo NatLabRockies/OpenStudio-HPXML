@@ -4431,100 +4431,107 @@ module HVAC
       comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
     )
 
-    # EMS Program
+    # EMS Program based on:
+	#   Shirey, Don, Henderson, H., Raustad, R. 2006. "Understanding the Dehumidification Performance of Air-Conditioning 
+	#   Equipment at Part Load Conditions". DOE/NETL Project No. DE-FC26-01NT41253.
+	#   Table and equation numbers below refer to the Shirey et al. report. See Chapter 5.
+	#
+	#   Note: This model accounts for latent removal during coil start-up, and moisture re-introduced to the living space during the blower-off
+    #   delay (forced evaporation) and during the remaining off cycle time after the blower shuts off (natural evaporation).
     latdeg_program = Model.add_ems_program(
       model,
       name: "#{air_loop_unitary.name} blower off delay program"
     )
     latdeg_program.addLine("Set RTF = #{clg_rtf_sensor.name}")
     if not speed_ratio_sensor.nil?
-      latdeg_program.addLine("If #{speed_ratio_sensor.name} > 0")
+      # Set RTF to 1 for two-stage or variable speed equipment if the speed ratio > 0
+	  latdeg_program.addLine("If #{speed_ratio_sensor.name} > 0")
       latdeg_program.addLine('  Set RTF = 1')
       latdeg_program.addLine('EndIf')
     end
-    latdeg_program.addLine("Set Qt = #{clg_qt_sensor.name}")
-    latdeg_program.addLine("Set Qs = #{clg_qs_sensor.name}")
-    latdeg_program.addLine('Set Ql = Qt - Qs')
+    latdeg_program.addLine("Set Qt = #{clg_qt_sensor.name}") # Timestep total cooling capacity
+    latdeg_program.addLine("Set Qs = #{clg_qs_sensor.name}") # Timestep sensible cooling capacity
+    latdeg_program.addLine('Set Ql = Qt - Qs') # Timestep latent cooling capacity
     latdeg_program.addLine("Set Qfan = #{fan_q_sensor.name}")
-    latdeg_program.addLine('IF (RTF == 0) || (RTF == 1) || (Ql == 0)')
+    latdeg_program.addLine('IF (RTF == 0) || (RTF == 1) || (Ql == 0)') # No latent degradation if coil is off, runs for the entire timestep, or is dry
     latdeg_program.addLine("  Set #{latent_heat_act.name}=0")
     latdeg_program.addLine("  Set #{sens_cool_act.name}=0")
     latdeg_program.addLine("  Set #{fan_power_act.name}=0")
     latdeg_program.addLine('  Return')
     latdeg_program.addLine('EndIf')
-    latdeg_program.addLine("Set scfm = #{vfr_sensor.name} * #{m3s_to_cfm} / RTF")
+    latdeg_program.addLine("Set scfm = #{vfr_sensor.name} * #{m3s_to_cfm} / RTF") # Full load standard volumetric flow rate
     latdeg_program.addLine("Set Patm = #{p_atm_sensor.name}")
     latdeg_program.addLine("Set ReturnDB = #{return_db_sensor.name}")
     latdeg_program.addLine("Set ReturnHumRat = #{return_hr_sensor.name}")
-    latdeg_program.addLine('Set MinEXP = -15')
-    latdeg_program.addLine('Set tau = 60')
-    latdeg_program.addLine('Set K1Per1000ft2 = 8')
-    latdeg_program.addLine('Set K2 = 0.03')
+    latdeg_program.addLine('Set MinEXP = -15') # Constant to avoid exponential terms from approaching 0
+    latdeg_program.addLine('Set tau = 60')  # Time constant of latent capacity at start-up. See Table 5-1. Typically 30-90 seconds.
+    latdeg_program.addLine('Set K1Per1000ft2 = 8') # Empirical constant. See Table 5-4.
+    latdeg_program.addLine('Set K2 = 0.03') # Empirical constant. See Table 5-4.
     latdeg_program.addLine("Set BlowerOffDelay = #{blower_off_delay}")
     latdeg_program.addLine('Set OffCycleFlowFraction = 0.001')
-    latdeg_program.addLine('Set MaxCyclesPerHour = 3')
+    latdeg_program.addLine('Set MaxCyclesPerHour = 3') # Maximum number of cycles per hour. See Table 5-1.
     latdeg_program.addLine('Set AfacePerTon = 1.57')
-    latdeg_program.addLine('Set EvapFPI = 14')
-    latdeg_program.addLine('Set EvapDepth = 3')
+    latdeg_program.addLine('Set EvapFPI = 14') # Assumed evaporator fins per inch (FPI)
+    latdeg_program.addLine('Set EvapDepth = 3') # Asseumed evaporator coil depth, inches
     latdeg_program.addLine('Set ReturnWB = (@TwbFnTdbWPb ReturnDB ReturnHumRat Patm)')
     latdeg_program.addLine("Set QratedTons = #{cool_cap_tons}")
     latdeg_program.addLine('If scfm == 0')
     latdeg_program.addLine("  Set scfm = QratedTons * #{RatedCFMPerTonDX}")
     latdeg_program.addLine('EndIf')
-    latdeg_program.addLine('Set Aface = AfacePerTon * QratedTons')
-    latdeg_program.addLine('Set Ao = 2 * Aface * EvapFPI * EvapDepth')
-    latdeg_program.addLine('Set Ql = Qt - Qs')
-    latdeg_program.addLine('Set SHR = Qs / Qt')
-    latdeg_program.addLine('Set WBDepression = (ReturnDB - ReturnWB) * 1.8')
+    latdeg_program.addLine('Set Aface = AfacePerTon * QratedTons') # Assumed coil face area
+    latdeg_program.addLine('Set Ao = 2 * Aface * EvapFPI * EvapDepth') # Total fin area, square feet. See Table 5-4.
+    latdeg_program.addLine('Set Ql = Qt - Qs') # Timestep latent cooling capacity (repeated equation from above)
+    latdeg_program.addLine('Set SHR = Qs / Qt') # Timestep SHR
+    latdeg_program.addLine('Set WBDepression = (ReturnDB - ReturnWB) * 1.8') # Return air wetbulb depression, deg F
     latdeg_program.addLine('Set K1 = K1Per1000ft2 * Ao / 1000')
-    latdeg_program.addLine("Set scfmPerTon = scfm / (Qt * #{w_to_ton} / RTF)")
-    latdeg_program.addLine("Set Mo = K1 * Ao / 1000 * (1 + 0.2 * (#{RatedCFMPerTonDX} - scfmPerTon) / 300)")
-    latdeg_program.addLine('Set scfmOffCycle = scfm * OffCycleFlowFraction + 0.0000001')
-    latdeg_program.addLine('Set NTUo = K2 * Ao / (scfmOffCycle^0.2)')
-    latdeg_program.addLine('Set NTU1o = K2 * Ao / (scfm^0.2)')
-    latdeg_program.addLine('Set twet = 3600 * Mo * 1060 / (@Max Ql 0.1)')
-    latdeg_program.addLine('Set tp = Mo * 1060 / 1.08 / scfmOffCycle / WBDepression * 3600')
-    latdeg_program.addLine('Set t1p = Mo * 1060 / 1.08 / scfm / WBDepression * 3600')
-    latdeg_program.addLine('Set Cycles = 4 * MaxCyclesPerHour * RTF * (1 - RTF)')
-    latdeg_program.addLine('Set toff = (@Min (3600 / 4 / MaxCyclesPerHour / RTF) BlowerOffDelay)')
-    latdeg_program.addLine('Set ton = 3600 / 4 / MaxCyclesPerHour / (1 - RTF)')
-    latdeg_program.addLine('Set t11off = ton / RTF - ton - BlowerOffDelay')
+    latdeg_program.addLine("Set scfmPerTon = scfm / (Qt * #{w_to_ton} / RTF)") # Operating cfm/ton. (`scfm` is full load.)
+    latdeg_program.addLine("Set Mo = K1 * Ao / 1000 * (1 + 0.2 * (#{RatedCFMPerTonDX} - scfmPerTon) / 300)") # Lin. reg. to vary coil moisture holding capacity (Mo) w/ airflow. Combination of equation in Table 5-4 w/ Fig. 5-49.
+    latdeg_program.addLine('Set scfmOffCycle = scfm * OffCycleFlowFraction + 0.0000001') # Assumed natural convection airflow rate when the blower is off
+    latdeg_program.addLine('Set NTUo = K2 * Ao / (scfmOffCycle^0.2)') # Eq 5-12 used when the blower is cycled off
+    latdeg_program.addLine('Set NTU1o = K2 * Ao / (scfm^0.2)') # Eq 5-12 used during the blower off delay
+    latdeg_program.addLine('Set twet = 3600 * Mo * 1060 / (@Max Ql 0.1)') # Nominal time (seconds) after cooling startup when moisture starts to drain. See Table 5-4.
+    latdeg_program.addLine('Set tp = Mo * 1060 / 1.08 / scfmOffCycle / WBDepression * 3600') # Defined on pg 5-23 for when the fan is off. See Table 5-4.
+    latdeg_program.addLine('Set t1p = Mo * 1060 / 1.08 / scfm / WBDepression * 3600') # Defined on pg 5-23 for during the blower off delay. See Table 5-4.
+    latdeg_program.addLine('Set Cycles = 4 * MaxCyclesPerHour * RTF * (1 - RTF)') # Number of cycles per hour
+    latdeg_program.addLine('Set toff = (@Min (3600 / 4 / MaxCyclesPerHour / RTF) BlowerOffDelay)') # Duration of an off cycle (seconds)
+    latdeg_program.addLine('Set ton = 3600 / 4 / MaxCyclesPerHour / (1 - RTF)') # Duration of a cooling cycle (seconds)
+    latdeg_program.addLine('Set t11off = ton / RTF - ton - BlowerOffDelay') # Duration of off cycle when the coil and blower are both off
     latdeg_program.addLine('Set fs = 1')
     latdeg_program.addLine('Set Deltafs = 1')
     latdeg_program.addLine('Set f1s = 1')
-    latdeg_program.addLine('While (@abs Deltafs) > 0.00001')
-    latdeg_program.addLine('  Set f1scalcint1 = (@EXP ((-NTU1o) * BlowerOffDelay / t1p))')
-    latdeg_program.addLine('  Set f1scalcint2 = (@EXP (NTU1o * fs))')
-    latdeg_program.addLine('  Set f1sCalc = 1 / NTU1o * (@LN (f1scalcint1 * (f1scalcint2 - 1) + 1))')
-    latdeg_program.addLine('  Set f1s = (@Min f1sCalc 1)')
-    latdeg_program.addLine('  Set fiint1 = (@EXP (@Max ((-NTUo) * t11off / tp) MinEXP))')
-    latdeg_program.addLine('  Set fiint2 = (@EXP (NTUo * f1s))')
-    latdeg_program.addLine('  Set fi = 1 / NTUo * (@LN (fiint1 * (fiint2 - 1) + 1))')
-    latdeg_program.addLine('  Set fscalcint = (@EXP (@Max ((-ton) / tau) MinEXP))')
-    latdeg_program.addLine('  Set fsCalc = fi + 1 / twet * (ton + tau * (fsCalcint - 1))')
-    latdeg_program.addLine('  Set fsCalc = (@Min fsCalc 1)')
-    latdeg_program.addLine('  Set Deltafs = fs - fsCalc')
-    latdeg_program.addLine('  Set fs = fsCalc')
+    latdeg_program.addLine('While (@abs Deltafs) > 0.00001') # Successive substitution loop for the blower off delay (forced evaporation) and latent degradation (natural evaporation)
+    latdeg_program.addLine('  Set f1scalcint1 = (@EXP ((-NTU1o) * BlowerOffDelay / t1p))') # Intermediate term for Eq 5-22
+    latdeg_program.addLine('  Set f1scalcint2 = (@EXP (NTU1o * fs))') # Intermediate term for Eq 5-22
+    latdeg_program.addLine('  Set f1sCalc = 1 / NTU1o * (@LN (f1scalcint1 * (f1scalcint2 - 1) + 1))') # Fraction of moisture on the coil after blower off delay. See Eq 5-22 and 5-31.
+    latdeg_program.addLine('  Set f1s = (@Min f1sCalc 1)') # Limit f_s to be <= 1.0 See pg. 5-23.
+    latdeg_program.addLine('  Set fiint1 = (@EXP (@Max ((-NTUo) * t11off / tp) MinEXP))') # Eq 5-22, first exponential term
+    latdeg_program.addLine('  Set fiint2 = (@EXP (NTUo * f1s))') # Eq 5-22, second exponential term
+    latdeg_program.addLine('  Set fi = 1 / NTUo * (@LN (fiint1 * (fiint2 - 1) + 1))') # Fraction of moisture on the coil after the off cycle. See Eq 5-22 and 5-31.
+    latdeg_program.addLine('  Set fscalcint = (@EXP (@Max ((-ton) / tau) MinEXP))') # Intermediate term for Eq 5-23
+    latdeg_program.addLine('  Set fsCalc = fi + 1 / twet * (ton + tau * (fsCalcint - 1))') # Fraction of moisture on coil at end of on cycle to coil moisture holding capacity (Mo). See Eq 5-23.
+    latdeg_program.addLine('  Set fsCalc = (@Min fsCalc 1)') # Limit f_s to be <= 1.0 See pg. 5-23.
+    latdeg_program.addLine('  Set Deltafs = fs - fsCalc') # Residual
+    latdeg_program.addLine('  Set fs = fsCalc') # Successive substitution to find f_s. Use f_i to find t_o.
     latdeg_program.addLine('EndWhile')
-    latdeg_program.addLine('Set to = ton')
+    latdeg_program.addLine('Set to = ton') # `to` is the time after coil startup when moisture begins to drain from the unit (s).
     latdeg_program.addLine('Set Deltato = 10')
     latdeg_program.addLine('While (@abs Deltato) > 0.01')
-    latdeg_program.addLine('  Set toCalcint = (@EXP (@Max ((-to) / tau) MinEXP))')
-    latdeg_program.addLine('  Set toCalc = (1 - fi) * twet - tau * (toCalcint - 1)')
-    latdeg_program.addLine('  Set toCalc = (@Min toCalc ton)')
-    latdeg_program.addLine('  Set Deltato = to - toCalc')
+    latdeg_program.addLine('  Set toCalcint = (@EXP (@Max ((-to) / tau) MinEXP))') # Intermediate term for Eq 5-25
+    latdeg_program.addLine('  Set toCalc = (1 - fi) * twet - tau * (toCalcint - 1)') # Eq 5-25
+    latdeg_program.addLine('  Set toCalc = (@Min toCalc ton)') # `to` must be less than the on cycle (`ton`)
+    latdeg_program.addLine('  Set Deltato = to - toCalc') 
     latdeg_program.addLine('  Set to = toCalc')
     latdeg_program.addLine('EndWhile')
-    latdeg_program.addLine('Set LHRssint = (@EXP (@Max ((-ton) / tau) MinEXP))')
-    latdeg_program.addLine('Set LHRss = ton + tau * (LHRssint - 1)')
-    latdeg_program.addLine('Set LHRint = (@EXP (@Max ((-to) / tau) MinEXP))')
-    latdeg_program.addLine('Set LHR= (@Abs (ton - to + tau * (LHRssint - LHRint)))')
-    latdeg_program.addLine('Set SHRnew = 1 - (1 - SHR) * LHR / LHRss')
-    latdeg_program.addLine('Set Qsnew = Qt * SHRnew')
-    latdeg_program.addLine('Set Qlnew = Qt - Qsnew')
+    latdeg_program.addLine('Set LHRssint = (@EXP (@Max ((-ton) / tau) MinEXP))') # Intermediate term for next line.
+    latdeg_program.addLine('Set LHRss = ton + tau * (LHRssint - 1)') # LHR at steady state. See denominator of Eq. 5-9.
+    latdeg_program.addLine('Set LHRint = (@EXP (@Max ((-to) / tau) MinEXP))') # Intermediate term for next line.
+    latdeg_program.addLine('Set LHR= (@Abs (ton - to + tau * (LHRssint - LHRint)))') # LHR at part load. See numerator of Eq. 5-9.
+    latdeg_program.addLine('Set SHRnew = 1 - (1 - SHR) * LHR / LHRss') # Adjust the E+ SHR (steady state) using LHR/LHRss ratio.
+    latdeg_program.addLine('Set Qsnew = Qt * SHRnew') # New sensible capacity
+    latdeg_program.addLine('Set Qlnew = Qt - Qsnew') # New latent capacity
     latdeg_program.addLine("Set #{latent_heat_act.name} = ((Ql - Qlnew) * RTF / 3.4121) / #{unit_multiplier}")
     latdeg_program.addLine("Set #{sens_cool_act.name} = ((Qs - Qsnew) * RTF / 3.4121) / #{unit_multiplier}")
-    latdeg_program.addLine("Set #{fan_power_act.name} = (#{blower_off_delay} / ton * Qfan) / #{unit_multiplier}")
+    latdeg_program.addLine("Set #{fan_power_act.name} = (#{blower_off_delay} / ton * Qfan) / #{unit_multiplier}") # Additional fan power during blower off delay
 
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
