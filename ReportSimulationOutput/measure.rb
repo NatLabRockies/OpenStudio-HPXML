@@ -559,7 +559,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     # Detailed air condition outputs (timeseries only)
     if args[:include_timeseries_zone_conditions]
-      Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Air Humidity Ratio', reporting_frequency: args[:timeseries_frequency])
+      Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Mean Air Humidity Ratio', reporting_frequency: args[:timeseries_frequency])
       Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Air Relative Humidity', reporting_frequency: args[:timeseries_frequency])
       Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Mean Air Dewpoint Temperature', reporting_frequency: args[:timeseries_frequency])
       Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Mean Radiant Temperature', reporting_frequency: args[:timeseries_frequency])
@@ -1219,7 +1219,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           @zone_conds["#{zone_name} Humidity Ratio"] = ZoneCond.new
           @zone_conds["#{zone_name} Humidity Ratio"].name = "Humidity Ratio: #{sanitize_name(bldg_id, zone_name)}"
           @zone_conds["#{zone_name} Humidity Ratio"].timeseries_units = 'fraction'
-          @zone_conds["#{zone_name} Humidity Ratio"].timeseries_output = get_report_variable_data_timeseries([zone_name], ['Zone Air Humidity Ratio'], 1, 0, args[:timeseries_frequency])
+          @zone_conds["#{zone_name} Humidity Ratio"].timeseries_output = get_report_variable_data_timeseries([zone_name], ['Zone Mean Air Humidity Ratio'], 1, 0, args[:timeseries_frequency])
         end
       end
 

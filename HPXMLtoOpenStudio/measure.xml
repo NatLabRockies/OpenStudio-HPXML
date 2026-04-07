@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>15c39750-5947-45ef-887d-47606442ed57</version_id>
-  <version_modified>2026-04-02T19:46:00Z</version_modified>
+  <version_id>3f7ffb63-0f24-4d34-8ea1-3db9fd8d8e0e</version_id>
+  <version_modified>2026-04-07T16:47:43Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -211,13 +211,13 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>B86AA9F1</checksum>
+      <checksum>A3EAD2F9</checksum>
     </file>
     <file>
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>2F17E22A</checksum>
+      <checksum>C473BF61</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
@@ -391,7 +391,7 @@
       <filename>geometry.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>CE6EE50A</checksum>
+      <checksum>785106A1</checksum>
     </file>
     <file>
       <filename>hotwater_appliances.rb</filename>
@@ -433,7 +433,7 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>86BE60D7</checksum>
+      <checksum>375618A1</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>
@@ -499,7 +499,7 @@
       <filename>output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>7F8E008D</checksum>
+      <checksum>D4F2BA82</checksum>
     </file>
     <file>
       <filename>psychrometrics.rb</filename>
@@ -703,7 +703,7 @@
       <filename>vehicle.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>62131EE4</checksum>
+      <checksum>9D6EA296</checksum>
     </file>
     <file>
       <filename>version.rb</filename>
@@ -715,7 +715,7 @@
       <filename>waterheater.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>096F8A5F</checksum>
+      <checksum>8508AF84</checksum>
     </file>
     <file>
       <filename>weather.rb</filename>

@@ -27,9 +27,8 @@ module HVAC
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param schedules_file [SchedulesFile] SchedulesFile wrapper class instance of detailed schedule files
-  # @param hvac_season_days [Hash] Map of htg/clg => Array of 365 days with 1s during the heating/cooling season and 0s otherwise
   # @return [Hash] Map of HPXML System ID -> AirLoopHVAC (or ZoneHVACFourPipeFanCoil)
-  def self.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml_header, schedules_file, hvac_season_days)
+  def self.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml_header, schedules_file)
     # Init
     hvac_remaining_load_fracs = { htg: 1.0, clg: 1.0 }
     airloop_map = {}
@@ -69,6 +68,7 @@ module HVAC
 
     apply_unit_multiplier(hpxml_bldg, hpxml_header)
     ensure_nonzero_sizing_values(hpxml_bldg)
+    hvac_season_days = apply_setpoints(runner, model, weather, spaces, hpxml_bldg, hpxml_header, schedules_file)
     apply_ideal_air_systems(model, weather, spaces, hpxml_bldg, hpxml_header, hvac_season_days, hvac_unavailable_periods, hvac_remaining_load_fracs)
     apply_cooling_system(runner, model, weather, spaces, hpxml_bldg, hpxml_header, schedules_file, airloop_map, hvac_season_days, hvac_unavailable_periods, hvac_remaining_load_fracs)
     hp_backup_obj = apply_heating_system(runner, model, weather, spaces, hpxml_bldg, hpxml_header, schedules_file, airloop_map, hvac_season_days, hvac_unavailable_periods, hvac_remaining_load_fracs)
@@ -1848,12 +1848,7 @@ module HVAC
   # @return [nil]
   def self.add_fan_power_ems_program(model, fan, hp_min_temp)
     # Sensors
-    tout_db_sensor = Model.add_ems_sensor(
-      model,
-      name: 'tout_db',
-      output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-      key_name: 'Environment'
-    )
+    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
 
     # Actuators
     fan_pressure_rise_act = Model.add_ems_actuator(
@@ -3391,12 +3386,7 @@ module HVAC
     return if htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
 
     # Sensors
-    tin_sensor = Model.add_ems_sensor(
-      model,
-      name: 'zone air temp',
-      output_var_or_meter_name: 'Zone Mean Air Temperature',
-      key_name: control_zone.name
-    )
+    tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
 
     htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
     htg_sp_ss = Model.add_ems_sensor(
@@ -3661,12 +3651,7 @@ module HVAC
       supp_coil_avail_act, global_var_supp_avail = get_supp_coil_avail_sch_actuator(model, htg_supp_coil)
     end
     # Sensors
-    living_temp_ss = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} temp",
-      output_var_or_meter_name: 'Zone Air Temperature',
-      key_name: control_zone.name
-    )
+    living_temp_ss = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
 
     htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
     clg_sch = control_zone.thermostatSetpointDualSetpoint.get.coolingSetpointTemperatureSchedule.get
@@ -3824,26 +3809,9 @@ module HVAC
       key_name: max_pow_ratio_sch.name
     )
 
-    indoor_temp_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} indoor_temp",
-      output_var_or_meter_name: 'Zone Air Temperature',
-      key_name: control_zone.name
-    )
-
-    htg_spt_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} htg_spt_temp",
-      output_var_or_meter_name: 'Zone Thermostat Heating Setpoint Temperature',
-      key_name: control_zone.name
-    )
-
-    clg_spt_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} clg_spt_temp",
-      output_var_or_meter_name: 'Zone Thermostat Cooling Setpoint Temperature',
-      key_name: control_zone.name
-    )
+    indoor_temp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
+    htg_spt_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Thermostat Heating Setpoint Temperature' && s.keyName == control_zone.name.to_s }
+    clg_spt_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Thermostat Cooling Setpoint Temperature' && s.keyName == control_zone.name.to_s }
 
     load_sensor = Model.add_ems_sensor(
       model,
@@ -3929,26 +3897,9 @@ module HVAC
         mode_s = 'If htg_mode > 0'
 
         # Outdoor sensors added to calculate defrost adjustment for heating
-        outdoor_db_sensor = Model.add_ems_sensor(
-          model,
-          name: 'outdoor_db',
-          output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-          key_name: nil
-        )
-
-        outdoor_w_sensor = Model.add_ems_sensor(
-          model,
-          name: 'outdoor_w',
-          output_var_or_meter_name: 'Site Outdoor Air Humidity Ratio',
-          key_name: nil
-        )
-
-        outdoor_bp_sensor = Model.add_ems_sensor(
-          model,
-          name: 'outdoor_bp',
-          output_var_or_meter_name: 'Site Outdoor Air Barometric Pressure',
-          key_name: nil
-        )
+        outdoor_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
+        outdoor_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Humidity Ratio' }
+        outdoor_bp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Barometric Pressure' }
 
         # Calculate capacity and eirs for later use of full-load power calculations at each stage
         # Equations from E+ source code
@@ -4129,19 +4080,8 @@ module HVAC
     ddb = model.getThermostatSetpointDualSetpoints[0].temperatureDifferenceBetweenCutoutAndSetpoint
 
     # Sensors
-    living_temp_ss = Model.add_ems_sensor(
-      model,
-      name: 'living temp',
-      output_var_or_meter_name: 'Zone Mean Air Temperature',
-      key_name: control_zone.name
-    )
-
-    htg_sp_ss = Model.add_ems_sensor(
-      model,
-      name: 'htg_setpoint',
-      output_var_or_meter_name: 'Zone Thermostat Heating Setpoint Temperature',
-      key_name: control_zone.name
-    )
+    living_temp_ss = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
+    htg_sp_ss = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Thermostat Heating Setpoint Temperature' && s.keyName == control_zone.name.to_s }
 
     backup_coil_htg_rate = Model.add_ems_sensor(
       model,
@@ -4338,12 +4278,7 @@ module HVAC
       # Use EMS to prevent operation of this system above the specified temperature.
 
       # Sensor
-      tout_db_sensor = Model.add_ems_sensor(
-        model,
-        name: 'tout db',
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: 'Environment'
-      )
+      tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
 
       # Actuator
       if heating_sch.is_a? OpenStudio::Model::ScheduleConstant
@@ -4667,19 +4602,8 @@ module HVAC
 
     obj_name = "#{air_loop_unitary.name} install quality program"
 
-    tin_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{obj_name} tin s",
-      output_var_or_meter_name: 'Zone Mean Air Temperature',
-      key_name: control_zone.name
-    )
-
-    tout_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{obj_name} tt s",
-      output_var_or_meter_name: 'Zone Outdoor Air Drybulb Temperature',
-      key_name: control_zone.name
-    )
+    tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
+    tout_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
 
     fault_program = Model.add_ems_program(
       model,
@@ -4836,12 +4760,7 @@ module HVAC
     )
 
     # Sensors
-    tout_db_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{htg_coil.name} tout s",
-      output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-      key_name: 'Environment'
-    )
+    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
 
     htg_coil_rtf_sensor = Model.add_ems_sensor(
       model,

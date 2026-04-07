@@ -92,12 +92,7 @@ module Outputs
       next if hvac_control.nil?
 
       if (onoff_deadbands > 0)
-        zone_air_temp_sensors[unit] = Model.add_ems_sensor(
-          model,
-          name: "#{conditioned_zone_name} space temp",
-          output_var_or_meter_name: 'Zone Air Temperature',
-          key_name: conditioned_zone_name
-        )
+        zone_air_temp_sensors[unit] = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone_name }
 
         htg_sch = conditioned_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
         htg_spt_sensors[unit] = Model.add_ems_sensor(
@@ -828,12 +823,7 @@ module Outputs
       end
 
       # EMS Sensors: Indoor temperature, setpoints
-      tin_sensor = Model.add_ems_sensor(
-        model,
-        name: 'tin s',
-        output_var_or_meter_name: 'Zone Mean Air Temperature',
-        key_name: conditioned_zone.name
-      )
+      tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone.name.to_s }
 
       thermostat = nil
       if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized

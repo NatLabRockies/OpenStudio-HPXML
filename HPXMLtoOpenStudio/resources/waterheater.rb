@@ -559,12 +559,7 @@ module Waterheater
         end
       end
 
-      mains_temp_sensor = Model.add_ems_sensor(
-        model,
-        name: 'Mains Temperature',
-        output_var_or_meter_name: 'Site Mains Water Temperature',
-        key_name: 'Environment'
-      )
+      mains_temp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Mains Water Temperature' }
 
       # Program
       combi_ctrl_program = Model.add_ems_program(
@@ -1138,34 +1133,13 @@ module Waterheater
         output_var_or_meter_name: 'Schedule Value',
         key_name: loc_schedule.name
       )
-
       if loc_schedule.name.get == HPXML::LocationOtherNonFreezingSpace
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb rh",
-          output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
-          key_name: 'Environment'
-        )
+        rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Relative Humidity' }
       elsif loc_schedule.name.get == HPXML::LocationOtherHousingUnit
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb rh",
-          output_var_or_meter_name: 'Zone Air Relative Humidity',
-          key_name: conditioned_zone.name
-        )
+        rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Air Relative Humidity' && s.keyName == conditioned_zone.name.to_s }
       else
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb1 rh",
-          output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
-          key_name: 'Environment'
-        )
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb2 rh",
-          output_var_or_meter_name: 'Zone Air Relative Humidity',
-          key_name: conditioned_zone.name
-        )
+        rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Relative Humidity' }
+        rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Air Relative Humidity' && s.keyName == conditioned_zone.name.to_s }
       end
     elsif not loc_space.nil?
       amb_temp_sensor = Model.add_ems_sensor(
@@ -1174,7 +1148,6 @@ module Waterheater
         output_var_or_meter_name: 'Zone Mean Air Temperature',
         key_name: loc_space.thermalZone.get.name
       )
-
       rh_sensors << Model.add_ems_sensor(
         model,
         name: "#{obj_name} amb rh",
@@ -1182,19 +1155,8 @@ module Waterheater
         key_name: loc_space.thermalZone.get.name
       )
     else # Located outside
-      amb_temp_sensor = Model.add_ems_sensor(
-        model,
-        name: "#{obj_name} amb temp",
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: 'Environment'
-      )
-
-      rh_sensors << Model.add_ems_sensor(
-        model,
-        name: "#{obj_name} amb rh",
-        output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
-        key_name: 'Environment'
-      )
+      amb_temp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
+      rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Relative Humidity' }
     end
     return amb_temp_sensor, rh_sensors
   end

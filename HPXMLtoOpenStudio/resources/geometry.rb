@@ -1609,32 +1609,18 @@ module Geometry
         # No HVAC system; use the average of defaulted heating/cooling setpoints.
         sensor_ia = UnitConversions.convert((default_htg_sp + default_clg_sp) / 2.0, 'F', 'C')
       else
-        sensor_ia = Model.add_ems_sensor(
-          model,
-          name: 'cond_zone_temp',
-          output_var_or_meter_name: 'Zone Air Temperature',
-          key_name: spaces[HPXML::LocationConditionedSpace].thermalZone.get.name
-        )
+        conditioned_zone = spaces[HPXML::LocationConditionedSpace].thermalZone.get
+        sensor_ia = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone.name.to_s }
         sensor_ia = sensor_ia.name
       end
     end
 
     if space_values[:outdoor_weight] > 0
-      sensor_oa = Model.add_ems_sensor(
-        model,
-        name: 'oa_temp',
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: nil
-      )
+      sensor_oa = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
     end
 
     if space_values[:ground_weight] > 0
-      sensor_gnd = Model.add_ems_sensor(
-        model,
-        name: 'ground_temp',
-        output_var_or_meter_name: 'Site Surface Ground Temperature',
-        key_name: nil
-      )
+      sensor_gnd = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Surface Ground Temperature' }
     end
 
     actuator = Model.add_ems_actuator(

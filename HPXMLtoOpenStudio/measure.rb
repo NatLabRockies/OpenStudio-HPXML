@@ -331,10 +331,10 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     SimControls.apply(model, hpxml.header)
     Location.apply(model, weather, hpxml_bldg, hpxml.header)
 
-    # Conditioned space & setpoints
+    # Conditioned space & global sensors
     spaces = {} # Map of HPXML locations => OpenStudio Space objects
     Geometry.create_or_get_space(model, spaces, HPXML::LocationConditionedSpace, hpxml_bldg)
-    hvac_days = HVAC.apply_setpoints(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file)
+    create_sensors(model, spaces)
 
     # Geometry & Enclosure
     Geometry.apply_foundation_and_walls_top(hpxml_bldg, hpxml.header)
@@ -352,7 +352,7 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     Geometry.explode_surfaces(model, hpxml_bldg)
 
     # HVAC
-    airloop_map = HVAC.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file, hvac_days)
+    airloop_map = HVAC.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file)
     HVAC.apply_dehumidifiers(runner, model, spaces, hpxml_bldg, hpxml.header)
     HVAC.apply_ceiling_fans(runner, model, spaces, weather, hpxml_bldg, hpxml.header, schedules_file)
 
@@ -419,6 +419,104 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     if hpxml_header.apply_ashrae140_assumptions.nil?
       hpxml_header.apply_ashrae140_assumptions = false
     end
+  end
+
+  # Creates a variety of global EMS sensors used throughout the code. Prevents creating
+  # duplicate sensors for different EMS programs.
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
+  # @return [nil]
+  def create_sensors(model, spaces)
+    # Create site sensors
+
+    Model.add_ems_sensor(
+      model,
+      name: 'out_db_s',
+      output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
+      key_name: 'Environment'
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'out_rh_s',
+      output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
+      key_name: 'Environment'
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'out_hr_s',
+      output_var_or_meter_name: 'Site Outdoor Air Humidity Ratio',
+      key_name: 'Environment'
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'out_pb_s',
+      output_var_or_meter_name: 'Site Outdoor Air Barometric Pressure',
+      key_name: 'Environment'
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'out_vw_s',
+      output_var_or_meter_name: 'Site Wind Speed',
+      key_name: 'Environment'
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'ground_temp_s',
+      output_var_or_meter_name: 'Site Surface Ground Temperature',
+      key_name: nil
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'mains_temp_s',
+      output_var_or_meter_name: 'Site Mains Water Temperature',
+      key_name: 'Environment'
+    )
+
+    # Create conditioned zone temperatures
+
+    conditioned_zone = spaces[HPXML::LocationConditionedSpace].thermalZone.get
+
+    Model.add_ems_sensor(
+      model,
+      name: 'in_db_s',
+      output_var_or_meter_name: 'Zone Mean Air Temperature',
+      key_name: conditioned_zone.name
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'in_rh_s',
+      output_var_or_meter_name: 'Zone Air Relative Humidity',
+      key_name: conditioned_zone.name
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'in_hr_s',
+      output_var_or_meter_name: 'Zone Mean Air Humidity Ratio',
+      key_name: conditioned_zone.name
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'in_clg_spt_s',
+      output_var_or_meter_name: 'Zone Thermostat Cooling Setpoint Temperature',
+      key_name: conditioned_zone.name
+    )
+
+    Model.add_ems_sensor(
+      model,
+      name: 'in_htg_stp_s',
+      output_var_or_meter_name: 'Zone Thermostat Heating Setpoint Temperature',
+      key_name: conditioned_zone.name
+    )
   end
 end
 

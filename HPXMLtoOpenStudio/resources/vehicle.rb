@@ -99,12 +99,7 @@ module Vehicle
     # Apply vehicle battery to model
     Battery.apply_battery(runner, model, spaces, hpxml, hpxml_bldg, vehicle, charging_schedule, discharging_schedule)
 
-    temp_sensor = Model.add_ems_sensor(
-      model,
-      name: 'site_temp',
-      output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-      key_name: 'Environment'
-    )
+    temp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
 
     # Power adjustment vs ambient temperature curve; derived from most recent data in Figure 9 of https://docs.nlr.gov/docs/fy23osti/83916.pdf
     # This adjustment scales power demand based on ambient temperature, and encompasses losses due to battery and space conditioning (i.e., discharging losses), as well as charging losses.
