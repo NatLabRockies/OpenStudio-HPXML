@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>ec6fe511-450f-4535-8b70-84ce43f74e7d</version_id>
-  <version_modified>2026-04-07T17:20:12Z</version_modified>
+  <version_id>179c31f7-e4e7-4fcd-b406-f7e5cec2eeb6</version_id>
+  <version_modified>2026-04-07T21:15:30Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -211,7 +211,7 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>4C2CB853</checksum>
+      <checksum>0363165F</checksum>
     </file>
     <file>
       <filename>airflow.rb</filename>
@@ -241,7 +241,7 @@
       <filename>constructions.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>207A61E6</checksum>
+      <checksum>62E206AC</checksum>
     </file>
     <file>
       <filename>data/Xing_okstate_0664D_13659_Table_A-3.csv</filename>
@@ -433,7 +433,7 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>C66FB0A1</checksum>
+      <checksum>2B778C99</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>

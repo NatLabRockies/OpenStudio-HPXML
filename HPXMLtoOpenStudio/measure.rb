@@ -331,10 +331,11 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     SimControls.apply(model, hpxml.header)
     Location.apply(model, weather, hpxml_bldg, hpxml.header)
 
-    # Conditioned space & global sensors
+    # Conditioned space and setpoints
     spaces = {} # Map of HPXML locations => OpenStudio Space objects
     Geometry.create_or_get_space(model, spaces, HPXML::LocationConditionedSpace, hpxml_bldg)
-    create_sensors(model, spaces)
+    hvac_season_days = HVAC.apply_setpoints(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file)
+    create_global_ems_sensors(model, spaces)
 
     # Geometry & Enclosure
     Geometry.apply_foundation_and_walls_top(hpxml_bldg, hpxml.header)
@@ -352,7 +353,7 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     Geometry.explode_surfaces(model, hpxml_bldg)
 
     # HVAC
-    airloop_map = HVAC.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file)
+    airloop_map = HVAC.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file, hvac_season_days)
     HVAC.apply_dehumidifiers(runner, model, spaces, hpxml_bldg, hpxml.header)
     HVAC.apply_ceiling_fans(runner, model, spaces, weather, hpxml_bldg, hpxml.header, schedules_file)
 
@@ -427,7 +428,7 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
   # @return [nil]
-  def create_sensors(model, spaces)
+  def create_global_ems_sensors(model, spaces)
     # Create site sensors
 
     s = Model.add_ems_sensor(
