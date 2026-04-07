@@ -2193,6 +2193,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
       # Shift energy use adjustments that lag due to EMS
       [Constants::ObjectTypeWaterHeaterAdjustment,
+       Constants::ObjectTypeCrankcaseHeater,
        Constants::ObjectTypePanHeater,
        Constants::ObjectTypeHPDefrostSupplHeat,
        Constants::ObjectTypeDSEHeating,
@@ -2410,7 +2411,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       next if object.to_AdditionalProperties.is_initialized
 
       [EUT, HWT, LT, RT].each do |class_type|
-        vars_by_key = Outputs.get_object_outputs_by_key(@model, object, class_type)
+        vars_by_key = Outputs.get_object_outputs_by_key(object, class_type)
         next if vars_by_key.size == 0
 
         sys_id = object.additionalProperties.getFeatureAsString('HPXML_ID')

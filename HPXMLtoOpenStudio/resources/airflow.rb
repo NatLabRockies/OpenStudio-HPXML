@@ -361,11 +361,11 @@ module Airflow
     end
 
     # Sensors
-    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone.name.to_s }
-    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
-    w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Humidity Ratio' }
-    pbar_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Barometric Pressure' }
-    vw_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Wind Speed' }
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
+    pbar_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
+    vw_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteWindSpeed }
 
     if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
       thermostat = conditioned_zone.thermostatSetpointDualSetpoint.get
@@ -465,7 +465,7 @@ module Airflow
     c_w, c_s = calc_wind_stack_coeffs(hpxml_bldg, hor_lk_frac, neutral_level, HPXML::LocationConditionedSpace, infil_values[:height])
     max_oa_hr = 0.0115 # From ANSI/RESNET/ICC 301-2022
 
-    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeCoolingAvailabilitySensor }
+    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
 
     # Program
     vent_program = Model.add_ems_program(
@@ -1005,7 +1005,7 @@ module Airflow
         key_name: conditioned_zone_return_air_node.name
       )
     else
-      ra_t_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone.name.to_s }
+      ra_t_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
     end
     duct_sensors[:ra_t] = [ra_t_var, ra_t_sensor]
 
@@ -1022,7 +1022,7 @@ module Airflow
         key_name: conditioned_zone_return_air_node.name
       )
     else
-      ra_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Humidity Ratio' && s.keyName == conditioned_zone.name.to_s }
+      ra_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
     end
     duct_sensors[:ra_w] = [ra_w_var, ra_w_sensor]
 
@@ -1083,9 +1083,9 @@ module Airflow
 
     # -- Sensors --
 
-    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone.name.to_s }
-    w_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Humidity Ratio' && s.keyName == conditioned_zone.name.to_s }
-    pbar_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Barometric Pressure' }
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    w_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
+    pbar_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
 
     # Duct zone temperature
     dz_t_var = Model.add_ems_global_var(
@@ -1107,7 +1107,7 @@ module Airflow
         key_name: duct_location.name
       )
     elsif duct_location.nil? # Outside
-      dz_t_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
+      dz_t_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
     else # shouldn't get here, should only have schedule/thermal zone/nil assigned
       fail 'Unexpected duct zone type passed'
     end
@@ -1127,18 +1127,18 @@ module Airflow
       dz_w = "#{dz_w_sensor.name}"
     elsif duct_location.is_a? OpenStudio::Model::ScheduleConstant # Outside or scheduled temperature
       if duct_location.name.to_s == HPXML::LocationOtherNonFreezingSpace
-        dz_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Humidity Ratio' }
+        dz_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
         dz_w = "#{dz_w_sensor.name}"
       elsif duct_location.name.to_s == HPXML::LocationOtherHousingUnit
-        dz_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Humidity Ratio' && s.keyName == conditioned_zone.name.to_s }
+        dz_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
         dz_w = "#{dz_w_sensor.name}"
       else
-        dz_w_sensor1 = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Humidity Ratio' }
-        dz_w_sensor2 = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Humidity Ratio' && s.keyName == conditioned_zone.name.to_s }
+        dz_w_sensor1 = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
+        dz_w_sensor2 = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
         dz_w = "(#{dz_w_sensor1.name} + #{dz_w_sensor2.name}) / 2"
       end
     else
-      dz_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Humidity Ratio' }
+      dz_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
       dz_w = "#{dz_w_sensor.name}"
     end
 
@@ -2144,14 +2144,13 @@ module Airflow
   # @return [Array<OpenStudio::Model::EnergyManagementSystemActuator, OpenStudio::Model::EnergyManagementSystemActuator>] EMS actuators for sensible and latent loads
   def self.initialize_mech_vent(model, spaces, infil_program)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
-    conditioned_zone = conditioned_space.thermalZone.get
 
     # Sensors
-    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone.name.to_s }
-    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
-    w_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Humidity Ratio' && s.keyName == conditioned_zone.name.to_s }
-    w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Humidity Ratio' }
-    pbar_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Barometric Pressure' }
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    w_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
+    w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
+    pbar_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
 
     # Actuators for mech vent fan
     sens_equip = Model.add_other_equipment(
@@ -2442,16 +2441,15 @@ module Airflow
   # @return [nil]
   def self.calculate_precond_loads(model, spaces, infil_program, vent_fans, hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator, clg_season_sensor)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
-    conditioned_zone = conditioned_space.thermalZone.get
 
     # Preconditioning
     # Assume introducing no sensible loads to zone if preconditioned
     if not vent_fans[:mech_preheat].empty?
-      htg_stp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Thermostat Heating Setpoint Temperature' && s.keyName == conditioned_zone.name.to_s }
+      htg_stp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
       infil_program.addLine("Set HtgStp = #{htg_stp_sensor.name}") # heating thermostat setpoint
     end
     if not vent_fans[:mech_precool].empty?
-      clg_stp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Thermostat Cooling Setpoint Temperature' && s.keyName == conditioned_zone.name.to_s }
+      clg_stp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
       infil_program.addLine("Set ClgStp = #{clg_stp_sensor.name}") # cooling thermostat setpoint
     end
     vent_fans[:mech_preheat].each_with_index do |f_preheat, i|
@@ -2650,11 +2648,9 @@ module Airflow
   def self.apply_infiltration_to_conditioned(model, spaces, hpxml_bldg, hpxml_header, infil_program, weather, infil_values, n_i = InfilPressureExponent)
     site_ap = hpxml_bldg.site.additional_properties
 
-    conditioned_space = spaces[HPXML::LocationConditionedSpace]
-    conditioned_zone = conditioned_space.thermalZone.get
-    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone.name.to_s }
-    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
-    vw_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Wind Speed' }
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    vw_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteWindSpeed }
 
     if hpxml_header.apply_ashrae140_assumptions
       const_ach = infil_values[:nach] * infil_values[:a_ext]

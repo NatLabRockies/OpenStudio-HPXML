@@ -92,7 +92,7 @@ module Outputs
       next if hvac_control.nil?
 
       if (onoff_deadbands > 0)
-        zone_air_temp_sensors[unit] = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone_name }
+        zone_air_temp_sensors[unit] = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
 
         htg_sch = conditioned_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
         htg_spt_sensors[unit] = Model.add_ems_sensor(
@@ -120,8 +120,8 @@ module Outputs
       }
     end
 
-    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHeatingAvailabilitySensor }
-    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeCoolingAvailabilitySensor }
+    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleHeatingAvailability }
+    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
 
     # EMS program
     clg_hrs = 'clg_unmet_hours'
@@ -215,7 +215,7 @@ module Outputs
       next if vehicle.nil?
 
       ev_elcd = unit_model.getElectricLoadCenterDistributions.find { |elcd| elcd.name.to_s.include?(vehicle.id) }
-      discharge_sch_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeVehicleDischargeScheduleSensor }
+      discharge_sch_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleVehicleDischarge }
 
       unit_model.getElectricLoadCenterStorageLiIonNMCBatterys.each do |elcs|
         next unless elcs.name.to_s.include? vehicle.id
@@ -823,7 +823,7 @@ module Outputs
       end
 
       # EMS Sensors: Indoor temperature, setpoints
-      tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == conditioned_zone.name.to_s }
+      tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
 
       thermostat = nil
       if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
@@ -1576,7 +1576,7 @@ module Outputs
       model.getModelObjects.sort.each do |object|
         next if object.to_AdditionalProperties.is_initialized
 
-        vars_by_key = get_object_outputs_by_key(model, object, EUT)
+        vars_by_key = get_object_outputs_by_key(object, EUT)
         vars_by_key.each do |key, output_vars|
           ft, eut = key
 
@@ -1635,7 +1635,7 @@ module Outputs
       next unless obj_id.is_initialized
       next if sys_id != obj_id.get
 
-      vars_by_key = get_object_outputs_by_key(model, object, EUT)
+      vars_by_key = get_object_outputs_by_key(object, EUT)
       vars_by_key.each do |key, object_vars|
         if eut_filter.nil? || eut_filter.include?(key[1])
           vars[key] = {} if vars[key].nil?
@@ -1650,11 +1650,10 @@ module Outputs
   # For a given object, returns the Output:Variables or Output:Meters to be requested,
   # and associates them with the appropriate keys (e.g., [FT::Elec, EUT::Heating]).
   #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param object [OpenStudio::Model::Foo] A given object in the OpenStudio Model
   # @param class_type [Module] The output class type
   # @return [Hash] Map of output key => array of EnergyPlus output variable/meter names
-  def self.get_object_outputs_by_key(model, object, class_type)
+  def self.get_object_outputs_by_key(object, class_type)
     object_type = object.additionalProperties.getFeatureAsString('ObjectType')
     object_type = object_type.get if object_type.is_initialized
 
@@ -1667,13 +1666,6 @@ module Outputs
 
       if object.to_CoilHeatingDXSingleSpeed.is_initialized || object.to_CoilHeatingDXMultiSpeed.is_initialized
         vars = { [FT::Elec, EUT::Heating] => ['Heating Coil Electricity Energy', 'Heating Coil Defrost Electricity Energy'] }
-        if object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').is_initialized && object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').get <= 0
-          # HP only provides cooling, allocate crankcase to cooling end use
-          vars[[FT::Elec, EUT::Cooling]] = ['Heating Coil Crankcase Heater Electricity Energy']
-        else
-          # Allocate crankcase to heating end use
-          vars[[FT::Elec, EUT::Heating]] << 'Heating Coil Crankcase Heater Electricity Energy'
-        end
         return vars
 
       elsif object.to_CoilHeatingElectric.is_initialized || object.to_CoilHeatingElectricMultiStage.is_initialized
@@ -1720,26 +1712,7 @@ module Outputs
         end
 
       elsif object.to_CoilCoolingDXSingleSpeed.is_initialized || object.to_CoilCoolingDXMultiSpeed.is_initialized
-        vars = { [FT::Elec, EUT::Cooling] => ['Cooling Coil Electricity Energy'] }
-        parent = model.getAirLoopHVACUnitarySystems.select { |u| u.coolingCoil.is_initialized && u.coolingCoil.get.handle.to_s == object.handle.to_s }
-        if (not parent.empty?) && parent[0].heatingCoil.is_initialized
-          htg_coil = parent[0].heatingCoil.get
-        end
-        if parent.empty?
-          parent = model.getZoneHVACPackagedTerminalAirConditioners.select { |u| u.coolingCoil.handle.to_s == object.handle.to_s }
-          if not parent.empty?
-            htg_coil = parent[0].heatingCoil
-          end
-        end
-        if parent.empty?
-          fail 'Could not find parent object.'
-        end
-
-        if htg_coil.nil? || (not (htg_coil.to_CoilHeatingDXSingleSpeed.is_initialized || htg_coil.to_CoilHeatingDXMultiSpeed.is_initialized))
-          # Crankcase variable only available if no DX heating coil on parent
-          vars[[FT::Elec, EUT::Cooling]] << 'Cooling Coil Crankcase Heater Electricity Energy'
-        end
-        return vars
+        return { [FT::Elec, EUT::Cooling] => ['Cooling Coil Electricity Energy'] }
 
       elsif object.to_CoilCoolingWaterToAirHeatPumpEquationFit.is_initialized || object.to_CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFit.is_initialized
         return { [FT::Elec, EUT::Cooling] => ['Cooling Coil Electricity Energy'] }
@@ -1851,6 +1824,7 @@ module Outputs
           Constants::ObjectTypeMechanicalVentilationPreheating => EUT::MechVentPreheat,
           Constants::ObjectTypeMechanicalVentilationPrecooling => EUT::MechVentPrecool,
           Constants::ObjectTypeHPDefrostSupplHeat => EUT::HeatingHeatPumpBackup,
+          Constants::ObjectTypeCrankcaseHeater => [EUT::Heating, EUT::Cooling],
           Constants::ObjectTypePanHeater => EUT::Heating,
           Constants::ObjectTypeWaterHeaterAdjustment => EUT::HotWater,
           Constants::ObjectTypeDSEHeating => EUT::Heating,
@@ -1862,6 +1836,15 @@ module Outputs
           Constants::ObjectTypeBatteryLossesAdjustment => EUT::Battery }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
           fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?
+
+          if obj_name == Constants::ObjectTypeCrankcaseHeater
+            if object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').is_initialized && object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').get <= 0
+              # Allocate crankcase to cooling end use (cooling system or HP only provides cooling)
+              eut = eut[1]
+            else
+              eut = eut[0]
+            end
+          end
 
           end_use = eut
         end

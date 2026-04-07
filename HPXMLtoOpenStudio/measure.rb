@@ -430,93 +430,105 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
   def create_sensors(model, spaces)
     # Create site sensors
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'out_db_s',
       output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
       key_name: 'Environment'
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteOutdoorAirDBTemp)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'out_rh_s',
       output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
       key_name: 'Environment'
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteOutdoorAirRH)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'out_hr_s',
       output_var_or_meter_name: 'Site Outdoor Air Humidity Ratio',
       key_name: 'Environment'
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteOutdoorAirHR)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'out_pb_s',
       output_var_or_meter_name: 'Site Outdoor Air Barometric Pressure',
       key_name: 'Environment'
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteOutdoorAirBarPressure)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'out_vw_s',
       output_var_or_meter_name: 'Site Wind Speed',
       key_name: 'Environment'
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteWindSpeed)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'ground_temp_s',
       output_var_or_meter_name: 'Site Surface Ground Temperature',
       key_name: nil
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteGroundTemp)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'mains_temp_s',
       output_var_or_meter_name: 'Site Mains Water Temperature',
       key_name: 'Environment'
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteMainsWaterTemp)
 
     # Create conditioned zone temperatures
 
     conditioned_zone = spaces[HPXML::LocationConditionedSpace].thermalZone.get
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'in_db_s',
       output_var_or_meter_name: 'Zone Mean Air Temperature',
       key_name: conditioned_zone.name
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorAirDBTemp)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'in_rh_s',
       output_var_or_meter_name: 'Zone Air Relative Humidity',
       key_name: conditioned_zone.name
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorAirRH)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'in_hr_s',
       output_var_or_meter_name: 'Zone Mean Air Humidity Ratio',
       key_name: conditioned_zone.name
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorAirHR)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'in_clg_spt_s',
       output_var_or_meter_name: 'Zone Thermostat Cooling Setpoint Temperature',
       key_name: conditioned_zone.name
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorCoolingSetpointTemp)
 
-    Model.add_ems_sensor(
+    s = Model.add_ems_sensor(
       model,
       name: 'in_htg_stp_s',
       output_var_or_meter_name: 'Zone Thermostat Heating Setpoint Temperature',
       key_name: conditioned_zone.name
     )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorHeatingSetpointTemp)
   end
 end
 

@@ -50,7 +50,7 @@ module HVAC
         output_var_or_meter_name: 'Schedule Value',
         key_name: htg_avail_sch.schedule.name
       )
-      htg_avail_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeHeatingAvailabilitySensor)
+      htg_avail_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorScheduleHeatingAvailability)
     end
 
     # Create cooling availability sensor
@@ -63,7 +63,7 @@ module HVAC
         output_var_or_meter_name: 'Schedule Value',
         key_name: clg_avail_sch.schedule.name
       )
-      clg_avail_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeCoolingAvailabilitySensor)
+      clg_avail_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorScheduleCoolingAvailability)
     end
 
     apply_unit_multiplier(hpxml_bldg, hpxml_header)
@@ -472,21 +472,23 @@ module HVAC
     # Air Loop
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, [htg_cfm.to_f, clg_cfm.to_f].max, heating_system, hvac_unavailable_periods)
 
-    add_backup_staging_ems_program(model, air_loop_unitary, htg_supp_coil, control_zone, htg_coil)
-    add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
+    add_backup_staging_ems_program(model, air_loop_unitary, htg_supp_coil, htg_coil)
+    add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil)
 
     # supp coil control in staging EMS
     add_two_speed_staging_ems_program(model, air_loop_unitary, htg_supp_coil, control_zone, has_deadband_control, cooling_system)
 
     add_supplemental_coil_ems_program(model, htg_supp_coil, control_zone, htg_coil, has_deadband_control, cooling_system)
 
-    add_variable_speed_power_ems_program(runner, model, air_loop_unitary, control_zone, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
+    add_variable_speed_power_ems_program(runner, model, air_loop_unitary, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
 
-    if is_heatpump
-      ems_program = apply_defrost_ems_program(model, htg_coil, control_zone.spaces[0], cooling_system, hpxml_bldg.building_construction.number_of_units)
-      if cooling_system.pan_heater_watts.to_f > 0
+    # Defrost, pan heater, crankcase heater
+    if not cooling_system.nil?
+      if is_heatpump
+        ems_program = apply_defrost_ems_program(model, htg_coil, control_zone.spaces[0], cooling_system, hpxml_bldg.building_construction.number_of_units)
         apply_pan_heater_ems_program(model, ems_program, htg_coil, control_zone.spaces[0], cooling_system, htg_ap.hp_min_temp)
       end
+      apply_crankcase_heater_ems_program(model, htg_coil, clg_coil, control_zone.spaces[0], cooling_system, air_loop_unitary)
     end
 
     add_dse_ems_program(:clg, model, hpxml_bldg, cooling_system, obj_name)
@@ -918,7 +920,7 @@ module HVAC
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, [htg_cfm, clg_cfm].max, heat_pump, hvac_unavailable_periods)
 
     # HVAC Installation Quality
-    add_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil, control_zone)
+    add_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil)
 
     add_dse_ems_program(:clg, model, hpxml_bldg, heat_pump, obj_name)
     add_dse_ems_program(:htg, model, hpxml_bldg, heat_pump, obj_name)
@@ -1607,9 +1609,6 @@ module HVAC
                                                        hvac_control.seasons_heating_end_month, hvac_control.seasons_heating_end_day)
     hvac_season_days[:clg] = Calendar.get_daily_season(hpxml_header.sim_calendar_year, hvac_control.seasons_cooling_begin_month, hvac_control.seasons_cooling_begin_day,
                                                        hvac_control.seasons_cooling_end_month, hvac_control.seasons_cooling_end_day)
-    if hvac_season_days[:htg].include?(0) || hvac_season_days[:clg].include?(0)
-      runner.registerWarning('It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus outside of an HVAC season.')
-    end
 
     heating_sch = nil
     cooling_sch = nil
@@ -1848,7 +1847,7 @@ module HVAC
   # @return [nil]
   def self.add_fan_power_ems_program(model, fan, hp_min_temp)
     # Sensors
-    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
+    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
 
     # Actuators
     fan_pressure_rise_act = Model.add_ems_actuator(
@@ -3125,7 +3124,7 @@ module HVAC
 
     clg_coil.setName(coil_name)
     clg_coil.setCondenserType('AirCooled')
-    clg_coil.setCrankcaseHeaterCapacity(cooling_system.crankcase_heater_watts)
+    clg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS.
     clg_coil.additionalProperties.setFeature('HPXML_ID', cooling_system.id) # Used by reporting measure
     if has_deadband_control
       # Apply startup capacity degradation
@@ -3293,7 +3292,7 @@ module HVAC
 
     # Per E+ documentation, if an air-to-air heat pump, the crankcase heater defined for the DX cooling coil is ignored and the crankcase heater power defined for the DX heating coil is used
     htg_coil.setMaximumOutdoorDryBulbTemperatureforCrankcaseHeaterOperation(UnitConversions.convert(CrankcaseHeaterTemp, 'F', 'C'))
-    htg_coil.setCrankcaseHeaterCapacity(heating_system.crankcase_heater_watts)
+    htg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS.
     htg_coil.additionalProperties.setFeature('HPXML_ID', heating_system.id) # Used by reporting measure
     htg_coil.additionalProperties.setFeature('FractionHeatLoadServed', heating_system.fraction_heat_load_served) # Used by reporting measure
     if has_deadband_control
@@ -3386,7 +3385,7 @@ module HVAC
     return if htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
 
     # Sensors
-    tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
+    tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
 
     htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
     htg_sp_ss = Model.add_ems_sensor(
@@ -3651,7 +3650,7 @@ module HVAC
       supp_coil_avail_act, global_var_supp_avail = get_supp_coil_avail_sch_actuator(model, htg_supp_coil)
     end
     # Sensors
-    living_temp_ss = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
+    living_temp_ss = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
 
     htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
     clg_sch = control_zone.thermostatSetpointDualSetpoint.get.coolingSetpointTemperatureSchedule.get
@@ -3769,7 +3768,6 @@ module HVAC
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param air_loop_unitary [OpenStudio::Model::AirLoopHVACUnitarySystem] Air loop for the HVAC system
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingElectric or CoilHeatingElectricMultiStage] OpenStudio Supplemental Heating Coil object
@@ -3777,7 +3775,7 @@ module HVAC
   # @param htg_coil [OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio MultiStage Heating Coil object
   # @param schedules_file [SchedulesFile] SchedulesFile wrapper class instance of detailed schedule files
   # @return [nil]
-  def self.add_variable_speed_power_ems_program(runner, model, air_loop_unitary, control_zone, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
+  def self.add_variable_speed_power_ems_program(runner, model, air_loop_unitary, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
     return if schedules_file.nil?
     return if clg_coil.nil? && htg_coil.nil?
 
@@ -3809,9 +3807,9 @@ module HVAC
       key_name: max_pow_ratio_sch.name
     )
 
-    indoor_temp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
-    htg_spt_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Thermostat Heating Setpoint Temperature' && s.keyName == control_zone.name.to_s }
-    clg_spt_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Thermostat Cooling Setpoint Temperature' && s.keyName == control_zone.name.to_s }
+    indoor_temp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    htg_spt_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+    clg_spt_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
 
     load_sensor = Model.add_ems_sensor(
       model,
@@ -3897,9 +3895,9 @@ module HVAC
         mode_s = 'If htg_mode > 0'
 
         # Outdoor sensors added to calculate defrost adjustment for heating
-        outdoor_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
-        outdoor_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Humidity Ratio' }
-        outdoor_bp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Barometric Pressure' }
+        outdoor_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+        outdoor_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirRH }
+        outdoor_bp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
 
         # Calculate capacity and eirs for later use of full-load power calculations at each stage
         # Equations from E+ source code
@@ -4068,10 +4066,9 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param unitary_system [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingElectric or CoilHeatingElectricMultiStage] OpenStudio Supplemental Heating Coil object
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param htg_coil [OpenStudio::Model::CoilHeatingDXSingleSpeed or OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio Heating Coil object
   # @return [nil]
-  def self.add_backup_staging_ems_program(model, unitary_system, htg_supp_coil, control_zone, htg_coil)
+  def self.add_backup_staging_ems_program(model, unitary_system, htg_supp_coil, htg_coil)
     return unless htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
 
     # Note: Currently only available in 1 min time step
@@ -4080,8 +4077,8 @@ module HVAC
     ddb = model.getThermostatSetpointDualSetpoints[0].temperatureDifferenceBetweenCutoutAndSetpoint
 
     # Sensors
-    living_temp_ss = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
-    htg_sp_ss = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Thermostat Heating Setpoint Temperature' && s.keyName == control_zone.name.to_s }
+    living_temp_ss = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    htg_sp_ss = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
 
     backup_coil_htg_rate = Model.add_ems_sensor(
       model,
@@ -4278,7 +4275,7 @@ module HVAC
       # Use EMS to prevent operation of this system above the specified temperature.
 
       # Sensor
-      tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
+      tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
 
       # Actuator
       if heating_sch.is_a? OpenStudio::Model::ScheduleConstant
@@ -4560,9 +4557,8 @@ module HVAC
   # @param air_loop_unitary [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
   # @param htg_coil [OpenStudio::Model::CoilHeatingXXX] Heating coil model object
   # @param clg_coil [OpenStudio::Model::CoilCoolingXXX] Cooling coil model object
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @return [nil]
-  def self.add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
+  def self.add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil)
     if not cooling_system.nil?
       charge_defect_ratio = cooling_system.charge_defect_ratio
       cool_airflow_defect_ratio = cooling_system.airflow_defect_ratio
@@ -4602,8 +4598,8 @@ module HVAC
 
     obj_name = "#{air_loop_unitary.name} install quality program"
 
-    tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Zone Mean Air Temperature' && s.keyName == control_zone.name.to_s }
-    tout_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
+    tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    tout_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
 
     fault_program = Model.add_ems_program(
       model,
@@ -4629,6 +4625,142 @@ module HVAC
     )
   end
 
+  # Creates an EMS program to add crankcase heater energy use for a heat pump.
+  # The crankcase heater is enabled during the time that the compressor is not running and the ODB is below a specified temperature.
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param htg_coil [OpenStudio::Model::CoilHeatingDXSingleSpeed or OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio Heating Coil object
+  # @param clg_coil [OpenStudio::Model::CoilCoolingDXSingleSpeed or OpenStudio::Model::CoilCoolingDXMultiSpeed] OpenStudio Cooling Coil object
+  # @param conditioned_space [OpenStudio::Model::Space] OpenStudio Space object for conditioned zone
+  # @param heat_pump [HPXML::HeatPump] The HPXML heat pump of interest
+  # @param unitary_system [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
+  # @return [nil]
+  def self.apply_crankcase_heater_ems_program(model, htg_coil, clg_coil, conditioned_space, heat_pump, unitary_system)
+    return unless heat_pump.crankcase_heater_watts.to_f > 0
+
+    coil_name = clg_coil.name.to_s
+    if (heat_pump.is_a? HPXML::HeatPump) && (heat_pump.fraction_heat_load_served > 0)
+      coil_name = htg_coil.name.to_s
+    else
+      htg_coil = nil
+    end
+
+    # Other equipment/actuator
+    cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeCrankcaseHeater } # Ensure unique meter for each heat pump
+    crankcase_heater_energy_oe = Model.add_other_equipment(
+      model,
+      name: "#{coil_name} crankcase heater energy",
+      end_use: "#{Constants::ObjectTypeCrankcaseHeater}#{cnt + 1}",
+      space: conditioned_space,
+      design_level: 0,
+      frac_radiant: 0,
+      frac_latent: 0,
+      frac_lost: 1,
+      schedule: model.alwaysOnDiscreteSchedule,
+      fuel_type: HPXML::FuelTypeElectricity
+    )
+    crankcase_heater_energy_oe.additionalProperties.setFeature('HPXML_ID', heat_pump.id) # Used by reporting measure
+    if heat_pump.is_a? HPXML::CoolingSystem
+      crankcase_heater_energy_oe.additionalProperties.setFeature('FractionHeatLoadServed', 0.0) # Used by reporting measure
+    elsif heat_pump.is_a? HPXML::HeatPump
+      crankcase_heater_energy_oe.additionalProperties.setFeature('FractionHeatLoadServed', heat_pump.fraction_heat_load_served) # Used by reporting measure
+    end
+
+    crankcase_heater_energy_oe_act = Model.add_ems_actuator(
+      name: "#{crankcase_heater_energy_oe.name} act",
+      model_object: crankcase_heater_energy_oe,
+      comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
+    )
+
+    # Sensors
+    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleHeatingAvailability }
+    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
+
+    if not htg_coil.nil?
+      htg_coil_rtf_sensor = Model.add_ems_sensor(
+        model,
+        name: "#{htg_coil.name} rtf s",
+        output_var_or_meter_name: 'Heating Coil Runtime Fraction',
+        key_name: htg_coil.name
+      )
+    end
+
+    if (heat_pump.is_a? HPXML::CoolingSystem) || ((heat_pump.is_a? HPXML::HeatPump) && (heat_pump.fraction_cool_load_served > 0))
+      clg_coil_rtf_sensor = Model.add_ems_sensor(
+        model,
+        name: "#{clg_coil.name} rtf s",
+        output_var_or_meter_name: 'Cooling Coil Runtime Fraction',
+        key_name: clg_coil.name
+      )
+    end
+
+    if (htg_coil.is_a? OpenStudio::Model::CoilHeatingDXMultiSpeed) || (clg_coil.is_a? OpenStudio::Model::CoilCoolingDXMultiSpeed)
+      unitary_sys_cyc_ratio_sensor = Model.add_ems_sensor(
+        model,
+        name: "#{unitary_system.name} cycling ratio s",
+        output_var_or_meter_name: 'Unitary System DX Coil Cycling Ratio',
+        key_name: unitary_system.name
+      )
+    end
+
+    # EMS program
+    if clg_coil.is_a? OpenStudio::Model::CoilCoolingDXSingleSpeed
+      max_oat_crankcase = clg_coil.maximumOutdoorDryBulbTemperatureForCrankcaseHeaterOperation
+    elsif clg_coil.is_a? OpenStudio::Model::CoilCoolingDXMultiSpeed
+      max_oat_crankcase = clg_coil.maximumOutdoorDryBulbTemperatureforCrankcaseHeaterOperation
+    end
+    program = Model.add_ems_program(
+      model,
+      name: "#{coil_name} crankcase program"
+    )
+    program.addLine("Set T_out = #{tout_db_sensor.name}")
+    if not htg_coil_rtf_sensor.nil?
+      program.addLine("Set frac_htg = #{htg_coil_rtf_sensor.name}")
+    else
+      program.addLine('Set frac_htg = 0.0')
+    end
+    if not clg_coil_rtf_sensor.nil?
+      program.addLine("Set frac_clg = #{clg_coil_rtf_sensor.name}")
+    else
+      program.addLine('Set frac_clg = 0.0')
+    end
+    if not unitary_sys_cyc_ratio_sensor.nil?
+      program.addLine("Set cyc_ratio = #{unitary_sys_cyc_ratio_sensor.name}")
+    else
+      program.addLine('Set cyc_ratio = 0')
+    end
+    temp_criteria = "If (T_out < #{max_oat_crankcase}) && (cyc_ratio < 1)"
+    # Don't run crankcase heater during heating/cooling unavailable periods either
+    if heat_pump.is_a? HPXML::CoolingSystem
+      temp_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+    elsif heat_pump.is_a? HPXML::HeatPump
+      if heat_pump.fraction_heat_load_served > 0
+        temp_criteria += " && (#{htg_avail_sensor.name} == 1)" if not htg_avail_sensor.nil?
+      else
+        temp_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+      end
+    end
+    program.addLine(temp_criteria)
+    program.addLine('  Set frac_htg_clg = @Max frac_htg frac_clg')
+    program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{heat_pump.crankcase_heater_watts} * (1 - frac_htg_clg)")
+    if not htg_coil.nil?
+      min_oat_compressor = htg_coil.minimumOutdoorDryBulbTemperatureforCompressorOperation
+      program.addLine("ElseIf T_out < #{min_oat_compressor}")
+      program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{heat_pump.crankcase_heater_watts}")
+    end
+    program.addLine('Else')
+    program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = 0.0")
+    program.addLine('EndIf')
+
+    Model.add_ems_program_calling_manager(
+      model,
+      name: "#{program.name} calling manager",
+      calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
+      ems_programs: [program]
+    )
+  end
+
   # Creates an EMS program to add pan heater energy use for a heat pump.
   # A pan heater ensures that water melted during the defrost cycle does not refreeze into ice and
   # result in fan obstruction or coil damage.
@@ -4641,6 +4773,8 @@ module HVAC
   # @param hp_min_temp [Double] Minimum heat pump compressor operating temperature for heating
   # @return [nil]
   def self.apply_pan_heater_ems_program(model, ems_program, htg_coil, conditioned_space, heat_pump, hp_min_temp)
+    return unless heat_pump.pan_heater_watts.to_f > 0
+
     # Other equipment/actuator
     cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypePanHeater } # Ensure unique meter for each heat pump
     pan_heater_energy_oe = Model.add_other_equipment(
@@ -4663,7 +4797,7 @@ module HVAC
       comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
     )
 
-    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHeatingAvailabilitySensor }
+    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleHeatingAvailability }
 
     # EMS program
     temp_criteria = "If (T_out <= #{UnitConversions.convert(32.0, 'F', 'C')}) && (T_out >= #{UnitConversions.convert(hp_min_temp, 'F', 'C').round(2)})"
@@ -4682,6 +4816,7 @@ module HVAC
     ems_program.addLine('Else')
     ems_program.addLine("  Set #{pan_heater_energy_oe_act.name} = 0.0")
     ems_program.addLine('EndIf')
+    return ems_program
   end
 
   # Create EMS program and Other equipment objects to account for delivered cooling load and supplemental heating energy during defrost.
@@ -4760,7 +4895,7 @@ module HVAC
     )
 
     # Sensors
-    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.outputVariableOrMeterName == 'Site Outdoor Air Drybulb Temperature' }
+    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
 
     htg_coil_rtf_sensor = Model.add_ems_sensor(
       model,
@@ -4771,7 +4906,7 @@ module HVAC
 
     htg_coil_htg_rate_sensor = Model.add_ems_sensor(
       model,
-      name: "#{htg_coil.name} deliverd htg",
+      name: "#{htg_coil.name} delivered htg s",
       output_var_or_meter_name: 'Heating Coil Heating Rate',
       key_name: htg_coil.name
     )
@@ -5106,7 +5241,6 @@ module HVAC
       clg_sys.cooling_capacity *= unit_multiplier
       clg_sys.cooling_design_airflow_cfm *= unit_multiplier
       clg_ap.cooling_actual_airflow_cfm *= unit_multiplier
-      clg_sys.crankcase_heater_watts *= unit_multiplier unless clg_sys.crankcase_heater_watts.nil?
       clg_sys.integrated_heating_system_capacity *= unit_multiplier unless clg_sys.integrated_heating_system_capacity.nil?
       clg_sys.integrated_heating_system_airflow_cfm *= unit_multiplier unless clg_sys.integrated_heating_system_airflow_cfm.nil?
       clg_sys.cooling_detailed_performance_data.each do |dp|
@@ -5123,7 +5257,6 @@ module HVAC
       hp_ap.heating_actual_airflow_cfm *= unit_multiplier
       hp_sys.heating_capacity_17F *= unit_multiplier unless hp_sys.heating_capacity_17F.nil?
       hp_sys.backup_heating_capacity *= unit_multiplier unless hp_sys.backup_heating_capacity.nil?
-      hp_sys.crankcase_heater_watts *= unit_multiplier unless hp_sys.crankcase_heater_watts.nil?
       hpxml_header.heat_pump_backup_heating_capacity_increment *= unit_multiplier unless hpxml_header.heat_pump_backup_heating_capacity_increment.nil?
       hp_sys.heating_detailed_performance_data.each do |dp|
         dp.capacity *= unit_multiplier unless dp.capacity.nil?
