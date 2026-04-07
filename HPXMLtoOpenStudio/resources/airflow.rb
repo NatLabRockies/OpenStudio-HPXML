@@ -368,21 +368,8 @@ module Airflow
     vw_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteWindSpeed }
 
     if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
-      thermostat = conditioned_zone.thermostatSetpointDualSetpoint.get
-
-      htg_sp_sensor = Model.add_ems_sensor(
-        model,
-        name: 'htg sp s',
-        output_var_or_meter_name: 'Schedule Value',
-        key_name: thermostat.heatingSetpointTemperatureSchedule.get.name
-      )
-
-      clg_sp_sensor = Model.add_ems_sensor(
-        model,
-        name: 'clg sp s',
-        output_var_or_meter_name: 'Schedule Value',
-        key_name: thermostat.coolingSetpointTemperatureSchedule.get.name
-      )
+      htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+      clg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
     end
 
     # Actuators
@@ -479,7 +466,7 @@ module Airflow
     vent_program.addLine("Set Pbar = #{pbar_out_sensor.name}")
     vent_program.addLine('Set Phiout = (@RhFnTdbWPb Tout Wout Pbar)')
     vent_program.addLine("Set MaxHR = #{max_oa_hr}")
-    if not thermostat.nil?
+    if (not htg_sp_sensor.nil?) && (not clg_sp_sensor.nil?)
       # Home has HVAC system (though setpoints may be defaulted); use the average of heating/cooling setpoints to minimize incurring additional heating energy.
       vent_program.addLine("Set Tnvsp = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
     else

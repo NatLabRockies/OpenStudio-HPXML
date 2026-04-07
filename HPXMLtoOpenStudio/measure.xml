@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>179c31f7-e4e7-4fcd-b406-f7e5cec2eeb6</version_id>
-  <version_modified>2026-04-07T21:15:30Z</version_modified>
+  <version_id>fc10ffdf-75c3-486b-91f7-37cb9517d827</version_id>
+  <version_modified>2026-04-07T22:11:19Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -217,7 +217,7 @@
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>D07CAA59</checksum>
+      <checksum>7660205D</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
@@ -391,7 +391,7 @@
       <filename>geometry.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>3D0B2B19</checksum>
+      <checksum>7A2DE2D7</checksum>
     </file>
     <file>
       <filename>hotwater_appliances.rb</filename>
@@ -433,7 +433,7 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>2B778C99</checksum>
+      <checksum>F465C267</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>
@@ -499,7 +499,7 @@
       <filename>output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>93CF9A27</checksum>
+      <checksum>5C7B0C78</checksum>
     </file>
     <file>
       <filename>psychrometrics.rb</filename>
@@ -715,7 +715,7 @@
       <filename>waterheater.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>F7F50698</checksum>
+      <checksum>93E3D235</checksum>
     </file>
     <file>
       <filename>weather.rb</filename>

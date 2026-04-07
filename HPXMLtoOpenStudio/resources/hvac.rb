@@ -476,9 +476,9 @@ module HVAC
     add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil)
 
     # supp coil control in staging EMS
-    add_two_speed_staging_ems_program(model, air_loop_unitary, htg_supp_coil, control_zone, has_deadband_control, cooling_system)
+    add_two_speed_staging_ems_program(model, air_loop_unitary, htg_supp_coil, has_deadband_control, cooling_system)
 
-    add_supplemental_coil_ems_program(model, htg_supp_coil, control_zone, htg_coil, has_deadband_control, cooling_system)
+    add_supplemental_coil_ems_program(model, htg_supp_coil, htg_coil, has_deadband_control, cooling_system)
 
     add_variable_speed_power_ems_program(runner, model, air_loop_unitary, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
 
@@ -3373,12 +3373,11 @@ module HVAC
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingElectric or OpenStudio::Model::CoilHeatingElectricMultiStage] OpenStudio Supplemental Heating Coil object
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param htg_coil [OpenStudio::Model::CoilHeatingDXSingleSpeed or OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio Heating Coil object
   # @param has_deadband_control [Boolean] Whether to apply on off thermostat deadband
   # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
   # @return [nil]
-  def self.add_supplemental_coil_ems_program(model, htg_supp_coil, control_zone, htg_coil, has_deadband_control, cooling_system)
+  def self.add_supplemental_coil_ems_program(model, htg_supp_coil, htg_coil, has_deadband_control, cooling_system)
     return if htg_supp_coil.nil?
     return unless cooling_system.compressor_type == HPXML::HVACCompressorTypeSingleStage
     return unless has_deadband_control
@@ -3386,14 +3385,7 @@ module HVAC
 
     # Sensors
     tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
-
-    htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-    htg_sp_ss = Model.add_ems_sensor(
-      model,
-      name: 'htg_setpoint',
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: htg_sch.name
-    )
+    htg_sp_ss = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
 
     supp_coil_energy = Model.add_ems_sensor(
       model,
@@ -3618,11 +3610,10 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param unitary_system [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingElectric or OpenStudio::Model::CoilHeatingElectricMultiStage] OpenStudio Supplemental Heating Coil object
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param has_deadband_control [Boolean] Whether to apply on off thermostat deadband
   # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
   # @return [nil]
-  def self.add_two_speed_staging_ems_program(model, unitary_system, htg_supp_coil, control_zone, has_deadband_control, cooling_system)
+  def self.add_two_speed_staging_ems_program(model, unitary_system, htg_supp_coil, has_deadband_control, cooling_system)
     # Note: Currently only available in 1 min time step
     return unless has_deadband_control
     return unless cooling_system.compressor_type == HPXML::HVACCompressorTypeTwoStage
@@ -3652,22 +3643,8 @@ module HVAC
     # Sensors
     living_temp_ss = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
 
-    htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-    clg_sch = control_zone.thermostatSetpointDualSetpoint.get.coolingSetpointTemperatureSchedule.get
-
-    htg_sp_ss = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} htg setpoint",
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: htg_sch.name
-    )
-
-    clg_sp_ss = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} clg setpoint",
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: clg_sch.name
-    )
+    htg_sp_ss = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+    clg_sp_ss = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
 
     unitary_var = Model.add_ems_sensor(
       model,

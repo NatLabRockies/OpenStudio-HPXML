@@ -1292,11 +1292,11 @@ module Waterheater
   # @param hpwh_bottom_element_sp [OpenStudio::Model::ScheduleConstant] HPWH bottom element setpoint schedule
   # @param min_temp [Double] Minimum temperature for compressor operation (F)
   # @param max_temp [Double] Maximum temperature for compressor operation (F)
-  # @param sensted_setpoint_schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] Setpoint temperature schedule (sensed)
+  # @param sensed_setpoint_schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] Setpoint temperature schedule (sensed)
   # @param control_setpoint_schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] Setpoint temperature schedule (controlled)
   # @param schedules_file [SchedulesFile] SchedulesFile wrapper class instance of detailed schedule files
   # @return [OpenStudio::Model::EnergyManagementSystemProgram] The HPWH control program
-  def self.apply_hpwh_control_program(runner, model, obj_name, water_heating_system, amb_temp_sensor, hpwh_top_element_sp, hpwh_bottom_element_sp, min_temp, max_temp, sensted_setpoint_schedule, control_setpoint_schedule, schedules_file)
+  def self.apply_hpwh_control_program(runner, model, obj_name, water_heating_system, amb_temp_sensor, hpwh_top_element_sp, hpwh_bottom_element_sp, min_temp, max_temp, sensed_setpoint_schedule, control_setpoint_schedule, schedules_file)
     # Lower element is enabled if the ambient air temperature prevents the HP from running
     leschedoverride_actuator = Model.add_ems_actuator(
       name: "#{obj_name} LESchedOverride",
@@ -1328,7 +1328,7 @@ module Waterheater
       model,
       name: "#{obj_name} T_set",
       output_var_or_meter_name: 'Schedule Value',
-      key_name: sensted_setpoint_schedule.name
+      key_name: sensed_setpoint_schedule.name
     )
 
     op_mode_schedule = nil

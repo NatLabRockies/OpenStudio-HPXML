@@ -93,22 +93,8 @@ module Outputs
 
       if (onoff_deadbands > 0)
         zone_air_temp_sensors[unit] = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
-
-        htg_sch = conditioned_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-        htg_spt_sensors[unit] = Model.add_ems_sensor(
-          model,
-          name: "#{htg_sch.name} sch value",
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: htg_sch.name
-        )
-
-        clg_sch = conditioned_zone.thermostatSetpointDualSetpoint.get.coolingSetpointTemperatureSchedule.get
-        clg_spt_sensors[unit] = Model.add_ems_sensor(
-          model,
-          name: "#{clg_sch.name} sch value",
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: clg_sch.name
-        )
+        htg_spt_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+        clg_spt_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
       end
 
       sim_year = hpxml_header.sim_calendar_year
@@ -825,23 +811,10 @@ module Outputs
       # EMS Sensors: Indoor temperature, setpoints
       tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
 
-      thermostat = nil
+      htg_sp_sensor, clg_sp_sensor = nil, nil
       if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
-        thermostat = conditioned_zone.thermostatSetpointDualSetpoint.get
-
-        htg_sp_sensor = Model.add_ems_sensor(
-          model,
-          name: 'htg sp s',
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: thermostat.heatingSetpointTemperatureSchedule.get.name
-        )
-
-        clg_sp_sensor = Model.add_ems_sensor(
-          model,
-          name: 'clg sp s',
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: thermostat.coolingSetpointTemperatureSchedule.get.name
-        )
+        htg_sp_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+        clg_sp_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
       end
 
       # EMS program: Heating vs Cooling logic
@@ -875,7 +848,7 @@ module Outputs
       program.addLine("    Set clg_mode = #{total_cool_load_serveds[unit]}")
       program.addLine("  ElseIf ((#{whf_sensors[0].name} <> 0) || (#{whf_sensors[1].name} <> 0)) && (clg_season == 1)") # Assign hour to cooling if whole house fan is operating
       program.addLine("    Set clg_mode = #{total_cool_load_serveds[unit]}")
-      if not thermostat.nil?
+      if (not htg_sp_sensor.nil?) && (not clg_sp_sensor.nil?)
         program.addLine('  Else') # Indoor temperature floating between setpoints; determine assignment by comparing to average of heating/cooling setpoints
         program.addLine("    Set Tmid_setpoint = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
         program.addLine("    If (#{tin_sensor.name} > Tmid_setpoint) && (clg_season == 1)")

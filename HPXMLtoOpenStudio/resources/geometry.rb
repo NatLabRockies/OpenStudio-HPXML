@@ -1589,13 +1589,7 @@ module Geometry
     if location == HPXML::LocationOtherHeatedSpace
       if spaces[HPXML::LocationConditionedSpace].thermalZone.get.thermostatSetpointDualSetpoint.is_initialized
         # Create a sensor to get dynamic heating setpoint
-        htg_sch = spaces[HPXML::LocationConditionedSpace].thermalZone.get.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-        space_values[:temp_min] = Model.add_ems_sensor(
-          model,
-          name: 'htg_spt',
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: htg_sch.name
-        )
+        space_values[:temp_min] = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
         space_values[:temp_min] = space_values[:temp_min].name.to_s
       else
         # No HVAC system; use the defaulted heating setpoint.
