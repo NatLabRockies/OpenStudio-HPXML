@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>39662630-5222-4788-b0a9-94925fa375a3</version_id>
-  <version_modified>2026-04-08T03:07:07Z</version_modified>
+  <version_id>84d4e9b4-4e3e-4c81-b99e-267a55e830e8</version_id>
+  <version_modified>2026-04-08T04:08:29Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -217,7 +217,7 @@
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>7660205D</checksum>
+      <checksum>60E73C43</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
@@ -235,7 +235,7 @@
       <filename>constants.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>04716AF0</checksum>
+      <checksum>0FEB301B</checksum>
     </file>
     <file>
       <filename>constructions.rb</filename>
@@ -391,7 +391,7 @@
       <filename>geometry.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>7A2DE2D7</checksum>
+      <checksum>D6D9B7ED</checksum>
     </file>
     <file>
       <filename>hotwater_appliances.rb</filename>
@@ -433,7 +433,7 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>0F51B93D</checksum>
+      <checksum>F0C8FE64</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>
@@ -703,7 +703,7 @@
       <filename>vehicle.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>EE770A63</checksum>
+      <checksum>976215CE</checksum>
     </file>
     <file>
       <filename>version.rb</filename>
@@ -715,7 +715,7 @@
       <filename>waterheater.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>93E3D235</checksum>
+      <checksum>245FEA65</checksum>
     </file>
     <file>
       <filename>weather.rb</filename>

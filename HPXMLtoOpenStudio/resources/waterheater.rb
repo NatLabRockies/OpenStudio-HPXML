@@ -1122,6 +1122,10 @@ module Waterheater
   # @param loc_schedule [OpenStudio::Model::ScheduleConstant] The temperature schedule, if not located in a space
   # @return [Array<OpenStudio::Model::EnergyManagementSystemSensor, Array<OpenStudio::Model::EnergyManagementSystemSensor>>] HPWH ambient temperature sensor, One or more HPWH ambient RH sensors
   def self.apply_hpwh_loc_temp_rh_sensors(model, obj_name, loc_space, loc_schedule)
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    rh_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirRH }
+    rh_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirRH }
+
     rh_sensors = []
     if not loc_schedule.nil?
       amb_temp_sensor = Model.add_ems_sensor(
@@ -1131,12 +1135,12 @@ module Waterheater
         key_name: loc_schedule.name
       )
       if loc_schedule.name.get == HPXML::LocationOtherNonFreezingSpace
-        rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirRH }
+        rh_sensors << rh_out_sensor
       elsif loc_schedule.name.get == HPXML::LocationOtherHousingUnit
-        rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirRH }
+        rh_sensors << rh_in_sensor
       else
-        rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirRH }
-        rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirRH }
+        rh_sensors << rh_out_sensor
+        rh_sensors << rh_in_sensor
       end
     elsif not loc_space.nil?
       amb_temp_sensor = Model.add_ems_sensor(
@@ -1152,8 +1156,8 @@ module Waterheater
         key_name: loc_space.thermalZone.get.name
       )
     else # Located outside
-      amb_temp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
-      rh_sensors << model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirRH }
+      amb_temp_sensor = t_out_sensor
+      rh_sensors << rh_out_sensor
     end
     return amb_temp_sensor, rh_sensors
   end

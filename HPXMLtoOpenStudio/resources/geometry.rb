@@ -1601,19 +1601,18 @@ module Geometry
     if space_values[:indoor_weight] > 0
       if not spaces[HPXML::LocationConditionedSpace].thermalZone.get.thermostatSetpointDualSetpoint.is_initialized
         # No HVAC system; use the average of defaulted heating/cooling setpoints.
-        sensor_ia = UnitConversions.convert((default_htg_sp + default_clg_sp) / 2.0, 'F', 'C')
+        t_in_sensor = UnitConversions.convert((default_htg_sp + default_clg_sp) / 2.0, 'F', 'C')
       else
-        sensor_ia = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
-        sensor_ia = sensor_ia.name
+        t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }.name
       end
     end
 
     if space_values[:outdoor_weight] > 0
-      sensor_oa = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+      t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }.name
     end
 
     if space_values[:ground_weight] > 0
-      sensor_gnd = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteGroundTemp }
+      t_gnd_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteGroundTemp }.name
     end
 
     actuator = Model.add_ems_actuator(
@@ -1628,14 +1627,14 @@ module Geometry
       name: "#{location} Temperature Program"
     )
     program.addLine("Set #{actuator.name} = 0.0")
-    if not sensor_ia.nil?
-      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{sensor_ia} * #{space_values[:indoor_weight]})")
+    if not t_in_sensor.nil?
+      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{t_in_sensor} * #{space_values[:indoor_weight]})")
     end
-    if not sensor_oa.nil?
-      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{sensor_oa.name} * #{space_values[:outdoor_weight]})")
+    if not t_out_sensor.nil?
+      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{t_out_sensor} * #{space_values[:outdoor_weight]})")
     end
-    if not sensor_gnd.nil?
-      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{sensor_gnd.name} * #{space_values[:ground_weight]})")
+    if not t_gnd_sensor.nil?
+      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{t_gnd_sensor} * #{space_values[:ground_weight]})")
     end
     if not space_values[:temp_min].nil?
       if space_values[:temp_min].is_a? String

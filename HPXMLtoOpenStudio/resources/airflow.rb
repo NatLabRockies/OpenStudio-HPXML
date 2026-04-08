@@ -364,7 +364,7 @@ module Airflow
     t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
     t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
     w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
-    pbar_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
+    bp_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
     vw_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteWindSpeed }
 
     if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
@@ -463,7 +463,7 @@ module Airflow
     vent_program.addLine("Set Tin = #{t_in_sensor.name}")
     vent_program.addLine("Set Tout = #{t_out_sensor.name}")
     vent_program.addLine("Set Wout = #{w_out_sensor.name}")
-    vent_program.addLine("Set Pbar = #{pbar_out_sensor.name}")
+    vent_program.addLine("Set Pbar = #{bp_out_sensor.name}")
     vent_program.addLine('Set Phiout = (@RhFnTdbWPb Tout Wout Pbar)')
     vent_program.addLine("Set MaxHR = #{max_oa_hr}")
     if (not htg_sp_sensor.nil?) && (not clg_sp_sensor.nil?)
@@ -1072,7 +1072,9 @@ module Airflow
 
     t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
     w_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
-    pbar_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    bp_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
+    w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
 
     # Duct zone temperature
     dz_t_var = Model.add_ems_global_var(
@@ -1094,7 +1096,7 @@ module Airflow
         key_name: duct_location.name
       )
     elsif duct_location.nil? # Outside
-      dz_t_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+      dz_t_sensor = t_out_sensor
     else # shouldn't get here, should only have schedule/thermal zone/nil assigned
       fail 'Unexpected duct zone type passed'
     end
@@ -1105,28 +1107,22 @@ module Airflow
       var_name: "#{object_name_idx} DZ W"
     )
     if duct_location.is_a? OpenStudio::Model::ThermalZone
-      dz_w_sensor = Model.add_ems_sensor(
+      dz_w = Model.add_ems_sensor(
         model,
         name: "#{dz_w_var.name} s",
         output_var_or_meter_name: 'Zone Mean Air Humidity Ratio',
         key_name: duct_location.name
-      )
-      dz_w = "#{dz_w_sensor.name}"
+      ).name
     elsif duct_location.is_a? OpenStudio::Model::ScheduleConstant # Outside or scheduled temperature
       if duct_location.name.to_s == HPXML::LocationOtherNonFreezingSpace
-        dz_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
-        dz_w = "#{dz_w_sensor.name}"
+        dz_w = w_out_sensor.name
       elsif duct_location.name.to_s == HPXML::LocationOtherHousingUnit
-        dz_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
-        dz_w = "#{dz_w_sensor.name}"
+        dz_w = w_in_sensor.name
       else
-        dz_w_sensor1 = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
-        dz_w_sensor2 = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
-        dz_w = "(#{dz_w_sensor1.name} + #{dz_w_sensor2.name}) / 2"
+        dz_w = "(#{w_out_sensor.name} + #{w_in_sensor.name}) / 2"
       end
     else
-      dz_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
-      dz_w = "#{dz_w_sensor.name}"
+      dz_w = w_out_sensor.name
     end
 
     # -- Actuators --
@@ -1538,7 +1534,7 @@ module Airflow
         duct_program.addLine("  Set cfis_m3s = #{fan_data[:max_airflow_m3s][object]} * #{cfis_fan.cfis_vent_mode_airflow_fraction}")
         duct_program.addLine("  Set #{fan_data[:rtf_var][object].name} = #{f_vent_only_mode_var.name}") # Need to use global vars to sync duct_program and infiltration program of different calling points
         duct_program.addLine("  Set #{ah_vfr_var.name} = #{fan_data[:rtf_var][object].name}*cfis_m3s")
-        duct_program.addLine("  Set rho_in = (@RhoAirFnPbTdbW #{pbar_out_sensor.name} #{t_in_sensor.name} #{w_in_sensor.name})")
+        duct_program.addLine("  Set rho_in = (@RhoAirFnPbTdbW #{bp_out_sensor.name} #{t_in_sensor.name} #{w_in_sensor.name})")
         duct_program.addLine("  Set #{ah_mfr_var.name} = #{ah_vfr_var.name} * rho_in")
         duct_program.addLine("  Set #{ah_tout_var.name} = #{ra_t_sensor.name}")
         duct_program.addLine("  Set #{ah_wout_var.name} = #{ra_w_sensor.name}")
@@ -2137,7 +2133,7 @@ module Airflow
     t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
     w_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
     w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
-    pbar_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
+    bp_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
 
     # Actuators for mech vent fan
     sens_equip = Model.add_other_equipment(
@@ -2182,7 +2178,7 @@ module Airflow
     infil_program.addLine("Set #{fan_lat_load_actuator.name} = 0.0")
 
     # Air property at inlet nodes on both sides
-    infil_program.addLine("Set OASupInPb = #{pbar_out_sensor.name}") # oa barometric pressure
+    infil_program.addLine("Set OASupInPb = #{bp_out_sensor.name}") # oa barometric pressure
     infil_program.addLine("Set OASupInTemp = #{t_out_sensor.name}") # oa db temperature
     infil_program.addLine("Set OASupInW = #{w_out_sensor.name}") # oa humidity ratio
     infil_program.addLine('Set OASupRho = (@RhoAirFnPbTdbW OASupInPb OASupInTemp OASupInW)')
