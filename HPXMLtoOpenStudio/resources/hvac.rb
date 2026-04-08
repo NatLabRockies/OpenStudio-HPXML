@@ -3428,8 +3428,8 @@ module HVAC
     supp_coil_avail_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
     supp_coil_avail_program.addLine('Else') # global variable = 1
     supp_coil_avail_program.addLine("  Set living_t = #{tin_sensor.name}")
-    supp_coil_avail_program.addLine("  Set htg_sp_l = #{htg_sp_ss.name}")
-    supp_coil_avail_program.addLine("  Set htg_sp_h = #{htg_sp_ss.name} + #{ddb}")
+    supp_coil_avail_program.addLine("  Set htg_sp_l = #{htg_sp_ss.name} - #{ddb}")
+    supp_coil_avail_program.addLine("  Set htg_sp_h = #{htg_sp_ss.name}")
     supp_coil_avail_program.addLine("  If (@TRENDVALUE #{supp_energy_trend.name} 1) > 0") # backup coil is turned on, keep it on until reaching upper end of ddb in case of high frequency oscillations
     supp_coil_avail_program.addLine('    If living_t > htg_sp_h')
     supp_coil_avail_program.addLine("      Set #{global_var_supp_avail.name} = 0")
@@ -3677,8 +3677,8 @@ module HVAC
 
     # Check values within min/max limits
     realistic_cycling_program.addLine("Set living_t = #{living_temp_ss.name}")
-    realistic_cycling_program.addLine("Set htg_sp_l = #{htg_sp_ss.name}")
-    realistic_cycling_program.addLine("Set htg_sp_h = #{htg_sp_ss.name} + #{ddb}")
+    realistic_cycling_program.addLine("Set htg_sp_l = #{htg_sp_ss.name} - #{ddb}")
+    realistic_cycling_program.addLine("Set htg_sp_h = #{htg_sp_ss.name}")
     realistic_cycling_program.addLine("Set clg_sp_l = #{clg_sp_ss.name} - #{ddb}")
     realistic_cycling_program.addLine("Set clg_sp_h = #{clg_sp_ss.name}")
 
