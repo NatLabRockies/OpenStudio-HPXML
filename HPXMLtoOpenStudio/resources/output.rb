@@ -61,11 +61,10 @@ module Outputs
   # @return [Hash] Mapping of unit index => heating/cooling season begin and end dates for use by subsequent programs
   def self.apply_unmet_hours_ems_program(model, hpxml_osm_map, hpxml_header)
     # Create sensors and gather data
-    htg_sensors, clg_sensors = {}, {}
+    htg_sensors, clg_sensors, htg_avail_sensors, clg_avail_sensors = {}, {}, {}, {}
     zone_air_temp_sensors, htg_spt_sensors, clg_spt_sensors = {}, {}, {}
     total_heat_load_serveds, total_cool_load_serveds = {}, {}
     season_day_nums = {}
-    onoff_deadbands = hpxml_header.hvac_onoff_thermostat_deadband.to_f
     hpxml_osm_map.each_with_index do |(hpxml_bldg, unit_model), unit|
       conditioned_zone = unit_model.getThermalZones.find { |z| z.additionalProperties.getFeatureAsString('ObjectType').to_s == HPXML::LocationConditionedSpace }
       conditioned_zone_name = conditioned_zone.name.to_s
@@ -91,8 +90,8 @@ module Outputs
       hvac_control = hpxml_bldg.hvac_controls[0]
       next if hvac_control.nil?
 
-      if (onoff_deadbands > 0)
-        zone_air_temp_sensors[unit] = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+      if hpxml_header.hvac_onoff_thermostat_deadband.to_f > 0
+        zone_air_temp_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
         htg_spt_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
         clg_spt_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
       end
@@ -104,10 +103,13 @@ module Outputs
         clg_start: Calendar.get_day_num_from_month_day(sim_year, hvac_control.seasons_cooling_begin_month, hvac_control.seasons_cooling_begin_day),
         clg_end: Calendar.get_day_num_from_month_day(sim_year, hvac_control.seasons_cooling_end_month, hvac_control.seasons_cooling_end_day)
       }
+
+      htg_avail_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleHeatingAvailability }
+      clg_avail_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
     end
 
-    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleHeatingAvailability }
-    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
+    htg_tol = model.getOutputControlReportingTolerances.toleranceforTimeHeatingSetpointNotMet
+    clg_tol = model.getOutputControlReportingTolerances.toleranceforTimeCoolingSetpointNotMet
 
     # EMS program
     clg_hrs = 'clg_unmet_hours'
@@ -129,10 +131,10 @@ module Outputs
         else
           line = "If ((DayOfYear >= #{season_day_nums[unit][:htg_start]}) || (DayOfYear <= #{season_day_nums[unit][:htg_end]}))"
         end
-        line += " && (#{htg_avail_sensor.name} == 1)" if not htg_avail_sensor.nil?
+        line += " && (#{htg_avail_sensors[unit].name} == 1)" unless htg_avail_sensors[unit].nil?
         program.addLine(line)
-        if zone_air_temp_sensors.keys.include? unit # on off deadband
-          program.addLine("  If #{zone_air_temp_sensors[unit].name} < (#{htg_spt_sensors[unit].name} - #{UnitConversions.convert(onoff_deadbands, 'deltaF', 'deltaC')})")
+        if not zone_air_temp_sensors[unit].nil? # on off deadband
+          program.addLine("  If #{zone_air_temp_sensors[unit].name} < (#{htg_spt_sensors[unit].name} - #{htg_tol})")
           program.addLine("    Set #{unit_htg_hrs} = #{unit_htg_hrs} + #{htg_sensors[unit].name}")
           program.addLine('  EndIf')
         else
@@ -151,10 +153,10 @@ module Outputs
       else
         line = "If ((DayOfYear >= #{season_day_nums[unit][:clg_start]}) || (DayOfYear <= #{season_day_nums[unit][:clg_end]}))"
       end
-      line += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+      line += " && (#{clg_avail_sensors[unit].name} == 1)" unless clg_avail_sensors[unit].nil?
       program.addLine(line)
-      if zone_air_temp_sensors.keys.include? unit # on off deadband
-        program.addLine("  If #{zone_air_temp_sensors[unit].name} > (#{clg_spt_sensors[unit].name} + #{UnitConversions.convert(onoff_deadbands, 'deltaF', 'deltaC')})")
+      if not zone_air_temp_sensors[unit].nil? # on off deadband
+        program.addLine("  If #{zone_air_temp_sensors[unit].name} > (#{clg_spt_sensors[unit].name} + #{clg_tol})")
         program.addLine("    Set #{unit_clg_hrs} = #{unit_clg_hrs} + #{clg_sensors[unit].name}")
         program.addLine('  EndIf')
       else
@@ -809,7 +811,7 @@ module Outputs
       end
 
       # EMS Sensors: Indoor temperature, setpoints
-      tin_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+      tin_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
 
       htg_sp_sensor, clg_sp_sensor = nil, nil
       if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
