@@ -4,6 +4,7 @@ __New Features__
 - HVAC updates:
   - Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
   - Improves handling of duct leakage specified using cfm25/cfm50.
+  - Adds advanced research feature for latent degradation model, including an input to specify an HVAC blower-off delay.
 - Allows "other" for `SoilType`; adds variation to dry/wet soil conductivity and diffusivity values for unknown/other/loam soil types.
 - Output updates:
   - **Breaking change**: Annual peak load outputs for heating and cooling now use units of Btu/h instead of kBtu/h for consistency with other outputs.
