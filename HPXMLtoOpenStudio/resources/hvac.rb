@@ -4266,9 +4266,9 @@ module HVAC
     )
   end
 
-  # Adds an EMS program to model latent degradation. The model includes latent degradation during
-  # the equipment startup transient period, as well as an HVAC blower-off delay, where the indoor
-  # supply fan is operated for a short period following the end of a cooling cycle.
+  # Adds an EMS program to model latent degradation. This model accounts for latent removal during coil start-up,
+  # and moisture re-introduced to the conditioned space during the blower-off delay (forced evaporation) and
+  # during the remaining off cycle time after the blower shuts off (natural evaporation).
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
@@ -4435,9 +4435,6 @@ module HVAC
     #   Shirey, Don, Henderson, H., Raustad, R. 2006. "Understanding the Dehumidification Performance of Air-Conditioning
     #   Equipment at Part Load Conditions". DOE/NETL Project No. DE-FC26-01NT41253.
     #   Table and equation numbers below refer to the Shirey et al. report. See Chapter 5.
-    #
-    #   Note: This model accounts for latent removal during coil start-up, and moisture re-introduced to the living space during the blower-off
-    #   delay (forced evaporation) and during the remaining off cycle time after the blower shuts off (natural evaporation).
     latdeg_program = Model.add_ems_program(
       model,
       name: "#{air_loop_unitary.name} blower off delay program"
