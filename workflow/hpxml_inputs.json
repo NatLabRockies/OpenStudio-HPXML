@@ -800,10 +800,11 @@
   },
   "sample_files/base-bldgtype-mf-unit-shared-water-heater.xml": {
     "parent_hpxml": "sample_files/base-bldgtype-mf-unit.xml",
-    "dhw_water_heater": "Natural Gas, Tank, UEF 0.60"
+    "dhw_water_heater": "Natural Gas, Tank, UEF 0.60",
+    "dhw_water_heater_location": "SFA/MF Other Heated Space"
   },
   "sample_files/base-bldgtype-mf-unit-shared-water-heater-heat-pump.xml": {
-    "parent_hpxml": "sample_files/base-bldgtype-mf-unit.xml",
+    "parent_hpxml": "sample_files/base-bldgtype-mf-unit-shared-water-heater.xml",
     "dhw_water_heater": "Electricity, Heat Pump, UEF 3.50"
   },
   "sample_files/base-bldgtype-mf-unit-shared-water-heater-recirc.xml": {

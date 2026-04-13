@@ -147,14 +147,14 @@ module Waterheater
     # Add in schedules for Tamb, RHamb, and the compressor
     hpwh_tamb = Model.add_schedule_constant(
       model,
-      name: "#{obj_name} Tamb act",
+      name: "#{obj_name} Tamb",
       value: 23,
       limits: EPlus::ScheduleTypeLimitsTemperature
     )
 
     hpwh_rhamb = Model.add_schedule_constant(
       model,
-      name: "#{obj_name} RHamb act",
+      name: "#{obj_name} RHamb",
       value: 0.5,
       limits: EPlus::ScheduleTypeLimitsFraction
     )

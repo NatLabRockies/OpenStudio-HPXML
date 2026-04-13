@@ -4432,11 +4432,11 @@ module HVAC
     )
 
     # EMS Program based on:
-	#   Shirey, Don, Henderson, H., Raustad, R. 2006. "Understanding the Dehumidification Performance of Air-Conditioning 
-	#   Equipment at Part Load Conditions". DOE/NETL Project No. DE-FC26-01NT41253.
-	#   Table and equation numbers below refer to the Shirey et al. report. See Chapter 5.
-	#
-	#   Note: This model accounts for latent removal during coil start-up, and moisture re-introduced to the living space during the blower-off
+    #   Shirey, Don, Henderson, H., Raustad, R. 2006. "Understanding the Dehumidification Performance of Air-Conditioning
+    #   Equipment at Part Load Conditions". DOE/NETL Project No. DE-FC26-01NT41253.
+    #   Table and equation numbers below refer to the Shirey et al. report. See Chapter 5.
+    #
+    #   Note: This model accounts for latent removal during coil start-up, and moisture re-introduced to the living space during the blower-off
     #   delay (forced evaporation) and during the remaining off cycle time after the blower shuts off (natural evaporation).
     latdeg_program = Model.add_ems_program(
       model,
@@ -4445,7 +4445,7 @@ module HVAC
     latdeg_program.addLine("Set RTF = #{clg_rtf_sensor.name}")
     if not speed_ratio_sensor.nil?
       # Set RTF to 1 for two-stage or variable speed equipment if the speed ratio > 0
-	  latdeg_program.addLine("If #{speed_ratio_sensor.name} > 0")
+      latdeg_program.addLine("If #{speed_ratio_sensor.name} > 0")
       latdeg_program.addLine('  Set RTF = 1')
       latdeg_program.addLine('EndIf')
     end
@@ -4464,7 +4464,7 @@ module HVAC
     latdeg_program.addLine("Set ReturnDB = #{return_db_sensor.name}")
     latdeg_program.addLine("Set ReturnHumRat = #{return_hr_sensor.name}")
     latdeg_program.addLine('Set MinEXP = -15') # Constant to avoid exponential terms from approaching 0
-    latdeg_program.addLine('Set tau = 60')  # Time constant of latent capacity at start-up. See Table 5-1. Typically 30-90 seconds.
+    latdeg_program.addLine('Set tau = 60') # Time constant of latent capacity at start-up. See Table 5-1. Typically 30-90 seconds.
     latdeg_program.addLine('Set K1Per1000ft2 = 8') # Empirical constant. See Table 5-4.
     latdeg_program.addLine('Set K2 = 0.03') # Empirical constant. See Table 5-4.
     latdeg_program.addLine("Set BlowerOffDelay = #{blower_off_delay}")
@@ -4519,7 +4519,7 @@ module HVAC
     latdeg_program.addLine('  Set toCalcint = (@EXP (@Max ((-to) / tau) MinEXP))') # Intermediate term for Eq 5-25
     latdeg_program.addLine('  Set toCalc = (1 - fi) * twet - tau * (toCalcint - 1)') # Eq 5-25
     latdeg_program.addLine('  Set toCalc = (@Min toCalc ton)') # `to` must be less than the on cycle (`ton`)
-    latdeg_program.addLine('  Set Deltato = to - toCalc') 
+    latdeg_program.addLine('  Set Deltato = to - toCalc')
     latdeg_program.addLine('  Set to = toCalc')
     latdeg_program.addLine('EndWhile')
     latdeg_program.addLine('Set LHRssint = (@EXP (@Max ((-ton) / tau) MinEXP))') # Intermediate term for next line.
