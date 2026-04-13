@@ -65,6 +65,7 @@ module Outputs
     zone_air_temp_sensors, htg_spt_sensors, clg_spt_sensors = {}, {}, {}
     total_heat_load_serveds, total_cool_load_serveds = {}, {}
     season_day_nums = {}
+    ddb = UnitConversions.convert(hpxml_header.hvac_onoff_thermostat_deadband.to_f, 'deltaF', 'deltaC')
     hpxml_osm_map.each_with_index do |(hpxml_bldg, unit_model), unit|
       conditioned_zone = unit_model.getThermalZones.find { |z| z.additionalProperties.getFeatureAsString('ObjectType').to_s == HPXML::LocationConditionedSpace }
       conditioned_zone_name = conditioned_zone.name.to_s
@@ -90,7 +91,7 @@ module Outputs
       hvac_control = hpxml_bldg.hvac_controls[0]
       next if hvac_control.nil?
 
-      if hpxml_header.hvac_onoff_thermostat_deadband.to_f > 0
+      if ddb > 0
         zone_air_temp_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
         htg_spt_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
         clg_spt_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
@@ -134,7 +135,7 @@ module Outputs
         line += " && (#{htg_avail_sensors[unit].name} == 1)" unless htg_avail_sensors[unit].nil?
         program.addLine(line)
         if not zone_air_temp_sensors[unit].nil? # on off deadband
-          program.addLine("  If #{zone_air_temp_sensors[unit].name} < (#{htg_spt_sensors[unit].name} - #{htg_tol})")
+          program.addLine("  If #{zone_air_temp_sensors[unit].name} < (#{htg_spt_sensors[unit].name} - #{ddb} - #{htg_tol})")
           program.addLine("    Set #{unit_htg_hrs} = #{unit_htg_hrs} + #{htg_sensors[unit].name}")
           program.addLine('  EndIf')
         else
