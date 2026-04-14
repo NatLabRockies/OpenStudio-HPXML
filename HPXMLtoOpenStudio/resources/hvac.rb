@@ -3385,7 +3385,7 @@ module HVAC
 
     # Sensors
     t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
-    htg_sp_s = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+    htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
 
     supp_coil_energy = Model.add_ems_sensor(
       model,
@@ -3428,8 +3428,8 @@ module HVAC
     supp_coil_avail_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
     supp_coil_avail_program.addLine('Else') # global variable = 1
     supp_coil_avail_program.addLine("  Set living_t = #{t_in_sensor.name}")
-    supp_coil_avail_program.addLine("  Set htg_sp_l = #{htg_sp_s.name} - #{ddb}")
-    supp_coil_avail_program.addLine("  Set htg_sp_h = #{htg_sp_s.name}")
+    supp_coil_avail_program.addLine("  Set htg_sp_l = #{htg_sp_sensor.name}")
+    supp_coil_avail_program.addLine("  Set htg_sp_h = #{htg_sp_sensor.name} + #{ddb}")
     supp_coil_avail_program.addLine("  If (@TRENDVALUE #{supp_energy_trend.name} 1) > 0") # backup coil is turned on, keep it on until reaching upper end of ddb in case of high frequency oscillations
     supp_coil_avail_program.addLine('    If living_t > htg_sp_h')
     supp_coil_avail_program.addLine("      Set #{global_var_supp_avail.name} = 0")
@@ -3643,8 +3643,8 @@ module HVAC
 
     # Sensors
     t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
-    htg_sp_s = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
-    clg_sp_s = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
+    htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+    clg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
 
     unitary_var = Model.add_ems_sensor(
       model,
@@ -3677,10 +3677,10 @@ module HVAC
 
     # Check values within min/max limits
     realistic_cycling_program.addLine("Set living_t = #{t_in_sensor.name}")
-    realistic_cycling_program.addLine("Set htg_sp_l = #{htg_sp_s.name} - #{ddb}")
-    realistic_cycling_program.addLine("Set htg_sp_h = #{htg_sp_s.name}")
-    realistic_cycling_program.addLine("Set clg_sp_l = #{clg_sp_s.name} - #{ddb}")
-    realistic_cycling_program.addLine("Set clg_sp_h = #{clg_sp_s.name}")
+    realistic_cycling_program.addLine("Set htg_sp_l = #{htg_sp_sensor.name}")
+    realistic_cycling_program.addLine("Set htg_sp_h = #{htg_sp_sensor.name} + #{ddb}")
+    realistic_cycling_program.addLine("Set clg_sp_l = #{clg_sp_sensor.name} - #{ddb}")
+    realistic_cycling_program.addLine("Set clg_sp_h = #{clg_sp_sensor.name}")
 
     (1..number_of_timestep_logged).each do |t_i|
       realistic_cycling_program.addLine("Set unitary_var_#{t_i}_ago = @TrendValue #{unitary_speed_var_trend.name} #{t_i}")
@@ -3785,8 +3785,8 @@ module HVAC
     )
 
     t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
-    htg_spt_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
-    clg_spt_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
+    htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+    clg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
 
     load_sensor = Model.add_ems_sensor(
       model,
@@ -3844,10 +3844,10 @@ module HVAC
     program.addLine('Set htg_mode = 0')
     program.addLine("If #{load_sensor.name} > 0")
     program.addLine('  Set htg_mode = 1')
-    program.addLine("  Set setpoint = #{htg_spt_sensor.name}")
+    program.addLine("  Set setpoint = #{htg_sp_sensor.name}")
     program.addLine("ElseIf #{load_sensor.name} < 0")
     program.addLine('  Set clg_mode = 1')
-    program.addLine("  Set setpoint = #{clg_spt_sensor.name}")
+    program.addLine("  Set setpoint = #{clg_sp_sensor.name}")
     program.addLine('EndIf')
     program.addLine("Set sens_load = @Abs #{load_sensor.name}")
     program.addLine('Set clg_mode = 0') if clg_coil.nil?
@@ -4055,7 +4055,7 @@ module HVAC
 
     # Sensors
     t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
-    htg_sp_s = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+    htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
 
     backup_coil_htg_rate = Model.add_ems_sensor(
       model,
@@ -4076,7 +4076,7 @@ module HVAC
 
     setpoint_temp_trend = Model.add_ems_trend_var(
       model,
-      ems_object: htg_sp_s,
+      ems_object: htg_sp_sensor,
       num_timesteps_logged: number_of_timestep_logged
     )
 
@@ -4133,11 +4133,11 @@ module HVAC
     supp_staging_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
     supp_staging_program.addLine('Else') # global variable = 1
     supp_staging_program.addLine("  Set #{supp_coil_avail_act.name} = 1")
-    supp_staging_program.addLine("  If (supp_htg_rate_1_ago > 0) && (#{htg_sp_s.name} + #{t_in_sensor.name} > 0.01)")
+    supp_staging_program.addLine("  If (supp_htg_rate_1_ago > 0) && (#{htg_sp_sensor.name} + #{t_in_sensor.name} > 0.01)")
     supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 1") # Keep backup coil on until reaching setpoint
     supp_staging_program.addLine("  ElseIf (#{s_trend.join(' && ')})")
     if ddb > 0.0
-      supp_staging_program.addLine("    If (#{t_in_sensor.name} >= #{htg_sp_s.name} - #{ddb})")
+      supp_staging_program.addLine("    If (#{t_in_sensor.name} >= #{htg_sp_sensor.name})")
       supp_staging_program.addLine("      Set #{global_var_supp_avail.name} = 0")
       supp_staging_program.addLine("      Set #{supp_coil_avail_act.name} = 0")
       supp_staging_program.addLine('    EndIf')

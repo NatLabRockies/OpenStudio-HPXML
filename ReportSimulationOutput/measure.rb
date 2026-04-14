@@ -549,8 +549,8 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       end
 
       # Also report thermostat setpoints
-      # Note that we use the schedule value, rather than the Zone Thermostat Heating (or Cooling) Setpoint Temperature output variable,
-      # because the latter is adjusted when the on-off thermostat deadband model is used.
+      # Note that we use the schedule value, rather than the Zone Thermostat Heating (or Cooling) Setpoint Temperature output
+      # variable, because the latter gets adjusted by EnergyPlus when the on-off thermostat deadband model is used.
       heated_zones.each do |heated_zone|
         thermal_zone = model.getThermalZones.find { |z| z.name.to_s == heated_zone }
         sched_name = thermal_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get.name.to_s.upcase

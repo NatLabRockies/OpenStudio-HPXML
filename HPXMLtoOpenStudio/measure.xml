@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxm_lto_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>31c0df72-bb14-4a27-b052-d2b0aa163bff</version_id>
-  <version_modified>2026-04-13T13:19:34Z</version_modified>
+  <version_id>08c45b69-e96f-4c6e-a9ac-556181bdbdc4</version_id>
+  <version_modified>2026-04-14T01:16:07Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLtoOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -211,13 +211,13 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>0363165F</checksum>
+      <checksum>B68E6B16</checksum>
     </file>
     <file>
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>60E73C43</checksum>
+      <checksum>1965E812</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
@@ -433,7 +433,7 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>F0C8FE64</checksum>
+      <checksum>73006DB2</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>
@@ -499,7 +499,7 @@
       <filename>output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>D032D905</checksum>
+      <checksum>22828305</checksum>
     </file>
     <file>
       <filename>psychrometrics.rb</filename>

@@ -515,21 +515,29 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     )
     s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorAirHR)
 
-    s = Model.add_ems_sensor(
-      model,
-      name: 'in_clg_spt_s',
-      output_var_or_meter_name: 'Zone Thermostat Cooling Setpoint Temperature',
-      key_name: conditioned_zone.name
-    )
-    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorCoolingSetpointTemp)
+    # Conditioned zone setpoints
+    # Note that we use the schedule value, rather than the Zone Thermostat Heating (or Cooling) Setpoint Temperature output
+    # variable, because the latter gets adjusted by EnergyPlus when the on-off thermostat deadband model is used.
 
-    s = Model.add_ems_sensor(
-      model,
-      name: 'in_htg_stp_s',
-      output_var_or_meter_name: 'Zone Thermostat Heating Setpoint Temperature',
-      key_name: conditioned_zone.name
-    )
-    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorHeatingSetpointTemp)
+    if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
+      thermostat = conditioned_zone.thermostatSetpointDualSetpoint.get
+
+      s = Model.add_ems_sensor(
+        model,
+        name: 'in_clg_sp_s',
+        output_var_or_meter_name: 'Schedule Value',
+        key_name: thermostat.coolingSetpointTemperatureSchedule.get.name
+      )
+      s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorCoolingSetpointTemp)
+
+      s = Model.add_ems_sensor(
+        model,
+        name: 'in_htg_sp_s',
+        output_var_or_meter_name: 'Schedule Value',
+        key_name: thermostat.heatingSetpointTemperatureSchedule.get.name
+      )
+      s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorHeatingSetpointTemp)
+    end
   end
 end
 
