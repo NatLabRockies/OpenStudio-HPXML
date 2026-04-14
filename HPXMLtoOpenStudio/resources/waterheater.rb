@@ -317,6 +317,7 @@ module Waterheater
                                       unavailable_periods: unavailable_periods,
                                       unit_multiplier: unit_multiplier)
     water_heater.setSourceSideDesignFlowRate(100 * unit_multiplier) # set one large number, override by EMS
+	water_heater.setSourceSideFlowControlMode('StorageTank')
 
     boiler_plant_loop.autosizeMaximumLoopFlowRate()
 
