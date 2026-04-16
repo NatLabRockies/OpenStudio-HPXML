@@ -658,7 +658,7 @@ Depending on the outputs requested, the file may include:
   Total Loads                         ``loads``            Heating, cooling, and hot water loads (in kBtu).
   Component Loads                     ``componentloads``   Heating and cooling loads (in kBtu) disaggregated by component (e.g., Walls, Windows, Infiltration, Ducts, etc.).
   Unmet Hours                         ``unmethours``       Heating, cooling, and EV driving unmet hours.
-  Zone Temperatures                   ``temperatures``     Zone temperatures (in deg-F) for each space (e.g., conditioned space, attic, garage, basement, crawlspace, etc.) plus heating/cooling setpoints. [#]_
+  Zone Temperatures                   ``temperatures``     Zone temperatures for each space (e.g., conditioned space [#]_, attic, garage, basement, crawlspace, etc.) plus heating/cooling setpoints [#]_ (in deg-F).
   Zone Conditions                     ``conditions``       Zone conditions (humidity ratio and relative humidity and dewpoint, radiant, and operative temperatures).
   Airflows                            ``airflows``         Airflow rates (in cfm) for infiltration, mechanical ventilation (including clothes dryer exhaust), natural ventilation, whole house fans.
   Weather                             ``weather``          Weather file data including outdoor temperatures, relative humidity, wind speed, and solar.
@@ -668,6 +668,7 @@ Depending on the outputs requested, the file may include:
   ==================================  ===================  ==================================================================================================================================
 
   .. [#] This is the argument provided to ``run_simulation.rb`` as described in the :ref:`basic_run` usage instructions.
+  .. [#] If the home is not fully conditioned (e.g., a room air conditioner that only meets 30% of the cooling load), the reported zone temperature for the conditioned space will reflect a fully conditioned home due to the way these systems are modeled in EnergyPlus.
   .. [#] When an On-Off Thermostat Deadband Temperature (see :ref:`hpxml_simulation_control`) is used, heating and cooling setpoints reflect the *cut-in* temperature for HVAC operation, not the middle of the deadband.
 
 Timeseries outputs can be one of the following frequencies: hourly, daily, monthly, or timestep (i.e., equal to the simulation timestep, which defaults to an hour but can be sub-hourly).
@@ -675,8 +676,6 @@ Timeseries outputs can be one of the following frequencies: hourly, daily, month
 Timestamps in the output use the start-of-period convention unless you have requested the end-of-period timestamp convention.
 Additional timestamp columns can be optionally requested that reflect daylight saving time (DST) and/or coordinated universal time (UTC).
 Most outputs will be summed over the hour (e.g., energy) but some will be averaged over the hour (e.g., temperatures, airflows).
-
-Note that if the home is not fully conditioned (e.g., a room air conditioner that only meets 30% of the cooling load), the reported zone temperature for the conditioned space will reflect a fully conditioned home due to the way these systems are modeled in EnergyPlus.
 
 .. _bill_outputs:
 
