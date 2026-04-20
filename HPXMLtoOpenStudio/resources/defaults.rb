@@ -3358,15 +3358,31 @@ module Defaults
         end
 
       elsif water_heating_system.water_heater_type == HPXML::WaterHeaterTypeHeatPump
+
+        if water_heating_system.hpwh_voltage.nil?
+          water_heating_system.hpwh_voltage = HPXML::HPWHVoltage240
+          water_heating_system.hpwh_voltage_isdefaulted = true
+        end
+
         water_heating_system.additional_properties.cop = get_water_heater_heat_pump_cop(water_heating_system)
 
         if water_heating_system.heating_capacity.nil?
-          water_heating_system.heating_capacity = (UnitConversions.convert(0.5, 'kW', 'Btu/hr') * water_heating_system.additional_properties.cop).round
+          if water_heating_system.hpwh_voltage == HPXML::HPWHVoltage240
+            water_heating_system.heating_capacity = (UnitConversions.convert(0.5, 'kW', 'Btu/hr') * water_heating_system.additional_properties.cop).round
+          elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated
+            water_heating_system.heating_capacity = (UnitConversions.convert(0.422, 'kW', 'Btu/hr') * water_heating_system.additional_properties.cop).round
+          else # 120V shared
+            water_heating_system.heating_capacity = (UnitConversions.convert(0.357, 'kW', 'Btu/hr') * water_heating_system.additional_properties.cop).round
+          end
           water_heating_system.heating_capacity_isdefaulted = true
         end
 
         if water_heating_system.backup_heating_capacity.nil?
-          water_heating_system.backup_heating_capacity = UnitConversions.convert(4.5, 'kW', 'Btu/hr').round
+          if water_heating_system.hpwh_voltage == HPXML::HPWHVoltage240
+            water_heating_system.backup_heating_capacity = UnitConversions.convert(4.5, 'kW', 'Btu/hr').round
+          else
+            water_heating_system.backup_heating_capacity = 0.0 # No backup elements
+          end
           water_heating_system.backup_heating_capacity_isdefaulted = true
         end
 
@@ -6120,6 +6136,7 @@ module Defaults
   # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @return [Double] Water heater setpoint temperature (F)
   def self.get_water_heater_temperature(eri_version)
+    # FIXME: Should we default to a different value for 120V HPWHs?
     if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2014A')
       # 2014 w/ Addendum A or newer
       return 125.0
@@ -6268,22 +6285,28 @@ module Defaults
   # @param water_heating_system [HPXML::WaterHeatingSystem] The HPXML water heating system of interest
   # @return [Double] COP of the heat pump (W/W)
   def self.get_water_heater_heat_pump_cop(water_heating_system)
-    # Based on simulations of the UEF test procedure at varying COPs
-    if not water_heating_system.energy_factor.nil?
-      uef = (0.60522 + water_heating_system.energy_factor) / 1.2101
-      cop = 1.174536058 * uef
-    elsif not water_heating_system.uniform_energy_factor.nil?
-      uef = water_heating_system.uniform_energy_factor
-      case water_heating_system.usage_bin
-      when HPXML::WaterHeaterUsageBinVerySmall
-        fail 'It is unlikely that a heat pump water heater falls into the very small bin of the First Hour Rating (FHR) test. Double check input.'
-      when HPXML::WaterHeaterUsageBinLow
-        cop = 1.0005 * uef - 0.0789
-      when HPXML::WaterHeaterUsageBinMedium
-        cop = 1.0909 * uef - 0.0868
-      when HPXML::WaterHeaterUsageBinHigh
-        cop = 1.1022 * uef - 0.0877
+    if water_heating_system.hpwh_voltage == HPXML::HPWHVoltage240
+      # Based on simulations of the UEF test procedure at varying COPs
+      if not water_heating_system.energy_factor.nil?
+        uef = (0.60522 + water_heating_system.energy_factor) / 1.2101
+        cop = 1.174536058 * uef
+      elsif not water_heating_system.uniform_energy_factor.nil?
+        uef = water_heating_system.uniform_energy_factor
+        case water_heating_system.usage_bin
+        when HPXML::WaterHeaterUsageBinVerySmall
+          fail 'It is unlikely that a heat pump water heater falls into the very small bin of the First Hour Rating (FHR) test. Double check input.'
+        when HPXML::WaterHeaterUsageBinLow
+          cop = 1.0005 * uef - 0.0789
+        when HPXML::WaterHeaterUsageBinMedium
+          cop = 1.0909 * uef - 0.0868
+        when HPXML::WaterHeaterUsageBinHigh
+          cop = 1.1022 * uef - 0.0877
+        end
       end
+    elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated
+      cop = 3.6
+    else # 120V shared
+      cop = 4.2
     end
     return cop
   end

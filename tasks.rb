@@ -2372,6 +2372,11 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     elsif ['base-dhw-tank-gas-fhr.xml'].include? hpxml_file
       hpxml_bldg.water_heating_systems[0].first_hour_rating = 56.0
       hpxml_bldg.water_heating_systems[0].usage_bin = nil
+    # FIXME: Add 120V options to BuildResidentialHPXML measure?
+    elsif ['base-dhw-tank-heat-pump-120v.xml'].include? hpxml_file
+      hpxml_bldg.water_heating_systems[0].hpwh_voltage = HPXML::HPWHVoltage120
+    elsif ['base-dhw-tank-heat-pump-120v-dedicated-circuit.xml'].include? hpxml_file
+      hpxml_bldg.water_heating_systems[0].hpwh_voltage = HPXML::HPWHVoltage120Dedicated
     elsif ['base-dhw-tank-heat-pump-confined-space.xml'].include? hpxml_file
       hpxml_bldg.water_heating_systems[0].hpwh_confined_space_without_mitigation = true
       hpxml_bldg.water_heating_systems[0].hpwh_containment_volume = 453

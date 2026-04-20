@@ -4247,10 +4247,11 @@ Each heat pump water heater is entered as a ``/HPXML/Building/BuildingDetails/Sy
   ``TankVolume``                                       double            gal            > 0                     No        See [#]_        Nominal tank volume
   ``FractionDHWLoadServed``                            double            frac           >= 0, <= 1 [#]_         Yes                       Fraction of hot water load served [#]_
   ``HeatingCapacity``                                  double            Btu/hr         > 0                     No        See [#]_        Heating output capacity
-  ``BackupHeatingCapacity``                            double            Btu/hr         >= 0                    No        15355 (4.5 kW)  Heating capacity of the electric resistance backup
+  ``BackupHeatingCapacity``                            double            Btu/hr         >= 0                    No        See [#]_        Heating capacity of the electric resistance backup
   ``UniformEnergyFactor`` or ``EnergyFactor``          double            frac           > 1, <= 5               Yes                       EnergyGuide label rated efficiency
+  ``HPWHOperatingMode``                                string                           See [#]_                No        hybrid/auto     HPWH operating mode [#]_
+  ``HPWHVoltage``                                      string                           See [#]_                No        240V            HPWH voltage
   ``HPWHDucting/ExhaustAirTermination``                string                           See [#]_                No        <none>          The location where HPWH exhaust air is ducted to
-  ``HPWHOperatingMode``                                string                           See [#]_                No        hybrid/auto     Operating mode [#]_
   ``UsageBin`` or ``FirstHourRating``                  string or double  str or gal/hr  See [#]_ or > 0         No        See [#]_        EnergyGuide label usage bin/first hour rating
   ``WaterHeaterInsulation/Jacket/JacketRValue``        double            F-ft2-hr/Btu   >= 0                    No        0               R-value of additional tank insulation wrap
   ``HotWaterTemperature``                              double            F              > 0                     No        125             Water heater setpoint [#]_
@@ -4277,11 +4278,13 @@ Each heat pump water heater is entered as a ``/HPXML/Building/BuildingDetails/Sy
   .. [#] The sum of all ``FractionDHWLoadServed`` (across all WaterHeatingSystems) must equal to 1.
   .. [#] FractionDHWLoadServed represents only the fraction of the hot water load associated with the hot water **fixtures**.
          Additional hot water load from clothes washers/dishwashers will be automatically assigned to the appropriate water heater(s).
-  .. [#] If HeatingCapacity not provided, defaults to 1706 Btu/hr (0.5 kW) multiplied by the heat pump COP.
-  .. [#] OpenStudio-HPXML currently only supports ExhaustAirTermination="outside" for heat pump water heaters located in conditioned space.
-         Any other combination of ExhaustAirTermination value and water heater location will be ignored w/ a warning.
+  .. [#] If HeatingCapacity not provided, defaults to the Btu/hr equivalent of the heat pump COP multiplied by 0.5 kW if HPWHVoltage="240V", 0.422 kW if HPWHVoltage="120V dedicated circuit", or 0.357 if HPWHVoltage="120V shared circuit" or "120V".
+  .. [#] If BackupHeatingCapacity not provided, defaults to 15355 (4.5 kW) if HPWHVoltage="240V" or 0 (no backup elements) for 120V systems.
   .. [#] HPWHOperatingMode choices are "hybrid/auto" or "heat pump only".
   .. [#] The heat pump water heater operating mode can alternatively be defined using :ref:`schedules_detailed`.
+  .. [#] HPWHVoltage choices are "240V", "120V", "120V dedicated circuit", or "120V shared circuit".
+  .. [#] OpenStudio-HPXML currently only supports ExhaustAirTermination="outside" for heat pump water heaters located in conditioned space.
+         Any other combination of ExhaustAirTermination value and water heater location will be ignored w/ a warning.
   .. [#] UsageBin choices are "very small", "low", "medium", or "high".
   .. [#] UsageBin/FirstHourRating are only used for water heaters that use UniformEnergyFactor.
          If neither UsageBin nor FirstHourRating provided, UsageBin defaults to "medium".

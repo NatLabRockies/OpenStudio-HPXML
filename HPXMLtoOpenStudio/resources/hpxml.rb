@@ -224,6 +224,10 @@ class HPXML < Object
   HeatPumpSizingACCA = 'ACCA'
   HeatPumpSizingHERS = 'HERS'
   HeatPumpSizingMaxLoad = 'MaxLoad'
+  HPWHVoltage240 = '240V'
+  HPWHVoltage120 = '120V'
+  HPWHVoltage120Dedicated = '120V dedicated circuit'
+  HPWHVoltage120Shared = '120V shared circuit'
   HVACCompressorTypeSingleStage = 'single stage'
   HVACCompressorTypeTwoStage = 'two stage'
   HVACCompressorTypeVariableSpeed = 'variable speed'
@@ -8595,6 +8599,7 @@ class HPXML < Object
              :energy_factor,                          # [Double] EnergyFactor (frac)
              :uniform_energy_factor,                  # [Double] UniformEnergyFactor (frac)
              :hpwh_operating_mode,                    # [String] HPWHOperatingMode (HPXML::WaterHeaterHPWHOperatingModeXXX)
+             :hpwh_voltage,                           # [String] HPWHVoltage (HPXML::HPWHVoltageXXX)
              :hpwh_ducting_supply,                    # [String] HPWHDucting/SupplyAirSource (HPXML::LocationXXX)
              :hpwh_ducting_exhaust,                   # [String] HPWHDucting/ExhaustAirTermination (HPXML::LocationXXX)
              :first_hour_rating,                      # [Double] FirstHourRating (gal/hr)
@@ -8698,6 +8703,7 @@ class HPXML < Object
       XMLHelper.add_element(water_heating_system, 'EnergyFactor', @energy_factor, :float, @energy_factor_isdefaulted) unless @energy_factor.nil?
       XMLHelper.add_element(water_heating_system, 'UniformEnergyFactor', @uniform_energy_factor, :float) unless @uniform_energy_factor.nil?
       XMLHelper.add_element(water_heating_system, 'HPWHOperatingMode', @hpwh_operating_mode, :string, @hpwh_operating_mode_isdefaulted) unless @hpwh_operating_mode.nil?
+      XMLHelper.add_element(water_heating_system, 'HPWHVoltage', @hpwh_voltage, :string, @hpwh_voltage_isdefaulted) unless @hpwh_voltage.nil?
       if (not @hpwh_ducting_exhaust.nil?) || (not @hpwh_ducting_supply.nil?)
         hpwh_ducting = XMLHelper.add_element(water_heating_system, 'HPWHDucting')
         XMLHelper.add_element(hpwh_ducting, 'SupplyAirSource', @hpwh_ducting_supply, :string, @hpwh_ducting_supply_isdefaulted) unless @hpwh_ducting_supply.nil?
@@ -8753,6 +8759,7 @@ class HPXML < Object
       @energy_factor = XMLHelper.get_value(water_heating_system, 'EnergyFactor', :float)
       @uniform_energy_factor = XMLHelper.get_value(water_heating_system, 'UniformEnergyFactor', :float)
       @hpwh_operating_mode = XMLHelper.get_value(water_heating_system, 'HPWHOperatingMode', :string)
+      @hpwh_voltage = XMLHelper.get_value(water_heating_system, 'HPWHVoltage', :string)
       @hpwh_ducting_supply = XMLHelper.get_value(water_heating_system, 'HPWHDucting/SupplyAirSource', :string)
       @hpwh_ducting_exhaust = XMLHelper.get_value(water_heating_system, 'HPWHDucting/ExhaustAirTermination', :string)
       @first_hour_rating = XMLHelper.get_value(water_heating_system, 'FirstHourRating', :float)

@@ -352,6 +352,15 @@ module HotWaterAndAppliances
         limits: EPlus::ScheduleTypeLimitsTemperature
       )
 
+      # FIXME: Use HPXML HasMixingValve and MixingValueSetpoint elements?
+      # FIXME: Should this be min(125.0, t_set)?
+      hw_temp_schedule = Model.add_schedule_constant(
+        model,
+        name: 'hot water temperature schedule',
+        value: UnitConversions.convert(125.0, 'F', 'C'),
+        limits: EPlus::ScheduleTypeLimitsTemperature
+      )
+
       water_heating = hpxml_bldg.water_heating
 
       # Create schedule
@@ -489,7 +498,7 @@ module HotWaterAndAppliances
             peak_flow_rate: unit_multiplier * cw_peak_flow * gpd_frac * non_solar_fraction,
             flow_rate_schedule: water_cw_schedule,
             water_use_connections: water_use_connections[water_heating_system.id],
-            target_temperature_schedule: nil
+            target_temperature_schedule: hw_temp_schedule
           )
           cw_wue.additionalProperties.setFeature('HPXML_ID', water_heating_system.id) # Used by reporting measure
         end
@@ -526,7 +535,7 @@ module HotWaterAndAppliances
         peak_flow_rate: unit_multiplier * dw_peak_flow * gpd_frac * non_solar_fraction,
         flow_rate_schedule: water_dw_schedule,
         water_use_connections: water_use_connections[water_heating_system.id],
-        target_temperature_schedule: nil
+        target_temperature_schedule: hw_temp_schedule
       )
       dw_wue.additionalProperties.setFeature('HPXML_ID', water_heating_system.id) # Used by reporting measure
     end
