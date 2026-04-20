@@ -3138,7 +3138,7 @@ module HVAC
 
     clg_coil.setName(coil_name)
     clg_coil.setCondenserType('AirCooled')
-    clg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS.
+    clg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS to account for unavailable periods.
     clg_coil.additionalProperties.setFeature('HPXML_ID', cooling_system.id) # Used by reporting measure
     if has_deadband_control
       # Apply startup capacity degradation
@@ -3306,7 +3306,7 @@ module HVAC
 
     # Per E+ documentation, if an air-to-air heat pump, the crankcase heater defined for the DX cooling coil is ignored and the crankcase heater power defined for the DX heating coil is used
     htg_coil.setMaximumOutdoorDryBulbTemperatureforCrankcaseHeaterOperation(UnitConversions.convert(CrankcaseHeaterTemp, 'F', 'C'))
-    htg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS.
+    htg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS to account for unavailable periods.
     htg_coil.additionalProperties.setFeature('HPXML_ID', heating_system.id) # Used by reporting measure
     htg_coil.additionalProperties.setFeature('FractionHeatLoadServed', heating_system.fraction_heat_load_served) # Used by reporting measure
     if has_deadband_control
@@ -4715,6 +4715,7 @@ module HVAC
 
   # Creates an EMS program to add crankcase heater energy use for a heat pump.
   # The crankcase heater is enabled during the time that the compressor is not running and the ODB is below a specified temperature.
+  # We use EMS to account for unavailable periods; see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2151.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param htg_coil [OpenStudio::Model::CoilHeatingDXSingleSpeed or OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio Heating Coil object
