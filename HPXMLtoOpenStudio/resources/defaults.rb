@@ -6849,8 +6849,17 @@ module Defaults
         end
       elsif component.is_a?(HPXML::PVSystem)
         voltages << HPXML::ElectricPanelVoltage240
-      elsif component.is_a?(HPXML::WaterHeatingSystem) ||
-            component.is_a?(HPXML::ClothesDryer) ||
+      elsif component.is_a?(HPXML::WaterHeatingSystem)
+        if component.fuel_type == HPXML::FuelTypeElectricity
+          if component.hpwh_voltage.nil? # Not HPWH
+            voltages << HPXML::ElectricPanelVoltage240
+          elsif component.hpwh_voltage == HPXML::HPWHVoltage240
+            voltages << HPXML::ElectricPanelVoltage240
+          else # 120V HPWH
+            voltages << HPXML::ElectricPanelVoltage120
+          end
+        end
+      elsif component.is_a?(HPXML::ClothesDryer) ||
             component.is_a?(HPXML::CookingRange)
         if component.fuel_type == HPXML::FuelTypeElectricity
           voltages << HPXML::ElectricPanelVoltage240

@@ -4820,7 +4820,7 @@ Individual branch circuits entered in ``BranchCircuits/BranchCircuit``.
 
          \- ``HeatPump[HeatPumpFuel="electricity"]``: 240
 
-         \- ``WaterHeatingSystem[FuelType="electricity"]``: 240
+         \- ``WaterHeatingSystem[FuelType="electricity"]``: 240, or 120 if a heat pump water heater with HPWHVoltage=120V
 
          \- ``ClothesDryer[FuelType="electricity"]``: 240
 
