@@ -1851,7 +1851,7 @@ module Outputs
           fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?
 
           if obj_name == Constants::ObjectTypeCrankcaseHeater
-            if object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').is_initialized && object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').get <= 0
+            if object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').get <= 0
               # Allocate crankcase to cooling end use (cooling system or HP only provides cooling)
               eut = eut[1]
             else
