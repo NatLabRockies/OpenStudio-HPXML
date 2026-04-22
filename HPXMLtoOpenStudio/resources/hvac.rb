@@ -4797,14 +4797,14 @@ module HVAC
     )
     program.addLine("Set T_out = #{tout_db_sensor.name}")
     if not htg_coil_rtf_sensor.nil?
-      program.addLine("Set frac_htg = #{htg_coil_rtf_sensor.name}")
+      program.addLine("Set htg_rtf = #{htg_coil_rtf_sensor.name}")
     else
-      program.addLine('Set frac_htg = 0.0')
+      program.addLine('Set htg_rtf = 0.0')
     end
     if not clg_coil_rtf_sensor.nil?
-      program.addLine("Set frac_clg = #{clg_coil_rtf_sensor.name}")
+      program.addLine("Set clg_rtf = #{clg_coil_rtf_sensor.name}")
     else
-      program.addLine('Set frac_clg = 0.0')
+      program.addLine('Set clg_rtf = 0.0')
     end
     if not unitary_sys_cyc_ratio_sensor.nil?
       program.addLine("Set cyc_ratio = #{unitary_sys_cyc_ratio_sensor.name}")
@@ -4812,28 +4812,31 @@ module HVAC
       program.addLine('Set cyc_ratio = 0')
     end
 
+    crankcase_criteria = "If (T_out < #{max_oat_crankcase})"
+
     # Don't run crankcase heater during heating/cooling unavailable periods
-    avail_criteria = ''
     if hvac_system.is_a? HPXML::CoolingSystem
-      avail_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+      crankcase_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
     elsif hvac_system.is_a? HPXML::HeatPump
       if hvac_system.fraction_heat_load_served > 0
-        avail_criteria += " && (#{htg_avail_sensor.name} == 1)" if not htg_avail_sensor.nil?
+        crankcase_criteria += " && (#{htg_avail_sensor.name} == 1)" if not htg_avail_sensor.nil?
       else
-        avail_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+        crankcase_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
       end
     end
 
-    temp_criteria = "If (T_out < #{max_oat_crankcase}) && (cyc_ratio < 1)" # cycling ratio is 1 for multispeed objects operating at speeds above 1 (i.e., compressor is not off)
-    program.addLine(temp_criteria + avail_criteria)
-    program.addLine('  Set frac_htg_clg = @Max frac_htg frac_clg')
-    program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{hvac_system.crankcase_heater_watts} * (1 - frac_htg_clg)")
+    program.addLine(crankcase_criteria)
+    program.addLine('  If (cyc_ratio < 1)') # Compressor cycling during timestep
+    program.addLine('    Set hvac_rtf = @Max htg_rtf clg_rtf')
     if not htg_coil.nil?
       min_oat_compressor = htg_coil.minimumOutdoorDryBulbTemperatureforCompressorOperation
-      temp_criteria = "ElseIf (T_out < #{min_oat_compressor})"
-      program.addLine(temp_criteria + avail_criteria)
-      program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{hvac_system.crankcase_heater_watts}")
+      program.addLine("  ElseIf (T_out < #{min_oat_compressor})") # Compressor off for entire timestep due to minimum operating temperature (cyc_ratio can still be 1)
+      program.addLine('    Set hvac_rtf = 0')
     end
+    program.addLine('  Else') # Compressor on for entire timestep
+    program.addLine('    Set hvac_rtf = 1')
+    program.addLine('  EndIf')
+    program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{hvac_system.crankcase_heater_watts} * (1 - hvac_rtf)")
     program.addLine('Else')
     program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = 0.0")
     program.addLine('EndIf')
