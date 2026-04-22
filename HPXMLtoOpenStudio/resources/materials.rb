@@ -186,7 +186,7 @@ class Material
   # @return [Material] The material object
   def self.CoveringBare(floor_fraction = 0.8, rvalue = 2.08)
     thick_in = 0.5 # in
-    return new(name: 'floor covering', thick_in: thick_in, k_in: thick_in / (rvalue * floor_fraction), rho: 3.4, cp: 0.2, tAbs: 0.9, sAbs: 0.9)
+    return new(name: 'floor covering', thick_in: thick_in, k_in: thick_in / (rvalue * floor_fraction), rho: 3.4, cp: 0.32, tAbs: 0.9, sAbs: 0.9)
   end
 
   # Creates a material for a given thickness of concrete.
