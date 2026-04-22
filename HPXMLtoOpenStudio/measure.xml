@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <measure>
   <schema_version>3.1</schema_version>
-  <name>hpxm_lto_openstudio</name>
+  <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
   <version_id>b2ce30a3-be8a-4659-85ec-2e133724ef4e</version_id>
   <version_modified>2026-04-22T17:51:13Z</version_modified>
