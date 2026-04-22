@@ -3351,7 +3351,7 @@ Allowed combinations of CapacityDescription and OutdoorTemperature for a given d
   .. [#] For variable speed equipment, minimum/maximum datapoints must both be provided or both be omitted.
   .. [#] Nominal datapoint at 82F is required for single/two stage equipment and optional for variable speed equipment.
 
-Note that when detailed cooling performance data is provided, some other inputs (like SEER) are ignored.
+Note that when detailed cooling performance data are provided, some other inputs (like SEER) are ignored.
 
 .. _htg_detailed_perf_data:
 
@@ -3372,7 +3372,7 @@ For air-source HVAC systems with detailed heating performance data, performance 
   .. [#] OutdoorTemperature choices are 47F, 17F, 5F, and one optional user-specified temperature less than 5F.
          Datapoints at additional outdoor temperatures are not currently supported.
   .. [#] If Capacity is used, the nominal value for the 47F datapoint must match the HeatingCapacity input (if provided) and the nominal value for the 17F datapoint must match the HeatingCapacity17F input (if provided).
-         If CapacityFractionOfNominal is used, the nominal value for the 95F datapoint must be 1.
+         If CapacityFractionOfNominal is used, the nominal value for the 47F datapoint must be 1.
   .. [#] CapacityDescription choices are "minimum", "nominal", and "maximum".
          See the table below for the allowed combinations of CapacityDescription and OutdoorTemperature.
   .. [#] The COP should not include power required for defrost cycling or drain pan heater operation.
@@ -3392,7 +3392,7 @@ Allowed combinations of CapacityDescription and OutdoorTemperature for a given d
   .. [#] Only variable speed equipment will use CapacityDescription="maximum".
   .. [#] For variable speed equipment, minimum/maximum datapoints must both be provided or both be omitted.
 
-Note that when detailed cooling performance data is provided, some other inputs (like HSPF) are ignored.
+Note that when detailed heating performance data are provided, some other inputs (like HSPF) are ignored.
 
 .. _geothermal_loops:
 
