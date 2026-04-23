@@ -9,7 +9,6 @@ module HVAC
   AirSourceCoolRatedIDB = 80.0 # degF, Rated indoor drybulb for air-source systems, cooling
   AirSourceCoolRatedIWB = 67.0 # degF, Rated indoor wetbulb for air-source systems, cooling
   RatedCFMPerTon = 400.0 # cfm/ton of rated capacity, RESNET HERS Addendum 82
-  CrankcaseHeaterTemp = 50.0 # degF, RESNET HERS Addendum 82
   MinCapacity = 1.0 # Btuh
   MinAirflow = 3.0 # cfm; E+ min airflow is 0.001 m3/s
   GroundSourceHeatRatedWET = 70.0 # degF, Rated water entering temperature for ground-source systems, heating
@@ -3086,7 +3085,6 @@ module HVAC
         clg_coil = OpenStudio::Model::CoilCoolingDXSingleSpeed.new(model, model.alwaysOnDiscreteSchedule, cap_ft_curve, cap_fff_curve, eir_ft_curve, eir_fff_curve, plf_fplr_curve)
         # Coil COP calculation based on system type
         clg_coil.setRatedCOP(clg_ap.cool_rated_cops[i])
-        clg_coil.setMaximumOutdoorDryBulbTemperatureForCrankcaseHeaterOperation(UnitConversions.convert(CrankcaseHeaterTemp, 'F', 'C'))
         clg_coil.setRatedSensibleHeatRatio(clg_ap.cool_rated_shr_gross)
         clg_coil.setNominalTimeForCondensateRemovalToBegin(1000.0)
         clg_coil.setRatioOfInitialMoistureEvaporationRateAndSteadyStateLatentCapacity(1.5)
@@ -3101,7 +3099,6 @@ module HVAC
           clg_coil.setApplyLatentDegradationtoSpeedsGreaterthan1(false)
           clg_coil.setFuelType(EPlus::FuelTypeElectricity)
           clg_coil.setAvailabilitySchedule(model.alwaysOnDiscreteSchedule)
-          clg_coil.setMaximumOutdoorDryBulbTemperatureforCrankcaseHeaterOperation(UnitConversions.convert(CrankcaseHeaterTemp, 'F', 'C'))
           constant_biquadratic = Model.add_curve_biquadratic(
             model,
             name: 'ConstantBiquadratic',
@@ -3124,7 +3121,7 @@ module HVAC
 
     clg_coil.setName(coil_name)
     clg_coil.setCondenserType('AirCooled')
-    clg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS.
+    clg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS to account for unavailable periods.
     clg_coil.additionalProperties.setFeature('HPXML_ID', cooling_system.id) # Used by reporting measure
     if has_deadband_control
       # Apply startup capacity degradation
@@ -3291,8 +3288,7 @@ module HVAC
     htg_coil.setResistiveDefrostHeaterCapacity(0.000001) # We model defrost via EMS. Use non-zero value to prevent E+ warning
 
     # Per E+ documentation, if an air-to-air heat pump, the crankcase heater defined for the DX cooling coil is ignored and the crankcase heater power defined for the DX heating coil is used
-    htg_coil.setMaximumOutdoorDryBulbTemperatureforCrankcaseHeaterOperation(UnitConversions.convert(CrankcaseHeaterTemp, 'F', 'C'))
-    htg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS.
+    htg_coil.setCrankcaseHeaterCapacity(0) # We model crankcase heater via EMS to account for unavailable periods.
     htg_coil.additionalProperties.setFeature('HPXML_ID', heating_system.id) # Used by reporting measure
     htg_coil.additionalProperties.setFeature('FractionHeatLoadServed', heating_system.fraction_heat_load_served) # Used by reporting measure
     if has_deadband_control
@@ -4604,19 +4600,20 @@ module HVAC
 
   # Creates an EMS program to add crankcase heater energy use for a heat pump.
   # The crankcase heater is enabled during the time that the compressor is not running and the ODB is below a specified temperature.
+  # We use EMS to account for unavailable periods; see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2151.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param htg_coil [OpenStudio::Model::CoilHeatingDXSingleSpeed or OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio Heating Coil object
   # @param clg_coil [OpenStudio::Model::CoilCoolingDXSingleSpeed or OpenStudio::Model::CoilCoolingDXMultiSpeed] OpenStudio Cooling Coil object
   # @param conditioned_space [OpenStudio::Model::Space] OpenStudio Space object for conditioned zone
-  # @param heat_pump [HPXML::HeatPump] The HPXML heat pump of interest
+  # @param hvac_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
   # @param unitary_system [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
   # @return [nil]
-  def self.apply_crankcase_heater_ems_program(model, htg_coil, clg_coil, conditioned_space, heat_pump, unitary_system)
-    return unless heat_pump.crankcase_heater_watts.to_f > 0
+  def self.apply_crankcase_heater_ems_program(model, htg_coil, clg_coil, conditioned_space, hvac_system, unitary_system)
+    return unless hvac_system.crankcase_heater_watts.to_f > 0
 
     coil_name = clg_coil.name.to_s
-    if (heat_pump.is_a? HPXML::HeatPump) && (heat_pump.fraction_heat_load_served > 0)
+    if (hvac_system.is_a? HPXML::HeatPump) && (hvac_system.fraction_heat_load_served > 0)
       coil_name = htg_coil.name.to_s
     else
       htg_coil = nil
@@ -4636,11 +4633,11 @@ module HVAC
       schedule: model.alwaysOnDiscreteSchedule,
       fuel_type: HPXML::FuelTypeElectricity
     )
-    crankcase_heater_energy_oe.additionalProperties.setFeature('HPXML_ID', heat_pump.id) # Used by reporting measure
-    if heat_pump.is_a? HPXML::CoolingSystem
+    crankcase_heater_energy_oe.additionalProperties.setFeature('HPXML_ID', hvac_system.id) # Used by reporting measure
+    if hvac_system.is_a? HPXML::CoolingSystem
       crankcase_heater_energy_oe.additionalProperties.setFeature('FractionHeatLoadServed', 0.0) # Used by reporting measure
-    elsif heat_pump.is_a? HPXML::HeatPump
-      crankcase_heater_energy_oe.additionalProperties.setFeature('FractionHeatLoadServed', heat_pump.fraction_heat_load_served) # Used by reporting measure
+    elsif hvac_system.is_a? HPXML::HeatPump
+      crankcase_heater_energy_oe.additionalProperties.setFeature('FractionHeatLoadServed', hvac_system.fraction_heat_load_served) # Used by reporting measure
     end
 
     crankcase_heater_energy_oe_act = Model.add_ems_actuator(
@@ -4663,7 +4660,7 @@ module HVAC
       )
     end
 
-    if (heat_pump.is_a? HPXML::CoolingSystem) || ((heat_pump.is_a? HPXML::HeatPump) && (heat_pump.fraction_cool_load_served > 0))
+    if (hvac_system.is_a? HPXML::CoolingSystem) || ((hvac_system.is_a? HPXML::HeatPump) && (hvac_system.fraction_cool_load_served > 0))
       clg_coil_rtf_sensor = Model.add_ems_sensor(
         model,
         name: "#{clg_coil.name} rtf s",
@@ -4682,50 +4679,53 @@ module HVAC
     end
 
     # EMS program
-    if clg_coil.is_a? OpenStudio::Model::CoilCoolingDXSingleSpeed
-      max_oat_crankcase = clg_coil.maximumOutdoorDryBulbTemperatureForCrankcaseHeaterOperation
-    elsif clg_coil.is_a? OpenStudio::Model::CoilCoolingDXMultiSpeed
-      max_oat_crankcase = clg_coil.maximumOutdoorDryBulbTemperatureforCrankcaseHeaterOperation
-    end
+    max_oat_crankcase = UnitConversions.convert(50.0, 'F', 'C') # RESNET HERS Addendum 82
     program = Model.add_ems_program(
       model,
       name: "#{coil_name} crankcase program"
     )
     program.addLine("Set T_out = #{t_out_sensor.name}")
     if not htg_coil_rtf_sensor.nil?
-      program.addLine("Set frac_htg = #{htg_coil_rtf_sensor.name}")
+      program.addLine("Set htg_rtf = #{htg_coil_rtf_sensor.name}")
     else
-      program.addLine('Set frac_htg = 0.0')
+      program.addLine('Set htg_rtf = 0.0')
     end
     if not clg_coil_rtf_sensor.nil?
-      program.addLine("Set frac_clg = #{clg_coil_rtf_sensor.name}")
+      program.addLine("Set clg_rtf = #{clg_coil_rtf_sensor.name}")
     else
-      program.addLine('Set frac_clg = 0.0')
+      program.addLine('Set clg_rtf = 0.0')
     end
     if not unitary_sys_cyc_ratio_sensor.nil?
       program.addLine("Set cyc_ratio = #{unitary_sys_cyc_ratio_sensor.name}")
     else
       program.addLine('Set cyc_ratio = 0')
     end
-    temp_criteria = "If (T_out < #{max_oat_crankcase}) && (cyc_ratio < 1)"
-    # Don't run crankcase heater during heating/cooling unavailable periods either
-    if heat_pump.is_a? HPXML::CoolingSystem
-      temp_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
-    elsif heat_pump.is_a? HPXML::HeatPump
-      if heat_pump.fraction_heat_load_served > 0
-        temp_criteria += " && (#{htg_avail_sensor.name} == 1)" if not htg_avail_sensor.nil?
+
+    crankcase_criteria = "If (T_out < #{max_oat_crankcase})"
+
+    # Don't run crankcase heater during heating/cooling unavailable periods
+    if hvac_system.is_a? HPXML::CoolingSystem
+      crankcase_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+    elsif hvac_system.is_a? HPXML::HeatPump
+      if hvac_system.fraction_heat_load_served > 0
+        crankcase_criteria += " && (#{htg_avail_sensor.name} == 1)" if not htg_avail_sensor.nil?
       else
-        temp_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+        crankcase_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
       end
     end
-    program.addLine(temp_criteria)
-    program.addLine('  Set frac_htg_clg = @Max frac_htg frac_clg')
-    program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{heat_pump.crankcase_heater_watts} * (1 - frac_htg_clg)")
+
+    program.addLine(crankcase_criteria)
+    program.addLine('  If (cyc_ratio < 1)') # Compressor cycling during timestep
+    program.addLine('    Set hvac_rtf = @Max htg_rtf clg_rtf')
     if not htg_coil.nil?
       min_oat_compressor = htg_coil.minimumOutdoorDryBulbTemperatureforCompressorOperation
-      program.addLine("ElseIf T_out < #{min_oat_compressor}")
-      program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{heat_pump.crankcase_heater_watts}")
+      program.addLine("  ElseIf (T_out < #{min_oat_compressor})") # Compressor off for entire timestep due to minimum operating temperature (cyc_ratio can still be 1)
+      program.addLine('    Set hvac_rtf = 0')
     end
+    program.addLine('  Else') # Compressor on for entire timestep
+    program.addLine('    Set hvac_rtf = 1')
+    program.addLine('  EndIf')
+    program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = #{hvac_system.crankcase_heater_watts} * (1 - hvac_rtf)")
     program.addLine('Else')
     program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = 0.0")
     program.addLine('EndIf')
