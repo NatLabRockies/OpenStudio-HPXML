@@ -30,6 +30,7 @@ __Bugfixes__
 - Small bugfixes when using the on/off thermostat deadband advanced research feature:
   - Fixes unmet hours outputs, which could be missing some periods of unmet hours.
   - Fixes timeseries outputs for heating/cooling setpoints.
+- Fixes logic in HP multi-stage backup advanced research feature.
 
 ## OpenStudio-HPXML v1.11.1
 
