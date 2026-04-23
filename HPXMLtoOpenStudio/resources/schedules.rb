@@ -277,14 +277,14 @@ class HourlyByDaySchedule
 
     prev_wkdy_vals, prev_wkdy_rule = nil, nil
     prev_wknd_vals, prev_wknd_rule = nil, nil
-    for d in 1..num_days
-      date_s = OpenStudio::Date::fromDayOfYear(d, year)
-      date_e = OpenStudio::Date::fromDayOfYear(d, year)
+    for d in 0..num_days - 1
+      date_s = OpenStudio::Date::fromDayOfYear(d + 1, year)
+      date_e = OpenStudio::Date::fromDayOfYear(d + 1, year)
 
       wkdy_vals, wknd_vals = [], []
-      for h in 1..24
-        wkdy_vals[h] = (@weekday_day_by_hour_values[d - 1][h - 1]) / @maxval
-        wknd_vals[h] = (@weekend_day_by_hour_values[d - 1][h - 1]) / @maxval
+      for h in 0..23
+        wkdy_vals[h] = (@weekday_day_by_hour_values[d][h]) / @maxval
+        wknd_vals[h] = (@weekend_day_by_hour_values[d][h]) / @maxval
       end
 
       if (wkdy_vals == prev_wkdy_vals) && (wknd_vals == prev_wknd_vals)
@@ -482,21 +482,21 @@ class MonthWeekdayWeekendSchedule
 
     periods = []
     if begin_month <= end_month # contiguous period
-      periods << [begin_month, end_month]
+      periods << [begin_month - 1, end_month - 1]
     else # non-contiguous period
-      periods << [1, end_month]
-      periods << [begin_month, 12]
+      periods << [0, end_month - 1]
+      periods << [begin_month - 1, 11]
     end
 
     periods.each do |period|
       for m in period[0]..period[1]
-        date_s = OpenStudio::Date::fromDayOfYear(day_startm[m - 1], year)
-        date_e = OpenStudio::Date::fromDayOfYear(day_endm[m - 1], year)
+        date_s = OpenStudio::Date::fromDayOfYear(day_startm[m], year)
+        date_e = OpenStudio::Date::fromDayOfYear(day_endm[m], year)
 
         wkdy_vals, wknd_vals = [], []
-        for h in 1..24
-          wkdy_vals[h] = (@monthly_values[m - 1] * @weekday_hourly_values[h - 1]) / @maxval
-          wknd_vals[h] = (@monthly_values[m - 1] * @weekend_hourly_values[h - 1]) / @maxval
+        for h in 0..23
+          wkdy_vals[h] = (@monthly_values[m] * @weekday_hourly_values[h]) / @maxval
+          wknd_vals[h] = (@monthly_values[m] * @weekend_hourly_values[h]) / @maxval
         end
 
         if (wkdy_vals == prev_wkdy_vals) && (wknd_vals == prev_wknd_vals)
