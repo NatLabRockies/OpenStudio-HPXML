@@ -13,7 +13,7 @@ Dir["#{File.dirname(__FILE__)}/resources/*.rb"].each do |resource_file|
 end
 
 # start the measure
-class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
+class HPXMLToOpenStudio < OpenStudio::Measure::ModelMeasure
   # human readable name
   def name
     return 'HPXML to OpenStudio Translator'
@@ -542,4 +542,4 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
 end
 
 # register the measure to be used by the application
-HPXMLtoOpenStudio.new.registerWithApplication
+HPXMLToOpenStudio.new.registerWithApplication
