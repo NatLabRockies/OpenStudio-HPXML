@@ -3424,10 +3424,10 @@ module HVAC
     supp_coil_avail_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
     supp_coil_avail_program.addLine('Else') # global variable = 1
     supp_coil_avail_program.addLine("  Set living_t = #{t_in_sensor.name}")
-    supp_coil_avail_program.addLine("  Set htg_sp_l = #{htg_sp_sensor.name}")
-    supp_coil_avail_program.addLine("  Set htg_sp_h = #{htg_sp_sensor.name} + #{ddb}")
+    supp_coil_avail_program.addLine("  Set htg_sp_low = #{htg_sp_sensor.name}")
+    supp_coil_avail_program.addLine("  Set htg_sp_high = #{htg_sp_sensor.name} + #{ddb}")
     supp_coil_avail_program.addLine("  If (@TRENDVALUE #{supp_energy_trend.name} 1) > 0") # backup coil is turned on, keep it on until reaching upper end of ddb in case of high frequency oscillations
-    supp_coil_avail_program.addLine('    If living_t > htg_sp_h')
+    supp_coil_avail_program.addLine('    If living_t > htg_sp_high')
     supp_coil_avail_program.addLine("      Set #{global_var_supp_avail.name} = 0")
     supp_coil_avail_program.addLine("      Set #{supp_coil_avail_act.name} = 0")
     supp_coil_avail_program.addLine('    Else')
@@ -3440,7 +3440,7 @@ module HVAC
       r_s_a << "(@TrendValue #{htg_energy_trend.name} #{t_i}) > 0"
     end
     supp_coil_avail_program.addLine("    If #{r_s_a.join(' && ')}")
-    supp_coil_avail_program.addLine('      If living_t > htg_sp_l')
+    supp_coil_avail_program.addLine('      If living_t > htg_sp_low')
     supp_coil_avail_program.addLine("        Set #{global_var_supp_avail.name} = 0")
     supp_coil_avail_program.addLine("        Set #{supp_coil_avail_act.name} = 0")
     supp_coil_avail_program.addLine('      Else')
@@ -3673,10 +3673,10 @@ module HVAC
 
     # Check values within min/max limits
     realistic_cycling_program.addLine("Set living_t = #{t_in_sensor.name}")
-    realistic_cycling_program.addLine("Set htg_sp_l = #{htg_sp_sensor.name}")
-    realistic_cycling_program.addLine("Set htg_sp_h = #{htg_sp_sensor.name} + #{ddb}")
-    realistic_cycling_program.addLine("Set clg_sp_l = #{clg_sp_sensor.name} - #{ddb}")
-    realistic_cycling_program.addLine("Set clg_sp_h = #{clg_sp_sensor.name}")
+    realistic_cycling_program.addLine("Set htg_sp_low = #{htg_sp_sensor.name}")
+    realistic_cycling_program.addLine("Set htg_sp_high = #{htg_sp_sensor.name} + #{ddb}")
+    realistic_cycling_program.addLine("Set clg_sp_low = #{clg_sp_sensor.name} - #{ddb}")
+    realistic_cycling_program.addLine("Set clg_sp_high = #{clg_sp_sensor.name}")
 
     (1..number_of_timestep_logged).each do |t_i|
       realistic_cycling_program.addLine("Set unitary_var_#{t_i}_ago = @TrendValue #{unitary_speed_var_trend.name} #{t_i}")
@@ -3689,22 +3689,22 @@ module HVAC
     end
     # Cooling
     # Setpoint not met and low speed is on for 5 time steps
-    realistic_cycling_program.addLine("If (living_t - clg_sp_h > 0.0) && (#{s_trend_low.join(' && ')})")
+    realistic_cycling_program.addLine("If (living_t - clg_sp_high > 0.0) && (#{s_trend_low.join(' && ')})")
     # Enable high speed unitary system
     realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 2")
     # Keep high speed unitary on until setpoint +- deadband is met
-    realistic_cycling_program.addLine('ElseIf (unitary_var_1_ago == 2) && ((living_t - clg_sp_l > 0.0))')
+    realistic_cycling_program.addLine('ElseIf (unitary_var_1_ago == 2) && ((living_t - clg_sp_low > 0.0))')
     realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 2")
     realistic_cycling_program.addLine('Else')
     realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 1")
     realistic_cycling_program.addLine('EndIf')
     if is_heatpump
       # Heating
-      realistic_cycling_program.addLine("If (htg_sp_l - living_t > 0.0) && (#{s_trend_low.join(' && ')})")
+      realistic_cycling_program.addLine("If (htg_sp_low - living_t > 0.0) && (#{s_trend_low.join(' && ')})")
       # Enable high speed unitary system
       realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 2")
       # Keep high speed unitary on until setpoint +- deadband is met
-      realistic_cycling_program.addLine('ElseIf (unitary_var_1_ago == 2) && (htg_sp_h - living_t > 0.0)')
+      realistic_cycling_program.addLine('ElseIf (unitary_var_1_ago == 2) && (htg_sp_high - living_t > 0.0)')
       realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 2")
       realistic_cycling_program.addLine('Else')
       realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 1")
@@ -3714,9 +3714,9 @@ module HVAC
         realistic_cycling_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
         realistic_cycling_program.addLine('Else') # global variable = 1
         realistic_cycling_program.addLine("  Set #{supp_coil_avail_act.name} = 1")
-        realistic_cycling_program.addLine("  If (htg_sp_l - living_t > 0.0) && (#{s_trend_high.join(' && ')})")
+        realistic_cycling_program.addLine("  If (htg_sp_low - living_t > 0.0) && (#{s_trend_high.join(' && ')})")
         realistic_cycling_program.addLine("    Set #{supp_coil_avail_act.name} = 1")
-        realistic_cycling_program.addLine("  ElseIf ((@TRENDVALUE #{backup_energy_trend.name} 1) > 0) && (htg_sp_h - living_t > 0.0)") # backup coil is turned on, keep it on until reaching upper end of ddb in case of high frequency oscillations
+        realistic_cycling_program.addLine("  ElseIf ((@TRENDVALUE #{backup_energy_trend.name} 1) > 0) && (htg_sp_high - living_t > 0.0)") # backup coil is turned on, keep it on until reaching upper end of ddb in case of high frequency oscillations
         realistic_cycling_program.addLine("    Set #{supp_coil_avail_act.name} = 1")
         realistic_cycling_program.addLine('  Else')
         realistic_cycling_program.addLine("    Set #{global_var_supp_avail.name} = 0")
@@ -4053,11 +4053,18 @@ module HVAC
     t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
     htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
 
-    backup_coil_htg_rate = Model.add_ems_sensor(
+    backup_htg_coil_sensor = Model.add_ems_sensor(
       model,
-      name: 'supp coil heating rate',
+      name: 'supp htg coil rate',
       output_var_or_meter_name: 'Heating Coil Heating Rate',
       key_name: htg_supp_coil.name
+    )
+
+    htg_coil_sensor = Model.add_ems_sensor(
+      model,
+      name: 'htg coil rate',
+      output_var_or_meter_name: 'Heating Coil Heating Rate',
+      key_name: htg_coil.name
     )
 
     # Need to use availability actuator because there's a bug in E+ that didn't handle the speed level = 0 correctly.See: https://github.com/NatLabRockies/EnergyPlus/pull/9392#discussion_r1578624175
@@ -4070,15 +4077,15 @@ module HVAC
       num_timesteps_logged: number_of_timestep_logged
     )
 
-    setpoint_temp_trend = Model.add_ems_trend_var(
+    htg_coil_trend = Model.add_ems_trend_var(
       model,
-      ems_object: htg_sp_sensor,
+      ems_object: htg_coil_sensor,
       num_timesteps_logged: number_of_timestep_logged
     )
 
-    backup_coil_htg_rate_trend = Model.add_ems_trend_var(
+    backup_htg_coil_trend = Model.add_ems_trend_var(
       model,
-      ems_object: backup_coil_htg_rate,
+      ems_object: backup_htg_coil_sensor,
       num_timesteps_logged: number_of_timestep_logged
     )
 
@@ -4111,12 +4118,19 @@ module HVAC
     )
 
     # Check values within min/max limits
+    supp_staging_program.addLine("Set htg_sp_high = #{htg_sp_sensor.name} + #{ddb}")
+    supp_staging_program.addLine("Set htg_sp_low = #{htg_sp_sensor.name}")
 
     s_trend = []
     (1..number_of_timestep_logged).each do |t_i|
       supp_staging_program.addLine("Set zone_temp_#{t_i}_ago = @TrendValue #{zone_temp_trend.name} #{t_i}")
-      supp_staging_program.addLine("Set htg_spt_temp_#{t_i}_ago = @TrendValue #{setpoint_temp_trend.name} #{t_i}")
-      supp_staging_program.addLine("Set supp_htg_rate_#{t_i}_ago = @TrendValue #{backup_coil_htg_rate_trend.name} #{t_i}")
+      supp_staging_program.addLine("Set htg_coil_rate_#{t_i}_ago = @TrendValue #{htg_coil_trend.name} #{t_i}")
+      supp_staging_program.addLine("Set supp_htg_rate_#{t_i}_ago = @TrendValue #{backup_htg_coil_trend.name} #{t_i}")
+      supp_staging_program.addLine("If htg_coil_rate_#{t_i}_ago > 0.0")
+      supp_staging_program.addLine("  Set htg_spt_temp_#{t_i}_ago = htg_sp_high")
+      supp_staging_program.addLine('Else')
+      supp_staging_program.addLine("  Set htg_spt_temp_#{t_i}_ago = htg_sp_low")
+      supp_staging_program.addLine('EndIf')
       if max_htg_coil_stage > 1
         supp_staging_program.addLine("Set unitary_var_#{t_i}_ago = @TrendValue #{unitary_speed_var_trend.name} #{t_i}")
         s_trend << "((htg_spt_temp_#{t_i}_ago - zone_temp_#{t_i}_ago > 0.01) && (unitary_var_#{t_i}_ago == #{max_htg_coil_stage}))"
@@ -4128,19 +4142,15 @@ module HVAC
     supp_staging_program.addLine("If #{global_var_supp_avail.name} == 0") # Other EMS set it to be 0.0, keep the logic
     supp_staging_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
     supp_staging_program.addLine('Else') # global variable = 1
-    supp_staging_program.addLine("  Set #{supp_coil_avail_act.name} = 1")
-    supp_staging_program.addLine("  If (supp_htg_rate_1_ago > 0) && (#{htg_sp_sensor.name} + #{t_in_sensor.name} > 0.01)")
-    supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 1") # Keep backup coil on until reaching setpoint
+    supp_staging_program.addLine("  If (supp_htg_rate_1_ago > 0) && (htg_sp_high - #{t_in_sensor.name} > 0.01)")
+    supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 1") # Keep backup coil on until reaching cut-out temperature
     supp_staging_program.addLine("  ElseIf (#{s_trend.join(' && ')})")
-    if ddb > 0.0
-      supp_staging_program.addLine("    If (#{t_in_sensor.name} >= #{htg_sp_sensor.name})")
-      supp_staging_program.addLine("      Set #{global_var_supp_avail.name} = 0")
-      supp_staging_program.addLine("      Set #{supp_coil_avail_act.name} = 0")
-      supp_staging_program.addLine('    EndIf')
-    end
     supp_staging_program.addLine('  Else')
-    supp_staging_program.addLine("    Set #{global_var_supp_avail.name} = 0")
-    supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 0")
+    supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 1")
+    supp_staging_program.addLine("    If (#{t_in_sensor.name} >= htg_sp_low)")
+    supp_staging_program.addLine("      Set #{global_var_supp_avail.name} = 0")
+    supp_staging_program.addLine("      Set #{supp_coil_avail_act.name} = 0")
+    supp_staging_program.addLine('    EndIf')
     supp_staging_program.addLine('  EndIf')
     supp_staging_program.addLine('EndIf')
     supp_staging_program.addLine("If #{supp_coil_avail_act.name} == 1")
