@@ -2002,7 +2002,7 @@ class HPXMLtoOpenStudioHVACSizingTest < Minitest::Test
 
   def _test_measure(args_hash, expect_num_warnings: nil, skip_in_xml_validation: false)
     # create an instance of the measure
-    measure = HPXMLtoOpenStudio.new
+    measure = HPXMLToOpenStudio.new
 
     runner = OpenStudio::Measure::OSRunner.new(OpenStudio::WorkflowJSON.new)
     model = OpenStudio::Model::Model.new
