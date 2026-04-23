@@ -2348,7 +2348,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
 
   def _test_measure(error_or_warning, expected_errors_or_warnings, building_id: nil)
     # create an instance of the measure
-    measure = HPXMLtoOpenStudio.new
+    measure = HPXMLToOpenStudio.new
 
     runner = OpenStudio::Measure::OSRunner.new(OpenStudio::WorkflowJSON.new)
     model = OpenStudio::Model::Model.new
