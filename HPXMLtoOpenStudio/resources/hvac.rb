@@ -3401,7 +3401,7 @@ module HVAC
     htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
     htg_sp_ss = Model.add_ems_sensor(
       model,
-      name: 'htg_setpoint',
+      name: "#{control_zone.name} htg setpoint",
       output_var_or_meter_name: 'Schedule Value',
       key_name: htg_sch.name
     )
@@ -3831,18 +3831,19 @@ module HVAC
       key_name: control_zone.name
     )
 
+    htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
+    clg_sch = control_zone.thermostatSetpointDualSetpoint.get.coolingSetpointTemperatureSchedule.get
     htg_spt_sensor = Model.add_ems_sensor(
       model,
-      name: "#{control_zone.name} htg_spt_temp",
-      output_var_or_meter_name: 'Zone Thermostat Heating Setpoint Temperature',
-      key_name: control_zone.name
+      name: "#{control_zone.name} htg setpoint",
+      output_var_or_meter_name: 'Schedule Value',
+      key_name: htg_sch.name
     )
-
     clg_spt_sensor = Model.add_ems_sensor(
       model,
-      name: "#{control_zone.name} clg_spt_temp",
-      output_var_or_meter_name: 'Zone Thermostat Cooling Setpoint Temperature',
-      key_name: control_zone.name
+      name: "#{control_zone.name} clg setpoint",
+      output_var_or_meter_name: 'Schedule Value',
+      key_name: clg_sch.name
     )
 
     load_sensor = Model.add_ems_sensor(
@@ -4136,11 +4137,18 @@ module HVAC
       key_name: control_zone.name
     )
 
-    htg_sp_ss = Model.add_ems_sensor(
+    htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
+    htg_sp_sch_ss = Model.add_ems_sensor(
       model,
-      name: 'htg_setpoint',
-      output_var_or_meter_name: 'Zone Thermostat Heating Setpoint Temperature',
-      key_name: control_zone.name
+      name: "#{control_zone.name} htg setpoint",
+      output_var_or_meter_name: 'Schedule Value',
+      key_name: htg_sch.name
+    )
+    htg_coil_ss = Model.add_ems_sensor(
+      model,
+      name: 'htg_coil_rate',
+      output_var_or_meter_name: 'Heating Coil Heating Rate',
+      key_name: htg_coil.name
     )
 
     backup_coil_htg_rate = Model.add_ems_sensor(
@@ -4160,9 +4168,9 @@ module HVAC
       num_timesteps_logged: number_of_timestep_logged
     )
 
-    setpoint_temp_trend = Model.add_ems_trend_var(
+    htg_coil_trend = Model.add_ems_trend_var(
       model,
-      ems_object: htg_sp_ss,
+      ems_object: htg_coil_ss,
       num_timesteps_logged: number_of_timestep_logged
     )
 
@@ -4201,12 +4209,19 @@ module HVAC
     )
 
     # Check values within min/max limits
+    supp_staging_program.addLine("Set htg_sp_high = #{htg_sp_sch_ss.name} + #{ddb}")
+    supp_staging_program.addLine("Set htg_sp_low = #{htg_sp_sch_ss.name}")
 
     s_trend = []
     (1..number_of_timestep_logged).each do |t_i|
       supp_staging_program.addLine("Set zone_temp_#{t_i}_ago = @TrendValue #{zone_temp_trend.name} #{t_i}")
-      supp_staging_program.addLine("Set htg_spt_temp_#{t_i}_ago = @TrendValue #{setpoint_temp_trend.name} #{t_i}")
+      supp_staging_program.addLine("Set htg_coil_rate_#{t_i}_ago = @TrendValue #{htg_coil_trend.name} #{t_i}")
       supp_staging_program.addLine("Set supp_htg_rate_#{t_i}_ago = @TrendValue #{backup_coil_htg_rate_trend.name} #{t_i}")
+      supp_staging_program.addLine("If htg_coil_rate_#{t_i}_ago > 0.0")
+      supp_staging_program.addLine("  Set htg_spt_temp_#{t_i}_ago = htg_sp_high")
+      supp_staging_program.addLine('Else')
+      supp_staging_program.addLine("  Set htg_spt_temp_#{t_i}_ago = htg_sp_low")
+      supp_staging_program.addLine('EndIf')
       if max_htg_coil_stage > 1
         supp_staging_program.addLine("Set unitary_var_#{t_i}_ago = @TrendValue #{unitary_speed_var_trend.name} #{t_i}")
         s_trend << "((htg_spt_temp_#{t_i}_ago - zone_temp_#{t_i}_ago > 0.01) && (unitary_var_#{t_i}_ago == #{max_htg_coil_stage}))"
@@ -4218,16 +4233,14 @@ module HVAC
     supp_staging_program.addLine("If #{global_var_supp_avail.name} == 0") # Other EMS set it to be 0.0, keep the logic
     supp_staging_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
     supp_staging_program.addLine('Else') # global variable = 1
-    supp_staging_program.addLine("  Set #{supp_coil_avail_act.name} = 1")
-    supp_staging_program.addLine("  If (supp_htg_rate_1_ago > 0) && (#{htg_sp_ss.name} + #{living_temp_ss.name} > 0.01)")
-    supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 1") # Keep backup coil on until reaching setpoint
+    supp_staging_program.addLine("  If (supp_htg_rate_1_ago > 0) && (htg_sp_high - #{living_temp_ss.name} > 0.01)")
+    supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 1") # Keep backup coil on until reaching cut-out temperature
     supp_staging_program.addLine("  ElseIf (#{s_trend.join(' && ')})")
-    if ddb > 0.0
-      supp_staging_program.addLine("    If (#{living_temp_ss.name} >= #{htg_sp_ss.name} - #{ddb})")
-      supp_staging_program.addLine("      Set #{global_var_supp_avail.name} = 0")
-      supp_staging_program.addLine("      Set #{supp_coil_avail_act.name} = 0")
-      supp_staging_program.addLine('    EndIf')
-    end
+    supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 1")
+    supp_staging_program.addLine("    If (#{living_temp_ss.name} >= htg_sp_low)")
+    supp_staging_program.addLine("      Set #{global_var_supp_avail.name} = 0")
+    supp_staging_program.addLine("      Set #{supp_coil_avail_act.name} = 0")
+    supp_staging_program.addLine('    EndIf')
     supp_staging_program.addLine('  Else')
     supp_staging_program.addLine("    Set #{global_var_supp_avail.name} = 0")
     supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 0")
