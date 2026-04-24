@@ -142,14 +142,14 @@ class HourlyByMonthSchedule
 
     prev_wkdy_vals, prev_wkdy_rule = nil, nil
     prev_wknd_vals, prev_wknd_rule = nil, nil
-    for m in 1..12
-      date_s = OpenStudio::Date::fromDayOfYear(day_startm[m - 1], year)
-      date_e = OpenStudio::Date::fromDayOfYear(day_endm[m - 1], year)
+    for m in 0..11
+      date_s = OpenStudio::Date::fromDayOfYear(day_startm[m], year)
+      date_e = OpenStudio::Date::fromDayOfYear(day_endm[m], year)
 
       wkdy_vals, wknd_vals = [], []
-      for h in 1..24
-        wkdy_vals[h] = (@weekday_month_by_hour_values[m - 1][h - 1]) / @maxval
-        wknd_vals[h] = (@weekend_month_by_hour_values[m - 1][h - 1]) / @maxval
+      for h in 0..23
+        wkdy_vals[h] = (@weekday_month_by_hour_values[m][h]) / @maxval
+        wknd_vals[h] = (@weekend_month_by_hour_values[m][h]) / @maxval
       end
 
       if (wkdy_vals == prev_wkdy_vals) && (wknd_vals == prev_wknd_vals)
