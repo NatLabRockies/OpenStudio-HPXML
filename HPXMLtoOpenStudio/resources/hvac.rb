@@ -4716,13 +4716,25 @@ module HVAC
     crankcase_criteria = "If (T_out < #{max_oat_crankcase})"
 
     # Don't run crankcase heater during heating/cooling unavailable periods
+    # Crankcase heater *can* run outside HVAC seasons
     if hvac_system.is_a? HPXML::CoolingSystem
-      crankcase_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+      if not clg_avail_sensor.nil?
+        crankcase_criteria += " && (#{clg_avail_sensor.name} == 1)"
+      end
     elsif hvac_system.is_a? HPXML::HeatPump
-      if hvac_system.fraction_heat_load_served > 0
-        crankcase_criteria += " && (#{htg_avail_sensor.name} == 1)" if not htg_avail_sensor.nil?
-      else
-        crankcase_criteria += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+      if (hvac_system.fraction_heat_load_served > 0) && (hvac_system.fraction_cool_load_served > 0) # HP provides heating and cooling
+        if (not htg_avail_sensor.nil?) && (not clg_avail_sensor.nil?) # crankcase *can* run when either is available
+          crankcase_criteria += " && ((#{htg_avail_sensor.name} == 1) || (#{clg_avail_sensor.name} == 1))"
+          # if either heating or cooling is *always* available (i.e., either htg_avail_sensor or clg_avail_sensor is nil), then the crankcase *can* run
+        end
+      elsif hvac_system.fraction_cool_load_served > 0 # HP provides only cooling
+        if not clg_avail_sensor.nil? # crankcase *can* run when cooling is available; equivalent to AC cooling system above
+          crankcase_criteria += " && (#{clg_avail_sensor.name} == 1)"
+        end
+      elsif hvac_system.fraction_heat_load_served > 0 # HP provides only heating
+        if not htg_avail_sensor.nil? # crankcase *can* run when heating is available; equivalent to HP cooling-only logic
+          crankcase_criteria += " && (#{htg_avail_sensor.name} == 1)"
+        end
       end
     end
 
@@ -4741,6 +4753,16 @@ module HVAC
     program.addLine('Else')
     program.addLine("  Set #{crankcase_heater_energy_oe_act.name} = 0.0")
     program.addLine('EndIf')
+
+    Model.add_ems_output_variable(
+      model,
+      name: "#{crankcase_heater_energy_oe_act.name}",
+      ems_variable_name: "#{crankcase_heater_energy_oe_act.name}",
+      type_of_data: 'Summed',
+      update_frequency: 'SystemTimestep',
+      ems_program_or_subroutine: program,
+      units: 'J'
+    )
 
     Model.add_ems_program_calling_manager(
       model,
