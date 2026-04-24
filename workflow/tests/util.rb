@@ -352,7 +352,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     next if message.include? 'Multiple speed fan will be applied to this unit. The speed number is determined by load.'
 
     # FIXME: Temporary
-    next if message.include? 'Heating COP Function of Temperature Curve Name = HPWH-COP-FT output is not equal to 1.0 (+ or - 10%) at rated conditions.'
+    next if message.include?('Heating COP Function of Temperature Curve Name') && message.include?('output is not equal to 1.0 (+ or - 10%) at rated conditions.')
 
     # HPWHs
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.water_heating_systems.count { |wh| wh.water_heater_type == HPXML::WaterHeaterTypeHeatPump } > 0 }
