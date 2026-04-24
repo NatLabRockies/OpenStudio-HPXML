@@ -2079,6 +2079,8 @@
       <sch:assert role='ERROR' test='count(../h:HotWaterDistribution) = 1'>Expected ../HotWaterDistribution</sch:assert>
       <sch:assert role='ERROR' test='count(../h:WaterFixture) &gt;= 1'>Expected ../WaterFixture</sch:assert>
       <sch:assert role='ERROR' test='h:WaterHeaterType[text()="storage water heater" or text()="instantaneous water heater" or text()="heat pump water heater" or text()="space-heating boiler with storage tank" or text()="space-heating boiler with tankless coil"]'>Expected WaterHeaterType to be 'storage water heater' or 'instantaneous water heater' or 'heat pump water heater' or 'space-heating boiler with storage tank' or 'space-heating boiler with tankless coil'</sch:assert>
+      <sch:assert role='ERROR' test='number(h:HotWaterTemperature) &gt;= 105 or not(h:HotWaterTemperature)'>Expected HotWaterTemperature to be greater than or equal to 105 deg-F</sch:assert>
+      <sch:assert role='ERROR' test='number(h:HotWaterTemperature) &lt;= 160 or not(h:HotWaterTemperature)'>Expected HotWaterTemperature to be less than or equal to 160 deg-F</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -2100,7 +2102,6 @@
       <sch:report role='WARN' test='number(h:UniformEnergyFactor) &lt; 0.45'>UniformEnergyFactor should typically be greater than or equal to 0.45.</sch:report>
       <sch:report role='WARN' test='number(h:EnergyFactor) &lt; 0.45'>EnergyFactor should typically be greater than or equal to 0.45.</sch:report>
       <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
-      <sch:report role='WARN' test='number(h:HotWaterTemperature) &lt; 110'>Hot water setpoint should typically be greater than or equal to 110 deg-F.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -2123,7 +2124,6 @@
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:UniformEnergyFactor) &lt; 0.45'>UniformEnergyFactor should typically be greater than or equal to 0.45.</sch:report>
       <sch:report role='WARN' test='number(h:EnergyFactor) &lt; 0.45'>EnergyFactor should typically be greater than or equal to 0.45.</sch:report>
-      <sch:report role='WARN' test='number(h:HotWaterTemperature) &lt; 110'>Hot water setpoint should typically be greater than or equal to 110 deg-F.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -2142,8 +2142,6 @@
       <sch:assert role='ERROR' test='h:extension/h:HPWHInConfinedSpaceWithoutMitigation[text()="true" or text()="false"] or not(h:extension/h:HPWHInConfinedSpaceWithoutMitigation)'>Expected extension/HPWHInConfinedSpaceWithoutMitigation to be 'true' or 'false'</sch:assert>
       <!-- Moved/deprecated extension/OperatingMode input; see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1289 -->
       <sch:assert role='ERROR' test='count(h:extension/h:OperatingMode) = 0'>extension/OperatingMode has been replaced by HPWHOperatingMode</sch:assert>
-      <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:HotWaterTemperature) &lt; 110'>Hot water setpoint should typically be greater than or equal to 110 deg-F.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -2169,8 +2167,6 @@
       <sch:assert role='ERROR' test='count(h:RecoveryEfficiency) = 0'>Expected no RecoveryEfficiency</sch:assert>
       <sch:assert role='ERROR' test='count(h:UsesDesuperheater[text()="true"]) = 0'>Expected no UsesDesuperheater=true</sch:assert>
       <sch:assert role='ERROR' test='count(h:RelatedHVACSystem) = 1'>Expected RelatedHVACSystem</sch:assert>
-      <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:HotWaterTemperature) &lt; 110'>Hot water setpoint should typically be greater than or equal to 110 deg-F.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -2189,8 +2185,6 @@
       <sch:assert role='ERROR' test='count(h:StandbyLoss[h:Units="F/hr"]/h:Value) = 0'>Expected no StandbyLoss[Units="F/hr"]/Value</sch:assert>
       <sch:assert role='ERROR' test='count(h:UsesDesuperheater[text()="true"]) = 0'>Expected no UsesDesuperheater=true</sch:assert>
       <sch:assert role='ERROR' test='count(h:RelatedHVACSystem) = 1'>Expected RelatedHVACSystem</sch:assert>
-      <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:HotWaterTemperature) &lt; 110'>Hot water setpoint should typically be greater than or equal to 110 deg-F.</sch:report>
     </sch:rule>
   </sch:pattern>
 

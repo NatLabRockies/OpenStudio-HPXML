@@ -76,6 +76,8 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'dhw-frac-load-served' => ['Expected sum(FractionDHWLoadServed) to be 1 [context: /HPXML/Building/BuildingDetails, id: "MyBuilding"]'],
                             'dhw-invalid-ef-tank' => ['Expected EnergyFactor to be less than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="storage water heater"], id: "WaterHeatingSystem1"]'],
                             'dhw-invalid-uef-tank-heat-pump' => ['Expected UniformEnergyFactor to be greater than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="heat pump water heater"], id: "WaterHeatingSystem1"]'],
+                            'dhw-setpoint-low' => ['Expected HotWaterTemperature to be greater than or equal to 105 deg-F'],
+                            'dhw-setpoint-high' => ['Expected HotWaterTemperature to be less than or equal to 160 deg-F'],
                             'dishwasher-location' => ['A location is specified as "garage" but no surfaces were found adjacent to this space type.'],
                             'duct-leakage-cfm25' => ["The value '-2.0' is less than the minimum value allowed",
                                                      "The value '-3.0' is less than the minimum value allowed"],
@@ -326,6 +328,12 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
       when 'dhw-invalid-uef-tank-heat-pump'
         hpxml, hpxml_bldg = _create_hpxml('base-dhw-tank-heat-pump.xml')
         hpxml_bldg.water_heating_systems[0].uniform_energy_factor = 1.0
+      when 'dhw-setpoint-low'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.water_heating_systems[0].temperature = 100
+      when 'dhw-setpoint-high'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.water_heating_systems[0].temperature = 200
       when 'dishwasher-location'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.dishwashers[0].location = HPXML::LocationGarage
@@ -991,7 +999,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                          'EnergyFactor should typically be greater than or equal to 0.45.',
                                                          'EnergyFactor should typically be greater than or equal to 0.45.',
                                                          'No space cooling specified, the model will not include space cooling energy use.'],
-                              'dhw-setpoint-low' => ['Hot water setpoint should typically be greater than or equal to 110 deg-F.'],
                               'erv-atre-low' => ['Adjusted total recovery efficiency should typically be at least half of the adjusted sensible recovery efficiency.'],
                               'erv-tre-low' => ['Total recovery efficiency should typically be at least half of the sensible recovery efficiency.'],
                               'ev-charging-methods' => ['Electric vehicle charging was specified as both a PlugLoad and a Vehicle, the latter will be ignored.'],
@@ -1094,9 +1101,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
             water_heating_system.energy_factor = 0.1
           end
         end
-      when 'dhw-setpoint-low'
-        hpxml, hpxml_bldg = _create_hpxml('base.xml')
-        hpxml_bldg.water_heating_systems[0].temperature = 100
       when 'erv-atre-low'
         hpxml, hpxml_bldg = _create_hpxml('base-mechvent-erv-atre-asre.xml')
         hpxml_bldg.ventilation_fans[0].total_recovery_efficiency_adjusted = 0.1
