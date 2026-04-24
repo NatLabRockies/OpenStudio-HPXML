@@ -4,7 +4,10 @@ __New Features__
 - HVAC updates:
   - Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
   - Improves handling of duct leakage specified using cfm25/cfm50.
-- Allows modeling 120V HPWHs (including dedicated vs shared circuits) using `WaterHeatingSystem/HPWHVoltage`.
+  - Crankcase heating energy is now disabled during unavailable periods, e.g., power outages.
+- Water heater updates:
+  - Allows modeling 120V HPWHs (including dedicated vs shared circuits) using `WaterHeatingSystem/HPWHVoltage`.
+  - Allows modeling water heaters with a mixing valve using `HasMixingValve` and `MixingValveSetpoint`.
 - Allows "other" for `SoilType`; adds variation to dry/wet soil conductivity and diffusivity values for unknown/other/loam soil types.
 - Output updates:
   - **Breaking change**: Annual peak load outputs for heating and cooling now use units of Btu/h instead of kBtu/h for consistency with other outputs.
@@ -30,6 +33,7 @@ __Bugfixes__
 - Small bugfixes when using the on/off thermostat deadband advanced research feature:
   - Fixes unmet hours outputs, which could be missing some periods of unmet hours.
   - Fixes timeseries outputs for heating/cooling setpoints.
+- Fixes logic in HP multi-stage backup advanced research feature.
 
 ## OpenStudio-HPXML v1.11.1
 
