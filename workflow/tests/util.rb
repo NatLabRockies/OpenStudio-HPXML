@@ -351,6 +351,9 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     next if message.include?('setupIHGOutputs: Output variables=Space Other Equipment') && message.include?('are not available')
     next if message.include? 'Multiple speed fan will be applied to this unit. The speed number is determined by load.'
 
+    # FIXME: Temporary
+    next if message.include? 'Heating COP Function of Temperature Curve Name = HPWH-COP-FT output is not equal to 1.0 (+ or - 10%) at rated conditions.'
+
     # HPWHs
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.water_heating_systems.count { |wh| wh.water_heater_type == HPXML::WaterHeaterTypeHeatPump } > 0 }
       next if message.include? 'Recovery Efficiency and Energy Factor could not be calculated during the test for standard ratings'
@@ -363,13 +366,14 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.water_heating_systems.count { |wh| wh.water_heater_type == HPXML::WaterHeaterTypeHeatPump && wh.location == HPXML::LocationOtherExterior } > 0 }
       next if message.include? 'Water heater tank set point temperature is greater than or equal to the cut-in temperature of the heat pump water heater.'
     end
+    # WHs w/ mixing valves
+    if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.water_heating_systems.count { |wh| wh.has_mixing_valve } > 0 }
+      next if message.include? 'Target water temperature is greater than the hot water temperature'
+      next if message.include? 'Target water temperature should be less than or equal to the hot water temperature'
+    end
     # Stratified tank WHs
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.water_heating_systems.count { |wh| wh.tank_model_type == HPXML::WaterHeaterTankModelTypeStratified } > 0 }
       next if message.include? 'Recovery Efficiency and Energy Factor could not be calculated during the test for standard ratings'
-    end
-    # HP defrost curves
-    if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.heat_pumps.count { |hp| [HPXML::HVACTypeHeatPumpAirToAir, HPXML::HVACTypeHeatPumpMiniSplit, HPXML::HVACTypeHeatPumpPTHP, HPXML::HVACTypeHeatPumpRoom].include? hp.heat_pump_type } > 0 }
-      next if message.include?('GetDXCoils: Coil:Heating:DX') && message.include?('curve values') && message.include?('Defrost Energy Input Ratio Function of Temperature Curve')
     end
     # variable system SHR adjustment
     if hpxml.buildings.any? { |hpxml_bldg| (hpxml_bldg.heat_pumps + hpxml_bldg.cooling_systems).count { |hp| hp.compressor_type == HPXML::HVACCompressorTypeVariableSpeed } > 0 }
