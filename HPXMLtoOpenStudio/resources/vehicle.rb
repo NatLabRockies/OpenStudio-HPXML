@@ -99,12 +99,7 @@ module Vehicle
     # Apply vehicle battery to model
     Battery.apply_battery(runner, model, spaces, hpxml, hpxml_bldg, vehicle, charging_schedule, discharging_schedule)
 
-    temp_sensor = Model.add_ems_sensor(
-      model,
-      name: 'site_temp',
-      output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-      key_name: 'Environment'
-    )
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
 
     # Power adjustment vs ambient temperature curve; derived from most recent data in Figure 9 of https://docs.nlr.gov/docs/fy23osti/83916.pdf
     # This adjustment scales power demand based on ambient temperature, and encompasses losses due to battery and space conditioning (i.e., discharging losses), as well as charging losses.
@@ -120,10 +115,10 @@ module Vehicle
       model,
       name: 'ev_discharge_program'
     )
-    ev_discharge_program.addLine("  Set site_temp_adj = #{temp_sensor.name}")
-    ev_discharge_program.addLine("  If #{temp_sensor.name} < #{UnitConversions.convert(0, 'F', 'C').round(3)}")
+    ev_discharge_program.addLine("  Set site_temp_adj = #{t_out_sensor.name}")
+    ev_discharge_program.addLine("  If #{t_out_sensor.name} < #{UnitConversions.convert(0, 'F', 'C').round(3)}")
     ev_discharge_program.addLine("    Set site_temp_adj = #{UnitConversions.convert(0, 'F', 'C').round(3)}")
-    ev_discharge_program.addLine("  ElseIf #{temp_sensor.name} > #{UnitConversions.convert(100, 'F', 'C').round(3)}")
+    ev_discharge_program.addLine("  ElseIf #{t_out_sensor.name} > #{UnitConversions.convert(100, 'F', 'C').round(3)}")
     ev_discharge_program.addLine("    Set site_temp_adj = #{UnitConversions.convert(100, 'F', 'C').round(3)}")
     ev_discharge_program.addLine('  EndIf')
     ev_discharge_program.addLine("  Set power_mult = #{power_curve}")
@@ -140,7 +135,7 @@ module Vehicle
       output_var_or_meter_name: 'Schedule Value',
       key_name: discharging_schedule.name.to_s
     )
-    discharge_sch_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeVehicleDischargeScheduleSensor)
+    discharge_sch_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorScheduleVehicleDischarge)
     charge_sch_sensor = Model.add_ems_sensor(
       model,
       name: "#{charging_schedule.name} charge_sch_sensor",

@@ -22,8 +22,6 @@ module Airflow
   # @param airloop_map [Hash] Map of HPXML System ID => OpenStudio AirLoopHVAC (or ZoneHVACFourPipeFanCoil or ZoneHVACBaseboardConvectiveWater) objects
   # @return [nil]
   def self.apply(runner, model, weather, spaces, hpxml_bldg, hpxml_header, schedules_file, airloop_map)
-    sensors = create_sensors(model, weather, spaces, hpxml_bldg)
-
     # Ventilation fans
     vent_fans = { mech: [], cfis_suppl: [], whf: [], kitchen: [], bath: [] }
     hpxml_bldg.ventilation_fans.each do |f|
@@ -48,6 +46,18 @@ module Airflow
       end
     end
 
+    # Create cooling season schedule sensor (applies only to natural ventilation, not HVAC equipment).
+    # Uses BAHSP cooling season, not user-specified cooling season (which may be, e.g., year-round).
+    _, default_cooling_months = HVAC.get_building_america_hvac_seasons(weather, hpxml_bldg.latitude)
+    clg_season_sch = MonthWeekdayWeekendSchedule.new(model, 'cooling season schedule', Array.new(24, 1), Array.new(24, 1), default_cooling_months, EPlus::ScheduleTypeLimitsFraction)
+    clg_season_sensor = Model.add_ems_sensor(
+      model,
+      name: 'cool_season_s',
+      output_var_or_meter_name: 'Schedule Value',
+      key_name: clg_season_sch.schedule.name
+    )
+    clg_season_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason)
+
     # Initialization
     cfis_data = initialize_cfis(model, vent_fans, airloop_map, hpxml_header.unavailable_periods)
     fan_data = { rtf_var: {}, max_airflow_m3s: {}, rtf_sensor: {} }
@@ -60,7 +70,7 @@ module Airflow
 
     # Apply ducts
     duct_lk_imbals = []
-    apply_ducts(runner, model, spaces, hpxml_bldg, airloop_map, vent_fans, cfis_data, fan_data, duct_lk_imbals, sensors)
+    apply_ducts(runner, model, spaces, hpxml_bldg, airloop_map, vent_fans, cfis_data, fan_data, duct_lk_imbals)
 
     # Apply infiltration/ventilation
     set_wind_speed_correction(model, hpxml_bldg)
@@ -68,7 +78,7 @@ module Airflow
     infil_values = get_values_from_air_infiltration_measurements(hpxml_bldg, weather)
 
     # Natural ventilation and whole house fans
-    apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values, sensors)
+    apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values)
 
     # Infiltration/ventilation
     apply_infiltration_to_garage(model, spaces, hpxml_bldg, infil_values, duct_lk_imbals)
@@ -78,76 +88,7 @@ module Airflow
     apply_infiltration_to_vented_attic(model, spaces, weather, hpxml_bldg, hpxml_header, duct_lk_imbals)
     apply_infiltration_to_unvented_attic(model, spaces, duct_lk_imbals)
     apply_infiltration_ventilation_to_conditioned(runner, model, spaces, weather, hpxml_bldg, hpxml_header, vent_fans, infil_values,
-                                                  schedules_file, duct_lk_imbals, cfis_data, fan_data, sensors)
-  end
-
-  # Creates a variety of EMS sensors used in airflow calculations.
-  #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param weather [WeatherFile] Weather object containing EPW information
-  # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
-  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
-  # @return [Hash] Map of :sensor_types => OpenStudio::Model::EnergyManagementSystemSensor objects
-  def self.create_sensors(model, weather, spaces, hpxml_bldg)
-    conditioned_space = spaces[HPXML::LocationConditionedSpace]
-    conditioned_zone = conditioned_space.thermalZone.get
-
-    sensors = {}
-
-    sensors[:pbar] = Model.add_ems_sensor(
-      model,
-      name: 'out pb s',
-      output_var_or_meter_name: 'Site Outdoor Air Barometric Pressure',
-      key_name: nil
-    )
-
-    sensors[:w_out] = Model.add_ems_sensor(
-      model,
-      name: 'out wt s',
-      output_var_or_meter_name: 'Site Outdoor Air Humidity Ratio',
-      key_name: nil
-    )
-
-    sensors[:w_in] = Model.add_ems_sensor(
-      model,
-      name: 'win s',
-      output_var_or_meter_name: 'Zone Air Humidity Ratio',
-      key_name: conditioned_zone.name
-    )
-
-    sensors[:v_wind] = Model.add_ems_sensor(
-      model,
-      name: 'site vw s',
-      output_var_or_meter_name: 'Site Wind Speed',
-      key_name: nil
-    )
-
-    sensors[:t_in] = Model.add_ems_sensor(
-      model,
-      name: 'tin s',
-      output_var_or_meter_name: 'Zone Mean Air Temperature',
-      key_name: conditioned_zone.name
-    )
-
-    sensors[:t_out] = Model.add_ems_sensor(
-      model,
-      name: 'tout s',
-      output_var_or_meter_name: 'Zone Outdoor Air Drybulb Temperature',
-      key_name: conditioned_zone.name
-    )
-
-    # Create cooling season schedule sensor (applies only to natural ventilation, not HVAC equipment).
-    # Uses BAHSP cooling season, not user-specified cooling season (which may be, e.g., year-round).
-    _, default_cooling_months = HVAC.get_building_america_hvac_seasons(weather, hpxml_bldg.latitude)
-    clg_season_sch = MonthWeekdayWeekendSchedule.new(model, 'cooling season schedule', Array.new(24, 1), Array.new(24, 1), default_cooling_months, EPlus::ScheduleTypeLimitsFraction)
-    sensors[:clg_ssn] = Model.add_ems_sensor(
-      model,
-      name: 'cool_season',
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: clg_season_sch.schedule.name
-    )
-
-    return sensors
+                                                  schedules_file, duct_lk_imbals, cfis_data, fan_data)
   end
 
   # Returns the single infiltration measurement object of interest, from all possible infiltration measurements
@@ -387,9 +328,8 @@ module Airflow
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param vent_fans [Hash] Map of vent fan types => list of HPXML VentilationFans
   # @param infil_values [Hash] Map with various infiltration key-value pairs (SLA, infiltration volume & height, etc.)
-  # @param sensors [Hash] Map of :sensor_types => OpenStudio::Model::EnergyManagementSystemSensor objects
   # @return [nil]
-  def self.apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values, sensors)
+  def self.apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
     conditioned_zone = conditioned_space.thermalZone.get
 
@@ -421,22 +361,15 @@ module Airflow
     end
 
     # Sensors
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
+    bp_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
+    vw_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteWindSpeed }
+
     if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
-      thermostat = conditioned_zone.thermostatSetpointDualSetpoint.get
-
-      htg_sp_sensor = Model.add_ems_sensor(
-        model,
-        name: 'htg sp s',
-        output_var_or_meter_name: 'Schedule Value',
-        key_name: thermostat.heatingSetpointTemperatureSchedule.get.name
-      )
-
-      clg_sp_sensor = Model.add_ems_sensor(
-        model,
-        name: 'clg sp s',
-        output_var_or_meter_name: 'Schedule Value',
-        key_name: thermostat.coolingSetpointTemperatureSchedule.get.name
-      )
+      htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+      clg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
     end
 
     # Actuators
@@ -519,7 +452,8 @@ module Airflow
     c_w, c_s = calc_wind_stack_coeffs(hpxml_bldg, hor_lk_frac, neutral_level, HPXML::LocationConditionedSpace, infil_values[:height])
     max_oa_hr = 0.0115 # From ANSI/RESNET/ICC 301-2022
 
-    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeCoolingAvailabilitySensor }
+    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
+    clg_season_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason }
 
     # Program
     vent_program = Model.add_ems_program(
@@ -527,13 +461,13 @@ module Airflow
       name: "#{Constants::ObjectTypeNaturalVentilation} program"
     )
     vent_program.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeNaturalVentilation)
-    vent_program.addLine("Set Tin = #{sensors[:t_in].name}")
-    vent_program.addLine("Set Tout = #{sensors[:t_out].name}")
-    vent_program.addLine("Set Wout = #{sensors[:w_out].name}")
-    vent_program.addLine("Set Pbar = #{sensors[:pbar].name}")
+    vent_program.addLine("Set Tin = #{t_in_sensor.name}")
+    vent_program.addLine("Set Tout = #{t_out_sensor.name}")
+    vent_program.addLine("Set Wout = #{w_out_sensor.name}")
+    vent_program.addLine("Set Pbar = #{bp_out_sensor.name}")
     vent_program.addLine('Set Phiout = (@RhFnTdbWPb Tout Wout Pbar)')
     vent_program.addLine("Set MaxHR = #{max_oa_hr}")
-    if not thermostat.nil?
+    if (not htg_sp_sensor.nil?) && (not clg_sp_sensor.nil?)
       # Home has HVAC system (though setpoints may be defaulted); use the average of heating/cooling setpoints to minimize incurring additional heating energy.
       vent_program.addLine("Set Tnvsp = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
     else
@@ -553,7 +487,7 @@ module Airflow
       vent_program.addLine("Set Tnvsp = (#{default_htg_sp} + #{default_clg_sp}) / 2")
     end
     vent_program.addLine("Set NVavail = #{nv_avail_sensor.name}")
-    vent_program.addLine("Set ClgSsnAvail = #{sensors[:clg_ssn].name}")
+    vent_program.addLine("Set ClgSsnAvail = #{clg_season_sensor.name}")
     vent_program.addLine('Set Qnv = 0') # Init
     vent_program.addLine('Set Qwhf = 0') # Init
     vent_program.addLine("Set #{cond_to_zone_flow_rate_actuator.name} = 0") unless whf_zone.nil? # Init
@@ -594,7 +528,7 @@ module Airflow
     vent_program.addLine("    Set Cw = #{c_w * 0.01}")
     vent_program.addLine('    Set Tdiff = Tin-Tout')
     vent_program.addLine('    Set dT = (@Abs Tdiff)')
-    vent_program.addLine("    Set Vwind = #{sensors[:v_wind].name}")
+    vent_program.addLine("    Set Vwind = #{vw_out_sensor.name}")
     vent_program.addLine('    Set SGNV = NVArea*Adj*((((Cs*dT)+(Cw*(Vwind^2)))^0.5)/1000)')
     vent_program.addLine("    Set MaxNV = #{UnitConversions.convert(max_flow_rate, 'cfm', 'm^3/s')}")
     vent_program.addLine('    Set Qnv = (@Min SGNV MaxNV)')
@@ -913,9 +847,8 @@ module Airflow
   # @param cfis_data [Hash] Map with various CFIS-relative OpenStudio model objects
   # @param fan_data [Hash] Map of HVAC blower fan properties => values
   # @param duct_lk_imbals [Array] List of duct leakage imbalance information
-  # @param sensors [Hash] Map of :sensor_types => OpenStudio::Model::EnergyManagementSystemSensor objects
   # @return [OpenStudio::Model::Construction] Adiabatic construction used by the duct model
-  def self.apply_ducts(runner, model, spaces, hpxml_bldg, airloop_map, vent_fans, cfis_data, fan_data, duct_lk_imbals, sensors)
+  def self.apply_ducts(runner, model, spaces, hpxml_bldg, airloop_map, vent_fans, cfis_data, fan_data, duct_lk_imbals)
     check_duct_leakage(runner, hpxml_bldg)
 
     # Apply ducts for each air distribution system
@@ -927,7 +860,7 @@ module Airflow
 
       objects = hvac_distribution.hvac_systems.map { |hvac_system| airloop_map[hvac_system.id] }.select { |o| !o.nil? }.uniq
       objects.each do |object|
-        apply_ducts_for_distribution_system(model, spaces, hpxml_bldg, duct_infos, object, vent_fans, cfis_data, fan_data, duct_lk_imbals, sensors)
+        apply_ducts_for_distribution_system(model, spaces, hpxml_bldg, duct_infos, object, vent_fans, cfis_data, fan_data, duct_lk_imbals)
       end
     end
   end
@@ -943,9 +876,8 @@ module Airflow
   # @param cfis_data [Hash] Map with various CFIS-relative OpenStudio model objects
   # @param fan_data [Hash] Map of HVAC blower fan properties => values
   # @param duct_lk_imbals [Array] List of duct leakage imbalance information
-  # @param sensors [Hash] Map of :sensor_types => OpenStudio::Model::EnergyManagementSystemSensor objects
   # @return [nil]
-  def self.apply_ducts_for_distribution_system(model, spaces, hpxml_bldg, duct_infos, object, vent_fans, cfis_data, fan_data, duct_lk_imbals, sensors)
+  def self.apply_ducts_for_distribution_system(model, spaces, hpxml_bldg, duct_infos, object, vent_fans, cfis_data, fan_data, duct_lk_imbals)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
     conditioned_zone = conditioned_space.thermalZone.get
     unit_multiplier = hpxml_bldg.building_construction.number_of_units
@@ -1061,7 +993,7 @@ module Airflow
         key_name: conditioned_zone_return_air_node.name
       )
     else
-      ra_t_sensor = sensors[:t_in]
+      ra_t_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
     end
     duct_sensors[:ra_t] = [ra_t_var, ra_t_sensor]
 
@@ -1078,12 +1010,7 @@ module Airflow
         key_name: conditioned_zone_return_air_node.name
       )
     else
-      ra_w_sensor = Model.add_ems_sensor(
-        model,
-        name: "#{ra_w_var.name} s",
-        output_var_or_meter_name: 'Zone Mean Air Humidity Ratio',
-        key_name: conditioned_zone.name
-      )
+      ra_w_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
     end
     duct_sensors[:ra_w] = [ra_w_var, ra_w_sensor]
 
@@ -1107,7 +1034,7 @@ module Airflow
     duct_locations_infos.each_with_index do |(duct_location, duct_location_info), index|
       next if (not duct_location.nil?) && (duct_location.name.to_s == conditioned_zone.name.to_s)
 
-      apply_ducts_for_distribution_system_location(model, spaces, hpxml_bldg, duct_location_info, object, index, duct_location, vent_fans, cfis_data, fan_data, duct_lk_imbals, sensors, duct_sensors, ra_duct_space)
+      apply_ducts_for_distribution_system_location(model, spaces, hpxml_bldg, duct_location_info, object, index, duct_location, vent_fans, cfis_data, fan_data, duct_lk_imbals, duct_sensors, ra_duct_space)
     end
   end
 
@@ -1125,11 +1052,10 @@ module Airflow
   # @param cfis_data [Hash] Map with various CFIS-relative OpenStudio model objects
   # @param fan_data [Hash] Map of HVAC blower fan properties => values
   # @param duct_lk_imbals [Array] List of duct leakage imbalance information
-  # @param sensors [Hash] Map of :sensor_type => OpenStudio::Model::EnergyManagementSystemSensor objects
   # @param duct_sensors [Hash] Map of :sensor_type => (EMS global var, EMS sensor)
   # @param ra_duct_space [OpenStudio::Model::Space] Return air duct space used in the EMS calculations
   # @return [nil]
-  def self.apply_ducts_for_distribution_system_location(model, spaces, hpxml_bldg, duct_infos, object, index, duct_location, vent_fans, cfis_data, fan_data, duct_lk_imbals, sensors, duct_sensors, ra_duct_space)
+  def self.apply_ducts_for_distribution_system_location(model, spaces, hpxml_bldg, duct_infos, object, index, duct_location, vent_fans, cfis_data, fan_data, duct_lk_imbals, duct_sensors, ra_duct_space)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
     conditioned_zone = conditioned_space.thermalZone.get
     unit_multiplier = hpxml_bldg.building_construction.number_of_units
@@ -1144,6 +1070,12 @@ module Airflow
     ra_w_var, ra_w_sensor = duct_sensors[:ra_w]
 
     # -- Sensors --
+
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    w_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    bp_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
+    w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
 
     # Duct zone temperature
     dz_t_var = Model.add_ems_global_var(
@@ -1165,12 +1097,7 @@ module Airflow
         key_name: duct_location.name
       )
     elsif duct_location.nil? # Outside
-      dz_t_sensor = Model.add_ems_sensor(
-        model,
-        name: "#{dz_t_var.name} s",
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: 'Environment'
-      )
+      dz_t_sensor = t_out_sensor
     else # shouldn't get here, should only have schedule/thermal zone/nil assigned
       fail 'Unexpected duct zone type passed'
     end
@@ -1181,54 +1108,22 @@ module Airflow
       var_name: "#{object_name_idx} DZ W"
     )
     if duct_location.is_a? OpenStudio::Model::ThermalZone
-      dz_w_sensor = Model.add_ems_sensor(
+      dz_w = Model.add_ems_sensor(
         model,
         name: "#{dz_w_var.name} s",
         output_var_or_meter_name: 'Zone Mean Air Humidity Ratio',
         key_name: duct_location.name
-      )
-      dz_w = "#{dz_w_sensor.name}"
+      ).name
     elsif duct_location.is_a? OpenStudio::Model::ScheduleConstant # Outside or scheduled temperature
       if duct_location.name.to_s == HPXML::LocationOtherNonFreezingSpace
-        dz_w_sensor = Model.add_ems_sensor(
-          model,
-          name: "#{dz_w_var.name} s",
-          output_var_or_meter_name: 'Site Outdoor Air Humidity Ratio',
-          key_name: nil
-        )
-        dz_w = "#{dz_w_sensor.name}"
+        dz_w = w_out_sensor.name
       elsif duct_location.name.to_s == HPXML::LocationOtherHousingUnit
-        dz_w_sensor = Model.add_ems_sensor(
-          model,
-          name: "#{dz_w_var.name} s",
-          output_var_or_meter_name: 'Zone Mean Air Humidity Ratio',
-          key_name: conditioned_zone.name
-        )
-        dz_w = "#{dz_w_sensor.name}"
+        dz_w = w_in_sensor.name
       else
-        dz_w_sensor1 = Model.add_ems_sensor(
-          model,
-          name: "#{dz_w_var.name} s 1",
-          output_var_or_meter_name: 'Site Outdoor Air Humidity Ratio',
-          key_name: nil
-        )
-
-        dz_w_sensor2 = Model.add_ems_sensor(
-          model,
-          name: "#{dz_w_var.name} s 2",
-          output_var_or_meter_name: 'Zone Mean Air Humidity Ratio',
-          key_name: conditioned_zone.name
-        )
-        dz_w = "(#{dz_w_sensor1.name} + #{dz_w_sensor2.name}) / 2"
+        dz_w = "(#{w_out_sensor.name} + #{w_in_sensor.name}) / 2"
       end
     else
-      dz_w_sensor = Model.add_ems_sensor(
-        model,
-        name: "#{dz_w_var.name} s",
-        output_var_or_meter_name: 'Site Outdoor Air Humidity Ratio',
-        key_name: nil
-      )
-      dz_w = "#{dz_w_sensor.name}"
+      dz_w = w_out_sensor.name
     end
 
     # -- Actuators --
@@ -1640,7 +1535,7 @@ module Airflow
         duct_program.addLine("  Set cfis_m3s = #{fan_data[:max_airflow_m3s][object]} * #{cfis_fan.cfis_vent_mode_airflow_fraction}")
         duct_program.addLine("  Set #{fan_data[:rtf_var][object].name} = #{f_vent_only_mode_var.name}") # Need to use global vars to sync duct_program and infiltration program of different calling points
         duct_program.addLine("  Set #{ah_vfr_var.name} = #{fan_data[:rtf_var][object].name}*cfis_m3s")
-        duct_program.addLine("  Set rho_in = (@RhoAirFnPbTdbW #{sensors[:pbar].name} #{sensors[:t_in].name} #{sensors[:w_in].name})")
+        duct_program.addLine("  Set rho_in = (@RhoAirFnPbTdbW #{bp_out_sensor.name} #{t_in_sensor.name} #{w_in_sensor.name})")
         duct_program.addLine("  Set #{ah_mfr_var.name} = #{ah_vfr_var.name} * rho_in")
         duct_program.addLine("  Set #{ah_tout_var.name} = #{ra_t_sensor.name}")
         duct_program.addLine("  Set #{ah_wout_var.name} = #{ra_w_sensor.name}")
@@ -2230,10 +2125,16 @@ module Airflow
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
   # @param infil_program [OpenStudio::Model::EnergyManagementSystemProgram] EMS program for the infiltration calculations
-  # @param sensors [Hash] Map of :sensor_types => OpenStudio::Model::EnergyManagementSystemSensor objects
   # @return [Array<OpenStudio::Model::EnergyManagementSystemActuator, OpenStudio::Model::EnergyManagementSystemActuator>] EMS actuators for sensible and latent loads
-  def self.initialize_mech_vent(model, spaces, infil_program, sensors)
+  def self.initialize_mech_vent(model, spaces, infil_program)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
+
+    # Sensors
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    w_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirHR }
+    w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
+    bp_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
 
     # Actuators for mech vent fan
     sens_equip = Model.add_other_equipment(
@@ -2278,15 +2179,15 @@ module Airflow
     infil_program.addLine("Set #{fan_lat_load_actuator.name} = 0.0")
 
     # Air property at inlet nodes on both sides
-    infil_program.addLine("Set OASupInPb = #{sensors[:pbar].name}") # oa barometric pressure
-    infil_program.addLine("Set OASupInTemp = #{sensors[:t_out].name}") # oa db temperature
-    infil_program.addLine("Set OASupInW = #{sensors[:w_out].name}") # oa humidity ratio
+    infil_program.addLine("Set OASupInPb = #{bp_out_sensor.name}") # oa barometric pressure
+    infil_program.addLine("Set OASupInTemp = #{t_out_sensor.name}") # oa db temperature
+    infil_program.addLine("Set OASupInW = #{w_out_sensor.name}") # oa humidity ratio
     infil_program.addLine('Set OASupRho = (@RhoAirFnPbTdbW OASupInPb OASupInTemp OASupInW)')
     infil_program.addLine('Set OASupCp = (@CpAirFnW OASupInW)')
     infil_program.addLine('Set OASupInEnth = (@HFnTdbW OASupInTemp OASupInW)')
 
-    infil_program.addLine("Set ZoneTemp = #{sensors[:t_in].name}") # zone air temperature
-    infil_program.addLine("Set ZoneW = #{sensors[:w_in].name}") # zone air humidity ratio
+    infil_program.addLine("Set ZoneTemp = #{t_in_sensor.name}") # zone air temperature
+    infil_program.addLine("Set ZoneW = #{w_in_sensor.name}") # zone air humidity ratio
     infil_program.addLine('Set ZoneCp = (@CpAirFnW ZoneW)')
     infil_program.addLine('Set ZoneAirEnth = (@HFnTdbW ZoneTemp ZoneW)')
 
@@ -2520,34 +2421,23 @@ module Airflow
   # @param hrv_erv_effectiveness_map [Hash] Map of HPXML VentilationFan => Hash of effectiveness values
   # @param fan_sens_load_actuator [OpenStudio::Model::EnergyManagementSystemActuator] EMS actuators for sensible load
   # @param fan_lat_load_actuator [OpenStudio::Model::EnergyManagementSystemActuator] EMS actuators for latent load
-  # @param sensors [Hash] Map of :sensor_types => OpenStudio::Model::EnergyManagementSystemSensor objects
   # @return [nil]
-  def self.calculate_precond_loads(model, spaces, infil_program, vent_fans, hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator, sensors)
+  def self.calculate_precond_loads(model, spaces, infil_program, vent_fans, hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
-    conditioned_zone = conditioned_space.thermalZone.get
 
     # Preconditioning
     # Assume introducing no sensible loads to zone if preconditioned
     if not vent_fans[:mech_preheat].empty?
-      htg_stp_sensor = Model.add_ems_sensor(
-        model,
-        name: 'htg stp s',
-        output_var_or_meter_name: 'Zone Thermostat Heating Setpoint Temperature',
-        key_name: conditioned_zone.name
-      )
-      infil_program.addLine("Set HtgStp = #{htg_stp_sensor.name}") # heating thermostat setpoint
+      htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+      infil_program.addLine("Set HtgStp = #{htg_sp_sensor.name}") # heating thermostat setpoint
     end
     if not vent_fans[:mech_precool].empty?
-      clg_stp_sensor = Model.add_ems_sensor(
-        model,
-        name: 'clg stp s',
-        output_var_or_meter_name: 'Zone Thermostat Cooling Setpoint Temperature',
-        key_name: conditioned_zone.name
-      )
-      infil_program.addLine("Set ClgStp = #{clg_stp_sensor.name}") # cooling thermostat setpoint
+      clg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
+      infil_program.addLine("Set ClgStp = #{clg_sp_sensor.name}") # cooling thermostat setpoint
     end
     vent_fans[:mech_preheat].each_with_index do |f_preheat, i|
-      infil_program.addLine("If (OASupInTemp < HtgStp) && (#{sensors[:clg_ssn].name} < 1)")
+      clg_season_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason }
+      infil_program.addLine("If (OASupInTemp < HtgStp) && (#{clg_season_sensor.name} < 1)")
 
       cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeMechanicalVentilationPreheating } # Ensure unique meter for each preheating system
       other_equip = Model.add_other_equipment(
@@ -2592,7 +2482,8 @@ module Airflow
       infil_program.addLine("Set #{htg_energy_actuator.name} = PreHeatingWatt / #{f_preheat.preheating_efficiency_cop}")
     end
     vent_fans[:mech_precool].each_with_index do |f_precool, i|
-      infil_program.addLine("If (OASupInTemp > ClgStp) && (#{sensors[:clg_ssn].name} > 0)")
+      clg_season_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason }
+      infil_program.addLine("If (OASupInTemp > ClgStp) && (#{clg_season_sensor.name} > 0)")
 
       cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeMechanicalVentilationPrecooling } # Ensure unique meter for each precooling system
       other_equip = Model.add_other_equipment(
@@ -2652,10 +2543,9 @@ module Airflow
   # @param duct_lk_imbals [Array] List of duct leakage imbalance information
   # @param cfis_data [Hash] Map with various CFIS-relative OpenStudio model objects
   # @param fan_data [Hash] Map of HVAC blower fan properties => values
-  # @param sensors [Hash] Map of :sensor_types => OpenStudio::Model::EnergyManagementSystemSensor objects
   # @return [nil]
   def self.apply_infiltration_ventilation_to_conditioned(runner, model, spaces, weather, hpxml_bldg, hpxml_header, vent_fans, infil_values,
-                                                         schedules_file, duct_lk_imbals, cfis_data, fan_data, sensors)
+                                                         schedules_file, duct_lk_imbals, cfis_data, fan_data)
     # Categorize fans into different types
     vent_fans[:mech_preheat] = vent_fans[:mech].select { |vent_mech| (not vent_mech.preheating_efficiency_cop.nil?) }
     vent_fans[:mech_precool] = vent_fans[:mech].select { |vent_mech| (not vent_mech.precooling_efficiency_cop.nil?) }
@@ -2691,10 +2581,10 @@ module Airflow
     infil_program.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeInfiltration)
 
     # Calculate infiltration without adjustment by ventilation
-    apply_infiltration_to_conditioned(spaces, hpxml_bldg, hpxml_header, infil_program, weather, infil_values, sensors)
+    apply_infiltration_to_conditioned(model, spaces, hpxml_bldg, hpxml_header, infil_program, weather, infil_values)
 
     # Common variable and load actuators across multiple mech vent calculations, create only once
-    fan_sens_load_actuator, fan_lat_load_actuator = initialize_mech_vent(model, spaces, infil_program, sensors)
+    fan_sens_load_actuator, fan_lat_load_actuator = initialize_mech_vent(model, spaces, infil_program)
 
     # Apply CFIS
     apply_cfis(runner, infil_program, vent_fans[:mech_cfis], cfis_data, cfis_fan_actuator, cfis_suppl_fan_actuator, fan_data)
@@ -2717,7 +2607,7 @@ module Airflow
     hrv_erv_effectiveness_map = calc_hrv_erv_effectiveness(vent_fans[:mech_erv_hrv])
 
     calculate_fan_loads(infil_program, vent_fans[:mech_erv_hrv], hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator, 'Qload')
-    calculate_precond_loads(model, spaces, infil_program, vent_fans, hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator, sensors)
+    calculate_precond_loads(model, spaces, infil_program, vent_fans, hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator)
 
     Model.add_ems_program_calling_manager(
       model,
@@ -2730,17 +2620,21 @@ module Airflow
   # Updates the infiltration EMS program with calculations for the conditioned space. Uses the Alberta Air
   # Infiltration Model version 2 (AIM-2), also known as the ASHRAE Enhanced model.
   #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param infil_program [OpenStudio::Model::EnergyManagementSystemProgram] EMS program for the infiltration calculations
   # @param weather [WeatherFile] Weather object containing EPW information
   # @param infil_values [Hash] Map with various infiltration key-value pairs (SLA, infiltration volume & height, etc.)
-  # @param sensors [Hash] Map of :sensor_types => OpenStudio::Model::EnergyManagementSystemSensor objects
   # @param n_i [Double] Infiltration test flow exponent
   # @return [nil]
-  def self.apply_infiltration_to_conditioned(spaces, hpxml_bldg, hpxml_header, infil_program, weather, infil_values, sensors, n_i = InfilPressureExponent)
+  def self.apply_infiltration_to_conditioned(model, spaces, hpxml_bldg, hpxml_header, infil_program, weather, infil_values, n_i = InfilPressureExponent)
     site_ap = hpxml_bldg.site.additional_properties
+
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    vw_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteWindSpeed }
 
     if hpxml_header.apply_ashrae140_assumptions
       const_ach = infil_values[:nach] * infil_values[:a_ext]
@@ -2835,14 +2729,14 @@ module Airflow
       infil_program.addLine("Set z_m = #{UnitConversions.convert(site_ap.height, 'ft', 'm')}")
       infil_program.addLine("Set z_s = #{UnitConversions.convert(infil_values[:height] + [hpxml_bldg.building_construction.unit_height_above_grade, 0].max, 'ft', 'm')}")
       infil_program.addLine('Set f_t = (((s_m/z_m)^p_m)*((z_s/s_s)^p_s))')
-      infil_program.addLine("Set Tdiff = #{sensors[:t_in].name}-#{sensors[:t_out].name}")
+      infil_program.addLine("Set Tdiff = #{t_in_sensor.name}-#{t_out_sensor.name}")
       infil_program.addLine('Set dT = @Abs Tdiff')
       infil_program.addLine("Set c = #{((UnitConversions.convert(c_i, 'cfm', 'm^3/s') / (UnitConversions.convert(1.0, 'inH2O', 'Pa')**n_i))).round(4)}")
       infil_program.addLine("Set Cs = #{(stack_coef * (UnitConversions.convert(1.0, 'inH2O/R', 'Pa/K')**n_i)).round(4)}")
       infil_program.addLine("Set Cw = #{(wind_coef * (UnitConversions.convert(1.0, 'inH2O/mph^2', 'Pa*s^2/m^2')**n_i)).round(4)}")
       infil_program.addLine("Set n = #{n_i}")
       infil_program.addLine("Set sft = (f_t*#{(site_ap.aim2_shelter_coeff * (1.0 - y_i)) + (s_wflue * (1.5 * y_i))})")
-      infil_program.addLine("Set temp1 = ((c*Cw)*((sft*#{sensors[:v_wind].name})^(2*n)))^2")
+      infil_program.addLine("Set temp1 = ((c*Cw)*((sft*#{vw_out_sensor.name})^(2*n)))^2")
       infil_program.addLine('Set Qinf = (((c*Cs*(dT^n))^2)+temp1)^0.5')
       infil_program.addLine('Set Qinf = (@Max Qinf 0)')
 
