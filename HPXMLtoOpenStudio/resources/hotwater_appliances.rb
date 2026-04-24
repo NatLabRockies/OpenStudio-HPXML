@@ -352,15 +352,6 @@ module HotWaterAndAppliances
         limits: EPlus::ScheduleTypeLimitsTemperature
       )
 
-      # FIXME: Use HPXML HasMixingValve and MixingValueSetpoint elements?
-      # FIXME: Should this be min(125.0, t_set)?
-      hw_temp_schedule = Model.add_schedule_constant(
-        model,
-        name: 'hot water temperature schedule',
-        value: UnitConversions.convert(125.0, 'F', 'C'),
-        limits: EPlus::ScheduleTypeLimitsTemperature
-      )
-
       water_heating = hpxml_bldg.water_heating
 
       # Create schedule
@@ -388,6 +379,16 @@ module HotWaterAndAppliances
 
     hpxml_bldg.water_heating_systems.each do |water_heating_system|
       non_solar_fraction = 1.0 - Waterheater.get_water_heater_solar_fraction(water_heating_system, hpxml_bldg)
+
+      hw_temp_schedule = nil
+      if water_heating_system.has_mixing_valve
+        hw_temp_schedule = Model.add_schedule_constant(
+          model,
+          name: 'hot water temperature schedule',
+          value: UnitConversions.convert(water_heating_system.mixing_valve_setpoint, 'F', 'C'),
+          limits: EPlus::ScheduleTypeLimitsTemperature
+        )
+      end
 
       gpd_frac = water_heating_system.fraction_dhw_load_served # Fixtures fraction
       if gpd_frac > 0

@@ -3403,6 +3403,22 @@ module Defaults
         end
 
       end
+
+      if water_heating_system.has_mixing_valve.nil?
+        if water_heating_system.water_heater_type == HPXML::WaterHeaterTypeHeatPump && water_heating_system.hpwh_voltage != HPXML::HPWHVoltage240
+          # 120V HPWH
+          water_heating_system.has_mixing_valve = true
+        else
+          water_heating_system.has_mixing_valve = false
+        end
+        water_heating_system.has_mixing_valve_isdefaulted = true
+      end
+
+      if water_heating_system.has_mixing_valve && water_heating_system.mixing_valve_setpoint.nil?
+        water_heating_system.mixing_valve_setpoint = [125.0, water_heating_system.temperature].min
+        water_heating_system.mixing_valve_setpoint_isdefaulted = true
+      end
+
       next unless water_heating_system.location.nil?
 
       iecc_zone = hpxml_bldg.climate_and_risk_zones.climate_zone_ieccs.empty? ? nil : hpxml_bldg.climate_and_risk_zones.climate_zone_ieccs[0].zone

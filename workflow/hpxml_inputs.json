@@ -1047,6 +1047,9 @@
     "parent_hpxml": "sample_files/base.xml",
     "dhw_water_heater": "Detailed Example: Electricity, Tank, UEF 0.94, 135F"
   },
+  "sample_files/base-dhw-setpoint-temperature-mixing-valve.xml": {
+    "parent_hpxml": "sample_files/base-dhw-setpoint-temperature.xml"
+  },
   "sample_files/base-detailed-electric-panel.xml": {
     "parent_hpxml": "sample_files/base.xml",
     "geometry_unit_conditioned_floor_area": "1228",

@@ -76,8 +76,10 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'dhw-frac-load-served' => ['Expected sum(FractionDHWLoadServed) to be 1 [context: /HPXML/Building/BuildingDetails, id: "MyBuilding"]'],
                             'dhw-invalid-ef-tank' => ['Expected EnergyFactor to be less than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="storage water heater"], id: "WaterHeatingSystem1"]'],
                             'dhw-invalid-uef-tank-heat-pump' => ['Expected UniformEnergyFactor to be greater than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="heat pump water heater"], id: "WaterHeatingSystem1"]'],
-                            'dhw-setpoint-low' => ['Expected HotWaterTemperature to be greater than or equal to 105 deg-F'],
+                            'dhw-mixing-valve-setpoint-high' => ['Expected MixingValveSetpoint to be less than or equal to HotWaterTemperature'],
+                            'dhw-mixing-valve-setpoint-low' => ['Expected MixingValveSetpoint to be greater than or equal to 105 deg-F'],
                             'dhw-setpoint-high' => ['Expected HotWaterTemperature to be less than or equal to 160 deg-F'],
+                            'dhw-setpoint-low' => ['Expected HotWaterTemperature to be greater than or equal to 105 deg-F'],
                             'dishwasher-location' => ['A location is specified as "garage" but no surfaces were found adjacent to this space type.'],
                             'duct-leakage-cfm25' => ["The value '-2.0' is less than the minimum value allowed",
                                                      "The value '-3.0' is less than the minimum value allowed"],
@@ -328,12 +330,19 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
       when 'dhw-invalid-uef-tank-heat-pump'
         hpxml, hpxml_bldg = _create_hpxml('base-dhw-tank-heat-pump.xml')
         hpxml_bldg.water_heating_systems[0].uniform_energy_factor = 1.0
-      when 'dhw-setpoint-low'
+      when 'dhw-mixing-valve-setpoint-high'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
-        hpxml_bldg.water_heating_systems[0].temperature = 100
+        hpxml_bldg.water_heating_systems[0].temperature = 130
+        hpxml_bldg.water_heating_systems[0].mixing_valve_setpoint = 131
+      when 'dhw-mixing-valve-setpoint-low'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.water_heating_systems[0].mixing_valve_setpoint = 100
       when 'dhw-setpoint-high'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.water_heating_systems[0].temperature = 200
+      when 'dhw-setpoint-low'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.water_heating_systems[0].temperature = 100
       when 'dishwasher-location'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.dishwashers[0].location = HPXML::LocationGarage

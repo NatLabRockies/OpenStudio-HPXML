@@ -8609,6 +8609,8 @@ class HPXML < Object
              :standby_loss_units,                     # [String] StandbyLoss/Units (HPXML::UnitsXXX)
              :standby_loss_value,                     # [Double] StandbyLoss/Value
              :temperature,                            # [Double] HotWaterTemperature (F)
+             :has_mixing_valve,                       # [Boolean] HasMixingValve
+             :mixing_valve_setpoint,                  # [Double] MixingValveSetpoint (F)
              :uses_desuperheater,                     # [Boolean] UsesDesuperheater
              :related_hvac_idref,                     # [String] RelatedHVACSystem/@idref
              :tank_model_type,                        # [String] extension/TankModelType (HPXML::WaterHeaterTankModelTypeXXX)
@@ -8723,6 +8725,8 @@ class HPXML < Object
         XMLHelper.add_element(standby_loss, 'Value', @standby_loss_value, :float, @standby_loss_value_isdefaulted)
       end
       XMLHelper.add_element(water_heating_system, 'HotWaterTemperature', @temperature, :float, @temperature_isdefaulted) unless @temperature.nil?
+      XMLHelper.add_element(water_heating_system, 'HasMixingValve', @has_mixing_valve, :boolean, @has_mixing_valve_isdefaulted) unless @has_mixing_valve.nil?
+      XMLHelper.add_element(water_heating_system, 'MixingValveSetpoint', @mixing_valve_setpoint, :float, @mixing_valve_setpoint_isdefaulted) unless @mixing_valve_setpoint.nil?
       XMLHelper.add_element(water_heating_system, 'UsesDesuperheater', @uses_desuperheater, :boolean) unless @uses_desuperheater.nil?
       if not @related_hvac_idref.nil?
         related_hvac_idref_el = XMLHelper.add_element(water_heating_system, 'RelatedHVACSystem')
@@ -8769,6 +8773,8 @@ class HPXML < Object
       @standby_loss_units = XMLHelper.get_value(water_heating_system, 'StandbyLoss/Units', :string)
       @standby_loss_value = XMLHelper.get_value(water_heating_system, 'StandbyLoss/Value', :float)
       @temperature = XMLHelper.get_value(water_heating_system, 'HotWaterTemperature', :float)
+      @has_mixing_valve = XMLHelper.get_value(water_heating_system, 'HasMixingValve', :boolean)
+      @mixing_valve_setpoint = XMLHelper.get_value(water_heating_system, 'MixingValveSetpoint', :float)
       @uses_desuperheater = XMLHelper.get_value(water_heating_system, 'UsesDesuperheater', :boolean)
       @related_hvac_idref = HPXML::get_idref(XMLHelper.get_element(water_heating_system, 'RelatedHVACSystem'))
       @tank_model_type = XMLHelper.get_value(water_heating_system, 'extension/TankModelType', :string)
