@@ -240,7 +240,7 @@ module Waterheater
     loc_duct_exhaust = water_heating_system.hpwh_ducting_exhaust
 
     # Amb temp & RH sensors, temp sensor shared across programs
-    amb_temp_sensor, amb_rh_sensors = apply_hpwh_loc_temp_rh_sensors(model, obj_name, loc_space, loc_schedule, spaces)
+    amb_temp_sensor, amb_rh_sensors = apply_hpwh_loc_temp_rh_sensors(model, obj_name, loc_space, loc_schedule)
     hpwh_zone_heat_gain_program = apply_hpwh_zone_heat_gain_program(model, obj_name, loc_space, loc_duct_exhaust, hpwh_tamb, hpwh_rhamb, tank, coil, fan, amb_temp_sensor, amb_rh_sensors, unit_multiplier)
 
     # EMS for the HPWH control logic
@@ -559,12 +559,7 @@ module Waterheater
         end
       end
 
-      mains_temp_sensor = Model.add_ems_sensor(
-        model,
-        name: 'Mains Temperature',
-        output_var_or_meter_name: 'Site Mains Water Temperature',
-        key_name: 'Environment'
-      )
+      mains_temp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteMainsWaterTemp }
 
       # Program
       combi_ctrl_program = Model.add_ems_program(
@@ -1125,10 +1120,11 @@ module Waterheater
   # @param obj_name [String] Name for the OpenStudio object
   # @param loc_space [OpenStudio::Model::Space] The space where the water heater is located
   # @param loc_schedule [OpenStudio::Model::ScheduleConstant] The temperature schedule, if not located in a space
-  # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
   # @return [Array<OpenStudio::Model::EnergyManagementSystemSensor, Array<OpenStudio::Model::EnergyManagementSystemSensor>>] HPWH ambient temperature sensor, One or more HPWH ambient RH sensors
-  def self.apply_hpwh_loc_temp_rh_sensors(model, obj_name, loc_space, loc_schedule, spaces)
-    conditioned_zone = spaces[HPXML::LocationConditionedSpace].thermalZone.get
+  def self.apply_hpwh_loc_temp_rh_sensors(model, obj_name, loc_space, loc_schedule)
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    rh_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirRH }
+    rh_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirRH }
 
     rh_sensors = []
     if not loc_schedule.nil?
@@ -1138,34 +1134,13 @@ module Waterheater
         output_var_or_meter_name: 'Schedule Value',
         key_name: loc_schedule.name
       )
-
       if loc_schedule.name.get == HPXML::LocationOtherNonFreezingSpace
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb rh",
-          output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
-          key_name: 'Environment'
-        )
+        rh_sensors << rh_out_sensor
       elsif loc_schedule.name.get == HPXML::LocationOtherHousingUnit
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb rh",
-          output_var_or_meter_name: 'Zone Air Relative Humidity',
-          key_name: conditioned_zone.name
-        )
+        rh_sensors << rh_in_sensor
       else
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb1 rh",
-          output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
-          key_name: 'Environment'
-        )
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb2 rh",
-          output_var_or_meter_name: 'Zone Air Relative Humidity',
-          key_name: conditioned_zone.name
-        )
+        rh_sensors << rh_out_sensor
+        rh_sensors << rh_in_sensor
       end
     elsif not loc_space.nil?
       amb_temp_sensor = Model.add_ems_sensor(
@@ -1174,7 +1149,6 @@ module Waterheater
         output_var_or_meter_name: 'Zone Mean Air Temperature',
         key_name: loc_space.thermalZone.get.name
       )
-
       rh_sensors << Model.add_ems_sensor(
         model,
         name: "#{obj_name} amb rh",
@@ -1182,19 +1156,8 @@ module Waterheater
         key_name: loc_space.thermalZone.get.name
       )
     else # Located outside
-      amb_temp_sensor = Model.add_ems_sensor(
-        model,
-        name: "#{obj_name} amb temp",
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: 'Environment'
-      )
-
-      rh_sensors << Model.add_ems_sensor(
-        model,
-        name: "#{obj_name} amb rh",
-        output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
-        key_name: 'Environment'
-      )
+      amb_temp_sensor = t_out_sensor
+      rh_sensors << rh_out_sensor
     end
     return amb_temp_sensor, rh_sensors
   end
@@ -1333,11 +1296,11 @@ module Waterheater
   # @param hpwh_bottom_element_sp [OpenStudio::Model::ScheduleConstant] HPWH bottom element setpoint schedule
   # @param min_temp [Double] Minimum temperature for compressor operation (F)
   # @param max_temp [Double] Maximum temperature for compressor operation (F)
-  # @param sensted_setpoint_schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] Setpoint temperature schedule (sensed)
+  # @param sensed_setpoint_schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] Setpoint temperature schedule (sensed)
   # @param control_setpoint_schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] Setpoint temperature schedule (controlled)
   # @param schedules_file [SchedulesFile] SchedulesFile wrapper class instance of detailed schedule files
   # @return [OpenStudio::Model::EnergyManagementSystemProgram] The HPWH control program
-  def self.apply_hpwh_control_program(runner, model, obj_name, water_heating_system, amb_temp_sensor, hpwh_top_element_sp, hpwh_bottom_element_sp, min_temp, max_temp, sensted_setpoint_schedule, control_setpoint_schedule, schedules_file)
+  def self.apply_hpwh_control_program(runner, model, obj_name, water_heating_system, amb_temp_sensor, hpwh_top_element_sp, hpwh_bottom_element_sp, min_temp, max_temp, sensed_setpoint_schedule, control_setpoint_schedule, schedules_file)
     # Lower element is enabled if the ambient air temperature prevents the HP from running
     leschedoverride_actuator = Model.add_ems_actuator(
       name: "#{obj_name} LESchedOverride",
@@ -1369,7 +1332,7 @@ module Waterheater
       model,
       name: "#{obj_name} T_set",
       output_var_or_meter_name: 'Schedule Value',
-      key_name: sensted_setpoint_schedule.name
+      key_name: sensed_setpoint_schedule.name
     )
 
     op_mode_schedule = nil

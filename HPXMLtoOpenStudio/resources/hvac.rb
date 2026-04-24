@@ -50,7 +50,7 @@ module HVAC
         output_var_or_meter_name: 'Schedule Value',
         key_name: htg_avail_sch.schedule.name
       )
-      htg_avail_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeHeatingAvailabilitySensor)
+      htg_avail_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorScheduleHeatingAvailability)
     end
 
     # Create cooling availability sensor
@@ -63,7 +63,7 @@ module HVAC
         output_var_or_meter_name: 'Schedule Value',
         key_name: clg_avail_sch.schedule.name
       )
-      clg_avail_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeCoolingAvailabilitySensor)
+      clg_avail_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorScheduleCoolingAvailability)
     end
 
     apply_unit_multiplier(hpxml_bldg, hpxml_header)
@@ -471,27 +471,18 @@ module HVAC
     # Air Loop
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, [htg_cfm.to_f, clg_cfm.to_f].max, heating_system, hvac_unavailable_periods)
 
-    add_backup_staging_ems_program(model, air_loop_unitary, htg_supp_coil, control_zone, htg_coil)
-    add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
+    add_backup_staging_ems_program(model, air_loop_unitary, htg_supp_coil, htg_coil)
+    add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil)
 
     # supp coil control in staging EMS
-    add_two_speed_staging_ems_program(model, air_loop_unitary, htg_supp_coil, control_zone, has_deadband_control, cooling_system)
+    add_two_speed_staging_ems_program(model, air_loop_unitary, htg_supp_coil, has_deadband_control, cooling_system)
 
-    add_supplemental_coil_ems_program(model, htg_supp_coil, control_zone, htg_coil, has_deadband_control, cooling_system)
+    add_supplemental_coil_ems_program(model, htg_supp_coil, htg_coil, has_deadband_control, cooling_system)
 
-    add_variable_speed_power_ems_program(runner, model, air_loop_unitary, control_zone, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
+    add_variable_speed_power_ems_program(runner, model, air_loop_unitary, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
 
     # Defrost, pan heater, crankcase heater
     if not cooling_system.nil?
-
-      tout_db_sensor = Model.add_ems_sensor(
-        model,
-        name: 'drybulb air tout s',
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: 'Environment'
-      )
-      tout_db_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeOATDrybulbSensor)
-
       if is_heatpump
         ems_program = apply_defrost_ems_program(model, htg_coil, control_zone.spaces[0], cooling_system, hpxml_bldg.building_construction.number_of_units)
         apply_pan_heater_ems_program(model, ems_program, htg_coil, control_zone.spaces[0], cooling_system, htg_ap.hp_min_temp)
@@ -928,7 +919,7 @@ module HVAC
     air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, [htg_cfm, clg_cfm].max, heat_pump, hvac_unavailable_periods)
 
     # HVAC Installation Quality
-    add_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil, control_zone)
+    add_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil)
 
     add_dse_ems_program(:clg, model, hpxml_bldg, heat_pump, obj_name)
     add_dse_ems_program(:htg, model, hpxml_bldg, heat_pump, obj_name)
@@ -1855,12 +1846,7 @@ module HVAC
   # @return [nil]
   def self.add_fan_power_ems_program(model, fan, hp_min_temp)
     # Sensors
-    tout_db_sensor = Model.add_ems_sensor(
-      model,
-      name: 'tout_db',
-      output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-      key_name: 'Environment'
-    )
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
 
     # Actuators
     fan_pressure_rise_act = Model.add_ems_actuator(
@@ -1880,7 +1866,7 @@ module HVAC
       model,
       name: "#{fan.name} power program"
     )
-    fan_program.addLine("If #{tout_db_sensor.name} < #{UnitConversions.convert(hp_min_temp, 'F', 'C').round(2)}")
+    fan_program.addLine("If #{t_out_sensor.name} < #{UnitConversions.convert(hp_min_temp, 'F', 'C').round(2)}")
     fan_program.addLine("  Set #{fan_pressure_rise_act.name} = 0")
     fan_program.addLine("  Set #{fan_total_efficiency_act.name} = 1")
     fan_program.addLine('Else')
@@ -3383,32 +3369,19 @@ module HVAC
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingElectric or OpenStudio::Model::CoilHeatingElectricMultiStage] OpenStudio Supplemental Heating Coil object
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param htg_coil [OpenStudio::Model::CoilHeatingDXSingleSpeed or OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio Heating Coil object
   # @param has_deadband_control [Boolean] Whether to apply on off thermostat deadband
   # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
   # @return [nil]
-  def self.add_supplemental_coil_ems_program(model, htg_supp_coil, control_zone, htg_coil, has_deadband_control, cooling_system)
+  def self.add_supplemental_coil_ems_program(model, htg_supp_coil, htg_coil, has_deadband_control, cooling_system)
     return if htg_supp_coil.nil?
     return unless cooling_system.compressor_type == HPXML::HVACCompressorTypeSingleStage
     return unless has_deadband_control
     return if htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
 
     # Sensors
-    tin_sensor = Model.add_ems_sensor(
-      model,
-      name: 'zone air temp',
-      output_var_or_meter_name: 'Zone Mean Air Temperature',
-      key_name: control_zone.name
-    )
-
-    htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-    htg_sp_ss = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} htg setpoint",
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: htg_sch.name
-    )
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
 
     supp_coil_energy = Model.add_ems_sensor(
       model,
@@ -3450,11 +3423,11 @@ module HVAC
     supp_coil_avail_program.addLine("If #{global_var_supp_avail.name} == 0") # Other EMS set it to be 0.0, keep the logic
     supp_coil_avail_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
     supp_coil_avail_program.addLine('Else') # global variable = 1
-    supp_coil_avail_program.addLine("  Set living_t = #{tin_sensor.name}")
-    supp_coil_avail_program.addLine("  Set htg_sp_l = #{htg_sp_ss.name}")
-    supp_coil_avail_program.addLine("  Set htg_sp_h = #{htg_sp_ss.name} + #{ddb}")
+    supp_coil_avail_program.addLine("  Set living_t = #{t_in_sensor.name}")
+    supp_coil_avail_program.addLine("  Set htg_sp_low = #{htg_sp_sensor.name}")
+    supp_coil_avail_program.addLine("  Set htg_sp_high = #{htg_sp_sensor.name} + #{ddb}")
     supp_coil_avail_program.addLine("  If (@TRENDVALUE #{supp_energy_trend.name} 1) > 0") # backup coil is turned on, keep it on until reaching upper end of ddb in case of high frequency oscillations
-    supp_coil_avail_program.addLine('    If living_t > htg_sp_h')
+    supp_coil_avail_program.addLine('    If living_t > htg_sp_high')
     supp_coil_avail_program.addLine("      Set #{global_var_supp_avail.name} = 0")
     supp_coil_avail_program.addLine("      Set #{supp_coil_avail_act.name} = 0")
     supp_coil_avail_program.addLine('    Else')
@@ -3467,7 +3440,7 @@ module HVAC
       r_s_a << "(@TrendValue #{htg_energy_trend.name} #{t_i}) > 0"
     end
     supp_coil_avail_program.addLine("    If #{r_s_a.join(' && ')}")
-    supp_coil_avail_program.addLine('      If living_t > htg_sp_l')
+    supp_coil_avail_program.addLine('      If living_t > htg_sp_low')
     supp_coil_avail_program.addLine("        Set #{global_var_supp_avail.name} = 0")
     supp_coil_avail_program.addLine("        Set #{supp_coil_avail_act.name} = 0")
     supp_coil_avail_program.addLine('      Else')
@@ -3633,11 +3606,10 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param unitary_system [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingElectric or OpenStudio::Model::CoilHeatingElectricMultiStage] OpenStudio Supplemental Heating Coil object
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param has_deadband_control [Boolean] Whether to apply on off thermostat deadband
   # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
   # @return [nil]
-  def self.add_two_speed_staging_ems_program(model, unitary_system, htg_supp_coil, control_zone, has_deadband_control, cooling_system)
+  def self.add_two_speed_staging_ems_program(model, unitary_system, htg_supp_coil, has_deadband_control, cooling_system)
     # Note: Currently only available in 1 min time step
     return unless has_deadband_control
     return unless cooling_system.compressor_type == HPXML::HVACCompressorTypeTwoStage
@@ -3664,30 +3636,11 @@ module HVAC
 
       supp_coil_avail_act, global_var_supp_avail = get_supp_coil_avail_sch_actuator(model, htg_supp_coil)
     end
+
     # Sensors
-    living_temp_ss = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} temp",
-      output_var_or_meter_name: 'Zone Air Temperature',
-      key_name: control_zone.name
-    )
-
-    htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-    clg_sch = control_zone.thermostatSetpointDualSetpoint.get.coolingSetpointTemperatureSchedule.get
-
-    htg_sp_ss = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} htg setpoint",
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: htg_sch.name
-    )
-
-    clg_sp_ss = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} clg setpoint",
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: clg_sch.name
-    )
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+    clg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
 
     unitary_var = Model.add_ems_sensor(
       model,
@@ -3719,11 +3672,11 @@ module HVAC
     )
 
     # Check values within min/max limits
-    realistic_cycling_program.addLine("Set living_t = #{living_temp_ss.name}")
-    realistic_cycling_program.addLine("Set htg_sp_l = #{htg_sp_ss.name}")
-    realistic_cycling_program.addLine("Set htg_sp_h = #{htg_sp_ss.name} + #{ddb}")
-    realistic_cycling_program.addLine("Set clg_sp_l = #{clg_sp_ss.name} - #{ddb}")
-    realistic_cycling_program.addLine("Set clg_sp_h = #{clg_sp_ss.name}")
+    realistic_cycling_program.addLine("Set living_t = #{t_in_sensor.name}")
+    realistic_cycling_program.addLine("Set htg_sp_low = #{htg_sp_sensor.name}")
+    realistic_cycling_program.addLine("Set htg_sp_high = #{htg_sp_sensor.name} + #{ddb}")
+    realistic_cycling_program.addLine("Set clg_sp_low = #{clg_sp_sensor.name} - #{ddb}")
+    realistic_cycling_program.addLine("Set clg_sp_high = #{clg_sp_sensor.name}")
 
     (1..number_of_timestep_logged).each do |t_i|
       realistic_cycling_program.addLine("Set unitary_var_#{t_i}_ago = @TrendValue #{unitary_speed_var_trend.name} #{t_i}")
@@ -3736,22 +3689,22 @@ module HVAC
     end
     # Cooling
     # Setpoint not met and low speed is on for 5 time steps
-    realistic_cycling_program.addLine("If (living_t - clg_sp_h > 0.0) && (#{s_trend_low.join(' && ')})")
+    realistic_cycling_program.addLine("If (living_t - clg_sp_high > 0.0) && (#{s_trend_low.join(' && ')})")
     # Enable high speed unitary system
     realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 2")
     # Keep high speed unitary on until setpoint +- deadband is met
-    realistic_cycling_program.addLine('ElseIf (unitary_var_1_ago == 2) && ((living_t - clg_sp_l > 0.0))')
+    realistic_cycling_program.addLine('ElseIf (unitary_var_1_ago == 2) && ((living_t - clg_sp_low > 0.0))')
     realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 2")
     realistic_cycling_program.addLine('Else')
     realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 1")
     realistic_cycling_program.addLine('EndIf')
     if is_heatpump
       # Heating
-      realistic_cycling_program.addLine("If (htg_sp_l - living_t > 0.0) && (#{s_trend_low.join(' && ')})")
+      realistic_cycling_program.addLine("If (htg_sp_low - living_t > 0.0) && (#{s_trend_low.join(' && ')})")
       # Enable high speed unitary system
       realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 2")
       # Keep high speed unitary on until setpoint +- deadband is met
-      realistic_cycling_program.addLine('ElseIf (unitary_var_1_ago == 2) && (htg_sp_h - living_t > 0.0)')
+      realistic_cycling_program.addLine('ElseIf (unitary_var_1_ago == 2) && (htg_sp_high - living_t > 0.0)')
       realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 2")
       realistic_cycling_program.addLine('Else')
       realistic_cycling_program.addLine("  Set #{unitary_actuator.name} = 1")
@@ -3761,9 +3714,9 @@ module HVAC
         realistic_cycling_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
         realistic_cycling_program.addLine('Else') # global variable = 1
         realistic_cycling_program.addLine("  Set #{supp_coil_avail_act.name} = 1")
-        realistic_cycling_program.addLine("  If (htg_sp_l - living_t > 0.0) && (#{s_trend_high.join(' && ')})")
+        realistic_cycling_program.addLine("  If (htg_sp_low - living_t > 0.0) && (#{s_trend_high.join(' && ')})")
         realistic_cycling_program.addLine("    Set #{supp_coil_avail_act.name} = 1")
-        realistic_cycling_program.addLine("  ElseIf ((@TRENDVALUE #{backup_energy_trend.name} 1) > 0) && (htg_sp_h - living_t > 0.0)") # backup coil is turned on, keep it on until reaching upper end of ddb in case of high frequency oscillations
+        realistic_cycling_program.addLine("  ElseIf ((@TRENDVALUE #{backup_energy_trend.name} 1) > 0) && (htg_sp_high - living_t > 0.0)") # backup coil is turned on, keep it on until reaching upper end of ddb in case of high frequency oscillations
         realistic_cycling_program.addLine("    Set #{supp_coil_avail_act.name} = 1")
         realistic_cycling_program.addLine('  Else')
         realistic_cycling_program.addLine("    Set #{global_var_supp_avail.name} = 0")
@@ -3788,7 +3741,6 @@ module HVAC
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param air_loop_unitary [OpenStudio::Model::AirLoopHVACUnitarySystem] Air loop for the HVAC system
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingElectric or CoilHeatingElectricMultiStage] OpenStudio Supplemental Heating Coil object
@@ -3796,7 +3748,7 @@ module HVAC
   # @param htg_coil [OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio MultiStage Heating Coil object
   # @param schedules_file [SchedulesFile] SchedulesFile wrapper class instance of detailed schedule files
   # @return [nil]
-  def self.add_variable_speed_power_ems_program(runner, model, air_loop_unitary, control_zone, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
+  def self.add_variable_speed_power_ems_program(runner, model, air_loop_unitary, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
     return if schedules_file.nil?
     return if clg_coil.nil? && htg_coil.nil?
 
@@ -3828,27 +3780,9 @@ module HVAC
       key_name: max_pow_ratio_sch.name
     )
 
-    indoor_temp_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} indoor_temp",
-      output_var_or_meter_name: 'Zone Air Temperature',
-      key_name: control_zone.name
-    )
-
-    htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-    clg_sch = control_zone.thermostatSetpointDualSetpoint.get.coolingSetpointTemperatureSchedule.get
-    htg_spt_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} htg setpoint",
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: htg_sch.name
-    )
-    clg_spt_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{control_zone.name} clg setpoint",
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: clg_sch.name
-    )
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+    clg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
 
     load_sensor = Model.add_ems_sensor(
       model,
@@ -3906,10 +3840,10 @@ module HVAC
     program.addLine('Set htg_mode = 0')
     program.addLine("If #{load_sensor.name} > 0")
     program.addLine('  Set htg_mode = 1')
-    program.addLine("  Set setpoint = #{htg_spt_sensor.name}")
+    program.addLine("  Set setpoint = #{htg_sp_sensor.name}")
     program.addLine("ElseIf #{load_sensor.name} < 0")
     program.addLine('  Set clg_mode = 1')
-    program.addLine("  Set setpoint = #{clg_spt_sensor.name}")
+    program.addLine("  Set setpoint = #{clg_sp_sensor.name}")
     program.addLine('EndIf')
     program.addLine("Set sens_load = @Abs #{load_sensor.name}")
     program.addLine('Set clg_mode = 0') if clg_coil.nil?
@@ -3934,33 +3868,16 @@ module HVAC
         mode_s = 'If htg_mode > 0'
 
         # Outdoor sensors added to calculate defrost adjustment for heating
-        outdoor_db_sensor = Model.add_ems_sensor(
-          model,
-          name: 'outdoor_db',
-          output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-          key_name: nil
-        )
-
-        outdoor_w_sensor = Model.add_ems_sensor(
-          model,
-          name: 'outdoor_w',
-          output_var_or_meter_name: 'Site Outdoor Air Humidity Ratio',
-          key_name: nil
-        )
-
-        outdoor_bp_sensor = Model.add_ems_sensor(
-          model,
-          name: 'outdoor_bp',
-          output_var_or_meter_name: 'Site Outdoor Air Barometric Pressure',
-          key_name: nil
-        )
+        t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+        w_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirHR }
+        bp_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirBarPressure }
 
         # Calculate capacity and eirs for later use of full-load power calculations at each stage
         # Equations from E+ source code
         program.addLine('If htg_mode > 0')
-        program.addLine("  If #{outdoor_db_sensor.name} < 4.444444,")
-        program.addLine("    Set T_coil_out = 0.82 * #{outdoor_db_sensor.name} - 8.589")
-        program.addLine("    Set delta_humidity_ratio = @MAX 0 (#{outdoor_w_sensor.name} - (@WFnTdbRhPb T_coil_out 1.0 #{outdoor_bp_sensor.name}))")
+        program.addLine("  If #{t_out_sensor.name} < 4.444444,")
+        program.addLine("    Set T_coil_out = 0.82 * #{t_out_sensor.name} - 8.589")
+        program.addLine("    Set delta_humidity_ratio = @MAX 0 (#{w_out_sensor.name} - (@WFnTdbRhPb T_coil_out 1.0 #{bp_out_sensor.name}))")
         program.addLine("    Set #{cap_multiplier} = 0.909 - 107.33 * delta_humidity_ratio")
         program.addLine("    Set #{pow_multiplier} = 0.90 - 36.45 * delta_humidity_ratio")
         program.addLine('  Else')
@@ -4086,11 +4003,11 @@ module HVAC
 
     program.addLine("Set #{supp_coil_avail_act.name} = #{global_var_supp_avail.name}") unless htg_supp_coil.nil?
     program.addLine('If htg_mode > 0 || clg_mode > 0')
-    program.addLine("  If (#{pow_ratio_sensor.name} == 1) || ((@Abs (#{indoor_temp_sensor.name} - setpoint)) > #{UnitConversions.convert(4, 'deltaF', 'deltaC')}) || #{temp_offset_signal.name} == 1")
+    program.addLine("  If (#{pow_ratio_sensor.name} == 1) || ((@Abs (#{t_in_sensor.name} - setpoint)) > #{UnitConversions.convert(4, 'deltaF', 'deltaC')}) || #{temp_offset_signal.name} == 1")
     program.addLine("    Set #{coil_speed_act.name} = NULL")
-    program.addLine("    If ((@Abs (#{indoor_temp_sensor.name} - setpoint)) > #{UnitConversions.convert(4, 'deltaF', 'deltaC')})")
+    program.addLine("    If ((@Abs (#{t_in_sensor.name} - setpoint)) > #{UnitConversions.convert(4, 'deltaF', 'deltaC')})")
     program.addLine("      Set #{temp_offset_signal.name} = 1")
-    program.addLine("    ElseIf (@Abs (#{indoor_temp_sensor.name} - setpoint)) < 0.001") # Temperature recovered
+    program.addLine("    ElseIf (@Abs (#{t_in_sensor.name} - setpoint)) < 0.001") # Temperature recovered
     program.addLine("      Set #{temp_offset_signal.name} = 0")
     program.addLine('    EndIf')
     program.addLine('  Else')
@@ -4122,10 +4039,9 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param unitary_system [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingElectric or CoilHeatingElectricMultiStage] OpenStudio Supplemental Heating Coil object
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param htg_coil [OpenStudio::Model::CoilHeatingDXSingleSpeed or OpenStudio::Model::CoilHeatingDXMultiSpeed] OpenStudio Heating Coil object
   # @return [nil]
-  def self.add_backup_staging_ems_program(model, unitary_system, htg_supp_coil, control_zone, htg_coil)
+  def self.add_backup_staging_ems_program(model, unitary_system, htg_supp_coil, htg_coil)
     return unless htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
 
     # Note: Currently only available in 1 min time step
@@ -4134,32 +4050,21 @@ module HVAC
     ddb = model.getThermostatSetpointDualSetpoints[0].temperatureDifferenceBetweenCutoutAndSetpoint
 
     # Sensors
-    living_temp_ss = Model.add_ems_sensor(
-      model,
-      name: 'living temp',
-      output_var_or_meter_name: 'Zone Mean Air Temperature',
-      key_name: control_zone.name
-    )
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    htg_sp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
 
-    htg_sch = control_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-    htg_sp_sch_ss = Model.add_ems_sensor(
+    backup_htg_coil_sensor = Model.add_ems_sensor(
       model,
-      name: "#{control_zone.name} htg setpoint",
-      output_var_or_meter_name: 'Schedule Value',
-      key_name: htg_sch.name
-    )
-    htg_coil_ss = Model.add_ems_sensor(
-      model,
-      name: 'htg_coil_rate',
-      output_var_or_meter_name: 'Heating Coil Heating Rate',
-      key_name: htg_coil.name
-    )
-
-    backup_coil_htg_rate = Model.add_ems_sensor(
-      model,
-      name: 'supp coil heating rate',
+      name: 'supp htg coil rate',
       output_var_or_meter_name: 'Heating Coil Heating Rate',
       key_name: htg_supp_coil.name
+    )
+
+    htg_coil_sensor = Model.add_ems_sensor(
+      model,
+      name: 'htg coil rate',
+      output_var_or_meter_name: 'Heating Coil Heating Rate',
+      key_name: htg_coil.name
     )
 
     # Need to use availability actuator because there's a bug in E+ that didn't handle the speed level = 0 correctly.See: https://github.com/NatLabRockies/EnergyPlus/pull/9392#discussion_r1578624175
@@ -4168,19 +4073,19 @@ module HVAC
     # Trend variables
     zone_temp_trend = Model.add_ems_trend_var(
       model,
-      ems_object: living_temp_ss,
+      ems_object: t_in_sensor,
       num_timesteps_logged: number_of_timestep_logged
     )
 
     htg_coil_trend = Model.add_ems_trend_var(
       model,
-      ems_object: htg_coil_ss,
+      ems_object: htg_coil_sensor,
       num_timesteps_logged: number_of_timestep_logged
     )
 
-    backup_coil_htg_rate_trend = Model.add_ems_trend_var(
+    backup_htg_coil_trend = Model.add_ems_trend_var(
       model,
-      ems_object: backup_coil_htg_rate,
+      ems_object: backup_htg_coil_sensor,
       num_timesteps_logged: number_of_timestep_logged
     )
 
@@ -4213,14 +4118,14 @@ module HVAC
     )
 
     # Check values within min/max limits
-    supp_staging_program.addLine("Set htg_sp_high = #{htg_sp_sch_ss.name} + #{ddb}")
-    supp_staging_program.addLine("Set htg_sp_low = #{htg_sp_sch_ss.name}")
+    supp_staging_program.addLine("Set htg_sp_high = #{htg_sp_sensor.name} + #{ddb}")
+    supp_staging_program.addLine("Set htg_sp_low = #{htg_sp_sensor.name}")
 
     s_trend = []
     (1..number_of_timestep_logged).each do |t_i|
       supp_staging_program.addLine("Set zone_temp_#{t_i}_ago = @TrendValue #{zone_temp_trend.name} #{t_i}")
       supp_staging_program.addLine("Set htg_coil_rate_#{t_i}_ago = @TrendValue #{htg_coil_trend.name} #{t_i}")
-      supp_staging_program.addLine("Set supp_htg_rate_#{t_i}_ago = @TrendValue #{backup_coil_htg_rate_trend.name} #{t_i}")
+      supp_staging_program.addLine("Set supp_htg_rate_#{t_i}_ago = @TrendValue #{backup_htg_coil_trend.name} #{t_i}")
       supp_staging_program.addLine("If htg_coil_rate_#{t_i}_ago > 0.0")
       supp_staging_program.addLine("  Set htg_spt_temp_#{t_i}_ago = htg_sp_high")
       supp_staging_program.addLine('Else')
@@ -4237,11 +4142,11 @@ module HVAC
     supp_staging_program.addLine("If #{global_var_supp_avail.name} == 0") # Other EMS set it to be 0.0, keep the logic
     supp_staging_program.addLine("  Set #{supp_coil_avail_act.name} = 0")
     supp_staging_program.addLine('Else') # global variable = 1
-    supp_staging_program.addLine("  If (supp_htg_rate_1_ago > 0) && (htg_sp_high - #{living_temp_ss.name} > 0.01)")
+    supp_staging_program.addLine("  If (supp_htg_rate_1_ago > 0) && (htg_sp_high - #{t_in_sensor.name} > 0.01)")
     supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 1") # Keep backup coil on until reaching cut-out temperature
     supp_staging_program.addLine("  ElseIf (#{s_trend.join(' && ')})")
     supp_staging_program.addLine("    Set #{supp_coil_avail_act.name} = 1")
-    supp_staging_program.addLine("    If (#{living_temp_ss.name} >= htg_sp_low)")
+    supp_staging_program.addLine("    If (#{t_in_sensor.name} >= htg_sp_low)")
     supp_staging_program.addLine("      Set #{global_var_supp_avail.name} = 0")
     supp_staging_program.addLine("      Set #{supp_coil_avail_act.name} = 0")
     supp_staging_program.addLine('    EndIf')
@@ -4355,12 +4260,7 @@ module HVAC
       # Use EMS to prevent operation of this system above the specified temperature.
 
       # Sensor
-      tout_db_sensor = Model.add_ems_sensor(
-        model,
-        name: 'tout db',
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: 'Environment'
-      )
+      t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
 
       # Actuator
       if heating_sch.is_a? OpenStudio::Model::ScheduleConstant
@@ -4382,7 +4282,7 @@ module HVAC
         name: "#{heating_sch.name} max heating temp program"
       )
       temp_override_program.addLine("Set max_heating_temp = #{UnitConversions.convert(max_heating_temp, 'F', 'C')}")
-      temp_override_program.addLine("If #{tout_db_sensor.name} > max_heating_temp")
+      temp_override_program.addLine("If #{t_out_sensor.name} > max_heating_temp")
       temp_override_program.addLine("  Set #{actuator.name} = 0")
       temp_override_program.addLine('Else')
       temp_override_program.addLine("  Set #{actuator.name} = NULL") # Allow normal operation
@@ -4404,15 +4304,15 @@ module HVAC
   # @param obj_name [String] Name for the OpenStudio object
   # @param mode [Symbol] Heating (:htg) or cooling (:clg)
   # @param fault_program [OpenStudio::Model::EnergyManagementSystemProgram] The EMS program of interest
-  # @param tin_sensor [OpenStudio::Model::EnergyManagementSystemSensor] The indoor temperature sensor
-  # @param tout_sensor [OpenStudio::Model::EnergyManagementSystemSensor] The outdoor temperature sensor
+  # @param t_in_sensor [OpenStudio::Model::EnergyManagementSystemSensor] The indoor temperature sensor
+  # @param t_out_sensor [OpenStudio::Model::EnergyManagementSystemSensor] The outdoor temperature sensor
   # @param hvac_coil [OpenStudio::Model::CoilCoolingXXX or OpenStudio::Model::CoilHeatingXXX] Cooling or heating coil model object
   # @param f_chg [Double] Refrigerant charge defect ratio (i.e., (InstalledCharge - DesignCharge) / DesignCharge)
   # @param airflow_defect_ratio [Double] Airflow defect ratio (i.e., (InstalledAirflow - DesignAirflow) / DesignAirflow)
   # @param airflow_rated_defect_ratio [Array<Double>] Rated airflow defect ratio (i.e., (InstalledAirflow - RatedAirflow) / RatedAirflow)) at each speed
   # @param hvac_ap [HPXML::AdditionalProperties] AdditionalProperties object for the HVAC system
   # @return [nil]
-  def self.add_installation_quality_ems_program_equations(model, obj_name, mode, fault_program, tin_sensor, tout_sensor, hvac_coil, f_chg, airflow_defect_ratio, airflow_rated_defect_ratio, hvac_ap)
+  def self.add_installation_quality_ems_program_equations(model, obj_name, mode, fault_program, t_in_sensor, t_out_sensor, hvac_coil, f_chg, airflow_defect_ratio, airflow_rated_defect_ratio, hvac_ap)
     if mode == :clg
       if hvac_coil.is_a? OpenStudio::Model::CoilCoolingDXSingleSpeed
         num_speeds = 1
@@ -4544,14 +4444,14 @@ module HVAC
     fault_program.addLine("Set a4_CH_P_#{suffix} = #{p_values[3]}")
 
     fault_program.addLine("Set q0_CH_#{suffix} = a1_CH_Qgr_#{suffix}")
-    fault_program.addLine("Set q1_CH_#{suffix} = a2_CH_Qgr_#{suffix}*#{tin_sensor.name}")
-    fault_program.addLine("Set q2_CH_#{suffix} = a3_CH_Qgr_#{suffix}*#{tout_sensor.name}")
+    fault_program.addLine("Set q1_CH_#{suffix} = a2_CH_Qgr_#{suffix}*#{t_in_sensor.name}")
+    fault_program.addLine("Set q2_CH_#{suffix} = a3_CH_Qgr_#{suffix}*#{t_out_sensor.name}")
     fault_program.addLine("Set q3_CH_#{suffix} = a4_CH_Qgr_#{suffix}*F_CH")
     fault_program.addLine("Set Y_CH_Q_#{suffix} = 1 + ((q0_CH_#{suffix}+(q1_CH_#{suffix})+(q2_CH_#{suffix})+(q3_CH_#{suffix}))*F_CH)")
 
     fault_program.addLine("Set p1_CH_#{suffix} = a1_CH_P_#{suffix}")
-    fault_program.addLine("Set p2_CH_#{suffix} = a2_CH_P_#{suffix}*#{tin_sensor.name}")
-    fault_program.addLine("Set p3_CH_#{suffix} = a3_CH_P_#{suffix}*#{tout_sensor.name}")
+    fault_program.addLine("Set p2_CH_#{suffix} = a2_CH_P_#{suffix}*#{t_in_sensor.name}")
+    fault_program.addLine("Set p3_CH_#{suffix} = a3_CH_P_#{suffix}*#{t_out_sensor.name}")
     fault_program.addLine("Set p4_CH_#{suffix} = a4_CH_P_#{suffix}*F_CH")
     fault_program.addLine("Set Y_CH_COP_#{suffix} = Y_CH_Q_#{suffix}/(1 + (p1_CH_#{suffix}+(p2_CH_#{suffix})+(p3_CH_#{suffix})+(p4_CH_#{suffix}))*F_CH)")
 
@@ -4642,9 +4542,8 @@ module HVAC
   # @param air_loop_unitary [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
   # @param htg_coil [OpenStudio::Model::CoilHeatingXXX] Heating coil model object
   # @param clg_coil [OpenStudio::Model::CoilCoolingXXX] Cooling coil model object
-  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @return [nil]
-  def self.add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil, control_zone)
+  def self.add_installation_quality_ems_program(model, heating_system, cooling_system, air_loop_unitary, htg_coil, clg_coil)
     if not cooling_system.nil?
       charge_defect_ratio = cooling_system.charge_defect_ratio
       cool_airflow_defect_ratio = cooling_system.airflow_defect_ratio
@@ -4684,19 +4583,8 @@ module HVAC
 
     obj_name = "#{air_loop_unitary.name} install quality program"
 
-    tin_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{obj_name} tin s",
-      output_var_or_meter_name: 'Zone Mean Air Temperature',
-      key_name: control_zone.name
-    )
-
-    tout_sensor = Model.add_ems_sensor(
-      model,
-      name: "#{obj_name} tt s",
-      output_var_or_meter_name: 'Zone Outdoor Air Drybulb Temperature',
-      key_name: control_zone.name
-    )
+    t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
 
     fault_program = Model.add_ems_program(
       model,
@@ -4707,11 +4595,11 @@ module HVAC
     fault_program.addLine("Set F_CH = #{f_chg.round(3)}")
 
     if not cool_airflow_rated_defect_ratio.empty?
-      add_installation_quality_ems_program_equations(model, obj_name, :clg, fault_program, tin_sensor, tout_sensor, clg_coil, f_chg, cool_airflow_defect_ratio, cool_airflow_rated_defect_ratio, clg_ap)
+      add_installation_quality_ems_program_equations(model, obj_name, :clg, fault_program, t_in_sensor, t_out_sensor, clg_coil, f_chg, cool_airflow_defect_ratio, cool_airflow_rated_defect_ratio, clg_ap)
     end
 
     if not heat_airflow_rated_defect_ratio.empty?
-      add_installation_quality_ems_program_equations(model, obj_name, :htg, fault_program, tin_sensor, tout_sensor, htg_coil, f_chg, heat_airflow_defect_ratio, heat_airflow_rated_defect_ratio, htg_ap)
+      add_installation_quality_ems_program_equations(model, obj_name, :htg, fault_program, t_in_sensor, t_out_sensor, htg_coil, f_chg, heat_airflow_defect_ratio, heat_airflow_rated_defect_ratio, htg_ap)
     end
 
     Model.add_ems_program_calling_manager(
@@ -4771,9 +4659,9 @@ module HVAC
     )
 
     # Sensors
-    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeOATDrybulbSensor }
-    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHeatingAvailabilitySensor }
-    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeCoolingAvailabilitySensor }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleHeatingAvailability }
+    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
 
     if not htg_coil.nil?
       htg_coil_rtf_sensor = Model.add_ems_sensor(
@@ -4808,7 +4696,7 @@ module HVAC
       model,
       name: "#{coil_name} crankcase program"
     )
-    program.addLine("Set T_out = #{tout_db_sensor.name}")
+    program.addLine("Set T_out = #{t_out_sensor.name}")
     if not htg_coil_rtf_sensor.nil?
       program.addLine("Set htg_rtf = #{htg_coil_rtf_sensor.name}")
     else
@@ -4920,7 +4808,7 @@ module HVAC
       comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
     )
 
-    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHeatingAvailabilitySensor }
+    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleHeatingAvailability }
 
     # EMS program
     temp_criteria = "If (T_out <= #{UnitConversions.convert(32.0, 'F', 'C')}) && (T_out >= #{UnitConversions.convert(hp_min_temp, 'F', 'C').round(2)})"
@@ -5018,7 +4906,7 @@ module HVAC
     )
 
     # Sensors
-    tout_db_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeOATDrybulbSensor }
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
 
     htg_coil_rtf_sensor = Model.add_ems_sensor(
       model,
@@ -5040,7 +4928,7 @@ module HVAC
       model,
       name: "#{htg_coil.name} defrost program"
     )
-    program.addLine("Set T_out = #{tout_db_sensor.name}")
+    program.addLine("Set T_out = #{t_out_sensor.name}")
     program.addLine('Set F_defrost = 0.134 - (0.003 * ((T_out * 1.8) + 32))')
     program.addLine('Set F_defrost = @Min F_defrost 0.08')
     program.addLine('Set F_defrost = @Max F_defrost 0')
