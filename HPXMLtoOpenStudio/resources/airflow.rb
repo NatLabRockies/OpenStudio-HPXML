@@ -56,6 +56,7 @@ module Airflow
       output_var_or_meter_name: 'Schedule Value',
       key_name: clg_season_sch.schedule.name
     )
+    clg_season_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason)
 
     # Initialization
     cfis_data = initialize_cfis(model, vent_fans, airloop_map, hpxml_header.unavailable_periods)
@@ -77,7 +78,7 @@ module Airflow
     infil_values = get_values_from_air_infiltration_measurements(hpxml_bldg, weather)
 
     # Natural ventilation and whole house fans
-    apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values, clg_season_sensor)
+    apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values)
 
     # Infiltration/ventilation
     apply_infiltration_to_garage(model, spaces, hpxml_bldg, infil_values, duct_lk_imbals)
@@ -87,7 +88,7 @@ module Airflow
     apply_infiltration_to_vented_attic(model, spaces, weather, hpxml_bldg, hpxml_header, duct_lk_imbals)
     apply_infiltration_to_unvented_attic(model, spaces, duct_lk_imbals)
     apply_infiltration_ventilation_to_conditioned(runner, model, spaces, weather, hpxml_bldg, hpxml_header, vent_fans, infil_values,
-                                                  schedules_file, duct_lk_imbals, cfis_data, fan_data, clg_season_sensor)
+                                                  schedules_file, duct_lk_imbals, cfis_data, fan_data)
   end
 
   # Returns the single infiltration measurement object of interest, from all possible infiltration measurements
@@ -327,9 +328,8 @@ module Airflow
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param vent_fans [Hash] Map of vent fan types => list of HPXML VentilationFans
   # @param infil_values [Hash] Map with various infiltration key-value pairs (SLA, infiltration volume & height, etc.)
-  # @param clg_season_sensor [OpenStudio::Model::EnergyManagementSystemSensor] EMS sensor for the BA cooling season
   # @return [nil]
-  def self.apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values, clg_season_sensor)
+  def self.apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
     conditioned_zone = conditioned_space.thermalZone.get
 
@@ -453,6 +453,7 @@ module Airflow
     max_oa_hr = 0.0115 # From ANSI/RESNET/ICC 301-2022
 
     clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
+    clg_season_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason }
 
     # Program
     vent_program = Model.add_ems_program(
@@ -2420,9 +2421,8 @@ module Airflow
   # @param hrv_erv_effectiveness_map [Hash] Map of HPXML VentilationFan => Hash of effectiveness values
   # @param fan_sens_load_actuator [OpenStudio::Model::EnergyManagementSystemActuator] EMS actuators for sensible load
   # @param fan_lat_load_actuator [OpenStudio::Model::EnergyManagementSystemActuator] EMS actuators for latent load
-  # @param clg_season_sensor [OpenStudio::Model::EnergyManagementSystemSensor] EMS sensor for the BA cooling season
   # @return [nil]
-  def self.calculate_precond_loads(model, spaces, infil_program, vent_fans, hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator, clg_season_sensor)
+  def self.calculate_precond_loads(model, spaces, infil_program, vent_fans, hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
 
     # Preconditioning
@@ -2436,6 +2436,7 @@ module Airflow
       infil_program.addLine("Set ClgStp = #{clg_sp_sensor.name}") # cooling thermostat setpoint
     end
     vent_fans[:mech_preheat].each_with_index do |f_preheat, i|
+      clg_season_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason }
       infil_program.addLine("If (OASupInTemp < HtgStp) && (#{clg_season_sensor.name} < 1)")
 
       cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeMechanicalVentilationPreheating } # Ensure unique meter for each preheating system
@@ -2481,6 +2482,7 @@ module Airflow
       infil_program.addLine("Set #{htg_energy_actuator.name} = PreHeatingWatt / #{f_preheat.preheating_efficiency_cop}")
     end
     vent_fans[:mech_precool].each_with_index do |f_precool, i|
+      clg_season_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason }
       infil_program.addLine("If (OASupInTemp > ClgStp) && (#{clg_season_sensor.name} > 0)")
 
       cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeMechanicalVentilationPrecooling } # Ensure unique meter for each precooling system
@@ -2541,10 +2543,9 @@ module Airflow
   # @param duct_lk_imbals [Array] List of duct leakage imbalance information
   # @param cfis_data [Hash] Map with various CFIS-relative OpenStudio model objects
   # @param fan_data [Hash] Map of HVAC blower fan properties => values
-  # @param clg_season_sensor [OpenStudio::Model::EnergyManagementSystemSensor] EMS sensor for the BA cooling season
   # @return [nil]
   def self.apply_infiltration_ventilation_to_conditioned(runner, model, spaces, weather, hpxml_bldg, hpxml_header, vent_fans, infil_values,
-                                                         schedules_file, duct_lk_imbals, cfis_data, fan_data, clg_season_sensor)
+                                                         schedules_file, duct_lk_imbals, cfis_data, fan_data)
     # Categorize fans into different types
     vent_fans[:mech_preheat] = vent_fans[:mech].select { |vent_mech| (not vent_mech.preheating_efficiency_cop.nil?) }
     vent_fans[:mech_precool] = vent_fans[:mech].select { |vent_mech| (not vent_mech.precooling_efficiency_cop.nil?) }
@@ -2606,7 +2607,7 @@ module Airflow
     hrv_erv_effectiveness_map = calc_hrv_erv_effectiveness(vent_fans[:mech_erv_hrv])
 
     calculate_fan_loads(infil_program, vent_fans[:mech_erv_hrv], hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator, 'Qload')
-    calculate_precond_loads(model, spaces, infil_program, vent_fans, hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator, clg_season_sensor)
+    calculate_precond_loads(model, spaces, infil_program, vent_fans, hrv_erv_effectiveness_map, fan_sens_load_actuator, fan_lat_load_actuator)
 
     Model.add_ems_program_calling_manager(
       model,
