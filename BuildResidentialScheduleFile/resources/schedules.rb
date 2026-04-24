@@ -702,7 +702,7 @@ class ScheduleGenerator
     sunrise_hour = []
     sunset_hour = []
     std_long = -time_zone_utc_offset * 15
-    normalized_hourly_lighting = [[1..24]] * 12
+    normalized_hourly_lighting = [[1..24], [1..24], [1..24], [1..24], [1..24], [1..24], [1..24], [1..24], [1..24], [1..24], [1..24], [1..24]]
     for month in 0..11
       if latitude < 51.49
         m_num = month + 1
@@ -797,7 +797,7 @@ class ScheduleGenerator
     end
 
     # Calculate schedule values
-    lighting_sch = [[]] * 12
+    lighting_sch = [[], [], [], [], [], [], [], [], [], [], [], []]
     for month in 0..11
       for hour in 0..23
         lighting_sch[month][hour] = normalized_monthly_lighting[month] * normalized_hourly_lighting[month][hour] / days_m[month]
