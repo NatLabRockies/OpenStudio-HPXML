@@ -653,17 +653,11 @@ module Model
     rule = OpenStudio::Model::ScheduleRule.new(schedule)
 
     if (not apply_to_days.is_a? Array) || (apply_to_days.size != 7)
-      fail 'Unexpected apply_to_days.'
+      fail "Unexpected apply_to_days for #{schedule.name}."
     end
 
-    # Allow for either 0-based or 1-based array for now
-    # FUTURE: Restrict to 0-based
-    if (not hourly_values.is_a? Array) || (hourly_values.size != 24 && hourly_values.size != 25)
-      fail 'Unexpected hourly_values.'
-    end
-
-    if hourly_values.size == 24
-      hourly_values = [nil] + hourly_values
+    if (not hourly_values.is_a? Array) || (hourly_values.size != 24)
+      fail "Unexpected hourly_values for #{schedule.name}."
     end
 
     if apply_to_days == [1, 1, 1, 1, 1, 1, 1]
@@ -688,12 +682,10 @@ module Model
     day_sch = rule.daySchedule
     day_sch.setName("#{schedule.name} day")
 
-    previous_value = hourly_values[1]
-    for h in 1..24
-      next if (h != 24) && (hourly_values[h + 1] == previous_value)
+    for h in 0..23
+      next if (h != 23) && (hourly_values[h] == hourly_values[h + 1]) # skip if same as next value
 
-      day_sch.addValue(OpenStudio::Time.new(0, h, 0, 0), previous_value)
-      previous_value = hourly_values[h + 1]
+      day_sch.addValue(OpenStudio::Time.new(0, h + 1, 0, 0), hourly_values[h])
     end
 
     return rule
