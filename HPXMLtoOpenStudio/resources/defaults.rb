@@ -7862,7 +7862,7 @@ module Defaults
   # @param cop_ratios [Array<Double>] Heating or cooling COP ratios for each speed
   # @param mode [Symbol] Heating or cooling
   # @return [nil]
-  def self.set_ground_to_air_heat_pump_cops(heat_pump, cop_ratios, mode)
+  def self.set_ground_to_air_heat_pump_cops(heat_pump, cop_ratios, mode, ground_to_air_heat_pump_model_type)
     hp_ap = heat_pump.additional_properties
     # Fan/pump adjustments calculations
     # Fan power to overcome the static pressure adjustment
@@ -7876,11 +7876,27 @@ module Defaults
       for i in 0..(cop_ratios.size - 1)
         hp_ap.cool_rated_cops << 1.0 / eir_rated * cop_ratios[i]
       end
+	  return if ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeStandard
+      # convert GLHP rated COPs to E+ rated COPs
+	  rated_glhp_ewt_clg = 25 # degree C, Cooling
+	  rated_eplus_ewt_clg = 29.4 # degree C, Cooling, https://bigladdersoftware.com/epx/docs/25-2/input-output-reference/group-heating-and-cooling-coils.html#coilcoolingwatertoairheatpumpvariablespeedequationfit
+	  hp_ap.cool_rated_cops.each_with_index do |rated_cop, i|
+	    eir_curve_value = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceCoolRatedIWB, 'F', 'C'), rated_glhp_ewt_clg, hp_ap.cool_eir_ft_spec[i])
+        hp_ap.cool_rated_cops[i] = rated_cop * eir_curve_value
+      end
     elsif mode == :htg
       eir_rated = (1 + UnitConversions.convert(power_f, 'Wh', 'Btu')) / heat_pump.heating_efficiency_cop - UnitConversions.convert(power_f + power_p, 'Wh', 'Btu')
       hp_ap.heat_rated_cops = []
       for i in 0..(cop_ratios.size - 1)
         hp_ap.heat_rated_cops << 1.0 / eir_rated * cop_ratios[i]
+      end
+	  return if ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeStandard
+      # convert GLHP rated COPs to E+ rated COPs
+	  rated_glhp_ewt_htg = 0 # degree C, Heating
+	  rated_eplus_ewt_htg = 21.1 # degree C, Heating, https://bigladdersoftware.com/epx/docs/25-2/input-output-reference/group-heating-and-cooling-coils.html#coilheatingwatertoairheatpumpvariablespeedequationfit
+	  hp_ap.heat_rated_cops.each_with_index do |rated_cop, i|
+	    eir_curve_value = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), rated_glhp_ewt_htg, hp_ap.heat_eir_ft_spec[i])
+        hp_ap.heat_rated_cops[i] = rated_cop * eir_curve_value
       end
     end
   end
@@ -8009,7 +8025,7 @@ module Defaults
         end
       end
 
-      set_ground_to_air_heat_pump_cops(cooling_system, cool_cop_ratios, :clg)
+      set_ground_to_air_heat_pump_cops(cooling_system, cool_cop_ratios, :clg, hpxml_header.ground_to_air_heat_pump_model_type)
       return
     end
 
@@ -8209,7 +8225,7 @@ module Defaults
         end
       end
 
-      set_ground_to_air_heat_pump_cops(heating_system, heat_cop_ratios, :htg)
+      set_ground_to_air_heat_pump_cops(heating_system, heat_cop_ratios, :htg, hpxml_header.ground_to_air_heat_pump_model_type)
       return
     end
 
