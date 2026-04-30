@@ -7876,23 +7876,11 @@ module Defaults
       for i in 0..(cop_ratios.size - 1)
         hp_ap.cool_rated_cops << 1.0 / eir_rated * cop_ratios[i]
       end
-	  return if ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeStandard
-      # convert GLHP rated COPs to E+ rated COPs
-	  hp_ap.cool_rated_cops.each_with_index do |rated_cop, i|
-	    eir_curve_value = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceCoolRatedIWB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceCoolGLHPRatedEWT, 'F', 'C'), hp_ap.cool_eir_ft_spec[i])
-        hp_ap.cool_rated_cops[i] = rated_cop * eir_curve_value
-      end
     elsif mode == :htg
       eir_rated = (1 + UnitConversions.convert(power_f, 'Wh', 'Btu')) / heat_pump.heating_efficiency_cop - UnitConversions.convert(power_f + power_p, 'Wh', 'Btu')
       hp_ap.heat_rated_cops = []
       for i in 0..(cop_ratios.size - 1)
         hp_ap.heat_rated_cops << 1.0 / eir_rated * cop_ratios[i]
-      end
-	  return if ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeStandard
-      # convert GLHP rated COPs to E+ rated COPs
-	  hp_ap.heat_rated_cops.each_with_index do |rated_cop, i|
-	    eir_curve_value = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceHeatGLHPRatedEWT, 'F', 'C'), hp_ap.heat_eir_ft_spec[i])
-        hp_ap.heat_rated_cops[i] = rated_cop * eir_curve_value
       end
     end
   end
