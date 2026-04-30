@@ -31,6 +31,7 @@ __Bugfixes__
   - Fixes unmet hours outputs, which could be missing some periods of unmet hours.
   - Fixes timeseries outputs for heating/cooling setpoints.
 - Fixes logic in HP multi-stage backup advanced research feature.
+- Fixes PV grid connection fee applying in utility bill calculation even if the home has no PV.
 
 ## OpenStudio-HPXML v1.11.1
 

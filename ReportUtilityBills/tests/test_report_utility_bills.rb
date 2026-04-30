@@ -105,6 +105,7 @@ class ReportUtilityBillsTest < Minitest::Test
   # Simple (non-JSON) Calculations
 
   def test_simple_pv_none
+    @hpxml_bldg.pv_systems.clear
     actual_bills, actual_monthly_bills = _bill_calcs(@fuels_pv_none_simple, @hpxml)
     _check_bills(@expected_bills, actual_bills)
     _check_monthly_bills(actual_bills, actual_monthly_bills)
@@ -892,6 +893,24 @@ class ReportUtilityBillsTest < Minitest::Test
   end
 
   # Extra Fees & Charges
+
+  def test_pv_none_with_pv_grid_fee_dollars_per_kW
+    # Check PV grid fee not applied if no PV
+    @hpxml.header.utility_bill_scenarios[-1].pv_monthly_grid_connection_fee_dollars_per_kw = 2.50
+    @hpxml_bldg.pv_systems.clear
+    actual_bills, actual_monthly_bills = _bill_calcs(@fuels_pv_none_simple, @hpxml)
+    _check_bills(@expected_bills, actual_bills)
+    _check_monthly_bills(actual_bills, actual_monthly_bills)
+  end
+
+  def test_pv_none_with_pv_grid_fee_dollars
+    # Check PV grid fee not applied if no PV
+    @hpxml.header.utility_bill_scenarios[-1].pv_monthly_grid_connection_fee_dollars = 7.50
+    @hpxml_bldg.pv_systems.clear
+    actual_bills, actual_monthly_bills = _bill_calcs(@fuels_pv_none_simple, @hpxml)
+    _check_bills(@expected_bills, actual_bills)
+    _check_monthly_bills(actual_bills, actual_monthly_bills)
+  end
 
   def test_simple_pv_1kW_grid_fee_dollars_per_kW
     @hpxml.header.utility_bill_scenarios[-1].pv_monthly_grid_connection_fee_dollars_per_kw = 2.50
