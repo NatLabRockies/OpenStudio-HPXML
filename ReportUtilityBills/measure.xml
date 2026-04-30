@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <measure>
   <schema_version>3.1</schema_version>
-  <error>Failed to infer measure name from '/mnt/c/git/openstudio-hpxml/ReportUtilityBills/measure.rb'</error>
+  <error>Failed to infer measure name from 'C:/Github/OpenStudio-HPXML/ReportUtilityBills/measure.rb'</error>
   <name>report_utility_bills</name>
   <uid>ca88a425-e59a-4bc4-af51-c7e7d1e960fe</uid>
-  <version_id>ef1c155c-852e-4dcf-8cd4-cf2029e7c3c5</version_id>
-  <version_modified>2026-03-19T22:48:22Z</version_modified>
+  <version_id>a981da93-4dbc-4bc3-a1a6-f8965a657bc7</version_id>
+  <version_modified>2026-04-30T21:57:24Z</version_modified>
   <xml_checksum>15BF4E57</xml_checksum>
   <class_name>ReportUtilityBills</class_name>
   <display_name>Utility Bills Report</display_name>
@@ -313,7 +313,7 @@
       <filename>simple_rates/pr_all_update.csv</filename>
       <filetype>csv</filetype>
       <usage_type>resource</usage_type>
-      <checksum>C6074A83</checksum>
+      <checksum>BDFFAD46</checksum>
     </file>
     <file>
       <filename>util.rb</filename>

@@ -3602,93 +3602,93 @@ def download_eia_seds
 
   latest2yrs = Hash.new { |h, k| h[k] = Hash.new { |h2, k2| h2[k2] = [] } }
 
-    msn_codes.each do |msn, fuel|
-      puts "  Fetching SEDS series: #{msn} (#{fuel})..."
+  msn_codes.each do |msn, fuel|
+    puts "  Fetching SEDS series: #{msn} (#{fuel})..."
 
-      offset = 0
-      loop do
-        query_parts = [
-          "api_key=#{URI.encode_www_form_component(api_key)}",
-          'frequency=annual',
-          'data[0]=value',
-          "facets[seriesId][0]=#{URI.encode_www_form_component(msn)}",
-          'sort[0][column]=period',
-          'sort[0][direction]=asc',
-          "offset=#{offset}",
-          "length=#{page_length}"
-        ]
-        url = "#{base_url}?#{query_parts.join('&')}"
+    offset = 0
+    loop do
+      query_parts = [
+        "api_key=#{URI.encode_www_form_component(api_key)}",
+        'frequency=annual',
+        'data[0]=value',
+        "facets[seriesId][0]=#{URI.encode_www_form_component(msn)}",
+        'sort[0][column]=period',
+        'sort[0][direction]=asc',
+        "offset=#{offset}",
+        "length=#{page_length}"
+      ]
+      url = "#{base_url}?#{query_parts.join('&')}"
 
-        retries = 0
-        parsed = nil
-        begin
-          uri = URI(url)
-          http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = true
-          http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      retries = 0
+      parsed = nil
+      begin
+        uri = URI(url)
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-          request = Net::HTTP::Get.new(uri)
-          request['Accept'] = 'application/json'
+        request = Net::HTTP::Get.new(uri)
+        request['Accept'] = 'application/json'
 
-          response = http.request(request)
+        response = http.request(request)
 
-          if response.is_a?(Net::HTTPSuccess)
-            parsed = JSON.parse(response.body)
-          else
-            puts "API Error: #{response.code}"
-          end
-        rescue JSON::ParserError => e
-          puts "JSON Parsing Error: #{e.message}"
-        rescue StandardError => e
-          puts "Network Error: #{e.message}"
+        if response.is_a?(Net::HTTPSuccess)
+          parsed = JSON.parse(response.body)
+        else
+          puts "API Error: #{response.code}"
         end
-
-        if parsed.nil? || parsed['response'].nil? || parsed['response']['data'].nil?
-          puts "Error: Unexpected API response for #{msn}: #{parsed.inspect}"
-          exit!
-        end
-
-        data  = parsed['response']['data']
-        total = parsed['response']['total'].to_i
-
-        data.each do |row|
-          state  = row['stateId']
-          period = row['period'].to_i
-          value  = row['value']
-
-          next if value.nil?
-
-          entries = latest2yrs[state][fuel]
-          entries << { period: period, value: value.to_f }
-
-          latest2yrs[state][fuel] = entries.sort_by { |e| -e[:period] }.first(2)
-        end
-
-        offset += data.size
-        break if offset >= total || data.empty?
+      rescue JSON::ParserError => e
+        puts "JSON Parsing Error: #{e.message}"
+      rescue StandardError => e
+        puts "Network Error: #{e.message}"
       end
-    end
 
-    states = latest2yrs.keys.sort
-
-    puts "Writing to #{filepath}..."
-
-    CSV.open(filepath, 'w') do |csv|
-      csv << ['year', 'state', 'fuel', 'rate_dollar_per_mmbtu']
-
-      states.each do |state|
-        msn_codes.each_value do |fuel|
-          entries = latest2yrs[state][fuel]
-          entries.each do |entry|
-            csv << [entry[:period], state, fuel, entry[:value].round(4)]
-          end
-        end
+      if parsed.nil? || parsed['response'].nil? || parsed['response']['data'].nil?
+        puts "Error: Unexpected API response for #{msn}: #{parsed.inspect}"
+        exit!
       end
-    end
 
-    puts "Completed. Data written to #{filepath}."
-    exit!
+      data  = parsed['response']['data']
+      total = parsed['response']['total'].to_i
+
+      data.each do |row|
+        state  = row['stateId']
+        period = row['period'].to_i
+        value  = row['value']
+
+        next if value.nil?
+
+        entries = latest2yrs[state][fuel]
+        entries << { period: period, value: value.to_f }
+
+        latest2yrs[state][fuel] = entries.sort_by { |e| -e[:period] }.first(2)
+      end
+
+      offset += data.size
+      break if offset >= total || data.empty?
+    end
   end
+
+  states = latest2yrs.keys.sort
+
+  puts "Writing to #{filepath}..."
+
+  CSV.open(filepath, 'w') do |csv|
+    csv << ['year', 'state', 'fuel', 'rate_dollar_per_mmbtu']
+
+    states.each do |state|
+      msn_codes.each_value do |fuel|
+        entries = latest2yrs[state][fuel]
+        entries.each do |entry|
+          csv << [entry[:period], state, fuel, entry[:value].round(4)]
+        end
+      end
+    end
+  end
+
+  puts "Completed. Data written to #{filepath}."
+  exit!
+end
 
 command_list = [
   :update_measures,
