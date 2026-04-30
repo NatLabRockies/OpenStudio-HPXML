@@ -3674,7 +3674,7 @@ def download_eia_seds
     puts "Writing to #{filepath}..."
 
     CSV.open(filepath, 'w') do |csv|
-      csv << ['year', 'state', 'fuel_type', 'rate_dollar_per_mmbtu']
+      csv << ['year', 'state', 'fuel', 'rate_dollar_per_mmbtu']
 
       states.each do |state|
         msn_codes.each_value do |fuel|

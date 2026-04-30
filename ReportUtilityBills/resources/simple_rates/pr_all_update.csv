@@ -1,4 +1,4 @@
-year,state,fuel_type,rate_dollar_per_mmbtu
+year,state,fuel,rate_dollar_per_mmbtu
 2024,AK,fuel oil,24.52
 2023,AK,fuel oil,27.97
 2024,AK,electricity,72.75
