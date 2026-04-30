@@ -7878,10 +7878,8 @@ module Defaults
       end
 	  return if ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeStandard
       # convert GLHP rated COPs to E+ rated COPs
-	  rated_glhp_ewt_clg = 25 # degree C, Cooling
-	  rated_eplus_ewt_clg = 29.4 # degree C, Cooling, https://bigladdersoftware.com/epx/docs/25-2/input-output-reference/group-heating-and-cooling-coils.html#coilcoolingwatertoairheatpumpvariablespeedequationfit
 	  hp_ap.cool_rated_cops.each_with_index do |rated_cop, i|
-	    eir_curve_value = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceCoolRatedIWB, 'F', 'C'), rated_glhp_ewt_clg, hp_ap.cool_eir_ft_spec[i])
+	    eir_curve_value = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceCoolRatedIWB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceCoolGLHPRatedEWT, 'F', 'C'), hp_ap.cool_eir_ft_spec[i])
         hp_ap.cool_rated_cops[i] = rated_cop * eir_curve_value
       end
     elsif mode == :htg
@@ -7892,10 +7890,8 @@ module Defaults
       end
 	  return if ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeStandard
       # convert GLHP rated COPs to E+ rated COPs
-	  rated_glhp_ewt_htg = 0 # degree C, Heating
-	  rated_eplus_ewt_htg = 21.1 # degree C, Heating, https://bigladdersoftware.com/epx/docs/25-2/input-output-reference/group-heating-and-cooling-coils.html#coilheatingwatertoairheatpumpvariablespeedequationfit
 	  hp_ap.heat_rated_cops.each_with_index do |rated_cop, i|
-	    eir_curve_value = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), rated_glhp_ewt_htg, hp_ap.heat_eir_ft_spec[i])
+	    eir_curve_value = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceHeatGLHPRatedEWT, 'F', 'C'), hp_ap.heat_eir_ft_spec[i])
         hp_ap.heat_rated_cops[i] = rated_cop * eir_curve_value
       end
     end

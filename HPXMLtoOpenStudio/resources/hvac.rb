@@ -11,11 +11,11 @@ module HVAC
   RatedCFMPerTon = 400.0 # cfm/ton of rated capacity, RESNET HERS Addendum 82
   MinCapacity = 1.0 # Btuh
   MinAirflow = 3.0 # cfm; E+ min airflow is 0.001 m3/s
-  GroundSourceHeatRatedWET = 70.0 # degF, Rated water entering temperature for ground-source systems, heating
   GroundSourceHeatRatedIDB = 70.0 # degF, Rated indoor drybulb for ground-source systems, heating
-  GroundSourceCoolRatedWET = 85.0 # degF, Rated water entering temperature for ground-source systems, cooling
   GroundSourceCoolRatedIDB = 80.0 # degF, Rated indoor drybulb for ground-source systems, cooling
   GroundSourceCoolRatedIWB = 67.0 # degF, Rated indoor wetbulb for ground-source systems, cooling
+  GroundSourceHeatGLHPRatedEWT = 32.0 # degF, Rated water entering temperature for ground-source systems, heating
+  GroundSourceCoolGLHPRatedEWT = 77.0 # degF, Rated water entering temperature for ground-source systems, cooling
 
   # Adds any HVAC Systems to the OpenStudio model.
   #
