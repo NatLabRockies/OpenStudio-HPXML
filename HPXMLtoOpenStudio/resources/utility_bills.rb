@@ -109,26 +109,54 @@ class UtilityBills
       HPXML::FuelTypeNaturalGas => 'NGRCD',
       HPXML::FuelTypeOil => 'DFRCD',
       HPXML::FuelTypePropane => 'PQRCD',
-      HPXML::FuelTypeCoal => 'CLRCD',
       HPXML::FuelTypeWoodCord => 'WDRCD',
       HPXML::FuelTypeWoodPellets => 'WDRCD'
     }
 
-    CSV.foreach(File.join(File.dirname(__FILE__), '../../ReportUtilityBills/resources/simple_rates/pr_all_update.csv'), headers: true) do |row|
-      next if row['State'].upcase != state_code.upcase # State
-      next if row['MSN'].upcase != msn_code_map[fuel_type] # EIA SEDS MSN code
+    csv_path = File.join(File.dirname(__FILE__), '../../ReportUtilityBills/resources/simple_rates/pr_all_update.csv')
 
-      seds_rate = row.to_h.values.reverse.find { |rate| rate.to_f != 0 } # If the rate for the latest year is unavailable, find the last non-nil/non-zero rate.
-      begin
-        seds_rate = Float(seds_rate)
-      rescue ArgumentError, TypeError
-        seds_rate = 0.0
-        runner.registerWarning("No EIA SEDS rate for #{fuel_type} was found for the state of #{state_code}.") if not runner.nil?
-      end
+    # Collect all matching rows for this state + fuel, keyed by year (desc)
+    matched_rows = []
+    CSV.foreach(csv_path, headers: true) do |row|
+      next if row['state'].to_s.upcase != state_code.to_s.upcase
+      next if row['fuel_type'].to_s.downcase != fuel_type.to_s.downcase
 
-      # Convert $/MBtu to $/XXX
-      seds_rate = UnitConversions.convert(seds_rate, get_fuel_units(fuel_type), 'mbtu')
-      return seds_rate
+      year = row['year'].to_i
+      rate = row['rate_dollar_per_mmbtu'].to_f
+      matched_rows << { year: year, rate: rate }
     end
+
+    if matched_rows.empty?
+      runner.registerWarning("No EIA SEDS rate for #{fuel_type} was found for the state of #{state_code}.") if !runner.nil?
+      return 0.0
+    end
+
+    # Sort descending: latest year first
+    matched_rows.sort_by! { |r| -r[:year] }
+    latest  = matched_rows[0]
+    prior   = matched_rows[1]
+
+    if latest[:rate] != 0.0
+      # Happy path: use latest year
+      seds_rate = latest[:rate]
+    elsif !prior.nil? && prior[:rate] != 0.0
+      # Latest year is zero, fall back to prior year
+      runner.registerWarning(
+        "EIA SEDS rate for #{fuel_type} in #{state_code} is unavailable for #{latest[:year]}. " \
+        "Using #{prior[:year]} rate (#{prior[:rate]} $/MMBtu) instead."
+      ) if !runner.nil?
+      seds_rate = prior[:rate]
+    else
+      # Both years are zero/missing
+      runner.registerWarning(
+        "EIA SEDS rate for #{fuel_type} in #{state_code} is unavailable for both " \
+        "#{latest[:year]} and #{prior.nil? ? 'prior year' : prior[:year]}."
+      ) if !runner.nil?
+      return 0.0
+    end
+
+    # Convert $/MMBtu to $/[fuel unit]
+    seds_rate = UnitConversions.convert(seds_rate, get_fuel_units(fuel_type), 'mbtu')
+    return seds_rate
   end
 end
