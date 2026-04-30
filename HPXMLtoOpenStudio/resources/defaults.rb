@@ -7862,7 +7862,7 @@ module Defaults
   # @param cop_ratios [Array<Double>] Heating or cooling COP ratios for each speed
   # @param mode [Symbol] Heating or cooling
   # @return [nil]
-  def self.set_ground_to_air_heat_pump_cops(heat_pump, cop_ratios, mode, ground_to_air_heat_pump_model_type)
+  def self.set_ground_to_air_heat_pump_cops(heat_pump, cop_ratios, mode)
     hp_ap = heat_pump.additional_properties
     # Fan/pump adjustments calculations
     # Fan power to overcome the static pressure adjustment
@@ -8009,7 +8009,7 @@ module Defaults
         end
       end
 
-      set_ground_to_air_heat_pump_cops(cooling_system, cool_cop_ratios, :clg, hpxml_header.ground_to_air_heat_pump_model_type)
+      set_ground_to_air_heat_pump_cops(cooling_system, cool_cop_ratios, :clg)
       return
     end
 
@@ -8209,7 +8209,7 @@ module Defaults
         end
       end
 
-      set_ground_to_air_heat_pump_cops(heating_system, heat_cop_ratios, :htg, hpxml_header.ground_to_air_heat_pump_model_type)
+      set_ground_to_air_heat_pump_cops(heating_system, heat_cop_ratios, :htg)
       return
     end
 
