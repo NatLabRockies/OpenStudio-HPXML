@@ -3586,7 +3586,7 @@ def download_eia_seds
 
   simple_rates_dir = File.join(File.dirname(__FILE__), 'ReportUtilityBills', 'resources', 'simple_rates')
   FileUtils.mkdir_p(simple_rates_dir) unless File.exist?(simple_rates_dir)
-  filepath = File.join(simple_rates_dir, 'pr_all_update.csv')
+  filepath = File.join(simple_rates_dir, 'eia_fuel_rates_by_state.csv')
 
   base_url = 'https://api.eia.gov/v2/seds/data/'
   page_length = 5000
@@ -3600,7 +3600,7 @@ def download_eia_seds
     'WDRCD' => 'wood', # Wood price in the residential sector ($/MMBtu)
   }
 
-  latest2yrs = Hash.new { |h, k| h[k] = Hash.new { |h2, k2| h2[k2] = [] } }
+  latest_rates = Hash.new { |h, k| h[k] = {} }
 
   msn_codes.each do |msn, fuel|
     puts "  Fetching SEDS series: #{msn} (#{fuel})..."
@@ -3655,12 +3655,16 @@ def download_eia_seds
         period = row['period'].to_i
         value  = row['value']
 
-        next if value.nil?
+        next if value.nil? || value.to_f == 0.0
 
-        entries = latest2yrs[state][fuel]
-        entries << { period: period, value: value.to_f }
+        existing = latest_rates[state][fuel]
 
-        latest2yrs[state][fuel] = entries.sort_by { |e| -e[:period] }.first(2)
+        if existing.nil? || period > existing[:period]
+          latest_rates[state][fuel] = {
+            period: period,
+            value: value.to_f
+          }
+        end
       end
 
       offset += data.size
@@ -3668,19 +3672,22 @@ def download_eia_seds
     end
   end
 
-  states = latest2yrs.keys.sort
-
   puts "Writing to #{filepath}..."
 
   CSV.open(filepath, 'w') do |csv|
     csv << ['year', 'state', 'fuel', 'rate_dollar_per_mmbtu']
 
-    states.each do |state|
-      msn_codes.each_value do |fuel|
-        entries = latest2yrs[state][fuel]
-        entries.each do |entry|
-          csv << [entry[:period], state, fuel, entry[:value].round(4)]
-        end
+    latest_rates.keys.sort.each do |state|
+      msn_codes.values.each do |fuel|
+        entry = latest_rates[state][fuel]
+        next if entry.nil?
+
+        csv << [
+          entry[:period],
+          state,
+          fuel,
+          entry[:value].round(4)
+        ]
       end
     end
   end

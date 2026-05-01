@@ -1,521 +1,261 @@
 year,state,fuel,rate_dollar_per_mmbtu
 2024,AK,fuel oil,24.52
-2023,AK,fuel oil,27.97
 2024,AK,electricity,72.75
-2023,AK,electricity,70.04
 2024,AK,natural gas,11.69
-2023,AK,natural gas,11.42
 2024,AK,propane,32.98
-2023,AK,propane,33.62
-2023,AK,wood,16.07
-2022,AK,wood,17.58
+2024,AK,wood,14.07
 2024,AL,fuel oil,19.81
-2023,AL,fuel oil,22.59
 2024,AL,electricity,44.48
-2023,AL,electricity,42.86
 2024,AL,natural gas,18.09
-2023,AL,natural gas,19.54
 2024,AL,propane,27.31
-2023,AL,propane,27.86
-2023,AL,wood,11.95
-2022,AL,wood,13.07
+2024,AL,wood,10.46
 2024,AR,fuel oil,20.28
-2023,AR,fuel oil,23.14
 2024,AR,electricity,36.1
-2023,AR,electricity,35.91
 2024,AR,natural gas,15.77
-2023,AR,natural gas,17.53
 2024,AR,propane,25.93
-2023,AR,propane,26.46
-2023,AR,wood,11.95
-2022,AR,wood,13.07
+2024,AR,wood,10.46
 2024,AZ,fuel oil,25.88
-2023,AZ,fuel oil,29.51
 2024,AZ,electricity,43.69
-2023,AZ,electricity,41.09
 2024,AZ,natural gas,19.92
-2023,AZ,natural gas,18.9
 2024,AZ,propane,31.25
-2023,AZ,propane,31.88
-2023,AZ,wood,16.07
-2022,AZ,wood,17.58
+2024,AZ,wood,14.07
 2024,CA,fuel oil,26.28
-2023,CA,fuel oil,29.98
 2024,CA,electricity,93.69
-2023,CA,electricity,86.49
 2024,CA,natural gas,18.44
-2023,CA,natural gas,21.13
 2024,CA,propane,30.89
-2023,CA,propane,31.52
-2023,CA,wood,16.07
-2022,CA,wood,17.58
+2024,CA,wood,14.07
 2024,CO,fuel oil,22.66
-2023,CO,fuel oil,25.84
 2024,CO,electricity,43.72
-2023,CO,electricity,41.9
 2024,CO,natural gas,10.09
-2023,CO,natural gas,11.38
 2024,CO,propane,24.16
-2023,CO,propane,24.67
-2023,CO,wood,16.07
-2022,CO,wood,17.58
+2024,CO,wood,14.07
 2024,CT,fuel oil,21.64
-2023,CT,fuel oil,24.97
 2024,CT,electricity,84.25
-2023,CT,electricity,87.58
 2024,CT,natural gas,16.36
-2023,CT,natural gas,18.34
 2024,CT,propane,42.56
-2023,CT,propane,42.19
-2023,CT,wood,9.58
-2022,CT,wood,10.47
+2024,CT,wood,8.38
 2024,DC,fuel oil,25.46
-2023,DC,fuel oil,29.21
 2024,DC,electricity,51.9
-2023,DC,electricity,48.2
 2024,DC,natural gas,16.03
-2023,DC,natural gas,16.25
 2024,DC,propane,36.43
-2023,DC,propane,35.22
-2023,DC,wood,0.0
-2022,DC,wood,0.0
+2020,DC,wood,7.04
 2024,DE,fuel oil,25.63
-2023,DE,fuel oil,29.51
 2024,DE,electricity,48.55
-2023,DE,electricity,46.11
 2024,DE,natural gas,14.29
-2023,DE,natural gas,17.11
 2024,DE,propane,34.96
-2023,DE,propane,33.21
-2023,DE,wood,11.95
-2022,DE,wood,13.07
+2024,DE,wood,10.46
 2024,FL,fuel oil,24.54
-2023,FL,fuel oil,28.06
 2024,FL,electricity,41.43
-2023,FL,electricity,44.57
 2024,FL,natural gas,24.66
-2023,FL,natural gas,24.51
 2024,FL,propane,43.2
-2023,FL,propane,42.25
-2023,FL,wood,11.95
-2022,FL,wood,13.07
+2024,FL,wood,10.46
 2024,GA,fuel oil,24.08
-2023,GA,fuel oil,27.54
 2024,GA,electricity,41.27
-2023,GA,electricity,40.12
 2024,GA,natural gas,17.66
-2023,GA,natural gas,18.53
 2024,GA,propane,32.44
-2023,GA,propane,31.74
-2023,GA,wood,11.95
-2022,GA,wood,13.07
+2024,GA,wood,10.46
 2024,HI,fuel oil,25.49
-2023,HI,fuel oil,29.07
 2024,HI,electricity,125.63
-2023,HI,electricity,124.25
 2024,HI,natural gas,53.25
-2023,HI,natural gas,57.84
 2024,HI,propane,49.95
-2023,HI,propane,50.84
-2023,HI,wood,16.07
-2022,HI,wood,17.58
+2024,HI,wood,14.07
 2024,IA,fuel oil,23.32
-2023,IA,fuel oil,27.35
 2024,IA,electricity,39.28
-2023,IA,electricity,39.0
 2024,IA,natural gas,9.69
-2023,IA,natural gas,11.04
 2024,IA,propane,16.67
-2023,IA,propane,18.69
-2023,IA,wood,12.07
-2022,IA,wood,13.2
+2024,IA,wood,10.56
 2024,ID,fuel oil,23.34
-2023,ID,fuel oil,26.62
 2024,ID,electricity,33.76
-2023,ID,electricity,32.4
 2024,ID,natural gas,8.25
-2023,ID,natural gas,9.45
 2024,ID,propane,26.48
-2023,ID,propane,27.05
-2023,ID,wood,16.07
-2022,ID,wood,17.58
+2024,ID,wood,14.07
 2024,IL,fuel oil,24.07
-2023,IL,fuel oil,27.52
 2024,IL,electricity,46.51
-2023,IL,electricity,46.03
 2024,IL,natural gas,10.64
-2023,IL,natural gas,11.12
 2024,IL,propane,19.96
-2023,IL,propane,21.02
-2023,IL,wood,12.07
-2022,IL,wood,13.2
+2024,IL,wood,10.56
 2024,IN,fuel oil,23.82
-2023,IN,fuel oil,27.2
 2024,IN,electricity,43.28
-2023,IN,electricity,43.78
 2024,IN,natural gas,8.99
-2023,IN,natural gas,11.1
 2024,IN,propane,24.07
-2023,IN,propane,25.0
-2023,IN,wood,12.07
-2022,IN,wood,13.2
+2024,IN,wood,10.56
 2024,KS,fuel oil,24.13
-2023,KS,fuel oil,27.58
 2024,KS,electricity,41.47
-2023,KS,electricity,39.22
 2024,KS,natural gas,12.65
-2023,KS,natural gas,14.02
 2024,KS,propane,19.76
-2023,KS,propane,20.91
-2023,KS,wood,12.07
-2022,KS,wood,13.2
+2024,KS,wood,10.56
 2024,KY,fuel oil,23.63
-2023,KY,fuel oil,28.16
 2024,KY,electricity,37.47
-2023,KY,electricity,37.08
 2024,KY,natural gas,12.85
-2023,KY,natural gas,14.64
 2024,KY,propane,27.15
-2023,KY,propane,26.51
-2023,KY,wood,11.95
-2022,KY,wood,13.07
+2024,KY,wood,10.46
 2024,LA,fuel oil,19.89
-2023,LA,fuel oil,22.69
 2024,LA,electricity,34.38
-2023,LA,electricity,33.85
 2024,LA,natural gas,16.04
-2023,LA,natural gas,16.06
 2024,LA,propane,30.49
-2023,LA,propane,31.14
-2023,LA,wood,11.95
-2022,LA,wood,13.07
+2024,LA,wood,10.46
 2024,MA,fuel oil,23.29
-2023,MA,fuel oil,26.36
 2024,MA,electricity,86.02
-2023,MA,electricity,86.78
 2024,MA,natural gas,21.27
-2023,MA,natural gas,20.82
 2024,MA,propane,41.72
-2023,MA,propane,40.94
-2023,MA,wood,9.58
-2022,MA,wood,10.47
+2024,MA,wood,8.38
 2024,MD,fuel oil,25.17
-2023,MD,fuel oil,28.72
 2024,MD,electricity,52.34
-2023,MD,electricity,48.64
 2024,MD,natural gas,15.55
-2023,MD,natural gas,16.7
 2024,MD,propane,36.61
-2023,MD,propane,35.36
-2023,MD,wood,11.95
-2022,MD,wood,13.07
+2024,MD,wood,10.46
 2024,ME,fuel oil,23.73
-2023,ME,fuel oil,27.07
 2024,ME,electricity,71.18
-2023,ME,electricity,80.37
 2024,ME,natural gas,18.17
-2023,ME,natural gas,18.34
 2024,ME,propane,34.26
-2023,ME,propane,33.52
-2023,ME,wood,9.58
-2022,ME,wood,10.47
+2024,ME,wood,8.38
 2024,MI,fuel oil,22.81
-2023,MI,fuel oil,26.22
 2024,MI,electricity,56.56
-2023,MI,electricity,55.23
 2024,MI,natural gas,10.21
-2023,MI,natural gas,10.91
 2024,MI,propane,23.05
-2023,MI,propane,23.92
-2023,MI,wood,12.07
-2022,MI,wood,13.2
+2024,MI,wood,10.56
 2024,MN,fuel oil,26.1
-2023,MN,fuel oil,29.66
 2024,MN,electricity,45.28
-2023,MN,electricity,43.18
 2024,MN,natural gas,10.03
-2023,MN,natural gas,11.3
 2024,MN,propane,19.91
-2023,MN,propane,21.51
-2023,MN,wood,12.07
-2022,MN,wood,13.2
+2024,MN,wood,10.56
 2024,MO,fuel oil,23.61
-2023,MO,fuel oil,26.99
 2024,MO,electricity,37.84
-2023,MO,electricity,36.86
 2024,MO,natural gas,16.49
-2023,MO,natural gas,16.82
 2024,MO,propane,21.3
-2023,MO,propane,22.35
-2023,MO,wood,12.07
-2022,MO,wood,13.2
+2024,MO,wood,10.56
 2024,MS,fuel oil,20.38
-2023,MS,fuel oil,23.24
 2024,MS,electricity,39.26
-2023,MS,electricity,38.76
 2024,MS,natural gas,15.03
-2023,MS,natural gas,15.23
 2024,MS,propane,29.42
-2023,MS,propane,30.05
-2023,MS,wood,11.95
-2022,MS,wood,13.07
+2024,MS,wood,10.46
 2024,MT,fuel oil,22.02
-2023,MT,fuel oil,25.11
 2024,MT,electricity,37.11
-2023,MT,electricity,36.75
 2024,MT,natural gas,7.77
-2023,MT,natural gas,9.63
 2024,MT,propane,22.28
-2023,MT,propane,22.76
-2023,MT,wood,16.07
-2022,MT,wood,17.58
+2024,MT,wood,14.07
 2024,NC,fuel oil,23.28
-2023,NC,fuel oil,27.05
 2024,NC,electricity,41.42
-2023,NC,electricity,37.89
 2024,NC,natural gas,15.82
-2023,NC,natural gas,16.81
 2024,NC,propane,35.57
-2023,NC,propane,34.97
-2023,NC,wood,11.95
-2022,NC,wood,13.07
+2024,NC,wood,10.46
 2024,ND,fuel oil,23.79
-2023,ND,fuel oil,27.19
 2024,ND,electricity,33.73
-2023,ND,electricity,32.27
 2024,ND,natural gas,8.44
-2023,ND,natural gas,9.21
 2024,ND,propane,17.33
-2023,ND,propane,18.96
-2023,ND,wood,12.07
-2022,ND,wood,13.2
+2024,ND,wood,10.56
 2024,NE,fuel oil,21.89
-2023,NE,fuel oil,26.2
 2024,NE,electricity,33.79
-2023,NE,electricity,32.83
 2024,NE,natural gas,10.06
-2023,NE,natural gas,12.42
 2024,NE,propane,17.8
-2023,NE,propane,18.76
-2023,NE,wood,12.07
-2022,NE,wood,13.2
+2024,NE,wood,10.56
 2024,NH,fuel oil,24.23
-2023,NH,fuel oil,26.54
 2024,NH,electricity,68.59
-2023,NH,electricity,82.51
 2024,NH,natural gas,18.09
-2023,NH,natural gas,20.32
 2024,NH,propane,33.0
-2023,NH,propane,33.25
-2023,NH,wood,9.58
-2022,NH,wood,10.47
+2024,NH,wood,8.38
 2024,NJ,fuel oil,24.99
-2023,NJ,fuel oil,28.74
 2024,NJ,electricity,56.69
-2023,NJ,electricity,51.89
 2024,NJ,natural gas,12.72
-2023,NJ,natural gas,12.7
 2024,NJ,propane,34.8
-2023,NJ,propane,33.59
-2023,NJ,wood,9.58
-2022,NJ,wood,10.47
+2024,NJ,wood,8.38
 2024,NM,fuel oil,19.98
-2023,NM,fuel oil,22.8
 2024,NM,electricity,41.61
-2023,NM,electricity,40.58
 2024,NM,natural gas,8.83
-2023,NM,natural gas,11.36
 2024,NM,propane,27.3
-2023,NM,propane,27.89
-2023,NM,wood,16.07
-2022,NM,wood,17.58
+2024,NM,wood,14.07
 2024,NV,fuel oil,26.18
-2023,NV,fuel oil,29.86
 2024,NV,electricity,43.95
-2023,NV,electricity,48.85
 2024,NV,natural gas,17.91
-2023,NV,natural gas,16.25
 2024,NV,propane,31.51
-2023,NV,propane,32.19
-2023,NV,wood,16.07
-2022,NV,wood,17.58
+2024,NV,wood,14.07
 2024,NY,fuel oil,23.11
-2023,NY,fuel oil,26.22
 2024,NY,electricity,71.6
-2023,NY,electricity,65.2
 2024,NY,natural gas,16.03
-2023,NY,natural gas,16.37
 2024,NY,propane,34.35
-2023,NY,propane,34.47
-2023,NY,wood,9.58
-2022,NY,wood,10.47
+2024,NY,wood,8.38
 2024,OH,fuel oil,24.71
-2023,OH,fuel oil,28.31
 2024,OH,electricity,46.85
-2023,OH,electricity,45.08
 2024,OH,natural gas,12.89
-2023,OH,natural gas,12.76
 2024,OH,propane,27.54
-2023,OH,propane,27.65
-2023,OH,wood,12.07
-2022,OH,wood,13.2
+2024,OH,wood,10.56
 2024,OK,fuel oil,23.68
-2023,OK,fuel oil,27.06
 2024,OK,electricity,35.86
-2023,OK,electricity,35.4
 2024,OK,natural gas,13.54
-2023,OK,natural gas,14.56
 2024,OK,propane,20.89
-2023,OK,propane,22.03
-2023,OK,wood,11.95
-2022,OK,wood,13.07
+2024,OK,wood,10.46
 2024,OR,fuel oil,24.51
-2023,OR,fuel oil,27.95
 2024,OR,electricity,43.08
-2023,OR,electricity,37.32
 2024,OR,natural gas,14.6
-2023,OR,natural gas,14.68
 2024,OR,propane,28.74
-2023,OR,propane,29.35
-2023,OR,wood,16.07
-2022,OR,wood,17.58
+2024,OR,wood,14.07
 2024,PA,fuel oil,25.15
-2023,PA,fuel oil,29.41
 2024,PA,electricity,52.07
-2023,PA,electricity,53.05
 2024,PA,natural gas,13.12
-2023,PA,natural gas,14.86
 2024,PA,propane,28.79
-2023,PA,propane,28.69
-2023,PA,wood,9.58
-2022,PA,wood,10.47
+2024,PA,wood,8.38
 2024,RI,fuel oil,22.61
-2023,RI,fuel oil,25.68
 2024,RI,electricity,83.97
-2023,RI,electricity,79.18
 2024,RI,natural gas,21.08
-2023,RI,natural gas,19.97
 2024,RI,propane,38.79
-2023,RI,propane,38.36
-2023,RI,wood,9.58
-2022,RI,wood,10.47
+2024,RI,wood,8.38
 2024,SC,fuel oil,24.54
-2023,SC,fuel oil,28.06
 2024,SC,electricity,41.71
-2023,SC,electricity,40.1
 2024,SC,natural gas,16.37
-2023,SC,natural gas,16.97
 2024,SC,propane,36.97
-2023,SC,propane,36.15
-2023,SC,wood,11.95
-2022,SC,wood,13.07
+2024,SC,wood,10.46
 2024,SD,fuel oil,23.61
-2023,SD,fuel oil,27.02
 2024,SD,electricity,37.69
-2023,SD,electricity,36.12
 2024,SD,natural gas,8.57
-2023,SD,natural gas,9.62
 2024,SD,propane,19.41
-2023,SD,propane,20.92
-2023,SD,wood,12.07
-2022,SD,wood,13.2
+2024,SD,wood,10.56
 2024,TN,fuel oil,24.24
-2023,TN,fuel oil,27.71
 2024,TN,electricity,36.41
-2023,TN,electricity,35.73
 2024,TN,natural gas,10.32
-2023,TN,natural gas,11.25
 2024,TN,propane,25.75
-2023,TN,propane,27.04
-2023,TN,wood,11.95
-2022,TN,wood,13.07
+2024,TN,wood,10.46
 2024,TX,fuel oil,20.24
-2023,TX,fuel oil,23.08
 2024,TX,electricity,43.78
-2023,TX,electricity,42.39
 2024,TX,natural gas,17.64
-2023,TX,natural gas,17.05
 2024,TX,propane,28.63
-2023,TX,propane,29.24
-2023,TX,wood,11.95
-2022,TX,wood,13.07
+2024,TX,wood,10.46
 2024,US,fuel oil,23.75
-2023,US,fuel oil,27.14
 2024,US,electricity,48.3
-2023,US,electricity,46.89
 2024,US,natural gas,13.88
-2023,US,natural gas,14.77
 2024,US,propane,27.08
-2023,US,propane,27.25
-2023,US,wood,11.93
-2022,US,wood,13.04
+2024,US,wood,10.45
 2024,UT,fuel oil,23.36
-2023,UT,fuel oil,26.65
 2024,UT,electricity,35.8
-2023,UT,electricity,32.82
 2024,UT,natural gas,12.55
-2023,UT,natural gas,12.84
 2024,UT,propane,25.36
-2023,UT,propane,25.91
-2023,UT,wood,16.07
-2022,UT,wood,17.58
+2024,UT,wood,14.07
 2024,VA,fuel oil,25.19
-2023,VA,fuel oil,28.47
 2024,VA,electricity,42.23
-2023,VA,electricity,41.79
 2024,VA,natural gas,14.64
-2023,VA,natural gas,16.25
 2024,VA,propane,36.01
-2023,VA,propane,34.84
-2023,VA,wood,11.95
-2022,VA,wood,13.07
+2024,VA,wood,10.46
 2024,VT,fuel oil,26.53
-2023,VT,fuel oil,29.43
 2024,VT,electricity,64.2
-2023,VT,electricity,61.02
 2024,VT,natural gas,16.61
-2023,VT,natural gas,16.53
 2024,VT,propane,33.0
-2023,VT,propane,31.92
-2023,VT,wood,9.58
-2022,VT,wood,10.47
+2024,VT,wood,8.38
 2024,WA,fuel oil,26.1
-2023,WA,fuel oil,29.77
 2024,WA,electricity,34.87
-2023,WA,electricity,32.19
 2024,WA,natural gas,11.65
-2023,WA,natural gas,14.29
 2024,WA,propane,26.3
-2023,WA,propane,26.82
-2023,WA,wood,16.07
-2022,WA,wood,17.58
+2024,WA,wood,14.07
 2024,WI,fuel oil,22.37
-2023,WI,fuel oil,25.36
 2024,WI,electricity,50.37
-2023,WI,electricity,49.46
 2024,WI,natural gas,9.65
-2023,WI,natural gas,10.39
 2024,WI,propane,18.91
-2023,WI,propane,20.37
-2023,WI,wood,12.07
-2022,WI,wood,13.2
+2024,WI,wood,10.56
 2024,WV,fuel oil,24.54
-2023,WV,fuel oil,28.06
 2024,WV,electricity,44.18
-2023,WV,electricity,41.18
 2024,WV,natural gas,14.15
-2023,WV,natural gas,14.4
 2024,WV,propane,36.34
-2023,WV,propane,35.56
-2023,WV,wood,11.95
-2022,WV,wood,13.07
+2024,WV,wood,10.46
 2024,WY,fuel oil,22.9
-2023,WY,fuel oil,26.12
 2024,WY,electricity,36.54
-2023,WY,electricity,33.59
 2024,WY,natural gas,11.7
-2023,WY,natural gas,12.99
 2024,WY,propane,24.69
-2023,WY,propane,25.25
-2023,WY,wood,16.07
-2022,WY,wood,17.58
+2024,WY,wood,14.07
