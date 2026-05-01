@@ -25,9 +25,9 @@ class UtilityBills
   # @param marginal_rate [Double] the marginal flat rate (USD/kWh or USD/therm, etc.)
   # @return [Array<Double, Double>] the marginal and average rates (USD/kWh or USD/therm, etc., USD/month)
   def self.get_rates_from_eia_data(runner, state_code, fuel_type, fixed_charge, marginal_rate = nil)
-    msn_codes = Constants::StateCodesMap.keys
-    msn_codes << 'US'
-    return unless msn_codes.include? state_code # Check if the state_code is valid
+    state_codes = Constants::StateCodesMap.keys
+    state_codes << 'US'
+    return unless state_codes.include? state_code # Check if the state_code is valid
 
     average_rate = nil
 
@@ -104,7 +104,7 @@ class UtilityBills
   # @param fuel_type [String] HPXML fuel type
   # @return [Double] average rate for electricity or natural gas, and marginal rate for all other fuel types (USD/kWh or USD/therm, etc.)
   def self.get_eia_seds_rate(runner, state_code, fuel_type)
-    csv_path = File.join(File.dirname(__FILE__), '../../ReportUtilityBills/resources/simple_rates/pr_all_update.csv')
+    csv_path = File.join(File.dirname(__FILE__), '../../ReportUtilityBills/resources/simple_rates/eia_fuel_rates_by_state.csv')
 
     # Collect all matching rows for this state + fuel, keyed by year (desc)
     matched_rows = []
