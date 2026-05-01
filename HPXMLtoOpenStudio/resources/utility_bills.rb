@@ -108,9 +108,11 @@ class UtilityBills
 
     # Collect all matching rows for this state + fuel, keyed by year (desc)
     matched_rows = []
+    csv_fuel = fuel_type.to_s.downcase == HPXML::FuelTypeWoodPellets.to_s.downcase ? 'wood' : fuel_type.to_s.downcase
+
     CSV.foreach(csv_path, headers: true) do |row|
       next if row['state'].to_s.upcase != state_code.to_s.upcase
-      next if row['fuel'].to_s.downcase != fuel_type.to_s.downcase
+      next if row['fuel'].to_s.downcase != csv_fuel
 
       year = row['year'].to_i
       rate = row['rate_dollar_per_mmbtu'].to_f
