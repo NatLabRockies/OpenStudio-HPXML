@@ -4,8 +4,8 @@
   <error>Failed to infer measure name from '/mnt/c/git/openstudio-hpxml/ReportUtilityBills/measure.rb'</error>
   <name>report_utility_bills</name>
   <uid>ca88a425-e59a-4bc4-af51-c7e7d1e960fe</uid>
-  <version_id>fb1e14f6-89e9-4e7a-87a6-6e9f60ee73f0</version_id>
-  <version_modified>2026-04-30T21:38:53Z</version_modified>
+  <version_id>cb973eaa-2d81-46fa-bdcc-5b0bba033125</version_id>
+  <version_modified>2026-05-01T14:45:46Z</version_modified>
   <xml_checksum>15BF4E57</xml_checksum>
   <class_name>ReportUtilityBills</class_name>
   <display_name>Utility Bills Report</display_name>
@@ -295,7 +295,7 @@
       <filename>detailed_rates/openei_rates.zip</filename>
       <filetype>zip</filetype>
       <usage_type>resource</usage_type>
-      <checksum>FCDE5F5D</checksum>
+      <checksum>ED0DBE6D</checksum>
     </file>
     <file>
       <filename>simple_rates/HouseholdConsumption.csv</filename>
