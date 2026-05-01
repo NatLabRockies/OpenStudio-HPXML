@@ -3619,7 +3619,6 @@ def download_eia_seds
       ]
       url = "#{base_url}?#{query_parts.join('&')}"
 
-      retries = 0
       parsed = nil
       begin
         uri = URI(url)
