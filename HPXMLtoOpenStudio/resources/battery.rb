@@ -218,7 +218,6 @@ module Battery
       name: Constants::ObjectTypeBatteryLossesAdjustment,
       end_use: Constants::ObjectTypeBatteryLossesAdjustment,
       space: space,
-      design_level: 0.01,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: frac_lost,

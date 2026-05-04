@@ -11,6 +11,7 @@ module Constants
   ObjectTypeAirSourceHeatPump = 'air source heat pump'
   ObjectTypeBattery = 'battery'
   ObjectTypeBatteryLossesAdjustment = 'battery losses adjustment'
+  ObjectTypeBlowerOffDelayFanPower = 'bod fan power'
   ObjectTypeBoiler = 'boiler'
   ObjectTypeCeilingFan = 'ceiling fan'
   ObjectTypeCentralAirConditioner = 'central ac'
