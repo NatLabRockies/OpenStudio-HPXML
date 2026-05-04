@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <measure>
   <schema_version>3.1</schema_version>
-  <error>Failed to infer measure name from '/mnt/c/git/openstudio-hpxml/ReportUtilityBills/measure.rb'</error>
   <name>report_utility_bills</name>
   <uid>ca88a425-e59a-4bc4-af51-c7e7d1e960fe</uid>
   <version_id>168a5113-84da-4ff3-8f03-45785f957fd2</version_id>
