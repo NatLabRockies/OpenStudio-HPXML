@@ -3659,12 +3659,12 @@ def download_eia_seds
 
         existing = latest_rates[state][fuel]
 
-        if existing.nil? || period > existing[:period]
-          latest_rates[state][fuel] = {
-            period: period,
-            value: value.to_f
-          }
-        end
+        next unless existing.nil? || period > existing[:period]
+
+        latest_rates[state][fuel] = {
+          period: period,
+          value: value.to_f
+        }
       end
 
       offset += data.size
