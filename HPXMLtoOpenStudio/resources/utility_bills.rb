@@ -106,8 +106,8 @@ class UtilityBills
   def self.get_eia_seds_rate(runner, state_code, fuel_type)
     csv_path = File.join(File.dirname(__FILE__), '../../ReportUtilityBills/resources/simple_rates/eia_fuel_rates_by_state.csv')
 
-    # Collect all matching rows for this state + fuel, keyed by year (desc)
-    matched_rows = []
+    # Collect the latest matching EIA SEDS rate for this state and fuel
+    matching_rate = nil
     csv_fuel = fuel_type.to_s.downcase == HPXML::FuelTypeWoodPellets.to_s.downcase ? 'wood' : fuel_type.to_s.downcase
 
     CSV.foreach(csv_path, headers: true) do |row|
@@ -116,34 +116,21 @@ class UtilityBills
 
       year = row['year'].to_i
       rate = row['rate_dollar_per_mmbtu'].to_f
-      matched_rows << { year: year, rate: rate }
+      matching_rate = { year: year, rate: rate }
+      break
     end
 
-    if matched_rows.empty?
+    if matching_rate.nil?
       runner.registerWarning("No EIA SEDS rate for #{fuel_type} was found for the state of #{state_code}.") if !runner.nil?
       return 0.0
     end
 
-    # Sort descending: latest year first
-    matched_rows.sort_by! { |r| -r[:year] }
-    latest  = matched_rows[0]
-    prior   = matched_rows[1]
-
-    if latest[:rate] != 0.0
-      # Happy path: use latest year
-      seds_rate = latest[:rate]
-    elsif !prior.nil? && prior[:rate] != 0.0
-      # Latest year is zero, fall back to prior year
-      runner.registerWarning(
-        "EIA SEDS rate for #{fuel_type} in #{state_code} is unavailable for #{latest[:year]}. " \
-        "Using #{prior[:year]} rate (#{prior[:rate]} $/MMBtu) instead."
-      ) if !runner.nil?
-      seds_rate = prior[:rate]
+    if matching_rate[:rate] != 0.0
+      seds_rate = matching_rate[:rate]
     else
-      # Both years are zero/missing
+      # Rate is zero/missing
       runner.registerWarning(
-        "EIA SEDS rate for #{fuel_type} in #{state_code} is unavailable for both " \
-        "#{latest[:year]} and #{prior.nil? ? 'prior year' : prior[:year]}."
+        "EIA SEDS rate for #{fuel_type} in #{state_code} is unavailable for #{matching_rate[:year]}."
       ) if !runner.nil?
       return 0.0
     end
