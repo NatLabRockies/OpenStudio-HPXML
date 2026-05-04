@@ -39,14 +39,16 @@ To enable advanced research features, additional information is entered in ``/HP
 
 These features may require shorter timesteps, allow more sophisticated simulation control, and/or impact simulation runtime.
 
-  ======================================  ========  =======  ================  ========  ========  ========================================================
-  Element                                 Type      Units    Constraints       Required  Default   Notes
-  ======================================  ========  =======  ================  ========  ========  ========================================================
-  ``TemperatureCapacitanceMultiplier``    double             > 0               No        7.0 [#]_  Multiplier on air heat capacitance [#]_
-  ``OnOffThermostatDeadbandTemperature``  double    F        > 0 [#]_          No                  Temperature difference between cut-in and cut-out temperature for HVAC operation [#]_
-  ``HeatPumpBackupCapacityIncrement``     double    Btu/hr   > 0 [#]_          No                  Capacity increment of multi-stage heat pump backup systems [#]_
-  ``GroundToAirHeatPumpModelType``        string             See [#]_          No        standard  Ground-to-air heat pump system model type [#]_
-  ======================================  ========  =======  ================  ========  ========  ========================================================
+  =============================================  ========  =======  ================  ========  ========  ========================================================
+  Element                                        Type      Units    Constraints       Required  Default   Notes
+  =============================================  ========  =======  ================  ========  ========  ========================================================
+  ``TemperatureCapacitanceMultiplier``           double             > 0               No        7.0 [#]_  Multiplier on air heat capacitance [#]_
+  ``OnOffThermostatDeadbandTemperature``         double    F        > 0 [#]_          No        <none>    Temperature difference between cut-in and cut-out temperature for HVAC operation [#]_
+  ``LatentDegradationModel/Enabled``             boolean                              No        false     Whether to use the latent degradation model for cooling systems [#]_
+  ``LatentDegradationModel/HVACBlowerOffDelay``  double    sec      >= 0              No        See [#]_  HVAC blower-off delay when using the latent degradation model
+  ``HeatPumpBackupCapacityIncrement``            double    Btu/hr   > 0 [#]_          No        <none>    Capacity increment of multi-stage heat pump backup systems [#]_
+  ``GroundToAirHeatPumpModelType``               string             See [#]_          No        standard  Ground-to-air heat pump system model type [#]_
+  =============================================  ========  =======  ================  ========  ========  ========================================================
 
   .. [#] The default value of 7 is an average value found in the literature when calibrating timeseries EnergyPlus indoor temperatures to field data.
   .. [#] TemperatureCapacitanceMultiplier affects the transient calculation of indoor air temperatures.
@@ -62,6 +64,11 @@ These features may require shorter timesteps, allow more sophisticated simulatio
          When this feature is enabled, the model will also explicitly model cycling, such that it will take several minutes for the HVAC to reach full capacity for single and two speed AC/ASHP systems, and time-based realistic staging (stay at low speed for 5 minutes before transitioning to the higher stage, and stay at high speed until cut-out deadband temperature is reached) for two speed AC/ASHP systems.
          This feature should only be used if detailed power profiles and loads are required.
          Common use cases for this feature are when modeling advanced controls, such as a Home Energy Management System, or if performing co-simulation with a grid model.
+  .. [#] The latent degradation model for cooling systems is suggested when running simulations where latent load or dehumidifier energy use is of interest.
+         This model accounts for latent removal during coil start-up, and moisture re-introduced to the conditioned space during the blower-off delay (forced evaporation) and during the remaining off cycle time after the blower shuts off (natural evaporation).
+         It currently applies to central air conditioners and central air source heat pumps only.
+         See `Understanding the Dehumidification Performance of Air-Conditioning Equipment at Part-Load Conditions <https://www.osti.gov/biblio/881342>_` for more information.
+  .. [#] When the latent degradation model is enabled, the HVAC blower-off delay defaults to 45 seconds.
   .. [#] HeatPumpBackupCapacityIncrement is currently only allowed with a 1 minute timestep.
   .. [#] HeatPumpBackupCapacityIncrement allows modeling multi-stage electric heat pump backup with time-based staging.
          If not provided, the heat pump backup is modeled with a single stage.

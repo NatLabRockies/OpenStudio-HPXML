@@ -1904,8 +1904,8 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
         program_values = _check_install_quality_multispeed_ratio(heat_pump, model, heat_pump)
       end
 
-      cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
-      heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
+      cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+      heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
       for i in 0.._get_num_speeds(heat_pump.compressor_type) - 1
         assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][i], 0.01)
         assert_in_epsilon(heat_rated_airflow_ratio, program_values['FF_AF_htg'][i], 0.01)
@@ -1948,7 +1948,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
         program_values = _check_install_quality_multispeed_ratio(cooling_system, model)
       end
 
-      cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+      cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
       for i in 0.._get_num_speeds(cooling_system.compressor_type) - 1
         assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][i], 0.01)
       end
@@ -1999,8 +1999,8 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     program_values = get_ems_values(model.getEnergyManagementSystemPrograms, "#{unitary_system.name} install quality program")
     assert_in_epsilon(program_values['F_CH'].sum, charge_defect, 0.01)
 
-    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
-    heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
+    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+    heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
     assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][0], 0.01)
     assert_in_epsilon(heat_rated_airflow_ratio, program_values['FF_AF_htg'][0], 0.01)
 
@@ -2057,7 +2057,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Check installation quality EMS
     program_values = _check_install_quality_multispeed_ratio(cooling_system, model)
 
-    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
     for i in 0.._get_num_speeds(cooling_system.compressor_type) - 1
       assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][i], 0.01)
     end
@@ -2079,8 +2079,8 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Check installation quality EMS
     program_values = _check_install_quality_multispeed_ratio(heat_pump, model, heat_pump)
 
-    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
-    heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
+    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+    heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
     for i in 0.._get_num_speeds(heat_pump.compressor_type) - 1
       assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][i], 0.01)
       assert_in_epsilon(heat_rated_airflow_ratio, program_values['FF_AF_htg'][i], 0.01)

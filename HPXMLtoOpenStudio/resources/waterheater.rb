@@ -1196,14 +1196,11 @@ module Waterheater
       hpwh_sens = Model.add_other_equipment(
         model,
         name: "#{obj_name} sens",
-        end_use: nil,
         space: loc_space,
-        design_level: 0,
         frac_radiant: 0,
         frac_latent: 0,
         frac_lost: 0,
-        schedule: model.alwaysOnDiscreteSchedule,
-        fuel_type: nil
+        schedule: model.alwaysOnDiscreteSchedule
       )
       sens_act_actuator = Model.add_ems_actuator(
         name: "#{hpwh_sens.name} act",
@@ -1214,14 +1211,11 @@ module Waterheater
       hpwh_lat = Model.add_other_equipment(
         model,
         name: "#{obj_name} lat",
-        end_use: nil,
         space: loc_space,
-        design_level: 0,
         frac_radiant: 0,
         frac_latent: 1,
         frac_lost: 0,
-        schedule: model.alwaysOnDiscreteSchedule,
-        fuel_type: nil
+        schedule: model.alwaysOnDiscreteSchedule
       )
       lat_act_actuator = Model.add_ems_actuator(
         name: "#{hpwh_lat.name} act",
@@ -1687,7 +1681,6 @@ module Waterheater
       name: "#{Constants::ObjectTypeWaterHeaterAdjustment}#{cnt + 1}",
       end_use: "#{Constants::ObjectTypeWaterHeaterAdjustment}#{cnt + 1}",
       space: model.getSpaces[0],
-      design_level: 0.01,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 1,
