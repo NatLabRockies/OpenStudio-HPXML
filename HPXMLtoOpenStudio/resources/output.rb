@@ -61,11 +61,10 @@ module Outputs
   # @return [Hash] Mapping of unit index => heating/cooling season begin and end dates for use by subsequent programs
   def self.apply_unmet_hours_ems_program(model, hpxml_osm_map, hpxml_header)
     # Create sensors and gather data
-    htg_sensors, clg_sensors = {}, {}
-    zone_air_temp_sensors, htg_spt_sensors, clg_spt_sensors = {}, {}, {}
+    htg_sensors, clg_sensors, htg_avail_sensors, clg_avail_sensors = {}, {}, {}, {}
+    zone_air_temp_sensors, htg_sp_sensors, clg_sp_sensors = {}, {}, {}
     total_heat_load_serveds, total_cool_load_serveds = {}, {}
     season_day_nums = {}
-    onoff_deadbands = hpxml_header.hvac_onoff_thermostat_deadband.to_f
     hpxml_osm_map.each_with_index do |(hpxml_bldg, unit_model), unit|
       conditioned_zone = unit_model.getThermalZones.find { |z| z.additionalProperties.getFeatureAsString('ObjectType').to_s == HPXML::LocationConditionedSpace }
       conditioned_zone_name = conditioned_zone.name.to_s
@@ -91,29 +90,10 @@ module Outputs
       hvac_control = hpxml_bldg.hvac_controls[0]
       next if hvac_control.nil?
 
-      if (onoff_deadbands > 0)
-        zone_air_temp_sensors[unit] = Model.add_ems_sensor(
-          model,
-          name: "#{conditioned_zone_name} space temp",
-          output_var_or_meter_name: 'Zone Air Temperature',
-          key_name: conditioned_zone_name
-        )
-
-        htg_sch = conditioned_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-        htg_spt_sensors[unit] = Model.add_ems_sensor(
-          model,
-          name: "#{htg_sch.name} sch value",
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: htg_sch.name
-        )
-
-        clg_sch = conditioned_zone.thermostatSetpointDualSetpoint.get.coolingSetpointTemperatureSchedule.get
-        clg_spt_sensors[unit] = Model.add_ems_sensor(
-          model,
-          name: "#{clg_sch.name} sch value",
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: clg_sch.name
-        )
+      if hpxml_header.hvac_onoff_thermostat_deadband.to_f > 0
+        zone_air_temp_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
+        htg_sp_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+        clg_sp_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
       end
 
       sim_year = hpxml_header.sim_calendar_year
@@ -123,10 +103,13 @@ module Outputs
         clg_start: Calendar.get_day_num_from_month_day(sim_year, hvac_control.seasons_cooling_begin_month, hvac_control.seasons_cooling_begin_day),
         clg_end: Calendar.get_day_num_from_month_day(sim_year, hvac_control.seasons_cooling_end_month, hvac_control.seasons_cooling_end_day)
       }
+
+      htg_avail_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleHeatingAvailability }
+      clg_avail_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
     end
 
-    htg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeHeatingAvailabilitySensor }
-    clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeCoolingAvailabilitySensor }
+    htg_tol = model.getOutputControlReportingTolerances.toleranceforTimeHeatingSetpointNotMet
+    clg_tol = model.getOutputControlReportingTolerances.toleranceforTimeCoolingSetpointNotMet
 
     # EMS program
     clg_hrs = 'clg_unmet_hours'
@@ -148,10 +131,10 @@ module Outputs
         else
           line = "If ((DayOfYear >= #{season_day_nums[unit][:htg_start]}) || (DayOfYear <= #{season_day_nums[unit][:htg_end]}))"
         end
-        line += " && (#{htg_avail_sensor.name} == 1)" if not htg_avail_sensor.nil?
+        line += " && (#{htg_avail_sensors[unit].name} == 1)" unless htg_avail_sensors[unit].nil?
         program.addLine(line)
-        if zone_air_temp_sensors.keys.include? unit # on off deadband
-          program.addLine("  If #{zone_air_temp_sensors[unit].name} < (#{htg_spt_sensors[unit].name} - #{UnitConversions.convert(onoff_deadbands, 'deltaF', 'deltaC')})")
+        if not zone_air_temp_sensors[unit].nil? # on off deadband
+          program.addLine("  If #{zone_air_temp_sensors[unit].name} < (#{htg_sp_sensors[unit].name} - #{htg_tol})")
           program.addLine("    Set #{unit_htg_hrs} = #{unit_htg_hrs} + #{htg_sensors[unit].name}")
           program.addLine('  EndIf')
         else
@@ -170,10 +153,10 @@ module Outputs
       else
         line = "If ((DayOfYear >= #{season_day_nums[unit][:clg_start]}) || (DayOfYear <= #{season_day_nums[unit][:clg_end]}))"
       end
-      line += " && (#{clg_avail_sensor.name} == 1)" if not clg_avail_sensor.nil?
+      line += " && (#{clg_avail_sensors[unit].name} == 1)" unless clg_avail_sensors[unit].nil?
       program.addLine(line)
-      if zone_air_temp_sensors.keys.include? unit # on off deadband
-        program.addLine("  If #{zone_air_temp_sensors[unit].name} > (#{clg_spt_sensors[unit].name} + #{UnitConversions.convert(onoff_deadbands, 'deltaF', 'deltaC')})")
+      if not zone_air_temp_sensors[unit].nil? # on off deadband
+        program.addLine("  If #{zone_air_temp_sensors[unit].name} > (#{clg_sp_sensors[unit].name} + #{clg_tol})")
         program.addLine("    Set #{unit_clg_hrs} = #{unit_clg_hrs} + #{clg_sensors[unit].name}")
         program.addLine('  EndIf')
       else
@@ -220,7 +203,7 @@ module Outputs
       next if vehicle.nil?
 
       ev_elcd = unit_model.getElectricLoadCenterDistributions.find { |elcd| elcd.name.to_s.include?(vehicle.id) }
-      discharge_sch_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeVehicleDischargeScheduleSensor }
+      discharge_sch_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleVehicleDischarge }
 
       unit_model.getElectricLoadCenterStorageLiIonNMCBatterys.each do |elcs|
         next unless elcs.name.to_s.include? vehicle.id
@@ -828,30 +811,12 @@ module Outputs
       end
 
       # EMS Sensors: Indoor temperature, setpoints
-      tin_sensor = Model.add_ems_sensor(
-        model,
-        name: 'tin s',
-        output_var_or_meter_name: 'Zone Mean Air Temperature',
-        key_name: conditioned_zone.name
-      )
+      tin_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }
 
-      thermostat = nil
+      htg_sp_sensor, clg_sp_sensor = nil, nil
       if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
-        thermostat = conditioned_zone.thermostatSetpointDualSetpoint.get
-
-        htg_sp_sensor = Model.add_ems_sensor(
-          model,
-          name: 'htg sp s',
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: thermostat.heatingSetpointTemperatureSchedule.get.name
-        )
-
-        clg_sp_sensor = Model.add_ems_sensor(
-          model,
-          name: 'clg sp s',
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: thermostat.coolingSetpointTemperatureSchedule.get.name
-        )
+        htg_sp_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
+        clg_sp_sensor = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorCoolingSetpointTemp }
       end
 
       # EMS program: Heating vs Cooling logic
@@ -885,7 +850,7 @@ module Outputs
       program.addLine("    Set clg_mode = #{total_cool_load_serveds[unit]}")
       program.addLine("  ElseIf ((#{whf_sensors[0].name} <> 0) || (#{whf_sensors[1].name} <> 0)) && (clg_season == 1)") # Assign hour to cooling if whole house fan is operating
       program.addLine("    Set clg_mode = #{total_cool_load_serveds[unit]}")
-      if not thermostat.nil?
+      if (not htg_sp_sensor.nil?) && (not clg_sp_sensor.nil?)
         program.addLine('  Else') # Indoor temperature floating between setpoints; determine assignment by comparing to average of heating/cooling setpoints
         program.addLine("    Set Tmid_setpoint = (#{htg_sp_sensor.name} + #{clg_sp_sensor.name}) / 2")
         program.addLine("    If (#{tin_sensor.name} > Tmid_setpoint) && (clg_season == 1)")
@@ -1586,7 +1551,7 @@ module Outputs
       model.getModelObjects.sort.each do |object|
         next if object.to_AdditionalProperties.is_initialized
 
-        vars_by_key = get_object_outputs_by_key(model, object, EUT)
+        vars_by_key = get_object_outputs_by_key(object, EUT)
         vars_by_key.each do |key, output_vars|
           ft, eut = key
 
@@ -1645,7 +1610,7 @@ module Outputs
       next unless obj_id.is_initialized
       next if sys_id != obj_id.get
 
-      vars_by_key = get_object_outputs_by_key(model, object, EUT)
+      vars_by_key = get_object_outputs_by_key(object, EUT)
       vars_by_key.each do |key, object_vars|
         if eut_filter.nil? || eut_filter.include?(key[1])
           vars[key] = {} if vars[key].nil?
@@ -1660,11 +1625,10 @@ module Outputs
   # For a given object, returns the Output:Variables or Output:Meters to be requested,
   # and associates them with the appropriate keys (e.g., [FT::Elec, EUT::Heating]).
   #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param object [OpenStudio::Model::Foo] A given object in the OpenStudio Model
   # @param class_type [Module] The output class type
   # @return [Hash] Map of output key => array of EnergyPlus output variable/meter names
-  def self.get_object_outputs_by_key(model, object, class_type)
+  def self.get_object_outputs_by_key(object, class_type)
     object_type = object.additionalProperties.getFeatureAsString('ObjectType')
     object_type = object_type.get if object_type.is_initialized
 
@@ -1677,13 +1641,6 @@ module Outputs
 
       if object.to_CoilHeatingDXSingleSpeed.is_initialized || object.to_CoilHeatingDXMultiSpeed.is_initialized
         vars = { [FT::Elec, EUT::Heating] => ['Heating Coil Electricity Energy', 'Heating Coil Defrost Electricity Energy'] }
-        if object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').is_initialized && object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').get <= 0
-          # HP only provides cooling, allocate crankcase to cooling end use
-          vars[[FT::Elec, EUT::Cooling]] = ['Heating Coil Crankcase Heater Electricity Energy']
-        else
-          # Allocate crankcase to heating end use
-          vars[[FT::Elec, EUT::Heating]] << 'Heating Coil Crankcase Heater Electricity Energy'
-        end
         return vars
 
       elsif object.to_CoilHeatingElectric.is_initialized || object.to_CoilHeatingElectricMultiStage.is_initialized
@@ -1730,26 +1687,7 @@ module Outputs
         end
 
       elsif object.to_CoilCoolingDXSingleSpeed.is_initialized || object.to_CoilCoolingDXMultiSpeed.is_initialized
-        vars = { [FT::Elec, EUT::Cooling] => ['Cooling Coil Electricity Energy'] }
-        parent = model.getAirLoopHVACUnitarySystems.select { |u| u.coolingCoil.is_initialized && u.coolingCoil.get.handle.to_s == object.handle.to_s }
-        if (not parent.empty?) && parent[0].heatingCoil.is_initialized
-          htg_coil = parent[0].heatingCoil.get
-        end
-        if parent.empty?
-          parent = model.getZoneHVACPackagedTerminalAirConditioners.select { |u| u.coolingCoil.handle.to_s == object.handle.to_s }
-          if not parent.empty?
-            htg_coil = parent[0].heatingCoil
-          end
-        end
-        if parent.empty?
-          fail 'Could not find parent object.'
-        end
-
-        if htg_coil.nil? || (not (htg_coil.to_CoilHeatingDXSingleSpeed.is_initialized || htg_coil.to_CoilHeatingDXMultiSpeed.is_initialized))
-          # Crankcase variable only available if no DX heating coil on parent
-          vars[[FT::Elec, EUT::Cooling]] << 'Cooling Coil Crankcase Heater Electricity Energy'
-        end
-        return vars
+        return { [FT::Elec, EUT::Cooling] => ['Cooling Coil Electricity Energy'] }
 
       elsif object.to_CoilCoolingWaterToAirHeatPumpEquationFit.is_initialized || object.to_CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFit.is_initialized
         return { [FT::Elec, EUT::Cooling] => ['Cooling Coil Electricity Energy'] }
@@ -1861,6 +1799,7 @@ module Outputs
           Constants::ObjectTypeMechanicalVentilationPreheating => EUT::MechVentPreheat,
           Constants::ObjectTypeMechanicalVentilationPrecooling => EUT::MechVentPrecool,
           Constants::ObjectTypeHPDefrostSupplHeat => EUT::HeatingHeatPumpBackup,
+          Constants::ObjectTypeCrankcaseHeater => [EUT::Heating, EUT::Cooling],
           Constants::ObjectTypePanHeater => EUT::Heating,
           Constants::ObjectTypeWaterHeaterAdjustment => EUT::HotWater,
           Constants::ObjectTypeDSEHeating => EUT::Heating,
@@ -1873,6 +1812,15 @@ module Outputs
           Constants::ObjectTypeBatteryLossesAdjustment => EUT::Battery }.each do |obj_name, eut|
           next unless subcategory.start_with? obj_name
           fail "Unexpected error: multiple matches for #{eut}." unless end_use.nil?
+
+          if obj_name == Constants::ObjectTypeCrankcaseHeater
+            if object.additionalProperties.getFeatureAsDouble('FractionHeatLoadServed').get <= 0
+              # Allocate crankcase to cooling end use (cooling system or HP only provides cooling)
+              eut = eut[1]
+            else
+              eut = eut[0]
+            end
+          end
 
           end_use = eut
         end

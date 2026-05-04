@@ -4,6 +4,7 @@ __New Features__
 - HVAC updates:
   - Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
   - Improves handling of duct leakage specified using cfm25/cfm50.
+  - Crankcase heating energy is now disabled during unavailable periods, e.g., power outages.
   - Adds advanced research feature to model latent degradation for cooling systems, including an input to specify an HVAC blower-off delay.
 - Allows "other" for `SoilType`; adds variation to dry/wet soil conductivity and diffusivity values for unknown/other/loam soil types.
 - Output updates:
@@ -27,6 +28,11 @@ __Bugfixes__
   - Fixes lighting and plug/fuel load energy use to not be zeroed out when a kWh/year or therm/year value is provided.
   - Fixes pool/spa energy use to be zeroed out when a kWh/year or therm/year value is not provided, or when there is a "Vacancy" unavailable period.
 - Fixes incorrect hot water (gallons) output for solar thermal systems using `SolarFraction`.
+- Small bugfixes when using the on/off thermostat deadband advanced research feature:
+  - Fixes unmet hours outputs, which could be missing some periods of unmet hours.
+  - Fixes timeseries outputs for heating/cooling setpoints.
+- Fixes logic in HP multi-stage backup advanced research feature.
+- Fixes PV grid connection fee applying in utility bill calculation even if the home has no PV.
 
 ## OpenStudio-HPXML v1.11.1
 

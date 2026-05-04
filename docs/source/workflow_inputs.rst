@@ -309,7 +309,7 @@ You can create an additional column in the CSV file to define another unavailabl
 
 .. warning::
 
-  It is not possible to eliminate all HVAC/DHW energy use (e.g. crankcase/defrost energy, water heater parasitics) in EnergyPlus during an unavailable period.
+  It is not possible to eliminate all DHW energy use (e.g. water heater parasitics) in EnergyPlus during an unavailable period.
 
 .. _hpxml_electric_panel_calculations:
 
@@ -3358,7 +3358,7 @@ Allowed combinations of CapacityDescription and OutdoorTemperature for a given d
   .. [#] For variable speed equipment, minimum/maximum datapoints must both be provided or both be omitted.
   .. [#] Nominal datapoint at 82F is required for single/two stage equipment and optional for variable speed equipment.
 
-Note that when detailed cooling performance data is provided, some other inputs (like SEER) are ignored.
+Note that when detailed cooling performance data are provided, some other inputs (like SEER) are ignored.
 
 .. _htg_detailed_perf_data:
 
@@ -3379,7 +3379,7 @@ For air-source HVAC systems with detailed heating performance data, performance 
   .. [#] OutdoorTemperature choices are 47F, 17F, 5F, and one optional user-specified temperature less than 5F.
          Datapoints at additional outdoor temperatures are not currently supported.
   .. [#] If Capacity is used, the nominal value for the 47F datapoint must match the HeatingCapacity input (if provided) and the nominal value for the 17F datapoint must match the HeatingCapacity17F input (if provided).
-         If CapacityFractionOfNominal is used, the nominal value for the 95F datapoint must be 1.
+         If CapacityFractionOfNominal is used, the nominal value for the 47F datapoint must be 1.
   .. [#] CapacityDescription choices are "minimum", "nominal", and "maximum".
          See the table below for the allowed combinations of CapacityDescription and OutdoorTemperature.
   .. [#] The COP should not include power required for defrost cycling or drain pan heater operation.
@@ -3399,7 +3399,7 @@ Allowed combinations of CapacityDescription and OutdoorTemperature for a given d
   .. [#] Only variable speed equipment will use CapacityDescription="maximum".
   .. [#] For variable speed equipment, minimum/maximum datapoints must both be provided or both be omitted.
 
-Note that when detailed cooling performance data is provided, some other inputs (like HSPF) are ignored.
+Note that when detailed heating performance data are provided, some other inputs (like HSPF) are ignored.
 
 .. _geothermal_loops:
 
@@ -3508,10 +3508,6 @@ If not provided, OpenStudio-HPXML defaults to year-round availability of heating
   ``EndMonth``         integer          >= 1, <= 12  Yes                End month
   ``EndDayOfMonth``    integer          >= 1, <= 31  Yes                End day
   ===================  ========  =====  ===========  ========  =======  ===========
-
-.. warning::
-
-  It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus outside of an HVAC season.
 
 HPXML HVAC Setpoints
 ~~~~~~~~~~~~~~~~~~~~
@@ -4721,7 +4717,7 @@ Many of the inputs are adopted from the `PVWatts model <https://pvwatts.nlr.gov/
   .. [#] ModuleType choices are "standard", "premium", or "thin film".
   .. [#] Tracking choices are "fixed", "1-axis", "1-axis backtracked", or "2-axis".
   .. [#] ArrayOrientation choices are "northeast", "east", "southeast", "south", "southwest", "west", "northwest", or "north"
-  .. [#] SystemLossesFraction default is derived from the `PVWatts documentation <https://www.nlr.gov/docs/fy14osti/62641.pdf>`_, which breaks down the losses as follows.
+  .. [#] SystemLossesFraction default is derived from the `PVWatts documentation <https://docs.nlr.gov/docs/fy14osti/62641.pdf>`_, which breaks down the losses as follows.
          Note that the total loss (14%) is not the sum of the individual losses but is calculated by multiplying the reduction due to each loss.
 
          \- **Soiling**: 2%

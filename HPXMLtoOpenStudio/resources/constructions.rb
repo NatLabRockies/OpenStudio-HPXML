@@ -1692,7 +1692,7 @@ module Constructions
   # @param exposed_perimeter [TODO] TODO
   # @param mat_carpet [TODO] TODO
   # @param soil_k_in [TODO] TODO
-  # @param foundation [TODO] TODO
+  # @param foundation [OpenStudio::Model::FoundationKiva] The Kiva foundation object of interest
   # @return [TODO] TODO
   def self.apply_kiva_foundation_slab(model, surface, constr_name, under_r, under_width, gap_r, perimeter_r,
                                       perimeter_depth, whole_r, concrete_thick_in, exposed_perimeter,
@@ -2154,7 +2154,7 @@ module Constructions
 
   # Sets Kiva foundation initial temperature.
   #
-  # @param foundation [TODO] TODO
+  # @param foundation [OpenStudio::Model::FoundationKiva] The Kiva foundation object of interest
   # @param weather [WeatherFile] Weather object containing EPW information
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)

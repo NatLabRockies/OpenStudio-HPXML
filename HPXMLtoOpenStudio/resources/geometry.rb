@@ -1589,13 +1589,7 @@ module Geometry
     if location == HPXML::LocationOtherHeatedSpace
       if spaces[HPXML::LocationConditionedSpace].thermalZone.get.thermostatSetpointDualSetpoint.is_initialized
         # Create a sensor to get dynamic heating setpoint
-        htg_sch = spaces[HPXML::LocationConditionedSpace].thermalZone.get.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-        space_values[:temp_min] = Model.add_ems_sensor(
-          model,
-          name: 'htg_spt',
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: htg_sch.name
-        )
+        space_values[:temp_min] = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
         space_values[:temp_min] = space_values[:temp_min].name.to_s
       else
         # No HVAC system; use the defaulted heating setpoint.
@@ -1607,34 +1601,18 @@ module Geometry
     if space_values[:indoor_weight] > 0
       if not spaces[HPXML::LocationConditionedSpace].thermalZone.get.thermostatSetpointDualSetpoint.is_initialized
         # No HVAC system; use the average of defaulted heating/cooling setpoints.
-        sensor_ia = UnitConversions.convert((default_htg_sp + default_clg_sp) / 2.0, 'F', 'C')
+        t_in_sensor = UnitConversions.convert((default_htg_sp + default_clg_sp) / 2.0, 'F', 'C')
       else
-        sensor_ia = Model.add_ems_sensor(
-          model,
-          name: 'cond_zone_temp',
-          output_var_or_meter_name: 'Zone Air Temperature',
-          key_name: spaces[HPXML::LocationConditionedSpace].thermalZone.get.name
-        )
-        sensor_ia = sensor_ia.name
+        t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }.name
       end
     end
 
     if space_values[:outdoor_weight] > 0
-      sensor_oa = Model.add_ems_sensor(
-        model,
-        name: 'oa_temp',
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: nil
-      )
+      t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }.name
     end
 
     if space_values[:ground_weight] > 0
-      sensor_gnd = Model.add_ems_sensor(
-        model,
-        name: 'ground_temp',
-        output_var_or_meter_name: 'Site Surface Ground Temperature',
-        key_name: nil
-      )
+      t_gnd_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteGroundTemp }.name
     end
 
     actuator = Model.add_ems_actuator(
@@ -1649,14 +1627,14 @@ module Geometry
       name: "#{location} Temperature Program"
     )
     program.addLine("Set #{actuator.name} = 0.0")
-    if not sensor_ia.nil?
-      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{sensor_ia} * #{space_values[:indoor_weight]})")
+    if not t_in_sensor.nil?
+      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{t_in_sensor} * #{space_values[:indoor_weight]})")
     end
-    if not sensor_oa.nil?
-      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{sensor_oa.name} * #{space_values[:outdoor_weight]})")
+    if not t_out_sensor.nil?
+      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{t_out_sensor} * #{space_values[:outdoor_weight]})")
     end
-    if not sensor_gnd.nil?
-      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{sensor_gnd.name} * #{space_values[:ground_weight]})")
+    if not t_gnd_sensor.nil?
+      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{t_gnd_sensor} * #{space_values[:ground_weight]})")
     end
     if not space_values[:temp_min].nil?
       if space_values[:temp_min].is_a? String

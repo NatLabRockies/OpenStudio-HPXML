@@ -324,7 +324,10 @@ class ReportUtilityBills < OpenStudio::Measure::ReportingMeasure
         end
       end
     elsif not bill_scenario.pv_monthly_grid_connection_fee_dollars.nil?
-      pv_monthly_fee = bill_scenario.pv_monthly_grid_connection_fee_dollars
+      has_pv = hpxml_buildings.map { |hpxml_bldg| hpxml_bldg.pv_systems.map { |pv_system| pv_system.max_power_output }.sum }.sum > 0
+      if has_pv
+        pv_monthly_fee = bill_scenario.pv_monthly_grid_connection_fee_dollars
+      end
     end
 
     return pv_monthly_fee
