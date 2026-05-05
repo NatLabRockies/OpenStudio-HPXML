@@ -2,7 +2,7 @@
 
 This dataset is generated using the U.S. Energy Information Administration (EIA) Open Data API (SEDS):
 
-- https://www.eia.gov/opendata/browser/seds  
+- https://www.eia.gov/opendata/browser/seds
 
 The data is fetched programmatically from the EIA SEDS API and processed into a simplified state-level fuel price table.
 
@@ -25,7 +25,7 @@ Only the following residential fuel types are included:
 Run the following OpenStudio task:
 
 ```bash
-openstudio tasks.rb download_eia_seds
+openstudio tasks.rb download_simple_utility_rates
 ```
 
 This script:

@@ -3493,7 +3493,7 @@ def check_hpxml(hpxml_path, hpxml)
   end
 end
 
-def download_utility_rates
+def download_detailed_utility_rates
   require_relative 'HPXMLtoOpenStudio/resources/util'
   require_relative 'ReportUtilityBills/resources/util'
 
@@ -3554,7 +3554,7 @@ def download_g_functions
   exit!
 end
 
-def download_eia_seds
+def download_simple_utility_rates
   require 'net/http'
   require 'uri'
   require 'json'
@@ -3704,9 +3704,9 @@ command_list = [
   :workflow_tests1,
   :workflow_tests2,
   :create_release_zips,
-  :download_utility_rates,
+  :download_simple_utility_rates,
+  :download_detailed_utility_rates,
   :download_g_functions,
-  :download_eia_seds
 ]
 
 def display_usage(command_list)
@@ -3804,8 +3804,8 @@ if [:unit_tests, :workflow_tests1, :workflow_tests2].include? ARGV[0].to_sym
   puts 'All tests passed.'
 end
 
-if ARGV[0].to_sym == :download_utility_rates
-  download_utility_rates
+if ARGV[0].to_sym == :download_detailed_utility_rates
+  download_detailed_utility_rates
 end
 
 if ARGV[0].to_sym == :download_g_functions
@@ -3900,6 +3900,6 @@ if ARGV[0].to_sym == :create_release_zips
   puts 'Done.'
 end
 
-if ARGV[0].to_sym == :download_eia_seds
-  download_eia_seds
+if ARGV[0].to_sym == :download_simple_utility_rates
+  download_simple_utility_rates
 end
