@@ -3703,7 +3703,7 @@ command_list = [
   :unit_tests,
   :workflow_tests1,
   :workflow_tests2,
-  :create_release_zips,
+  :create_release_zip,
   :download_simple_utility_rates,
   :download_detailed_utility_rates,
   :download_g_functions,
@@ -3812,7 +3812,7 @@ if ARGV[0].to_sym == :download_g_functions
   download_g_functions
 end
 
-if ARGV[0].to_sym == :create_release_zips
+if ARGV[0].to_sym == :create_release_zip
   if ENV['CI']
     # CI doesn't have git, so default to everything
     git_files = Dir['**/*.*']
