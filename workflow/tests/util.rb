@@ -291,6 +291,15 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.inverters.map { |i| i.inverter_efficiency }.uniq.size > 1 }
       next if message.include? 'Inverters with varying efficiencies found; using a single PV size weighted-average in the model'
     end
+    coal_files = [
+      'base-appliances-coal.xml',
+      'base-dhw-tank-coal.xml',
+      'base-hvac-boiler-coal-only.xml',
+      'base-hvac-furnace-coal-only.xml'
+    ]
+    if coal_files.any? { |f| hpxml_path.include?(f) }
+      next if message.include?('No EIA SEDS rate for coal was found for the state of')
+    end
 
     # FUTURE: Revert this eventually
     # https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1499
