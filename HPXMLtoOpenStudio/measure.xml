@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>9181ef9b-e4cd-49a9-a155-db95445dc66a</version_id>
-  <version_modified>2026-05-05T19:31:05Z</version_modified>
+  <version_id>1adc6205-5ee2-4f19-b76f-50d6b1971a5a</version_id>
+  <version_modified>2026-05-05T20:13:55Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -697,7 +697,7 @@
       <filename>utility_bills.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>C87C3553</checksum>
+      <checksum>FAE3470C</checksum>
     </file>
     <file>
       <filename>vehicle.rb</filename>
@@ -751,7 +751,7 @@
       <filename>test_defaults.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>D53CDCAB</checksum>
+      <checksum>4E7A6CA0</checksum>
     </file>
     <file>
       <filename>test_electric_panel.rb</filename>

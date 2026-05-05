@@ -6,7 +6,6 @@ __New Features__
   - Improves handling of duct leakage specified using cfm25/cfm50.
   - Crankcase heating energy is now disabled during unavailable periods, e.g., power outages.
   - Adds advanced research feature to model latent degradation for cooling systems, including an input to specify an HVAC blower-off delay.
-- Allows "other" for `SoilType`; adds variation to dry/wet soil conductivity and diffusivity values for unknown/other/loam soil types.
 - Output updates:
   - **Breaking change**: Annual peak load outputs for heating and cooling now use units of Btu/h instead of kBtu/h for consistency with other outputs.
   - **Breaking change**: Replaces "UnitX" prefixes with Building IDs in whole SFA/MF building timeseries outputs.
@@ -14,6 +13,10 @@ __New Features__
   - Allows calculating utility bills for homes with HVAC distribution systems using simplified heating/cooling DSE values (previously unsupported).
 - Whole SFA/MF buildings:
   - Allows modeling batteries in individual dwelling units (previously unsupported).
+- Utility bill calculations:
+  - Updated default state-average utility rates to EIA State Energy Data System (SEDS) 2024 data.
+  - Updates `openei_rates.zip` with the latest residential utility rates from the [OpenEI U.S. Utility Rate database](https://apps.openei.org/USURDB/).
+- Allows "other" for `SoilType`; adds variation to dry/wet soil conductivity and diffusivity values for unknown/other/loam soil types.
 - Updates schematron validation error messages to be more user friendly.
 - Adds a `run_simulation.rb --ems-debug` argument to generate the EnergyPlus EDD file for debugging EMS programs.
 
