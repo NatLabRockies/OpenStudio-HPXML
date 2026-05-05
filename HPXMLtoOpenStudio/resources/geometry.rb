@@ -1649,7 +1649,7 @@ module Geometry
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'EndOfSystemTimestepAfterHVACReporting',
       ems_programs: [program]
     )

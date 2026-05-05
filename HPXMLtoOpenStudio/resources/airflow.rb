@@ -311,7 +311,7 @@ module Airflow
 
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{uncond_infil_program.name} calling manager",
+        name: "#{uncond_infil_program.name} manager",
         calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
         ems_programs: [uncond_infil_program]
       )
@@ -538,7 +538,7 @@ module Airflow
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{vent_program.name} calling manager",
+      name: "#{vent_program.name} manager",
       calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
       ems_programs: [vent_program]
     )
@@ -681,31 +681,31 @@ module Airflow
 
       cfis_data[:sum_oa_cfm_var][vent_mech.id] = Model.add_ems_global_var(
         model,
-        var_name: "#{Constants::ObjectTypeMechanicalVentilation} cfis sum oa cfm #{index}"
+        var_name: "#{Constants::ObjectTypeMechVent} cfis sum oa cfm #{index}"
       )
       cfis_data[:f_vent_only_mode_var][vent_mech.id] = Model.add_ems_global_var(
         model,
-        var_name: "#{Constants::ObjectTypeMechanicalVentilation} cfis f vent only mode #{index}"
+        var_name: "#{Constants::ObjectTypeMechVent} cfis f vent only mode #{index}"
       )
 
       # CFIS Initialization Program
       cfis_program = Model.add_ems_program(
         model,
-        name: "#{Constants::ObjectTypeMechanicalVentilation} cfis init program #{index}"
+        name: "#{Constants::ObjectTypeMechVent} cfis init program #{index}"
       )
       cfis_program.addLine("Set #{cfis_data[:sum_oa_cfm_var][vent_mech.id].name} = 0")
       cfis_program.addLine("Set #{cfis_data[:f_vent_only_mode_var][vent_mech.id].name} = 0")
 
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{cfis_program.name} calling manager",
+        name: "#{cfis_program.name} manager",
         calling_point: 'BeginNewEnvironment',
         ems_programs: [cfis_program]
       )
 
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{cfis_program.name} calling manager2",
+        name: "#{cfis_program.name} manager2",
         calling_point: 'AfterNewEnvironmentWarmUpIsComplete',
         ems_programs: [cfis_program]
       )
@@ -1577,7 +1577,7 @@ module Airflow
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{duct_program.name} calling manager",
+      name: "#{duct_program.name} manager",
       calling_point: 'EndOfSystemTimestepAfterHVACReporting',
       ems_programs: [duct_program]
     )
@@ -1742,7 +1742,7 @@ module Airflow
     Model.add_electric_equipment(
       model,
       name: obj_name,
-      end_use: Constants::ObjectTypeMechanicalVentilation,
+      end_use: Constants::ObjectTypeMechVent,
       space: spaces[HPXML::LocationConditionedSpace], # no heat gain, so assign the equipment to an arbitrary space
       design_level: vent_fan.fan_power * vent_fan.count,
       frac_radiant: 0,
@@ -2066,11 +2066,11 @@ module Airflow
     # Calculate fan heat fraction
     # 1.0: Fan heat does not enter space (e.g., exhaust)
     # 0.0: Fan heat does enter space (e.g., supply)
-    if obj_name == Constants::ObjectTypeMechanicalVentilationHouseFanCFIS
+    if obj_name == Constants::ObjectTypeMechVentHouseFanCFIS
       fan_heat_lost_fraction = 0.0
     else
       # Calculate total fan power
-      if obj_name == Constants::ObjectTypeMechanicalVentilationHouseFanCFISSupplFan
+      if obj_name == Constants::ObjectTypeMechVentHouseFanCFISSupplFan
         sup_fans_w = sup_fans.map { |f| f.unit_fan_power }.sum(0.0)
         exh_fans_w = exh_fans.map { |f| f.unit_fan_power }.sum(0.0)
         bal_fans_w = (bal_fans + erv_hrv_fans).map { |f| f.unit_fan_power }.sum(0.0)
@@ -2095,7 +2095,7 @@ module Airflow
     equip = Model.add_electric_equipment(
       model,
       name: obj_name,
-      end_use: Constants::ObjectTypeMechanicalVentilation,
+      end_use: Constants::ObjectTypeMechVent,
       space: spaces[HPXML::LocationConditionedSpace],
       design_level: tot_fans_w,
       frac_radiant: 0,
@@ -2105,8 +2105,8 @@ module Airflow
     )
 
     equip_actuator = nil
-    if [Constants::ObjectTypeMechanicalVentilationHouseFanCFIS,
-        Constants::ObjectTypeMechanicalVentilationHouseFanCFISSupplFan].include? obj_name # actuate its power level in EMS
+    if [Constants::ObjectTypeMechVentHouseFanCFIS,
+        Constants::ObjectTypeMechVentHouseFanCFISSupplFan].include? obj_name # actuate its power level in EMS
       equip_actuator = Model.add_ems_actuator(
         name: "#{equip.name} act",
         model_object: equip,
@@ -2136,8 +2136,8 @@ module Airflow
     # Actuators for mech vent fan
     sens_equip = Model.add_other_equipment(
       model,
-      name: "#{Constants::ObjectTypeMechanicalVentilationHouseFan} sensible load",
-      end_use: Constants::ObjectTypeMechanicalVentilationHouseFan,
+      name: "#{Constants::ObjectTypeMechVentHouseFan} sensible load",
+      end_use: Constants::ObjectTypeMechVentHouseFan,
       space: conditioned_space,
       frac_radiant: 0,
       frac_latent: 0,
@@ -2153,8 +2153,8 @@ module Airflow
 
     lat_equip = Model.add_other_equipment(
       model,
-      name: "#{Constants::ObjectTypeMechanicalVentilationHouseFan} latent load",
-      end_use: Constants::ObjectTypeMechanicalVentilationHouseFan,
+      name: "#{Constants::ObjectTypeMechVentHouseFan} latent load",
+      end_use: Constants::ObjectTypeMechVentHouseFan,
       space: conditioned_space,
       frac_radiant: 0,
       frac_latent: 1,
@@ -2231,7 +2231,7 @@ module Airflow
     vent_fans[:kitchen].each_with_index do |vent_kitchen, index|
       # Electricity impact
       vent_kitchen_unavailable_periods = Schedule.get_unavailable_periods(runner, SchedulesFile::Columns[:KitchenFan].name, hpxml_header.unavailable_periods)
-      obj_sch_sensor = apply_local_vent_fan_power(model, spaces, vent_kitchen, Constants::ObjectTypeMechanicalVentilationRangeFan, index, vent_kitchen_unavailable_periods)
+      obj_sch_sensor = apply_local_vent_fan_power(model, spaces, vent_kitchen, Constants::ObjectTypeMechVentRangeFan, index, vent_kitchen_unavailable_periods)
       next unless cooking_range_in_cond_space
 
       # Infiltration impact
@@ -2243,7 +2243,7 @@ module Airflow
     vent_fans[:bath].each_with_index do |vent_bath, index|
       # Electricity impact
       vent_bath_unavailable_periods = Schedule.get_unavailable_periods(runner, SchedulesFile::Columns[:BathFan].name, hpxml_header.unavailable_periods)
-      obj_sch_sensor = apply_local_vent_fan_power(model, spaces, vent_bath, Constants::ObjectTypeMechanicalVentilationBathFan, index, vent_bath_unavailable_periods)
+      obj_sch_sensor = apply_local_vent_fan_power(model, spaces, vent_bath, Constants::ObjectTypeMechVentBathFan, index, vent_bath_unavailable_periods)
 
       # Infiltration impact
       infil_program.addLine("Set Qbath = Qbath + #{UnitConversions.convert(vent_bath.flow_rate * vent_bath.count, 'cfm', 'm^3/s').round(5)} * #{obj_sch_sensor.name}")
@@ -2343,7 +2343,7 @@ module Airflow
       var_name: "#{infil_program.name} Qfan"
     )
     q_inf_var.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeInfiltration)
-    q_fan_var.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeMechanicalVentilation)
+    q_fan_var.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeMechVent)
     infil_program.addLine("Set #{q_inf_var.name} = Qinf_adj")
     infil_program.addLine("Set #{q_fan_var.name} = Qfan")
   end
@@ -2432,11 +2432,11 @@ module Airflow
       clg_season_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason }
       infil_program.addLine("If (OASupInTemp < HtgStp) && (#{clg_season_sensor.name} < 1)")
 
-      cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeMechanicalVentilationPreheating } # Ensure unique meter for each preheating system
+      cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeMechVentPreheat } # Ensure unique meter for each preheating system
       other_equip = Model.add_other_equipment(
         model,
         name: "shared mech vent preheating energy #{i}",
-        end_use: "#{Constants::ObjectTypeMechanicalVentilationPreheating}#{cnt + 1}",
+        end_use: "#{Constants::ObjectTypeMechVentPreheat}#{cnt + 1}",
         space: conditioned_space,
         frac_radiant: 0,
         frac_latent: 0,
@@ -2477,11 +2477,11 @@ module Airflow
       clg_season_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason }
       infil_program.addLine("If (OASupInTemp > ClgStp) && (#{clg_season_sensor.name} > 0)")
 
-      cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeMechanicalVentilationPrecooling } # Ensure unique meter for each precooling system
+      cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeMechVentPrecool } # Ensure unique meter for each precooling system
       other_equip = Model.add_other_equipment(
         model,
         name: "shared mech vent precooling energy #{i}",
-        end_use: "#{Constants::ObjectTypeMechanicalVentilationPrecooling}#{cnt + 1}",
+        end_use: "#{Constants::ObjectTypeMechVentPrecool}#{cnt + 1}",
         space: conditioned_space,
         frac_radiant: 0,
         frac_latent: 0,
@@ -2548,17 +2548,17 @@ module Airflow
 
     # Non-CFIS fan power
     house_fan_unavailable_periods = Schedule.get_unavailable_periods(runner, SchedulesFile::Columns[:HouseFan].name, hpxml_header.unavailable_periods)
-    add_mech_vent_fan_power(model, spaces, Constants::ObjectTypeMechanicalVentilationHouseFan,
+    add_mech_vent_fan_power(model, spaces, Constants::ObjectTypeMechVentHouseFan,
                             vent_fans[:mech_supply], vent_fans[:mech_exhaust], vent_fans[:mech_balanced], vent_fans[:mech_erv_hrv], house_fan_unavailable_periods)
 
     # CFIS ventilation mode fan power
-    cfis_fan_actuator = add_mech_vent_fan_power(model, spaces, Constants::ObjectTypeMechanicalVentilationHouseFanCFIS) # Fan heat enters space
+    cfis_fan_actuator = add_mech_vent_fan_power(model, spaces, Constants::ObjectTypeMechVentHouseFanCFIS) # Fan heat enters space
 
     # CFIS ventilation mode supplemental fan power
     if not vent_fans[:cfis_suppl].empty?
       vent_mech_cfis_suppl_sup_tot = vent_fans[:cfis_suppl].select { |vent_mech| vent_mech.fan_type == HPXML::MechVentTypeSupply }
       vent_mech_cfis_suppl_exh_tot = vent_fans[:cfis_suppl].select { |vent_mech| vent_mech.fan_type == HPXML::MechVentTypeExhaust }
-      cfis_suppl_fan_actuator = add_mech_vent_fan_power(model, spaces, Constants::ObjectTypeMechanicalVentilationHouseFanCFISSupplFan,
+      cfis_suppl_fan_actuator = add_mech_vent_fan_power(model, spaces, Constants::ObjectTypeMechVentHouseFanCFISSupplFan,
                                                         vent_mech_cfis_suppl_sup_tot, vent_mech_cfis_suppl_exh_tot)
     else
       cfis_suppl_fan_actuator = nil
@@ -2602,7 +2602,7 @@ module Airflow
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{infil_program.name} calling manager",
+      name: "#{infil_program.name} manager",
       calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
       ems_programs: [infil_program]
     )
