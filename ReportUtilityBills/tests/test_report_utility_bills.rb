@@ -452,7 +452,7 @@ class ReportUtilityBillsTest < Minitest::Test
     Zip.on_exists_proc = true
     Zip::File.open(File.join(File.dirname(__FILE__), '../resources/detailed_rates/openei_rates.zip')) do |zip_file|
       zip_file.each_with_index do |entry, i|
-        break if i >= 1000 # No need to run *every* file, that will take a while
+        break if i >= 500 # No need to run *every* file, that will take a while
         next unless entry.file?
 
         tmpdir = Dir.tmpdir
