@@ -16,6 +16,7 @@ __New Features__
   - Allows modeling batteries in individual dwelling units (previously unsupported).
 - Updates schematron validation error messages to be more user friendly.
 - Adds a `run_simulation.rb --ems-debug` argument to generate the EnergyPlus EDD file for debugging EMS programs.
+- Updated SEDS rates to 2024 data and added support for updating rates via the `tasks.rb download_eia_seds` argument.
 
 __Bugfixes__
 - Fixes a misleading warning about adjusting inverted setpoints when heating setpoint is greater than cooling setpoint during non-overlapping heating/cooling seasons.
