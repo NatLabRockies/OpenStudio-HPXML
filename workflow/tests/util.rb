@@ -300,6 +300,11 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     if coal_files.any? { |f| hpxml_path.include?(f) }
       next if message.include?('No EIA SEDS rate for coal was found for the state of')
     end
+    # Undersized HVAC or poor HVAC install quality or max-power-ratio or realistic HP backup staging or variable speed system maximum power ratio schedule
+    if hpxml_path.include?('base-hvac-undersized.xml') || hpxml_path.include?('install-quality') || hpxml_path.include?('max-power-ratio') || (hpxml.header.heat_pump_backup_heating_capacity_increment.to_f > 0)
+      next if message.include?('There are a large number of unmet hours') && message.include?('for heating; this may indicate the heating system is undersized or the presence of large thermostat setbacks.')
+      next if message.include?('There are a large number of unmet hours') && message.include?('for cooling; this may indicate the cooling system is undersized or the presence of large thermostat setbacks.')
+    end
 
     # FUTURE: Revert this eventually
     # https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1499
@@ -335,9 +340,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     next if message.include?('CalculateZoneVolume') && message.include?('not fully enclosed')
     next if message.include? 'do not define an enclosure'
     next if message.include? 'Pump nominal power or motor efficiency is set to 0'
-    next if message.include? 'volume flow rate per watt of rated total cooling capacity is out of range'
-    next if message.include? 'volume flow rate per watt of rated total heating capacity is out of range'
-    next if message.include? 'volume flow rate per watt of rated total water heating capacity is out of range'
+    next if message.include?('volume flow rate per watt of rated total') && message.include?('capacity is out of range')
     next if message.include? 'The Standard Ratings is calculated for'
     next if message.include?('WetBulb not converged after') && message.include?('iterations(PsyTwbFnTdbWPb)')
     next if message.include? 'Inside surface heat balance did not converge with Max Temp Difference'
@@ -1075,30 +1078,6 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
       assert_operator(energy_cr, :>, 0)
     else
       assert_equal(0, energy_cr)
-    end
-  end
-
-  # Check unmet hours
-  skip_unmet_check = false
-  if hpxml_path.include?('install-quality') || hpxml_path.include?('research-features')
-    # unmet hours are expected for HVAC installation quality and realistic backup staging files
-    skip_unmet_check = true
-  end
-  unmet_hours_htg = results.select { |k, _v| k.include? 'Unmet Hours: Heating' }.values.sum(0.0)
-  unmet_hours_clg = results.select { |k, _v| k.include? 'Unmet Hours: Cooling' }.values.sum(0.0)
-  if hpxml_path.include? 'base-hvac-undersized.xml'
-    assert_operator(unmet_hours_htg, :>, 1000)
-    assert_operator(unmet_hours_clg, :>, 1000)
-  else
-    if hpxml_bldg.total_fraction_heat_load_served == 0
-      assert_equal(0, unmet_hours_htg)
-    else
-      assert_operator(unmet_hours_htg, :<, 500) unless skip_unmet_check
-    end
-    if hpxml_bldg.total_fraction_cool_load_served == 0
-      assert_equal(0, unmet_hours_clg)
-    else
-      assert_operator(unmet_hours_clg, :<, 500) unless skip_unmet_check
     end
   end
 

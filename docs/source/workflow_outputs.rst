@@ -335,10 +335,12 @@ If running :ref:`bldg_type_whole_mf_buildings`, values will reflect hours in whi
   ============================  =====
 
   .. [#] The unmet heating and cooling numbers reflect the number of hours during the heating/cooling season when the conditioned space temperature deviates more than 0.2 deg-C (0.36 deg-F) from the heating/cooling setpoint.
+         OpenStudio-HPXML will issue a warning if there are more than 300 unmet hours for heating or cooling.
 
   .. [#] The unmet EV driving number represents the total time in which the electric vehicle discharge schedule exceeds zero while the EV battery's state of charge is at its minimum level.
          Unmet EV driving hours indicate unrealized driving events and reduced EV charging energy.
          Unmet hours will only occur when using the detailed electric vehicle model in :ref:`hpxml_vehicles`, not the simple EV charging in :ref:`plug_loads`.
+         OpenStudio-HPXML will issue a warning if there are unmet hours for EV driving.
 
 Peak Building Electricity
 ~~~~~~~~~~~~~~~~~~~~~~~~~

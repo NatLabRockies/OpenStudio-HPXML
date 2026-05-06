@@ -2,6 +2,7 @@
 
 __New Features__
 - HVAC updates:
+  - Adds a warning if there are more than 300 unmet hours for heating or cooling.
   - Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
   - Improves handling of duct leakage specified using cfm25/cfm50.
   - Crankcase heating energy is now disabled during unavailable periods, e.g., power outages.
