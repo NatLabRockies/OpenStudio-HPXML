@@ -243,7 +243,7 @@ module Battery
 
     Model.add_ems_program_calling_manager(
       model,
-      name: 'battery losses calling manager',
+      name: "#{battery_losses_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [battery_losses_program]
     )

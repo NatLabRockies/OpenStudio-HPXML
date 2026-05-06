@@ -327,7 +327,7 @@ module HVAC
           if heating_system.nil?
             obj_name = Constants::ObjectTypeCentralAirConditioner
           else
-            obj_name = Constants::ObjectTypeCentralAirConditionerAndFurnace
+            obj_name = Constants::ObjectTypeCentralAirConditionerFurnace
             # error checking for fan motor type
             if (not cooling_system.fan_motor_type.nil?) && (not heating_system.fan_motor_type.nil?) && (cooling_system.fan_motor_type != heating_system.fan_motor_type)
               fail "Fan motor types for heating system '#{heating_system.id}' (#{heating_system.fan_motor_type}) and cooling system '#{cooling_system.id}' (#{cooling_system.fan_motor_type}) are attached to a single distribution system and therefore must be the same."
@@ -1881,7 +1881,7 @@ module HVAC
     # Calling Point
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{fan_program.name} calling manager",
+      name: "#{fan_program.name} manager",
       calling_point: 'AfterPredictorBeforeHVACManagers',
       ems_programs: [fan_program]
     )
@@ -2046,7 +2046,7 @@ module HVAC
     # Calling Point
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{pump_program.name} calling manager",
+      name: "#{pump_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [pump_program]
     )
@@ -2116,7 +2116,7 @@ module HVAC
     # Calling Point
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{pump_program.name} calling manager",
+      name: "#{pump_program.name} manager",
       calling_point: 'AfterPredictorBeforeHVACManagers',
       ems_programs: [pump_program]
     )
@@ -2253,7 +2253,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{fan_or_pump_program.name} calling manager",
+      name: "#{fan_or_pump_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [fan_or_pump_program]
     )
@@ -2332,7 +2332,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
       ems_programs: [program]
     )
@@ -3358,7 +3358,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{global_var_supp_avail_program.name} calling manager",
+      name: "#{global_var_supp_avail_program.name} manager",
       calling_point: 'BeginZoneTimestepBeforeInitHeatBalance',
       ems_programs: [global_var_supp_avail_program]
     )
@@ -3457,7 +3457,7 @@ module HVAC
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{supp_coil_avail_program.name} calling manager",
+      name: "#{supp_coil_avail_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [supp_coil_avail_program]
     )
@@ -3595,7 +3595,7 @@ module HVAC
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{cycling_degrad_program.name} calling manager",
+      name: "#{cycling_degrad_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [cycling_degrad_program]
     )
@@ -3730,7 +3730,7 @@ module HVAC
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{realistic_cycling_program.name} Program Manager",
+      name: "#{realistic_cycling_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [realistic_cycling_program]
     )
@@ -3810,14 +3810,14 @@ module HVAC
     # calling managers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{temp_offset_program.name} calling manager",
+      name: "#{temp_offset_program.name} manager",
       calling_point: 'BeginNewEnvironment',
       ems_programs: [temp_offset_program]
     )
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{temp_offset_program.name} calling manager2",
+      name: "#{temp_offset_program.name} manager2",
       calling_point: 'AfterNewEnvironmentWarmUpIsComplete',
       ems_programs: [temp_offset_program]
     )
@@ -4028,7 +4028,7 @@ module HVAC
     # calling manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [program]
     )
@@ -4182,7 +4182,7 @@ module HVAC
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{supp_staging_program.name} Program Manager",
+      name: "#{supp_staging_program.name} Manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [supp_staging_program]
     )
@@ -4455,7 +4455,7 @@ module HVAC
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{latdeg_program.name} calling manager",
+      name: "#{latdeg_program.name} manager",
       calling_point: 'EndOfSystemTimestepAfterHVACReporting',
       ems_programs: [latdeg_program]
     )
@@ -4564,7 +4564,7 @@ module HVAC
 
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{heating_sch.name} program manager",
+        name: "#{temp_override_program.name} manager",
         calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
         ems_programs: [temp_override_program]
       )
@@ -4878,7 +4878,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{obj_name} program manager",
+      name: "#{obj_name} manager",
       calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
       ems_programs: [fault_program]
     )
@@ -5040,7 +5040,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [program]
     )
@@ -5231,7 +5231,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [program]
     )
@@ -5366,7 +5366,7 @@ module HVAC
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{dse_program.name} calling manager",
+      name: "#{dse_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [dse_program]
     )

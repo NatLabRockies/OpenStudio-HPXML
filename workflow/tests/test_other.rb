@@ -517,7 +517,7 @@ class WorkflowOtherTest < Minitest::Test
   def test_release_zips
     # Check release zips successfully created
     top_dir = File.join(File.dirname(__FILE__), '..', '..')
-    command = "\"#{OpenStudio.getOpenStudioCLI}\" \"#{File.join(top_dir, 'tasks.rb')}\" create_release_zips"
+    command = "\"#{OpenStudio.getOpenStudioCLI}\" \"#{File.join(top_dir, 'tasks.rb')}\" create_release_zip"
     system(command)
     assert_equal(1, Dir["#{top_dir}/*.zip"].size)
 

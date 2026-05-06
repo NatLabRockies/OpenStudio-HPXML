@@ -171,7 +171,7 @@ module Outputs
     # EMS calling manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'EndOfZoneTimestepBeforeZoneReporting',
       ems_programs: [program]
     )
@@ -234,7 +234,7 @@ module Outputs
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'BeginTimestepBeforePredictor',
       ems_programs: [program]
     )
@@ -337,14 +337,14 @@ module Outputs
       # calling managers
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{timestep_offset_program.name} calling manager",
+        name: "#{timestep_offset_program.name} manager",
         calling_point: 'BeginNewEnvironment',
         ems_programs: [timestep_offset_program]
       )
 
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{timestep_offset_program.name} calling manager2",
+        name: "#{timestep_offset_program.name} manager2",
         calling_point: 'AfterNewEnvironmentWarmUpIsComplete',
         ems_programs: [timestep_offset_program]
       )
@@ -402,7 +402,7 @@ module Outputs
     # EMS calling manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'EndOfZoneTimestepAfterZoneReporting',
       ems_programs: [program]
     )
@@ -597,7 +597,7 @@ module Outputs
       # EMS Sensors: Mechanical Ventilation
       mechvents_sensors = []
       unit_model.getElectricEquipments.sort.each do |o|
-        next unless o.endUseSubcategory == Constants::ObjectTypeMechanicalVentilation
+        next unless o.endUseSubcategory == Constants::ObjectTypeMechVent
 
         objects_already_processed << o
         { 'Electric Equipment Convective Heating Energy' => 'mv_conv',
@@ -611,7 +611,7 @@ module Outputs
         end
       end
       unit_model.getOtherEquipments.sort.each do |o|
-        next unless o.endUseSubcategory == Constants::ObjectTypeMechanicalVentilationHouseFan
+        next unless o.endUseSubcategory == Constants::ObjectTypeMechVentHouseFan
 
         objects_already_processed << o
         { 'Other Equipment Convective Heating Energy' => 'mv_conv',
@@ -791,7 +791,7 @@ module Outputs
         next if sensors.empty?
 
         s = "Set hr_#{loadtype} = hr_#{loadtype}"
-        sensors.each do |sensor|
+        sensors.each_with_index do |sensor, i|
           if ['intgains', 'lighting', 'mechvent', 'ducts'].include? loadtype
             s += " - #{sensor.name}"
           elsif sensor.name.to_s.include? 'gain'
@@ -799,6 +799,11 @@ module Outputs
           elsif sensor.name.to_s.include? 'loss'
             s += " + #{sensor.name}"
           end
+          next unless (i + 1) % 10 == 0
+
+          # Split into separate lines to fix https://github.com/NatLabRockies/OpenStudio-HPXML/issues/2210
+          program.addLine(s)
+          s = "Set hr_#{loadtype} = hr_#{loadtype}"
         end
         program.addLine(s)
       end
@@ -881,7 +886,7 @@ module Outputs
     # EMS calling manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'EndOfZoneTimestepAfterZoneReporting',
       ems_programs: [program]
     )
@@ -902,7 +907,7 @@ module Outputs
     unit_multipliers = []
     hpxml_osm_map.each do |hpxml_bldg, unit_model|
       infil_vars << unit_model.getEnergyManagementSystemGlobalVariables.find { |v| v.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeInfiltration }
-      mechvent_vars << unit_model.getEnergyManagementSystemGlobalVariables.find { |v| v.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeMechanicalVentilation }
+      mechvent_vars << unit_model.getEnergyManagementSystemGlobalVariables.find { |v| v.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeMechVent }
       natvent_vars << unit_model.getEnergyManagementSystemGlobalVariables.find { |v| v.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeNaturalVentilation }
       whf_vars << unit_model.getEnergyManagementSystemGlobalVariables.find { |v| v.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeWholeHouseFan }
       unit_multipliers << hpxml_bldg.building_construction.number_of_units
@@ -934,7 +939,7 @@ module Outputs
     # EMS calling manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'EndOfZoneTimestepAfterZoneReporting',
       ems_programs: [program]
     )
@@ -1759,7 +1764,7 @@ module Outputs
           Constants::ObjectTypeCookingRange => EUT::RangeOven,
           Constants::ObjectTypeCeilingFan => EUT::CeilingFan,
           Constants::ObjectTypeWholeHouseFan => EUT::WholeHouseFan,
-          Constants::ObjectTypeMechanicalVentilation => EUT::MechVent,
+          Constants::ObjectTypeMechVent => EUT::MechVent,
           Constants::ObjectTypeMiscPlugLoads => EUT::PlugLoads,
           Constants::ObjectTypeMiscTelevision => EUT::Television,
           Constants::ObjectTypeMiscPoolHeater => EUT::PoolHeater,
@@ -1796,8 +1801,8 @@ module Outputs
           Constants::ObjectTypeMiscFireplace => EUT::Fireplace,
           Constants::ObjectTypeMiscPoolHeater => EUT::PoolHeater,
           Constants::ObjectTypeMiscPermanentSpaHeater => EUT::PermanentSpaHeater,
-          Constants::ObjectTypeMechanicalVentilationPreheating => EUT::MechVentPreheat,
-          Constants::ObjectTypeMechanicalVentilationPrecooling => EUT::MechVentPrecool,
+          Constants::ObjectTypeMechVentPreheat => EUT::MechVentPreheat,
+          Constants::ObjectTypeMechVentPrecool => EUT::MechVentPrecool,
           Constants::ObjectTypeHPDefrostSupplHeat => EUT::HeatingHeatPumpBackup,
           Constants::ObjectTypeCrankcaseHeater => [EUT::Heating, EUT::Cooling],
           Constants::ObjectTypePanHeater => EUT::Heating,

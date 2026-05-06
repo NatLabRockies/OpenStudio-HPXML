@@ -408,6 +408,10 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.heat_pumps.count { |hp| hp.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir && (hp.fraction_heat_load_served == 0 || hp.fraction_cool_load_served == 0) } > 0 }
       next if message.include? 'heating capacity is disproportionate (> 20% different) to total cooling capacity' # safe to ignore
     end
+    # GSHPs with hard-sized capacities
+    if hpxml_path.include? 'house052.xml'
+      next if message.include? 'heating capacity is disproportionate (> 20% different) to total cooling capacity' # safe to ignore
+    end
     # Solar thermal systems
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.solar_thermal_systems.size > 0 }
       next if message.include? 'Supply Side is storing excess heat the majority of the time.'

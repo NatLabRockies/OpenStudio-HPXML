@@ -36,6 +36,7 @@ __Bugfixes__
   - Fixes timeseries outputs for heating/cooling setpoints.
 - Fixes logic in HP multi-stage backup advanced research feature.
 - Fixes PV grid connection fee applying in utility bill calculation even if the home has no PV.
+- Fixes possible "Failed to process String" EnergyPlus error when requesting component loads.
 
 ## OpenStudio-HPXML v1.11.1
 
