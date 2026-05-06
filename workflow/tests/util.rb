@@ -300,7 +300,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     if coal_files.any? { |f| hpxml_path.include?(f) }
       next if message.include?('No EIA SEDS rate for coal was found for the state of')
     end
-    # Undersized HVAC or poor HVAC install quality or max-power-ratio or realistic HP backup staging or variable speed system maximum power ratio schedule
+    # Undersized HVAC or poor HVAC install quality or variable speed system max power ratio schedule or realistic HP backup staging
     if hpxml_path.include?('base-hvac-undersized.xml') || hpxml_path.include?('install-quality') || hpxml_path.include?('max-power-ratio') || (hpxml.header.heat_pump_backup_heating_capacity_increment.to_f > 0)
       next if message.include?('There are a large number of unmet hours') && message.include?('for heating; this may indicate the heating system is undersized or the presence of large thermostat setbacks.')
       next if message.include?('There are a large number of unmet hours') && message.include?('for cooling; this may indicate the cooling system is undersized or the presence of large thermostat setbacks.')

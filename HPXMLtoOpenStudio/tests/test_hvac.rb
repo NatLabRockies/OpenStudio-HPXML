@@ -1368,7 +1368,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
 
     assert_equal(1, model.getCoilHeatingDXMultiSpeeds.size)
     htg_coil = model.getCoilHeatingDXMultiSpeeds[0]
-    _check_defrost_and_pan_heater_and_crankcase_heater(model, htg_coil, 0.0, 0.0, backup_fuel, 0.06667, 0.0, 150.0, 15.0)
+    _check_defrost_and_pan_heater_and_crankcase_heater(model, htg_coil, 0.0, 0.0, backup_fuel, 0.06667, 0.0, 150.0, 20.0)
   end
 
   def test_mini_split_heat_pump_ductless
