@@ -1492,8 +1492,7 @@
     "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed-backup-boiler.xml",
     "hvac_heat_pump": "Central HP, SEER2 21.0, HSPF2 9.2",
     "hvac_heat_pump_backup": "Separate Heating System",
-    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp",
-    "hvac_heat_pump_capacity": "2.0 tons"
+    "hvac_heat_pump_temperatures": "30F Min Compressor Temp, 30F Max HP Backup Temp"
   },
   "sample_files/base-hvac-air-to-air-heat-pump-var-speed-backup-furnace.xml": {
     "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed-backup-boiler.xml",
