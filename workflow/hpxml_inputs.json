@@ -1520,14 +1520,12 @@
     "schedules_paths": "../../HPXMLtoOpenStudio/resources/schedule_files/hvac-variable-system-maximum-power-ratios-varied.csv",
     "simulation_control_timestep": "60"
   },
-  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-max-power-ratio-schedule-two-systems.xml": {
-    "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed.xml",
-    "schedules_paths": "../../HPXMLtoOpenStudio/resources/schedule_files/hvac-variable-system-maximum-power-ratios-varied.csv",
+  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-research-features-two-systems.xml": {
+    "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed-research-features.xml",
     "hvac_ducts": "2 CFM25 per 100ft2, R-4"
   },
-  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-max-power-ratio-schedule-10-mins.xml": {
-    "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed.xml",
-    "schedules_paths": "../../HPXMLtoOpenStudio/resources/schedule_files/hvac-variable-system-maximum-power-ratios-varied.csv",
+  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-research-features-10-mins.xml": {
+    "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed-research-features.xml",
     "simulation_control_timestep": "10"
   },
   "sample_files/base-hvac-air-to-air-heat-pump-var-speed-detailed-performance.xml": {
@@ -1618,7 +1616,7 @@
     "parent_hpxml": "sample_files/base-hvac-central-ac-only-1-speed.xml",
     "hvac_cooling_system": "Central AC, SEER2 23.0"
   },
-  "sample_files/base-hvac-central-ac-only-var-speed-max-power-ratio-schedule.xml": {
+  "sample_files/base-hvac-central-ac-only-var-speed-research-features.xml": {
     "parent_hpxml": "sample_files/base-hvac-central-ac-only-var-speed.xml",
     "schedules_paths": "../../HPXMLtoOpenStudio/resources/schedule_files/hvac-variable-system-maximum-power-ratios-varied.csv"
   },
@@ -1770,7 +1768,7 @@
     "parent_hpxml": "sample_files/base.xml",
     "hvac_cooling_system": "Central AC, SEER2 23.0"
   },
-  "sample_files/base-hvac-furnace-gas-central-ac-var-speed-max-power-ratio-schedule.xml": {
+  "sample_files/base-hvac-furnace-gas-central-ac-var-speed-research-features.xml": {
     "parent_hpxml": "sample_files/base-hvac-furnace-gas-central-ac-var-speed.xml",
     "schedules_paths": "../../HPXMLtoOpenStudio/resources/schedule_files/hvac-variable-system-maximum-power-ratios-varied.csv"
   },
@@ -1953,11 +1951,11 @@
     "parent_hpxml": "sample_files/base-hvac-mini-split-heat-pump-ducted.xml",
     "hvac_heat_pump_cooling_load_served": "0%"
   },
-  "sample_files/base-hvac-mini-split-heat-pump-ducted-heating-only-max-power-ratio-schedule.xml": {
+  "sample_files/base-hvac-mini-split-heat-pump-ducted-heating-only-research-features.xml": {
     "parent_hpxml": "sample_files/base-hvac-mini-split-heat-pump-ducted-heating-only.xml",
     "schedules_paths": "../../HPXMLtoOpenStudio/resources/schedule_files/hvac-variable-system-maximum-power-ratios-varied.csv"
   },
-  "sample_files/base-hvac-mini-split-heat-pump-ducted-max-power-ratio-schedule.xml": {
+  "sample_files/base-hvac-mini-split-heat-pump-ducted-research-features.xml": {
     "parent_hpxml": "sample_files/base-hvac-mini-split-heat-pump-ducted.xml",
     "schedules_paths": "../../HPXMLtoOpenStudio/resources/schedule_files/hvac-variable-system-maximum-power-ratios-varied.csv"
   },
