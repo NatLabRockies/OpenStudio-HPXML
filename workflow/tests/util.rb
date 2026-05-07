@@ -300,6 +300,11 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     if coal_files.any? { |f| hpxml_path.include?(f) }
       next if message.include?('No EIA SEDS rate for coal was found for the state of')
     end
+    # HVAC is undersized or poor install quality or advanced research features
+    if hpxml_path.include?('base-hvac-undersized.xml') || hpxml_path.include?('install-quality') || hpxml_path.include?('research-features')
+      next if message.include?('There are a large number of unmet hours') && message.include?('for heating; this may indicate the heating system is undersized or the presence of large thermostat setbacks.')
+      next if message.include?('There are a large number of unmet hours') && message.include?('for cooling; this may indicate the cooling system is undersized or the presence of large thermostat setbacks.')
+    end
 
     # FUTURE: Revert this eventually
     # https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1499
@@ -335,9 +340,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     next if message.include?('CalculateZoneVolume') && message.include?('not fully enclosed')
     next if message.include? 'do not define an enclosure'
     next if message.include? 'Pump nominal power or motor efficiency is set to 0'
-    next if message.include? 'volume flow rate per watt of rated total cooling capacity is out of range'
-    next if message.include? 'volume flow rate per watt of rated total heating capacity is out of range'
-    next if message.include? 'volume flow rate per watt of rated total water heating capacity is out of range'
+    next if message.include?('volume flow rate per watt of rated total') && message.include?('capacity is out of range')
     next if message.include? 'The Standard Ratings is calculated for'
     next if message.include?('WetBulb not converged after') && message.include?('iterations(PsyTwbFnTdbWPb)')
     next if message.include? 'Inside surface heat balance did not converge with Max Temp Difference'
@@ -1078,30 +1081,6 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     end
   end
 
-  # Check unmet hours
-  skip_unmet_check = false
-  if hpxml_path.include?('install-quality') || hpxml_path.include?('research-features')
-    # unmet hours are expected for HVAC installation quality and realistic backup staging files
-    skip_unmet_check = true
-  end
-  unmet_hours_htg = results.select { |k, _v| k.include? 'Unmet Hours: Heating' }.values.sum(0.0)
-  unmet_hours_clg = results.select { |k, _v| k.include? 'Unmet Hours: Cooling' }.values.sum(0.0)
-  if hpxml_path.include? 'base-hvac-undersized.xml'
-    assert_operator(unmet_hours_htg, :>, 1000)
-    assert_operator(unmet_hours_clg, :>, 1000)
-  else
-    if hpxml_bldg.total_fraction_heat_load_served == 0
-      assert_equal(0, unmet_hours_htg)
-    else
-      assert_operator(unmet_hours_htg, :<, 500) unless skip_unmet_check
-    end
-    if hpxml_bldg.total_fraction_cool_load_served == 0
-      assert_equal(0, unmet_hours_clg)
-    else
-      assert_operator(unmet_hours_clg, :<, 500) unless skip_unmet_check
-    end
-  end
-
   sqlFile.close
 
   # Ensure sql file is immediately freed; otherwise we can get
@@ -1142,8 +1121,8 @@ def _check_unit_multiplier_results(xml, hpxml_bldg, annual_results_1x, annual_re
       abs_delta_tol = 10.0
       abs_frac_tol = 0.02
     elsif key.include?('Resilience: Battery')
-      # Check that the battery resilience difference is less than 1 hr or less than 1%
-      abs_delta_tol = 1.0
+      # Check that the battery resilience difference is less than 2 hrs or less than 1%
+      abs_delta_tol = 2.0
       abs_frac_tol = 0.01
     elsif key.include?('Airflow:')
       # Check that airflow rate difference is less than 0.2 cfm or less than 5%

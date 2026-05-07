@@ -582,14 +582,14 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Test w/ max power ratio
 
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-central-ac-only-var-speed-max-power-ratio-schedule.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-central-ac-only-var-speed-research-features.xml'))
     model, _hpxml = _test_measure(args_hash)
 
     _check_max_power_ratio_EMS_multispeed(model, nil, nil, expected_clg_capacities_95, expected_clg_cops_95)
 
     # Test w/ furnace & max power ratio
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-furnace-gas-central-ac-var-speed-max-power-ratio-schedule.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-furnace-gas-central-ac-var-speed-research-features.xml'))
     model, _hpxml = _test_measure(args_hash)
 
     _check_max_power_ratio_EMS_multispeed(model, nil, nil, expected_clg_capacities_95, expected_clg_cops_95)
@@ -1179,7 +1179,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Test w/ two systems and max power ratio
 
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-var-speed-max-power-ratio-schedule-two-systems.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-var-speed-research-features-two-systems.xml'))
     model, _hpxml = _test_measure(args_hash)
 
     _check_max_power_ratio_EMS_multispeed(model, expected_htg_capacities_47, expected_htg_cops_47, expected_clg_capacities_95, expected_clg_cops_95, 2, 0)
@@ -1344,7 +1344,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
 
     # Two heat pump test
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-var-speed-max-power-ratio-schedule-two-systems.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-var-speed-research-features-two-systems.xml'))
     model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
     # Get HPXML values
@@ -1368,7 +1368,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
 
     assert_equal(1, model.getCoilHeatingDXMultiSpeeds.size)
     htg_coil = model.getCoilHeatingDXMultiSpeeds[0]
-    _check_defrost_and_pan_heater_and_crankcase_heater(model, htg_coil, 0.0, 0.0, backup_fuel, 0.06667, 0.0, 150.0, 15.0)
+    _check_defrost_and_pan_heater_and_crankcase_heater(model, htg_coil, 0.0, 0.0, backup_fuel, 0.06667, 0.0, 150.0, 20.0)
   end
 
   def test_mini_split_heat_pump_ductless
@@ -1491,7 +1491,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Test w/ max power ratio
 
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-mini-split-heat-pump-ducted-max-power-ratio-schedule.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-mini-split-heat-pump-ducted-research-features.xml'))
     model, _hpxml = _test_measure(args_hash)
 
     _check_max_power_ratio_EMS_multispeed(model, expected_htg_capacities_47, expected_htg_cops_47, expected_clg_capacities_95, expected_clg_cops_95)

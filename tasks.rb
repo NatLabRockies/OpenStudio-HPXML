@@ -2055,7 +2055,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                 compressor_type: HPXML::HVACCompressorTypeVariableSpeed,
                                 primary_cooling_system: true,
                                 primary_heating_system: true)
-    elsif ['base-hvac-air-to-air-heat-pump-var-speed-max-power-ratio-schedule-two-systems.xml'].include? hpxml_file
+    elsif ['base-hvac-air-to-air-heat-pump-var-speed-research-features-two-systems.xml'].include? hpxml_file
       hpxml_bldg.heat_pumps << hpxml_bldg.heat_pumps[0].dup
       hpxml_bldg.heat_pumps[-1].id += "#{hpxml_bldg.hvac_distributions.size}"
       hpxml_bldg.heat_pumps[-1].primary_cooling_system = false
