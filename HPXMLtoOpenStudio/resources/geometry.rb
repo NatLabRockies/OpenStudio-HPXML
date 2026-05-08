@@ -1441,18 +1441,18 @@ module Geometry
                ground_weight: 1.0,
                f_regain: 0.83 } # From LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P"
     when HPXML::LocationManufacturedHomeBelly
-      # Based on "Measured and Modeled Duct Efficiency in Manufactured Homes: Insights for Standard 152P" (https://www.aivc.org/sites/default/files/airbase_11101.pdf)
-      # Per Model B, "Because Standard 152 does not have belly space as one of the duct location options, external wall was chosen ... since this was
-      # deemed to most closely resemble an actual belly space", we use average of indoor/outdoor temperatures as above for HPXML::LocationExteriorWall.
-      # Note the model assumes there is a layer of insulation (typically about R-7) in the buffer zone where the ducts are located.
+      # Based on 2007 paper by Francisco & Palmiter "Thermal Characterization and Duct Losses of Belly Spaces in Manufactured Homes",
+      # Table 5 shows an average belly space connection to outdoors of 15%.
+      # https://www.researchgate.net/publication/290674828_Thermal_characterization_and_duct_losses_of_belly_spaces_in_manufactured_homes
       #
-      # Regain assumption is based on LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P"
-      # https://eta-publications.lbl.gov/sites/default/files/40588.pdf; see Section 3.5: Manufactured Home Belly Pan Temperatures
+      # Regain assumption is based on LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P";
+      # see Section 3.5: Manufactured Home Belly Pan Temperatures.
+      # https://eta-publications.lbl.gov/sites/default/files/40588.pdf
       #
       # FUTURE: Consider modeling the belly as a separate thermal zone so that we dynamically calculate temperatures.
       return { temp_min: nil,
-               indoor_weight: 0.5,
-               outdoor_weight: 0.5,
+               indoor_weight: 0.85,
+               outdoor_weight: 0.15,
                ground_weight: 0.0,
                f_regain: 0.62 }
     end
