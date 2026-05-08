@@ -1441,12 +1441,15 @@ module Geometry
                ground_weight: 1.0,
                f_regain: 0.83 } # From LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P"
     when HPXML::LocationManufacturedHomeBelly
-      # From LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P"
-      # 3.5 Manufactured House Belly Pan Temperatures
+      # Based on "Measured and Modeled Duct Efficiency in Manufactured Homes: Insights for Standard 152P".
+      # Per Model B, "Because Standard 152 does not have belly space as one of the duct location options, external wall was chosen
+      # for this portion of the duct work since this was deemed to most closely resemble an actual belly space", we use average of
+      # indoor/outdoor temperatures as above for HPXML::LocationExteriorWall.
+      # Note the model assumes there is a layer of insulation (typically about R-7) in the buffer zone where the ducts are located.
       # FUTURE: Consider modeling the belly as a separate thermal zone so that we dynamically calculate temperatures.
       return { temp_min: nil,
-               indoor_weight: 1.0,
-               outdoor_weight: 0.0,
+               indoor_weight: 0.5,
+               outdoor_weight: 0.5,
                ground_weight: 0.0,
                f_regain: 0.62 }
     end
@@ -1677,7 +1680,8 @@ module Geometry
         HPXML::LocationOtherMultifamilyBufferSpace,
         HPXML::LocationOtherNonFreezingSpace,
         HPXML::LocationExteriorWall,
-        HPXML::LocationUnderSlab].include? location
+        HPXML::LocationUnderSlab,
+        HPXML::LocationManufacturedHomeBelly].include? location
       # if located in spaces where we don't model a thermal zone, create and return temperature schedule
       sch = get_space_temperature_schedule(model, location, spaces)
     else
