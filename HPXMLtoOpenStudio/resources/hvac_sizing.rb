@@ -3330,7 +3330,7 @@ module HVACSizing
     # Sounds like people are pushing ever deeper but for now we can apply this limit and add a note about where it came from.
     max_bore_depth = 500 # ft
     min_num_boreholes = 1
-    max_num_boreholes = 10
+    max_num_boreholes = 15
 
     num_bore_holes = geothermal_loop.num_bore_holes
     bore_depth = geothermal_loop.bore_length
