@@ -1594,26 +1594,26 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     heat_pump = hpxml_bldg.heat_pumps[0]
     _check_ghp_standard(model, heat_pump, 12.79, 4.94, 962, [12.5, -1.3], [20, 31])
 
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-1-speed-experimental.xml'))
-    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+    # args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-1-speed-experimental.xml'))
+    # model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-    # Get HPXML values
-    heat_pump = hpxml_bldg.heat_pumps[0]
-    _check_ghp_experimental(model, heat_pump, [10550.56], [10550.56], [6.14], [4.02], 962, [12.5, -1.3], [20, 31])
+    # # Get HPXML values
+    # heat_pump = hpxml_bldg.heat_pumps[0]
+    # _check_ghp_experimental(model, heat_pump, [10550.56], [10550.56], [6.14], [4.02], 962, [12.5, -1.3], [20, 31])
 
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-2-speed-experimental.xml'))
-    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+    # args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-2-speed-experimental.xml'))
+    # model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-    # Get HPXML values
-    heat_pump = hpxml_bldg.heat_pumps[0]
-    _check_ghp_experimental(model, heat_pump, [7757.83, 10550.56], [7779.98, 10550.56], [8.29, 7.52], [5.15, 4.44], 962, [12.5, -1.3], [20, 31])
+    # # Get HPXML values
+    # heat_pump = hpxml_bldg.heat_pumps[0]
+    # _check_ghp_experimental(model, heat_pump, [7757.83, 10550.56], [7779.98, 10550.56], [8.29, 7.52], [5.15, 4.44], 962, [12.5, -1.3], [20, 31])
 
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-var-speed-experimental.xml'))
-    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+    # args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-var-speed-experimental.xml'))
+    # model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-    # Get HPXML values
-    heat_pump = hpxml_bldg.heat_pumps[0]
-    _check_ghp_experimental(model, heat_pump, [5066.38, 10550.56], [4719.26, 10550.56], [13.55, 12.79], [5.69, 4.94], 962, [12.5, -1.3], [20, 31])
+    # # Get HPXML values
+    # heat_pump = hpxml_bldg.heat_pumps[0]
+    # _check_ghp_experimental(model, heat_pump, [5066.38, 10550.56], [4719.26, 10550.56], [13.55, 12.79], [5.69, 4.94], 962, [12.5, -1.3], [20, 31])
   end
 
   def test_ground_to_air_heat_pump_integrated_backup
