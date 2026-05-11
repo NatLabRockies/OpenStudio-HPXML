@@ -8,7 +8,9 @@ module HVAC
   AirSourceCoolRatedOWB = 75.0 # degF, Rated outdoor wetbulb for air-source systems, cooling
   AirSourceCoolRatedIDB = 80.0 # degF, Rated indoor drybulb for air-source systems, cooling
   AirSourceCoolRatedIWB = 67.0 # degF, Rated indoor wetbulb for air-source systems, cooling
-  RatedCFMPerTon = 400.0 # cfm/ton of rated capacity, RESNET HERS Addendum 82
+  RatedCFMPerTonDX = 400.0 # cfm/ton of rated capacity, airflow rate assumed during rating test for AC/HP systems, RESNET HERS Addendum 82
+  ActualCFMPerTonDX = 360.0 # cfm/ton of rated capacity, default actual airflow rate for AC/HP systems, RESNET
+  ActualCFMPerTonHeat = 240.0 # cfm/ton of rated capacity, default actual airflow rate for furnaces, RESNET
   MinCapacity = 1.0 # Btuh
   MinAirflow = 3.0 # cfm; E+ min airflow is 0.001 m3/s
   GroundSourceHeatRatedIDB = 70.0 # degF, Rated indoor drybulb for ground-source systems, heating
@@ -325,7 +327,7 @@ module HVAC
           if heating_system.nil?
             obj_name = Constants::ObjectTypeCentralAirConditioner
           else
-            obj_name = Constants::ObjectTypeCentralAirConditionerAndFurnace
+            obj_name = Constants::ObjectTypeCentralAirConditionerFurnace
             # error checking for fan motor type
             if (not cooling_system.fan_motor_type.nil?) && (not heating_system.fan_motor_type.nil?) && (cooling_system.fan_motor_type != heating_system.fan_motor_type)
               fail "Fan motor types for heating system '#{heating_system.id}' (#{heating_system.fan_motor_type}) and cooling system '#{cooling_system.id}' (#{cooling_system.fan_motor_type}) are attached to a single distribution system and therefore must be the same."
@@ -480,6 +482,8 @@ module HVAC
     add_supplemental_coil_ems_program(model, htg_supp_coil, htg_coil, has_deadband_control, cooling_system)
 
     add_variable_speed_power_ems_program(runner, model, air_loop_unitary, heating_system, cooling_system, htg_supp_coil, clg_coil, htg_coil, schedules_file)
+
+    add_latent_degradation_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, control_zone.spaces[0], hpxml_bldg.building_construction.number_of_units)
 
     # Defrost, pan heater, crankcase heater
     if not cooling_system.nil?
@@ -1202,7 +1206,7 @@ module HVAC
 
     if heating_system.distribution_system.air_type.to_s == HPXML::AirTypeFanCoil
       # Fan
-      fan_cfm = RatedCFMPerTon * UnitConversions.convert(heating_system.heating_capacity, 'Btu/hr', 'ton') # CFM
+      fan_cfm = ActualCFMPerTonHeat * UnitConversions.convert(heating_system.heating_capacity, 'Btu/hr', 'ton') # CFM
       fan = create_supply_fan(model, obj_name, 0.0, [fan_cfm], heating_system) # fan energy included in above pump via Electric Auxiliary Energy (EAE)
 
       # Heating Coil
@@ -1896,7 +1900,7 @@ module HVAC
     # Calling Point
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{fan_program.name} calling manager",
+      name: "#{fan_program.name} manager",
       calling_point: 'AfterPredictorBeforeHVACManagers',
       ems_programs: [fan_program]
     )
@@ -2061,7 +2065,7 @@ module HVAC
     # Calling Point
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{pump_program.name} calling manager",
+      name: "#{pump_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [pump_program]
     )
@@ -2131,7 +2135,7 @@ module HVAC
     # Calling Point
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{pump_program.name} calling manager",
+      name: "#{pump_program.name} manager",
       calling_point: 'AfterPredictorBeforeHVACManagers',
       ems_programs: [pump_program]
     )
@@ -2268,7 +2272,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{fan_or_pump.name} disaggregate program calling manager",
+      name: "#{fan_or_pump_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [fan_or_pump_program]
     )
@@ -2322,14 +2326,11 @@ module HVAC
     dehumidifier_load_adj = Model.add_other_equipment(
       model,
       name: "#{dehumidifier.name} sens htg adj",
-      end_use: nil,
       space: conditioned_space,
-      design_level: 0,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 0,
-      schedule: model.alwaysOnDiscreteSchedule,
-      fuel_type: nil
+      schedule: model.alwaysOnDiscreteSchedule
     )
     dehumidifier_load_adj_act = Model.add_ems_actuator(
       name: "#{dehumidifier.name} sens htg adj act",
@@ -2350,7 +2351,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
       ems_programs: [program]
     )
@@ -3376,7 +3377,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{global_var_supp_avail_program.name} calling manager",
+      name: "#{global_var_supp_avail_program.name} manager",
       calling_point: 'BeginZoneTimestepBeforeInitHeatBalance',
       ems_programs: [global_var_supp_avail_program]
     )
@@ -3475,7 +3476,7 @@ module HVAC
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{supp_coil_avail_program.name} calling manager",
+      name: "#{supp_coil_avail_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [supp_coil_avail_program]
     )
@@ -3613,7 +3614,7 @@ module HVAC
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{cycling_degrad_program.name} calling manager",
+      name: "#{cycling_degrad_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [cycling_degrad_program]
     )
@@ -3748,7 +3749,7 @@ module HVAC
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{realistic_cycling_program.name} Program Manager",
+      name: "#{realistic_cycling_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [realistic_cycling_program]
     )
@@ -3828,14 +3829,14 @@ module HVAC
     # calling managers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{temp_offset_program.name} calling manager",
+      name: "#{temp_offset_program.name} manager",
       calling_point: 'BeginNewEnvironment',
       ems_programs: [temp_offset_program]
     )
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{temp_offset_program.name} calling manager2",
+      name: "#{temp_offset_program.name} manager2",
       calling_point: 'AfterNewEnvironmentWarmUpIsComplete',
       ems_programs: [temp_offset_program]
     )
@@ -4046,7 +4047,7 @@ module HVAC
     # calling manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [program]
     )
@@ -4200,9 +4201,282 @@ module HVAC
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{supp_staging_program.name} Program Manager",
+      name: "#{supp_staging_program.name} Manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [supp_staging_program]
+    )
+  end
+
+  # Adds an EMS program to model latent degradation. This model accounts for latent removal during coil start-up,
+  # and moisture re-introduced to the conditioned space during the blower-off delay (forced evaporation) and
+  # during the remaining off cycle time after the blower shuts off (natural evaporation).
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
+  # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
+  # @param air_loop_unitary [OpenStudio::Model::AirLoopHVACUnitarySystem] OpenStudio Air Loop HVAC Unitary System object
+  # @param clg_coil [OpenStudio::Model::CoilCoolingXXX] Cooling coil model object
+  # @param fan [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
+  # @param conditioned_space [OpenStudio::Model::Space] OpenStudio Space object for conditioned zone
+  # @param unit_multiplier [Integer] Number of similar dwelling units
+  # @return [nil]
+  def self.add_latent_degradation_ems_program(model, hpxml_header, cooling_system, air_loop_unitary, clg_coil, fan, conditioned_space, unit_multiplier)
+    return unless hpxml_header.latent_degradation_model_enabled
+    return if cooling_system.nil?
+
+    # Check that it's a central AC/HP
+    is_ducted = !cooling_system.distribution_system.nil?
+    if cooling_system.is_a? HPXML::CoolingSystem
+      cooling_type = cooling_system.cooling_system_type
+    else
+      cooling_type = cooling_system.heat_pump_type
+    end
+    if not ([HPXML::HVACTypeCentralAirConditioner,
+             HPXML::HVACTypeHeatPumpAirToAir].include?(cooling_type) ||
+            ([HPXML::HVACTypeMiniSplitAirConditioner,
+              HPXML::HVACTypeHeatPumpMiniSplit].include?(cooling_type) && is_ducted))
+      return
+    end
+
+    m3s_to_cfm = UnitConversions.convert(1, 'm^3/s', 'cfm').round(2)
+    w_to_ton = UnitConversions.convert(1, 'W', 'ton').round(4)
+    is_single_stage = (cooling_system.compressor_type == HPXML::HVACCompressorTypeSingleStage)
+    if is_single_stage
+      cool_cap_tons = UnitConversions.convert(clg_coil.ratedTotalCoolingCapacity.get, 'W', 'ton')
+    else
+      cool_cap_tons = UnitConversions.convert(clg_coil.stages[-1].grossRatedTotalCoolingCapacity.get, 'W', 'ton')
+    end
+    blower_off_delay = hpxml_header.latent_degradation_model_blower_off_delay
+
+    # Sensors
+    clg_rtf_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{air_loop_unitary.name} latdeg clg rtf s",
+      output_var_or_meter_name: 'Cooling Coil Runtime Fraction',
+      key_name: clg_coil.name
+    )
+
+    clg_qt_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{air_loop_unitary.name} latdeg clg qt s",
+      output_var_or_meter_name: 'Cooling Coil Total Cooling Rate',
+      key_name: clg_coil.name
+    )
+
+    clg_qs_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{air_loop_unitary.name} latdeg clg qs s",
+      output_var_or_meter_name: 'Cooling Coil Sensible Cooling Rate',
+      key_name: clg_coil.name
+    )
+
+    if not is_single_stage
+      speed_ratio_sensor = Model.add_ems_sensor(
+        model,
+        name: "#{air_loop_unitary.name} latdeg speed ratio s",
+        output_var_or_meter_name: 'Unitary System DX Coil Speed Ratio',
+        key_name: air_loop_unitary.name
+      )
+    end
+
+    fan_q_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{air_loop_unitary.name} latdeg fan q s",
+      output_var_or_meter_name: 'Fan Electricity Rate',
+      key_name: fan.name
+    )
+
+    # No way to retrieve this node name from the model, it's
+    # created automatically during FT
+    clg_coil_inlet_node_name = "#{air_loop_unitary.name} Fan - Cooling Coil Node"
+
+    vfr_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{air_loop_unitary.name} latdeg vfr s",
+      output_var_or_meter_name: 'System Node Standard Density Volume Flow Rate',
+      key_name: clg_coil_inlet_node_name
+    )
+
+    p_atm_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{air_loop_unitary.name} latdeg p atm s",
+      output_var_or_meter_name: 'System Node Pressure',
+      key_name: clg_coil_inlet_node_name
+    )
+
+    return_db_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{air_loop_unitary.name} latdeg return db s",
+      output_var_or_meter_name: 'System Node Temperature',
+      key_name: clg_coil_inlet_node_name
+    )
+
+    return_hr_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{air_loop_unitary.name} latdeg return db s",
+      output_var_or_meter_name: 'System Node Humidity Ratio',
+      key_name: clg_coil_inlet_node_name
+    )
+
+    # OtherEquipment objects to add heat/cool
+    cnt = model.getOtherEquipments.count { |e| e.endUseSubcategory.start_with? Constants::ObjectTypeBlowerOffDelayFanPower } # Ensure unique name for each cooling system
+    fan_power_oe = Model.add_other_equipment(
+      model,
+      name: "#{air_loop_unitary.name} latdeg blower fan power",
+      end_use: "#{Constants::ObjectTypeBlowerOffDelayFanPower}#{cnt + 1}",
+      space: conditioned_space,
+      frac_radiant: 0,
+      frac_latent: 0,
+      frac_lost: 0,
+      schedule: model.alwaysOnDiscreteSchedule,
+      fuel_type: HPXML::FuelTypeElectricity
+    )
+    fan_power_oe.additionalProperties.setFeature('HPXML_ID', cooling_system.id) # Used by reporting measure
+
+    latent_heat_oe = Model.add_other_equipment(
+      model,
+      name: "#{air_loop_unitary.name} latdeg latent heat",
+      space: conditioned_space,
+      frac_radiant: 0,
+      frac_latent: 1,
+      frac_lost: 0,
+      schedule: model.alwaysOnDiscreteSchedule
+    )
+
+    sens_cool_oe = Model.add_other_equipment(
+      model,
+      name: "#{air_loop_unitary.name} latdeg sens cool",
+      space: conditioned_space,
+      frac_radiant: 0,
+      frac_latent: 0,
+      frac_lost: 0,
+      schedule: model.alwaysOnDiscreteSchedule
+    )
+
+    # Actuators
+    fan_power_act = Model.add_ems_actuator(
+      name: "#{fan_power_oe.name} act",
+      model_object: fan_power_oe,
+      comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
+    )
+
+    latent_heat_act = Model.add_ems_actuator(
+      name: "#{latent_heat_oe.name} act",
+      model_object: latent_heat_oe,
+      comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
+    )
+
+    sens_cool_act = Model.add_ems_actuator(
+      name: "#{sens_cool_oe.name} act",
+      model_object: sens_cool_oe,
+      comp_type_and_control: EPlus::EMSActuatorOtherEquipmentPower
+    )
+
+    # EMS Program based on:
+    #   Shirey, Don, Henderson, H., Raustad, R. 2006. "Understanding the Dehumidification Performance of Air-Conditioning
+    #   Equipment at Part Load Conditions". DOE/NETL Project No. DE-FC26-01NT41253.
+    #   Table and equation numbers below refer to the Shirey et al. report. See Chapter 5.
+    latdeg_program = Model.add_ems_program(
+      model,
+      name: "#{air_loop_unitary.name} blower off delay program"
+    )
+    latdeg_program.addLine("Set RTF = #{clg_rtf_sensor.name}")
+    if not speed_ratio_sensor.nil?
+      # Set RTF to 1 for two-stage or variable speed equipment if the speed ratio > 0
+      latdeg_program.addLine("If #{speed_ratio_sensor.name} > 0")
+      latdeg_program.addLine('  Set RTF = 1')
+      latdeg_program.addLine('EndIf')
+    end
+    latdeg_program.addLine("Set Qt = #{clg_qt_sensor.name}") # Timestep total cooling capacity
+    latdeg_program.addLine("Set Qs = #{clg_qs_sensor.name}") # Timestep sensible cooling capacity
+    latdeg_program.addLine('Set Ql = Qt - Qs') # Timestep latent cooling capacity
+    latdeg_program.addLine("Set Qfan = #{fan_q_sensor.name}")
+    latdeg_program.addLine('IF (RTF == 0) || (RTF == 1) || (Ql == 0)') # No latent degradation if coil is off, runs for the entire timestep, or is dry
+    latdeg_program.addLine("  Set #{latent_heat_act.name}=0")
+    latdeg_program.addLine("  Set #{sens_cool_act.name}=0")
+    latdeg_program.addLine("  Set #{fan_power_act.name}=0")
+    latdeg_program.addLine('  Return')
+    latdeg_program.addLine('EndIf')
+    latdeg_program.addLine("Set scfm = #{vfr_sensor.name} * #{m3s_to_cfm} / RTF") # Full load standard volumetric flow rate
+    latdeg_program.addLine("Set Patm = #{p_atm_sensor.name}")
+    latdeg_program.addLine("Set ReturnDB = #{return_db_sensor.name}")
+    latdeg_program.addLine("Set ReturnHumRat = #{return_hr_sensor.name}")
+    latdeg_program.addLine('Set MinEXP = -15') # Constant to avoid exponential terms from approaching 0
+    latdeg_program.addLine('Set tau = 60') # Time constant of latent capacity at start-up. See Table 5-1. Typically 30-90 seconds.
+    latdeg_program.addLine('Set K1Per1000ft2 = 8') # Empirical constant. See Table 5-4.
+    latdeg_program.addLine('Set K2 = 0.03') # Empirical constant. See Table 5-4.
+    latdeg_program.addLine("Set BlowerOffDelay = #{blower_off_delay}")
+    latdeg_program.addLine('Set OffCycleFlowFraction = 0.001')
+    latdeg_program.addLine('Set MaxCyclesPerHour = 3') # Maximum number of cycles per hour. See Table 5-1.
+    latdeg_program.addLine('Set AfacePerTon = 1.57')
+    latdeg_program.addLine('Set EvapFPI = 14') # Assumed evaporator fins per inch (FPI)
+    latdeg_program.addLine('Set EvapDepth = 3') # Asseumed evaporator coil depth, inches
+    latdeg_program.addLine('Set ReturnWB = (@TwbFnTdbWPb ReturnDB ReturnHumRat Patm)')
+    latdeg_program.addLine("Set QratedTons = #{cool_cap_tons}")
+    latdeg_program.addLine('If scfm == 0')
+    latdeg_program.addLine("  Set scfm = QratedTons * #{RatedCFMPerTonDX}")
+    latdeg_program.addLine('EndIf')
+    latdeg_program.addLine('Set Aface = AfacePerTon * QratedTons') # Assumed coil face area
+    latdeg_program.addLine('Set Ao = 2 * Aface * EvapFPI * EvapDepth') # Total fin area, square feet. See Table 5-4.
+    latdeg_program.addLine('Set Ql = Qt - Qs') # Timestep latent cooling capacity (repeated equation from above)
+    latdeg_program.addLine('Set SHR = Qs / Qt') # Timestep SHR
+    latdeg_program.addLine('Set WBDepression = (ReturnDB - ReturnWB) * 1.8') # Return air wetbulb depression, deg F
+    latdeg_program.addLine('Set K1 = K1Per1000ft2 * Ao / 1000')
+    latdeg_program.addLine("Set scfmPerTon = scfm / (Qt * #{w_to_ton} / RTF)") # Operating cfm/ton. (`scfm` is full load.)
+    latdeg_program.addLine("Set Mo = K1 * Ao / 1000 * (1 + 0.2 * (#{RatedCFMPerTonDX} - scfmPerTon) / 300)") # Lin. reg. to vary coil moisture holding capacity (Mo) w/ airflow. Combination of equation in Table 5-4 w/ Fig. 5-49.
+    latdeg_program.addLine('Set scfmOffCycle = scfm * OffCycleFlowFraction + 0.0000001') # Assumed natural convection airflow rate when the blower is off
+    latdeg_program.addLine('Set NTUo = K2 * Ao / (scfmOffCycle^0.2)') # Eq 5-12 used when the blower is cycled off
+    latdeg_program.addLine('Set NTU1o = K2 * Ao / (scfm^0.2)') # Eq 5-12 used during the blower off delay
+    latdeg_program.addLine('Set twet = 3600 * Mo * 1060 / (@Max Ql 0.1)') # Nominal time (seconds) after cooling startup when moisture starts to drain. See Table 5-4.
+    latdeg_program.addLine('Set tp = Mo * 1060 / 1.08 / scfmOffCycle / WBDepression * 3600') # Defined on pg 5-23 for when the fan is off. See Table 5-4.
+    latdeg_program.addLine('Set t1p = Mo * 1060 / 1.08 / scfm / WBDepression * 3600') # Defined on pg 5-23 for during the blower off delay. See Table 5-4.
+    latdeg_program.addLine('Set Cycles = 4 * MaxCyclesPerHour * RTF * (1 - RTF)') # Number of cycles per hour
+    latdeg_program.addLine('Set toff = (@Min (3600 / 4 / MaxCyclesPerHour / RTF) BlowerOffDelay)') # Duration of an off cycle (seconds)
+    latdeg_program.addLine('Set ton = 3600 / 4 / MaxCyclesPerHour / (1 - RTF)') # Duration of a cooling cycle (seconds)
+    latdeg_program.addLine('Set t11off = ton / RTF - ton - BlowerOffDelay') # Duration of off cycle when the coil and blower are both off
+    latdeg_program.addLine('Set fs = 1')
+    latdeg_program.addLine('Set Deltafs = 1')
+    latdeg_program.addLine('Set f1s = 1')
+    latdeg_program.addLine('While (@abs Deltafs) > 0.00001') # Successive substitution loop for the blower off delay (forced evaporation) and latent degradation (natural evaporation)
+    latdeg_program.addLine('  Set f1scalcint1 = (@EXP ((-NTU1o) * BlowerOffDelay / t1p))') # Intermediate term for Eq 5-22
+    latdeg_program.addLine('  Set f1scalcint2 = (@EXP (NTU1o * fs))') # Intermediate term for Eq 5-22
+    latdeg_program.addLine('  Set f1sCalc = 1 / NTU1o * (@LN (f1scalcint1 * (f1scalcint2 - 1) + 1))') # Fraction of moisture on the coil after blower off delay. See Eq 5-22 and 5-31.
+    latdeg_program.addLine('  Set f1s = (@Min f1sCalc 1)') # Limit f_s to be <= 1.0 See pg. 5-23.
+    latdeg_program.addLine('  Set fiint1 = (@EXP (@Max ((-NTUo) * t11off / tp) MinEXP))') # Eq 5-22, first exponential term
+    latdeg_program.addLine('  Set fiint2 = (@EXP (NTUo * f1s))') # Eq 5-22, second exponential term
+    latdeg_program.addLine('  Set fi = 1 / NTUo * (@LN (fiint1 * (fiint2 - 1) + 1))') # Fraction of moisture on the coil after the off cycle. See Eq 5-22 and 5-31.
+    latdeg_program.addLine('  Set fscalcint = (@EXP (@Max ((-ton) / tau) MinEXP))') # Intermediate term for Eq 5-23
+    latdeg_program.addLine('  Set fsCalc = fi + 1 / twet * (ton + tau * (fsCalcint - 1))') # Fraction of moisture on coil at end of on cycle to coil moisture holding capacity (Mo). See Eq 5-23.
+    latdeg_program.addLine('  Set fsCalc = (@Min fsCalc 1)') # Limit f_s to be <= 1.0 See pg. 5-23.
+    latdeg_program.addLine('  Set Deltafs = fs - fsCalc') # Residual
+    latdeg_program.addLine('  Set fs = fsCalc') # Successive substitution to find f_s. Use f_i to find t_o.
+    latdeg_program.addLine('EndWhile')
+    latdeg_program.addLine('Set to = ton') # `to` is the time after coil startup when moisture begins to drain from the unit (s).
+    latdeg_program.addLine('Set Deltato = 10')
+    latdeg_program.addLine('While (@abs Deltato) > 0.01')
+    latdeg_program.addLine('  Set toCalcint = (@EXP (@Max ((-to) / tau) MinEXP))') # Intermediate term for Eq 5-25
+    latdeg_program.addLine('  Set toCalc = (1 - fi) * twet - tau * (toCalcint - 1)') # Eq 5-25
+    latdeg_program.addLine('  Set toCalc = (@Min toCalc ton)') # `to` must be less than the on cycle (`ton`)
+    latdeg_program.addLine('  Set Deltato = to - toCalc')
+    latdeg_program.addLine('  Set to = toCalc')
+    latdeg_program.addLine('EndWhile')
+    latdeg_program.addLine('Set LHRssint = (@EXP (@Max ((-ton) / tau) MinEXP))') # Intermediate term for next line.
+    latdeg_program.addLine('Set LHRss = ton + tau * (LHRssint - 1)') # LHR at steady state. See denominator of Eq. 5-9.
+    latdeg_program.addLine('Set LHRint = (@EXP (@Max ((-to) / tau) MinEXP))') # Intermediate term for next line.
+    latdeg_program.addLine('Set LHR= (@Abs (ton - to + tau * (LHRssint - LHRint)))') # LHR at part load. See numerator of Eq. 5-9.
+    latdeg_program.addLine('Set SHRnew = 1 - (1 - SHR) * LHR / LHRss') # Adjust the E+ SHR (steady state) using LHR/LHRss ratio.
+    latdeg_program.addLine('Set Qsnew = Qt * SHRnew') # New sensible capacity
+    latdeg_program.addLine('Set Qlnew = Qt - Qsnew') # New latent capacity
+    latdeg_program.addLine("Set #{latent_heat_act.name} = ((Ql - Qlnew) * RTF / 3.4121) / #{unit_multiplier}")
+    latdeg_program.addLine("Set #{sens_cool_act.name} = ((Qs - Qsnew) * RTF / 3.4121) / #{unit_multiplier}")
+    latdeg_program.addLine("Set #{fan_power_act.name} = (#{blower_off_delay} / ton * Qfan) / #{unit_multiplier}") # Additional fan power during blower off delay
+
+    # EMS Program Calling Manager
+    Model.add_ems_program_calling_manager(
+      model,
+      name: "#{latdeg_program.name} manager",
+      calling_point: 'EndOfSystemTimestepAfterHVACReporting',
+      ems_programs: [latdeg_program]
     )
   end
 
@@ -4309,7 +4583,7 @@ module HVAC
 
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{heating_sch.name} program manager",
+        name: "#{temp_override_program.name} manager",
         calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
         ems_programs: [temp_override_program]
       )
@@ -4623,7 +4897,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{obj_name} program manager",
+      name: "#{obj_name} manager",
       calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
       ems_programs: [fault_program]
     )
@@ -4785,7 +5059,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [program]
     )
@@ -4812,7 +5086,6 @@ module HVAC
       name: "#{htg_coil.name} pan heater energy",
       end_use: "#{Constants::ObjectTypePanHeater}#{cnt + 1}",
       space: conditioned_space,
-      design_level: 0,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 1,
@@ -4874,14 +5147,11 @@ module HVAC
     defrost_heat_load_oe = Model.add_other_equipment(
       model,
       name: "#{htg_coil.name} defrost heat load",
-      end_use: nil,
       space: conditioned_space,
-      design_level: 0,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 0,
-      schedule: model.alwaysOnDiscreteSchedule,
-      fuel_type: nil
+      schedule: model.alwaysOnDiscreteSchedule
     )
     defrost_heat_load_oe.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeHPDefrostHeatLoad) # Used by reporting measure
     defrost_heat_load_oe_act = Model.add_ems_actuator(
@@ -4896,7 +5166,6 @@ module HVAC
       name: "#{htg_coil.name} defrost supp heat energy",
       end_use: "#{Constants::ObjectTypeHPDefrostSupplHeat}#{cnt + 1}",
       space: conditioned_space,
-      design_level: 0,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 1.0,
@@ -4981,7 +5250,7 @@ module HVAC
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [program]
     )
@@ -5053,7 +5322,6 @@ module HVAC
         name: "#{sys_id} dse #{key_name(key)} adjustment",
         end_use: "#{end_use}#{cnt}",
         space: model.getSpaces[0],
-        design_level: 0.01,
         frac_radiant: 0,
         frac_latent: 0,
         frac_lost: 1,
@@ -5114,10 +5382,10 @@ module HVAC
     end
     dse_program.addLine('EndIf')
 
-    # EMS Program Calling Point
+    # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{dse_program.name} calling manager",
+      name: "#{dse_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [dse_program]
     )

@@ -1013,7 +1013,7 @@ module HotWaterAndAppliances
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{schedule.name} program calling manager",
+      name: "#{schedule_program.name} manager",
       calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
       ems_programs: [schedule_program]
     )

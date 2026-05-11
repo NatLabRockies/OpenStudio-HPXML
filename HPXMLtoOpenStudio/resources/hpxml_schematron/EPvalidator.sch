@@ -70,6 +70,10 @@
       <sch:assert role='ERROR' test='count(h:DefrostModelType) = 0'>DefrostModelType has been deprecated</sch:assert>
       <sch:assert role='ERROR' test='count(h:OnOffThermostatDeadbandTemperature) &lt;= 1'>Expected at most one OnOffThermostatDeadbandTemperature</sch:assert>
       <sch:assert role='ERROR' test='number(h:OnOffThermostatDeadbandTemperature) &gt; 0 or not(h:OnOffThermostatDeadbandTemperature)'>Expected OnOffThermostatDeadbandTemperature to be greater than 0</sch:assert>
+      <sch:assert role='ERROR' test='count(h:LatentDegradationModel/h:Enabled) &lt;= 1'>Expected at most one LatentDegradationModel/Enabled</sch:assert>
+      <sch:assert role='ERROR' test='h:LatentDegradationModel/h:Enabled[text()="true" or text()="false"] or not(h:LatentDegradationModel/h:Enabled)'>Expected LatentDegradationModel/Enabled to be 'true' or 'false'</sch:assert>
+      <sch:assert role='ERROR' test='count(h:LatentDegradationModel/h:HVACBlowerOffDelay) &lt;= 1'>Expected at most one LatentDegradationModel/HVACBlowerOffDelay</sch:assert>
+      <sch:assert role='ERROR' test='number(h:LatentDegradationModel/h:HVACBlowerOffDelay) &gt;= 0 or not(h:LatentDegradationModel/h:HVACBlowerOffDelay)'>Expected LatentDegradationModel/HVACBlowerOffDelay to be greater than or equal to 0</sch:assert>
       <sch:assert role='ERROR' test='count(h:HeatPumpBackupCapacityIncrement) &lt;= 1'>Expected at most one HeatPumpBackupCapacityIncrement</sch:assert>
       <sch:assert role='ERROR' test='number(h:HeatPumpBackupCapacityIncrement) &gt; 0 or not (h:HeatPumpBackupCapacityIncrement)'>Expected HeatPumpBackupCapacityIncrement to be greater than 0</sch:assert>
       <sch:assert role='ERROR' test='count(h:GroundToAirHeatPumpModelType) &lt;= 1'>Expected at most one GroundToAirHeatPumpModelType</sch:assert>

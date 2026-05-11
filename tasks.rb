@@ -518,6 +518,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       iecc_zone = {
         'USA_HI_Honolulu.Intl.AP.911820_TMY3.epw' => '1A',
         'USA_FL_Miami.Intl.AP.722020_TMY3.epw' => '1A',
+        'USA_TX_Houston-Bush.Intercontinental.AP.722430_TMY3.epw' => '2A',
         'USA_AZ_Phoenix-Sky.Harbor.Intl.AP.722780_TMY3.epw' => '2B',
         'USA_TX_Dallas-Fort.Worth.Intl.AP.722590_TMY3.epw' => '3A',
         'USA_MD_Baltimore-Washington.Intl.AP.724060_TMY3.epw' => '4A',
@@ -2054,7 +2055,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                 compressor_type: HPXML::HVACCompressorTypeVariableSpeed,
                                 primary_cooling_system: true,
                                 primary_heating_system: true)
-    elsif ['base-hvac-air-to-air-heat-pump-var-speed-max-power-ratio-schedule-two-systems.xml'].include? hpxml_file
+    elsif ['base-hvac-air-to-air-heat-pump-var-speed-research-features-two-systems.xml'].include? hpxml_file
       hpxml_bldg.heat_pumps << hpxml_bldg.heat_pumps[0].dup
       hpxml_bldg.heat_pumps[-1].id += "#{hpxml_bldg.hvac_distributions.size}"
       hpxml_bldg.heat_pumps[-1].primary_cooling_system = false
@@ -3492,7 +3493,7 @@ def check_hpxml(hpxml_path, hpxml)
   end
 end
 
-def download_utility_rates
+def download_detailed_utility_rates
   require_relative 'HPXMLtoOpenStudio/resources/util'
   require_relative 'ReportUtilityBills/resources/util'
 
@@ -3553,15 +3554,159 @@ def download_g_functions
   exit!
 end
 
+def download_simple_utility_rates
+  require 'net/http'
+  require 'uri'
+  require 'json'
+  require 'csv'
+  require 'openssl'
+
+  # Load .env file if it exists
+  env_path = File.join(File.dirname(__FILE__), '.env')
+  if File.exist?(env_path)
+    File.foreach(env_path) do |line|
+      line.strip!
+      next if line.empty? || line.start_with?('#')
+
+      key, value = line.split('=', 2)
+      ENV[key.strip] = value.strip if key && value
+    end
+  end
+
+  # EIA API v2 SEDS endpoint. Register for a free key at:
+  # https://www.eia.gov/opendata/register.php
+  api_key = ENV['EIA_API_KEY']
+  if api_key.nil? || api_key.empty?
+    puts 'ERROR: EIA_API_KEY is not set.'
+    puts 'Options:'
+    puts '  1. Create a .env file in the project root with: EIA_API_KEY=<your_key_here>'
+    puts '  2. Set the environment variable: export EIA_API_KEY=<your_key_here>'
+    puts 'Register for a free key at https://www.eia.gov/opendata/register.php'
+    exit!
+  end
+
+  simple_rates_dir = File.join(File.dirname(__FILE__), 'ReportUtilityBills', 'resources', 'simple_rates')
+  FileUtils.mkdir_p(simple_rates_dir) unless File.exist?(simple_rates_dir)
+  filepath = File.join(simple_rates_dir, 'eia_fuel_rates_by_state.csv')
+
+  base_url = 'https://api.eia.gov/v2/seds/data/'
+  page_length = 5000
+
+  # Residential fuel price series (MSN codes)
+  msn_codes = {
+    'DFRCD' => 'fuel oil', # Distillate fuel oil price in the residential sector ($/MMBtu)
+    'ESRCD' => 'electricity', # Electricity price in the residential sector ($/MMBtu)
+    'NGRCD' => 'natural gas', # Natural gas price in the residential sector ($/MMBtu)
+    'PQRCD' => 'propane', # Propane price in the residential sector ($/MMBtu)
+    'WDRCD' => 'wood', # Wood price in the residential sector ($/MMBtu)
+  }
+
+  latest_rates = Hash.new { |h, k| h[k] = {} }
+
+  msn_codes.each do |msn, fuel|
+    puts "  Fetching SEDS series: #{msn} (#{fuel})..."
+
+    offset = 0
+    loop do
+      query_parts = [
+        "api_key=#{URI.encode_www_form_component(api_key)}",
+        'frequency=annual',
+        'data[0]=value',
+        "facets[seriesId][0]=#{URI.encode_www_form_component(msn)}",
+        'sort[0][column]=period',
+        'sort[0][direction]=asc',
+        "offset=#{offset}",
+        "length=#{page_length}"
+      ]
+      url = "#{base_url}?#{query_parts.join('&')}"
+
+      parsed = nil
+      begin
+        uri = URI(url)
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+        request = Net::HTTP::Get.new(uri)
+        request['Accept'] = 'application/json'
+
+        response = http.request(request)
+
+        if response.is_a?(Net::HTTPSuccess)
+          parsed = JSON.parse(response.body)
+        else
+          puts "API Error: #{response.code}"
+        end
+      rescue JSON::ParserError => e
+        puts "JSON Parsing Error: #{e.message}"
+      rescue StandardError => e
+        puts "Network Error: #{e.message}"
+      end
+
+      if parsed.nil? || parsed['response'].nil? || parsed['response']['data'].nil?
+        puts "Error: Unexpected API response for #{msn}: #{parsed.inspect}"
+        exit!
+      end
+
+      data  = parsed['response']['data']
+      total = parsed['response']['total'].to_i
+
+      data.each do |row|
+        state  = row['stateId']
+        period = row['period'].to_i
+        value  = row['value']
+
+        next if value.nil? || value.to_f == 0.0
+
+        existing = latest_rates[state][fuel]
+
+        next unless existing.nil? || period > existing[:period]
+
+        latest_rates[state][fuel] = {
+          period: period,
+          value: value.to_f
+        }
+      end
+
+      offset += data.size
+      break if offset >= total || data.empty?
+    end
+  end
+
+  puts "Writing to #{filepath}..."
+
+  CSV.open(filepath, 'w') do |csv|
+    csv << ['year', 'state', 'fuel', 'rate_dollar_per_mmbtu']
+
+    latest_rates.keys.sort.each do |state|
+      msn_codes.values.each do |fuel|
+        entry = latest_rates[state][fuel]
+        next if entry.nil?
+
+        csv << [
+          entry[:period],
+          state,
+          fuel,
+          entry[:value].round(4)
+        ]
+      end
+    end
+  end
+
+  puts "Completed. Data written to #{filepath}."
+  exit!
+end
+
 command_list = [
   :update_measures,
   :update_hpxmls,
   :unit_tests,
   :workflow_tests1,
   :workflow_tests2,
-  :create_release_zips,
-  :download_utility_rates,
-  :download_g_functions
+  :create_release_zip,
+  :download_simple_utility_rates,
+  :download_detailed_utility_rates,
+  :download_g_functions,
 ]
 
 def display_usage(command_list)
@@ -3659,15 +3804,15 @@ if [:unit_tests, :workflow_tests1, :workflow_tests2].include? ARGV[0].to_sym
   puts 'All tests passed.'
 end
 
-if ARGV[0].to_sym == :download_utility_rates
-  download_utility_rates
+if ARGV[0].to_sym == :download_detailed_utility_rates
+  download_detailed_utility_rates
 end
 
 if ARGV[0].to_sym == :download_g_functions
   download_g_functions
 end
 
-if ARGV[0].to_sym == :create_release_zips
+if ARGV[0].to_sym == :create_release_zip
   if ENV['CI']
     # CI doesn't have git, so default to everything
     git_files = Dir['**/*.*']
@@ -3753,4 +3898,8 @@ if ARGV[0].to_sym == :create_release_zips
   end
 
   puts 'Done.'
+end
+
+if ARGV[0].to_sym == :download_simple_utility_rates
+  download_simple_utility_rates
 end

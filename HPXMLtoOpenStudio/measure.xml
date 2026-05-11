@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>8b05dfcf-bf6e-4880-8280-e89fa9ac1f1d</version_id>
-  <version_modified>2026-04-24T15:17:55Z</version_modified>
+  <version_id>7e28808f-6d6c-4c22-a3b9-d3815fed2266</version_id>
+  <version_modified>2026-05-08T20:34:38Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -217,13 +217,13 @@
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>8AE95CCA</checksum>
+      <checksum>6CC294CC</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>E058674B</checksum>
+      <checksum>CD794F3A</checksum>
     </file>
     <file>
       <filename>calendar.rb</filename>
@@ -235,7 +235,7 @@
       <filename>constants.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>53BE15A9</checksum>
+      <checksum>64015603</checksum>
     </file>
     <file>
       <filename>constructions.rb</filename>
@@ -367,7 +367,7 @@
       <filename>defaults.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>F91B9101</checksum>
+      <checksum>7C57F239</checksum>
     </file>
     <file>
       <filename>electric_panel.rb</filename>
@@ -391,19 +391,19 @@
       <filename>geometry.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>D6D9B7ED</checksum>
+      <checksum>7F402CF9</checksum>
     </file>
     <file>
       <filename>hotwater_appliances.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>5F185DC6</checksum>
+      <checksum>3413BD58</checksum>
     </file>
     <file>
       <filename>hpxml.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>BF5902DA</checksum>
+      <checksum>A8A9DC80</checksum>
     </file>
     <file>
       <filename>hpxml_schema/HPXML.xsd</filename>
@@ -421,7 +421,7 @@
       <filename>hpxml_schematron/EPvalidator.sch</filename>
       <filetype>sch</filetype>
       <usage_type>resource</usage_type>
-      <checksum>9B5934A8</checksum>
+      <checksum>43C0728B</checksum>
     </file>
     <file>
       <filename>hpxml_schematron/iso-schematron.xsd</filename>
@@ -433,19 +433,19 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>9A6F303E</checksum>
+      <checksum>D88E051C</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>26B469A6</checksum>
+      <checksum>9A5B62E2</checksum>
     </file>
     <file>
       <filename>internal_gains.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>D8FFFC3A</checksum>
+      <checksum>CD7FA760</checksum>
     </file>
     <file>
       <filename>lighting.rb</filename>
@@ -493,13 +493,13 @@
       <filename>model.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>D71FCAF6</checksum>
+      <checksum>24B25073</checksum>
     </file>
     <file>
       <filename>output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>8C392359</checksum>
+      <checksum>F5CABDA5</checksum>
     </file>
     <file>
       <filename>psychrometrics.rb</filename>
@@ -697,13 +697,13 @@
       <filename>utility_bills.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>C87C3553</checksum>
+      <checksum>FAE3470C</checksum>
     </file>
     <file>
       <filename>vehicle.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>976215CE</checksum>
+      <checksum>36FF8B6B</checksum>
     </file>
     <file>
       <filename>version.rb</filename>
@@ -715,7 +715,7 @@
       <filename>waterheater.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>245FEA65</checksum>
+      <checksum>C9FBD6FB</checksum>
     </file>
     <file>
       <filename>weather.rb</filename>
@@ -739,7 +739,7 @@
       <filename>test_airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>57F2C554</checksum>
+      <checksum>0D9C2677</checksum>
     </file>
     <file>
       <filename>test_battery.rb</filename>
@@ -751,13 +751,13 @@
       <filename>test_defaults.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>191743A2</checksum>
+      <checksum>4E7A6CA0</checksum>
     </file>
     <file>
       <filename>test_electric_panel.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>8E69A0EB</checksum>
+      <checksum>91EBCCF9</checksum>
     </file>
     <file>
       <filename>test_enclosure.rb</filename>
@@ -781,7 +781,7 @@
       <filename>test_hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>E770DC36</checksum>
+      <checksum>1F777044</checksum>
     </file>
     <file>
       <filename>test_hvac_sizing.rb</filename>
@@ -817,7 +817,7 @@
       <filename>test_schedules.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>F16EAD8C</checksum>
+      <checksum>777EB5A0</checksum>
     </file>
     <file>
       <filename>test_simcontrols.rb</filename>
@@ -829,7 +829,7 @@
       <filename>test_validation.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>FD24774E</checksum>
+      <checksum>24E06C3D</checksum>
     </file>
     <file>
       <filename>test_vehicle.rb</filename>
