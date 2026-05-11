@@ -1894,10 +1894,10 @@ class HPXMLtoOpenStudioHVACSizingTest < Minitest::Test
 
       # Bore depth greater than the max -> increase number of boreholes until the max, set depth to the max, and issue warning
       hpxml, hpxml_bldg = _create_hpxml(ghp_filename)
-      hpxml_bldg.site.ground_conductivity = 0.07
+      hpxml_bldg.site.ground_conductivity = 0.01
       XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
       _model, _test_hpxml, test_hpxml_bldg = _test_measure(args_hash)
-      assert_equal(10, test_hpxml_bldg.geothermal_loops[0].num_bore_holes)
+      assert_equal(15, test_hpxml_bldg.geothermal_loops[0].num_bore_holes)
       assert_in_delta(500.0, test_hpxml_bldg.geothermal_loops[0].bore_length, 1.0)
 
       # Boreholes greater than the max -> decrease the number of boreholes until the max
@@ -1905,8 +1905,8 @@ class HPXMLtoOpenStudioHVACSizingTest < Minitest::Test
       hpxml_bldg.heat_pumps[0].cooling_capacity *= 5
       XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
       _model, _test_hpxml, test_hpxml_bldg = _test_measure(args_hash)
-      assert_equal(10, test_hpxml_bldg.geothermal_loops[0].num_bore_holes)
-      assert_in_delta(226.0, test_hpxml_bldg.geothermal_loops[0].bore_length, 1.0)
+      assert_equal(15, test_hpxml_bldg.geothermal_loops[0].num_bore_holes)
+      assert_in_delta(150.0, test_hpxml_bldg.geothermal_loops[0].bore_length, 1.0)
     end
   end
 

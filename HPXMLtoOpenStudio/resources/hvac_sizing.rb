@@ -2908,6 +2908,8 @@ module HVACSizing
       hvac_sizings.Heat_Airflow = calc_airflow_rate(:htg, hvac_heating, hvac_sizings.Heat_Capacity, hpxml_bldg)
 
     elsif [HPXML::HVACTypeHeatPumpGroundToAir].include? heating_type
+
+      gl_ap = hvac_heating.geothermal_loop.additional_properties
       hvac_heating_speed = get_nominal_speed(htg_ap, false)
       htg_cap_curve_value = calc_gshp_htg_curve_value(htg_ap, hpxml_header, mj.heat_setpoint, gl_ap.design_hw, hvac_heating_speed)
       hvac_sizings.Heat_Capacity = hvac_sizings.Heat_Load / htg_cap_curve_value
