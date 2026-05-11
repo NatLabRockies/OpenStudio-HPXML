@@ -249,7 +249,7 @@ module Waterheater
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{obj_name} ProgramManager",
+      name: "#{hpwh_ctrl_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [hpwh_ctrl_program, hpwh_zone_heat_gain_program]
     )
@@ -601,7 +601,7 @@ module Waterheater
       # ProgramCallingManagers
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{combi_sys_id} ProgramManager",
+        name: "#{combi_ctrl_program.name} manager",
         calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
         ems_programs: [combi_ctrl_program]
       )
@@ -888,7 +888,7 @@ module Waterheater
     # Program
     swh_program = Model.add_ems_program(
       model,
-      name: "#{obj_name} Controller"
+      name: "#{obj_name} controls"
     )
     swh_program.addLine("If #{coll_sensor.name} > #{tank_source_sensor.name}")
     swh_program.addLine("Set #{swh_pump_actuator.name} = 100 * #{unit_multiplier}")
@@ -899,7 +899,7 @@ module Waterheater
     # ProgramCallingManager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{obj_name} Control",
+      name: "#{swh_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [swh_program]
     )
@@ -1196,14 +1196,11 @@ module Waterheater
       hpwh_sens = Model.add_other_equipment(
         model,
         name: "#{obj_name} sens",
-        end_use: nil,
         space: loc_space,
-        design_level: 0,
         frac_radiant: 0,
         frac_latent: 0,
         frac_lost: 0,
-        schedule: model.alwaysOnDiscreteSchedule,
-        fuel_type: nil
+        schedule: model.alwaysOnDiscreteSchedule
       )
       sens_act_actuator = Model.add_ems_actuator(
         name: "#{hpwh_sens.name} act",
@@ -1214,14 +1211,11 @@ module Waterheater
       hpwh_lat = Model.add_other_equipment(
         model,
         name: "#{obj_name} lat",
-        end_use: nil,
         space: loc_space,
-        design_level: 0,
         frac_radiant: 0,
         frac_latent: 1,
         frac_lost: 0,
-        schedule: model.alwaysOnDiscreteSchedule,
-        fuel_type: nil
+        schedule: model.alwaysOnDiscreteSchedule
       )
       lat_act_actuator = Model.add_ems_actuator(
         name: "#{hpwh_lat.name} act",
@@ -1687,7 +1681,6 @@ module Waterheater
       name: "#{Constants::ObjectTypeWaterHeaterAdjustment}#{cnt + 1}",
       end_use: "#{Constants::ObjectTypeWaterHeaterAdjustment}#{cnt + 1}",
       space: model.getSpaces[0],
-      design_level: 0.01,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 1,
@@ -1719,7 +1712,7 @@ module Waterheater
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{ec_adj_program.name} calling manager",
+      name: "#{ec_adj_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [ec_adj_program]
     )

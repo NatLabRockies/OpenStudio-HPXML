@@ -240,6 +240,16 @@ module Defaults
         unavailable_period.natvent_availability_isdefaulted = true
       end
     end
+
+    if hpxml_header.latent_degradation_model_enabled.nil?
+      hpxml_header.latent_degradation_model_enabled = false
+      hpxml_header.latent_degradation_model_enabled_isdefaulted = true
+    end
+
+    if hpxml_header.latent_degradation_model_enabled && hpxml_header.latent_degradation_model_blower_off_delay.nil?
+      hpxml_header.latent_degradation_model_blower_off_delay = 45.0
+      hpxml_header.latent_degradation_model_blower_off_delay_isdefaulted = true
+    end
   end
 
   # Assigns default values for omitted optional inputs in the HPXML::BuildingHeader object
@@ -2363,7 +2373,7 @@ module Defaults
                    HPXML::HVACTypeFloorFurnace,
                    HPXML::HVACTypeFireplace].include? heating_system.heating_system_type
 
-      htg_ap.heat_rated_cfm_per_ton = HVAC::RatedCFMPerTon
+      htg_ap.heat_rated_cfm_per_ton = HVAC::RatedCFMPerTonDX
     end
     hpxml_bldg.heat_pumps.each do |heat_pump|
       case heat_pump.heat_pump_type
@@ -7867,7 +7877,7 @@ module Defaults
     # Fan/pump adjustments calculations
     # Fan power to overcome the static pressure adjustment
     rated_fan_watts_per_cfm = 0.5 * heat_pump.fan_watts_per_cfm # Calculate rated fan power by assuming the power to overcome the ductwork is approximately 50% of the total fan power (ANSI/RESNET/ICC 301 says 0.2 W/cfm is the fan power associated with ductwork, but we don't know if that was a PSC or BPM fan)
-    power_f = rated_fan_watts_per_cfm * HVAC::RatedCFMPerTon / UnitConversions.convert(1.0, 'ton', 'Btu/hr') # W per Btu/hr of capacity
+    power_f = rated_fan_watts_per_cfm * HVAC::RatedCFMPerTonDX / UnitConversions.convert(1.0, 'ton', 'Btu/hr') # W per Btu/hr of capacity
     rated_pump_watts_per_ton = 30.0 # ANSI/RESNET/ICC 301, estimated pump power required to overcome the internal resistance of the ground-water heat exchanger under AHRI test conditions for a closed loop system
     power_p = rated_pump_watts_per_ton / UnitConversions.convert(1.0, 'ton', 'Btu/hr') # result is in W per Btu/hr of capacity
     if mode == :clg
@@ -7924,7 +7934,7 @@ module Defaults
     if cooling_system.is_a?(HPXML::HeatPump) && cooling_system.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir
       # Based on RESNET HERS Addendum 82
       clg_ap.cool_rated_shr_gross = 0.708
-      clg_ap.cool_rated_cfm_per_ton = HVAC::RatedCFMPerTon
+      clg_ap.cool_rated_cfm_per_ton = HVAC::RatedCFMPerTonDX
 
       case hpxml_header.ground_to_air_heat_pump_model_type
       when HPXML::GroundToAirHeatPumpModelTypeStandard
@@ -8087,7 +8097,7 @@ module Defaults
       clg_ap.cool_capacity_ratios = [clg_ap.qr95min, 1.0, 1.0 / clg_ap.qr95full]
     end
 
-    clg_ap.cool_rated_cfm_per_ton = HVAC::RatedCFMPerTon
+    clg_ap.cool_rated_cfm_per_ton = HVAC::RatedCFMPerTonDX
     clg_ap.cool_cap_ft_spec = [3.717717741, -0.09918866, 0.000964488, 0.005887776, -0.000012808, -0.000132822]
     clg_ap.cool_eir_ft_spec = [-3.400341169, 0.135184783, -0.001037932, -0.007852322, 0.000183438, -0.000142548]
     clg_ap.cool_rated_shr_gross = 0.708
@@ -8132,7 +8142,7 @@ module Defaults
 
     if heating_system.is_a?(HPXML::HeatPump) && heating_system.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir
       # Based on RESNET HERS Addendum 82
-      htg_ap.heat_rated_cfm_per_ton = HVAC::RatedCFMPerTon
+      htg_ap.heat_rated_cfm_per_ton = HVAC::RatedCFMPerTonDX
 
       case hpxml_header.ground_to_air_heat_pump_model_type
       when HPXML::GroundToAirHeatPumpModelTypeStandard
@@ -8265,7 +8275,7 @@ module Defaults
       htg_ap.heat_cap_ft_spec = oat_intercept + iat_intercept, iat_slope, 0, oat_slope, 0, 0
 
       htg_ap.heat_eir_ft_spec = [0.718398423, 0.003498178, 0.000142202, -0.005724331, 0.00014085, -0.000215321]
-      htg_ap.heat_rated_cfm_per_ton = HVAC::RatedCFMPerTon
+      htg_ap.heat_rated_cfm_per_ton = HVAC::RatedCFMPerTonDX
       return
     end
 
@@ -8337,7 +8347,7 @@ module Defaults
       htg_ap.heat_capacity_ratios = [htg_ap.qr47min / htg_ap.qr47full, 1.0, 1.0 / htg_ap.qr47full]
     end
 
-    htg_ap.heat_rated_cfm_per_ton = HVAC::RatedCFMPerTon
+    htg_ap.heat_rated_cfm_per_ton = HVAC::RatedCFMPerTonDX
     htg_ap.heat_cap_ft_spec = [0.568706266, -0.000747282, -0.0000103432, 0.00945408, 0.000050812, -0.00000677828]
     htg_ap.heat_eir_ft_spec = [0.722917608, 0.003520184, 0.000143097, -0.005760341, 0.000141736, -0.000216676]
   end
