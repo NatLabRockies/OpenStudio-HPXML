@@ -7426,7 +7426,7 @@ class HPXML < Object
     # Returns all heat pumps connect to the geothermal loop.
     #
     # @return [Array<HPXML::HeatPump>] List of heat pump objects
-    def heat_pump
+    def heat_pumps
       list = []
       @parent_object.heat_pumps.each do |heat_pump|
         next if heat_pump.geothermal_loop_idref.nil?
@@ -7437,9 +7437,9 @@ class HPXML < Object
 
       if list.size == 0
         fail "Geothermal loop '#{@id}' found but no heat pump attached to it."
-      elsif list.size > 1
-        fail "Multiple heat pumps found attached to geothermal loop '#{@id}'."
       end
+
+      return list
     end
 
     # Deletes the current object from the array.
@@ -7459,7 +7459,7 @@ class HPXML < Object
     # @return [Array<String>] List of error messages
     def check_for_errors
       errors = []
-      begin; heat_pump; rescue StandardError => e; errors << e.message; end
+      begin; heat_pumps; rescue StandardError => e; errors << e.message; end
       return errors
     end
 

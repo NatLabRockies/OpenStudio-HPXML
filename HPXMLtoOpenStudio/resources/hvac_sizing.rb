@@ -72,12 +72,22 @@ module HVACSizing
       apply_hvac_installation_quality(mj, hvac_sizings, hvac_heating, hvac_cooling, hpxml_bldg)
       apply_hvac_autosizing_factors_and_limits(hvac_sizings, hvac_heating, hvac_cooling)
       apply_hvac_final_capacities(hvac_sizings, hvac_heating, hvac_cooling, hpxml_bldg)
-      apply_hvac_ground_loop(mj, runner, hvac_sizings, weather, hvac_cooling, hpxml_bldg)
       @all_hvac_sizings[hvac_system] = hvac_sizings
 
       if update_hpxml
         # Assign capacities, airflows, etc. to HPXML systems
         assign_to_hpxml_system(hvac_heating, hvac_cooling, hvac_sizings)
+      end
+    end
+
+    # Calculate geothermal loop size if there are any GSHPs
+    hpxml_bldg.geothermal_loops.each do |geothermal_loop|
+      geothermal_loop_values = GeothermalLoopValues.new
+      apply_geothermal_loop(mj, runner, weather, geothermal_loop, geothermal_loop_values, hpxml_bldg)
+
+      if update_hpxml
+        # Assign geothermal loop properties to HPXML GeothermalLoop
+        apply_to_hpxml_geothermal_loop(geothermal_loop, geothermal_loop_values)
       end
     end
 
@@ -2801,7 +2811,9 @@ module HVACSizing
 
     elsif HPXML::HVACTypeHeatPumpGroundToAir == cooling_type
 
-      entering_temp = clg_ap.design_chw
+      geothermal_loop = hvac_cooling.geothermal_loop
+      gl_ap = geothermal_loop.additional_properties
+      entering_temp = gl_ap.design_chw
       hvac_cooling_speed = get_nominal_speed(clg_ap, true)
       if [HPXML::GroundToAirHeatPumpModelTypeStandard].include? hpxml_header.ground_to_air_heat_pump_model_type
         # TODO: replace hardcoded bypass factor and curve?
@@ -2897,7 +2909,7 @@ module HVACSizing
 
     elsif [HPXML::HVACTypeHeatPumpGroundToAir].include? heating_type
       hvac_heating_speed = get_nominal_speed(htg_ap, false)
-      htg_cap_curve_value = calc_gshp_htg_curve_value(htg_ap, hpxml_header, mj.heat_setpoint, htg_ap.design_hw, hvac_heating_speed)
+      htg_cap_curve_value = calc_gshp_htg_curve_value(htg_ap, hpxml_header, mj.heat_setpoint, gl_ap.design_hw, hvac_heating_speed)
       hvac_sizings.Heat_Capacity = hvac_sizings.Heat_Load / htg_cap_curve_value
       hvac_sizings.Heat_Capacity_Supp = hvac_sizings.Heat_Load_Supp
       if hvac_sizings.Cool_Capacity > 0
@@ -3287,25 +3299,30 @@ module HVACSizing
     end
   end
 
-  # GSHP Ground Loop Sizing Calculations
+  # GSHP Geothermal Loop Sizing Calculations
   #
   # @param mj [MJValues] Object with a collection of misc Manual J values
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
-  # @param hvac_sizings [HVACSizingValues] Object with sizing values for a given HVAC system
   # @param weather [WeatherFile] Weather object containing EPW information
-  # @param hvac_cooling [HPXML::CoolingSystem or HPXML::HeatPump] The cooling portion of the current HPXML HVAC system
+  # @param geothermal_loop [HPXML::GeothermalLoop] The HPXML geothermal loop of interest
+  # @param geothermal_loop_values [GeothermalLoopValues] Object with properties for a given geothermal loop
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @return [nil]
-  def self.apply_hvac_ground_loop(mj, runner, hvac_sizings, weather, hvac_cooling, hpxml_bldg)
-    cooling_type = get_hvac_cooling_type(hvac_cooling)
+  def self.apply_geothermal_loop(mj, runner, weather, geothermal_loop, geothermal_loop_values, hpxml_bldg)
+    total_heat_capacity, total_cool_capacity = 0.0, 0.0
+    bore_length_heat, bore_length_cool = 0.0, 0.0
+    geothermal_loop.heat_pumps.each do |gshp|
+      hvac_system = { heating: gshp, cooling: gshp }
+      heat_capacity = @all_hvac_sizings[hvac_system].Heat_Capacity
+      cool_capacity = @all_hvac_sizings[hvac_system].Cool_Capacity
 
-    return if cooling_type != HPXML::HVACTypeHeatPumpGroundToAir
+      total_heat_capacity += heat_capacity
+      total_cool_capacity += cool_capacity
 
-    geothermal_loop = hvac_cooling.geothermal_loop
-
-    loop_flow = geothermal_loop.loop_flow
-    if loop_flow.nil?
-      loop_flow = [1.0, UnitConversions.convert([hvac_sizings.Heat_Capacity, hvac_sizings.Cool_Capacity].max, 'Btu/hr', 'ton')].max.floor * 3.0
+      # Autosize ground loop heat exchanger length
+      nom_length_heat, nom_length_cool = get_geothermal_loop_borefield_ft_per_ton(mj, hpxml_bldg, geothermal_loop, weather, gshp)
+      bore_length_heat += nom_length_heat * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton')
+      bore_length_cool += nom_length_cool * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton')
     end
 
     min_bore_depth = 80 # ft; based on g-function library
@@ -3319,14 +3336,14 @@ module HVACSizing
     bore_depth = geothermal_loop.bore_length
 
     if num_bore_holes.nil? || bore_depth.nil?
-      # Autosize ground loop heat exchanger length
-      nom_length_heat, nom_length_cool = get_geothermal_loop_borefield_ft_per_ton(mj, hpxml_bldg, geothermal_loop, weather, hvac_cooling)
-      bore_length_heat = nom_length_heat * UnitConversions.convert(hvac_sizings.Heat_Capacity, 'Btu/hr', 'ton')
-      bore_length_cool = nom_length_cool * UnitConversions.convert(hvac_sizings.Cool_Capacity, 'Btu/hr', 'ton')
       bore_length = [bore_length_heat, bore_length_cool].max
 
       if num_bore_holes.nil? && bore_depth.nil?
-        num_bore_holes = [min_num_boreholes, (UnitConversions.convert(hvac_sizings.Cool_Capacity, 'Btu/hr', 'ton') + 0.5).floor].max
+        if total_cool_capacity > 0
+          num_bore_holes = [min_num_boreholes, (UnitConversions.convert(total_cool_capacity, 'Btu/hr', 'ton') + 0.5).floor].max
+        else # if GSHP only provides heating
+          num_bore_holes = [min_num_boreholes, (UnitConversions.convert(total_heat_capacity, 'Btu/hr', 'ton') + 0.5).floor].max
+        end
 
         # Divide length by number of boreholes for average bore depth
         bore_depth = (bore_length / num_bore_holes).floor # ft
@@ -3378,26 +3395,31 @@ module HVACSizing
       fail "Number of bore holes (#{num_bore_holes}) with borefield configuration '#{bore_config}' not supported."
     end
 
-    hvac_sizings.GSHP_Loop_Flow = loop_flow
-    hvac_sizings.GSHP_Bore_Depth = bore_depth
-    hvac_sizings.GSHP_Bore_Holes = num_bore_holes
-    hvac_sizings.GSHP_Bore_Config = bore_config
+    loop_flow = geothermal_loop.loop_flow
+    if loop_flow.nil?
+      loop_flow = [1.0, UnitConversions.convert([total_heat_capacity, total_cool_capacity].max, 'Btu/hr', 'ton')].max.floor * 3.0
+    end
 
-    hvac_sizings.GSHP_G_Functions = get_geothermal_g_functions_data(bore_config, g_functions_json, geothermal_loop, num_bore_holes, bore_depth)
+    geothermal_loop_values.Loop_Flow = loop_flow
+    geothermal_loop_values.Bore_Depth = bore_depth
+    geothermal_loop_values.Bore_Holes = num_bore_holes
+    geothermal_loop_values.Bore_Config = bore_config
+    geothermal_loop_values.G_Functions = get_geothermal_g_functions_data(bore_config, g_functions_json, geothermal_loop, num_bore_holes, bore_depth)
   end
 
   # Calculates the total needed length of heating/cooling borehole length for the geothermal loop.
   #
   # @param mj [MJValues] Object with a collection of misc Manual J values
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
-  # @param geothermal_loop [HPXML::GeothermalLoop] Geothermal loop of interest
+  # @param geothermal_loop [HPXML::GeothermalLoop] The HPXML geothermal loop of interest
   # @param weather [WeatherFile] Weather object containing EPW information
-  # @param hvac_cooling [HPXML::HeatPump] The cooling portion of the current HPXML HVAC system
+  # @param heat_pump [HPXML::HeatPump] The cooling portion of the current HPXML HVAC system
   # @return [Array<Double, Double>] Nominal heating length, nominal cooling length (ft/ton)
-  def self.get_geothermal_loop_borefield_ft_per_ton(mj, hpxml_bldg, geothermal_loop, weather, hvac_cooling)
-    clg_ap = hvac_cooling.additional_properties
+  def self.get_geothermal_loop_borefield_ft_per_ton(mj, hpxml_bldg, geothermal_loop, weather, heat_pump)
+    gl_ap = geothermal_loop.additional_properties
+    hp_ap = heat_pump.additional_properties
 
-    case clg_ap.u_tube_spacing_type
+    case gl_ap.u_tube_spacing_type
     when 'b'
       beta_0 = 17.4427
       beta_1 = -0.6052
@@ -3410,8 +3432,8 @@ module HVACSizing
     end
 
     r_value_ground = Math.log(geothermal_loop.bore_spacing / geothermal_loop.bore_diameter * 12.0) / 2.0 / Math::PI / hpxml_bldg.site.ground_conductivity
-    r_value_grout = 1.0 / geothermal_loop.grout_conductivity / beta_0 / ((geothermal_loop.bore_diameter / clg_ap.pipe_od)**beta_1)
-    r_value_pipe = Math.log(clg_ap.pipe_od / clg_ap.pipe_id) / 2.0 / Math::PI / hvac_cooling.geothermal_loop.pipe_conductivity
+    r_value_grout = 1.0 / geothermal_loop.grout_conductivity / beta_0 / ((geothermal_loop.bore_diameter / gl_ap.pipe_od)**beta_1)
+    r_value_pipe = Math.log(gl_ap.pipe_od / gl_ap.pipe_id) / 2.0 / Math::PI / geothermal_loop.pipe_conductivity
     r_value_bore = r_value_grout + r_value_pipe / 2.0 # Note: Convection resistance is negligible when calculated against Glhepro (Jeffrey D. Spitler, 2000)
 
     is_southern_hemisphere = (hpxml_bldg.latitude < 0)
@@ -3438,8 +3460,8 @@ module HVACSizing
     rtf_design_mon_heat = [[rtf_design_mon_heat, 0.25].max, 1.0].min
     rtf_design_mon_cool = [[rtf_design_mon_cool, 0.25].max, 1.0].min
 
-    nom_length_heat = (1.0 - 1.0 / clg_ap.heat_rated_cops[0]) * (r_value_bore + r_value_ground * rtf_design_mon_heat) / (weather.data.DeepGroundAnnualTemp - (2.0 * clg_ap.design_hw - clg_ap.design_delta_t) / 2.0) * UnitConversions.convert(1.0, 'ton', 'Btu/hr')
-    nom_length_cool = (1.0 + 1.0 / clg_ap.cool_rated_cops[0]) * (r_value_bore + r_value_ground * rtf_design_mon_cool) / ((2.0 * clg_ap.design_chw + clg_ap.design_delta_t) / 2.0 - weather.data.DeepGroundAnnualTemp) * UnitConversions.convert(1.0, 'ton', 'Btu/hr')
+    nom_length_heat = (1.0 - 1.0 / hp_ap.heat_rated_cops[0]) * (r_value_bore + r_value_ground * rtf_design_mon_heat) / (weather.data.DeepGroundAnnualTemp - (2.0 * gl_ap.design_hw - gl_ap.design_delta_t) / 2.0) * UnitConversions.convert(1.0, 'ton', 'Btu/hr')
+    nom_length_cool = (1.0 + 1.0 / hp_ap.cool_rated_cops[0]) * (r_value_bore + r_value_ground * rtf_design_mon_cool) / ((2.0 * gl_ap.design_chw + gl_ap.design_delta_t) / 2.0 - weather.data.DeepGroundAnnualTemp) * UnitConversions.convert(1.0, 'ton', 'Btu/hr')
 
     return nom_length_heat, nom_length_cool
   end
@@ -3448,7 +3470,7 @@ module HVACSizing
   #
   # @param bore_config [String] Borefield configuration (HPXML::GeothermalLoopBorefieldConfigurationXXX)
   # @param g_functions_json [JSON] JSON object with g-function data
-  # @param geothermal_loop [HPXML::GeothermalLoop] Geothermal loop of interest
+  # @param geothermal_loop [HPXML::GeothermalLoop] The HPXML geothermal loop of interest
   # @param num_bore_holes [Integer] Total number of boreholes
   # @param bore_depth [Double] Depth of each borehole (ft)
   # @return [Array<Array<Double>, Array<Double>>] List of g-function lntts (natural log of time/steady state time) values, list of g-function values
@@ -5274,31 +5296,6 @@ module HVACSizing
       end
       htg_ap.heating_actual_airflow_cfm = Float(htg_ap.heating_actual_airflow_cfm.round)
 
-      # Heating geothermal loop
-      if hvac_heating.is_a? HPXML::HeatPump
-        htg_ap.GSHP_G_Functions = hvac_sizings.GSHP_G_Functions
-
-        geothermal_loop = hvac_heating.geothermal_loop
-        if not geothermal_loop.nil?
-          if geothermal_loop.loop_flow.nil?
-            geothermal_loop.loop_flow = hvac_sizings.GSHP_Loop_Flow
-            geothermal_loop.loop_flow_isdefaulted = true
-          end
-          if geothermal_loop.num_bore_holes.nil?
-            geothermal_loop.num_bore_holes = hvac_sizings.GSHP_Bore_Holes
-            geothermal_loop.num_bore_holes_isdefaulted = true
-          end
-          if geothermal_loop.bore_length.nil?
-            geothermal_loop.bore_length = hvac_sizings.GSHP_Bore_Depth
-            geothermal_loop.bore_length_isdefaulted = true
-          end
-          if geothermal_loop.bore_config.nil?
-            geothermal_loop.bore_config = hvac_sizings.GSHP_Bore_Config
-            geothermal_loop.bore_config_isdefaulted = true
-          end
-        end
-      end
-
     end
 
     if not hvac_cooling.nil?
@@ -5345,6 +5342,33 @@ module HVACSizing
         clg_ap.cooling_actual_airflow_cfm *= (1.0 + hvac_cooling.airflow_defect_ratio.to_f)
       end
       clg_ap.cooling_actual_airflow_cfm = Float(clg_ap.cooling_actual_airflow_cfm.round)
+    end
+  end
+
+  # Assigns the final calculated borefield configuration to the HPXML GeothermalLoop.
+  # These values will end up in the in.xml file, among other outputs.
+  #
+  # @param geothermal_loop [HPXML::GeothermalLoop] The HPXML geothermal loop of interest
+  # @param geothermal_loop_values [GeothermalLoopValues] Object with properties for a given geothermal loop
+  # @return [nil]
+  def self.apply_to_hpxml_geothermal_loop(geothermal_loop, geothermal_loop_values)
+    gl_ap = geothermal_loop.additional_properties
+    gl_ap.g_functions = geothermal_loop_values.G_Functions
+    if geothermal_loop.loop_flow.nil?
+      geothermal_loop.loop_flow = geothermal_loop_values.Loop_Flow
+      geothermal_loop.loop_flow_isdefaulted = true
+    end
+    if geothermal_loop.num_bore_holes.nil?
+      geothermal_loop.num_bore_holes = geothermal_loop_values.Bore_Holes
+      geothermal_loop.num_bore_holes_isdefaulted = true
+    end
+    if geothermal_loop.bore_length.nil?
+      geothermal_loop.bore_length = geothermal_loop_values.Bore_Depth
+      geothermal_loop.bore_length_isdefaulted = true
+    end
+    if geothermal_loop.bore_config.nil?
+      geothermal_loop.bore_config = geothermal_loop_values.Bore_Config
+      geothermal_loop.bore_config_isdefaulted = true
     end
   end
 
@@ -5730,7 +5754,7 @@ class DesignLoadValues
   end
 end
 
-# Object with sizing values (loads, capacities, airflows, etc.) for a specific HVAC system
+# Object with HVAC sizing values (loads, capacities, airflows, etc.) for a specific HVAC system
 class HVACSizingValues
   attr_accessor(:Cool_Load_Sens,      # [Double] Total sensible cooling load (Btu/hr)
                 :Cool_Load_Lat,       # [Double] Total latent cooling load (Btu/hr)
@@ -5742,12 +5766,16 @@ class HVACSizingValues
                 :Heat_Capacity,       # [Double] Nominal heating capacity (Btu/hr)
                 :Heat_Capacity_Supp,  # [Double] Nominal heating capacity for the HP backup (Btu/hr)
                 :Cool_Airflow,        # [Double] Cooling airflow rate (cfm)
-                :Heat_Airflow,        # [Double] Heating airflow rate (cfm)
-                :GSHP_Loop_Flow,      # [Double] Ground-source heat pump water flow rate through the geothermal loop (gal/min)
-                :GSHP_Bore_Holes,     # [Integer] Ground-source heat pump number of boreholes (#)
-                :GSHP_Bore_Depth,     # [Double] Ground-source heat pump depth of each borehole (ft)
-                :GSHP_G_Functions,    # [Array<Array<Double>, Array<Double>>] Ground-source heat pump G-functions
-                :GSHP_Bore_Config)    # [String] Ground-source heat pump borefield configuration (HPXML::GeothermalLoopBorefieldConfigurationXXX)
+                :Heat_Airflow)        # [Double] Heating airflow rate (cfm)
+end
+
+# Object with geothermal loop values for ground-source heat pumps
+class GeothermalLoopValues
+  attr_accessor(:Loop_Flow,     # [Double] Water flow rate (gal/min)
+                :Bore_Holes,    # [Integer] Number of boreholes (#)
+                :Bore_Depth,    # [Double] Depth of each borehole (ft)
+                :Bore_Config,   # [String] Borefield configuration (HPXML::GeothermalLoopBorefieldConfigurationXXX)
+                :G_Functions)   # [Array<Array<Double>, Array<Double>>] G-functions
 end
 
 # Object with data needed to write out the detailed output (used for populating an ACCA J1 form).
