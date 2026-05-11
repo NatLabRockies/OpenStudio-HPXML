@@ -621,7 +621,8 @@ module HVAC
       clg_coil.setRatioofInitialMoistureEvaporationRateandSteadyStateLatentCapacity(1.5)
       clg_coil.setRatedAirFlowRate(clg_air_flow_rated)
       clg_coil.setRatedWaterFlowRate(UnitConversions.convert(geothermal_loop.loop_flow, 'gal/min', 'm^3/s'))
-      clg_coil.setRatedEnteringWaterTemperature(UnitConversions.convert(77, 'F', 'C'))
+	  # RatedEnteringWaterTemperature is not impacting results, only used in E+ sizing
+      # clg_coil.setRatedEnteringWaterTemperature(UnitConversions.convert(77, 'F', 'C'))
       clg_coil.setRatedEnteringAirDryBulbTemperature(UnitConversions.convert(80, 'F', 'C'))
       clg_coil.setRatedEnteringAirWetBulbTemperature(UnitConversions.convert(67, 'F', 'C'))
       # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
@@ -643,7 +644,8 @@ module HVAC
       htg_coil.setRatedHeatingCoefficientofPerformance(hp_ap.heat_rated_cops[0])
       htg_coil.setRatedAirFlowRate(htg_air_flow_rated)
       htg_coil.setRatedWaterFlowRate(UnitConversions.convert(geothermal_loop.loop_flow, 'gal/min', 'm^3/s'))
-      htg_coil.setRatedEnteringWaterTemperature(UnitConversions.convert(32, 'F', 'C'))
+	  # RatedEnteringWaterTemperature is not impacting results, only used in E+ sizing
+      # htg_coil.setRatedEnteringWaterTemperature(UnitConversions.convert(32, 'F', 'C'))
       htg_coil.setRatedEnteringAirDryBulbTemperature(UnitConversions.convert(70, 'F', 'C'))
       # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
       htg_coil.setRatedHeatingCapacity(UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'W'))
