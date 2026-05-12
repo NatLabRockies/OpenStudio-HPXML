@@ -814,8 +814,6 @@ module HVAC
     # Supplemental Heating Coil
     htg_supp_coil = create_heat_pump_supplemental_heating_coil(model, obj_name, heat_pump)
 
-    pump = apply_geothermal_loop(model, obj_name, weather, hpxml_bldg, geothermal_loop, heat_pump, htg_coil, clg_coil, htg_supp_coil)
-
     # Fan
     fan_cfms = []
     hp_ap.cool_capacity_ratios.each do |capacity_ratio|
@@ -829,13 +827,14 @@ module HVAC
 
     # Unitary System
     air_loop_unitary = create_air_loop_unitary_system(model, obj_name, fan, htg_coil, clg_coil, htg_supp_coil, htg_cfm, clg_cfm, 40.0)
-    add_pump_power_ems_program(model, pump, air_loop_unitary, heat_pump)
-    if (heat_pump.compressor_type == HPXML::HVACCompressorTypeVariableSpeed) && (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental)
-      add_ghp_pump_mass_flow_rate_ems_program(model, pump, control_zone, htg_coil, clg_coil)
-    end
 
     # Air Loop
-    air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs, [htg_cfm, clg_cfm].max, heat_pump, hvac_unavailable_periods)
+    air_loop = create_air_loop(model, obj_name, air_loop_unitary, control_zone, hvac_sequential_load_fracs,
+                               [htg_cfm, clg_cfm].max, heat_pump, hvac_unavailable_periods)
+
+    # Geothermal Loop/Plant Loop
+    apply_geothermal_loop(model, obj_name, weather, hpxml_bldg, hpxml_header, geothermal_loop,
+                          heat_pump, air_loop_unitary, htg_coil, clg_coil, htg_supp_coil, control_zone)
 
     # HVAC Installation Quality
     add_installation_quality_ems_program(model, heat_pump, heat_pump, air_loop_unitary, htg_coil, clg_coil)
@@ -854,13 +853,17 @@ module HVAC
   # @param obj_name [String] Name for the OpenStudio object
   # @param weather [WeatherFile] Weather object containing EPW information
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
+  # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param geothermal_loop [HPXML::GeothermalLoop] The HPXML geothermal loop of interest
   # @param heat_pump [HPXML::HeatPump] The HPXML heat pump of interest
+  # @param air_loop_unitary [OpenStudio::Model::AirLoopHVACUnitarySystem] Air loop for the HVAC system
   # @param htg_coil [OpenStudio::Model::CoilHeatingWaterToAirHeatPumpEquationFit or OpenStudio::Model::CoilHeatingWaterToAirHeatPumpVariableSpeedEquationFit] OpenStudio Heating Coil object
   # @param clg_coil [OpenStudio::Model::CoilCoolingWaterToAirHeatPumpEquationFit or OpenStudio::Model::CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFit] OpenStudio Cooling Coil object
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingXXX] Heat pump backup heating coil model object
-  # @return [OpenStudio::Model::PumpVariableSpeed] The pump associated with the geothermal loop
-  def self.apply_geothermal_loop(model, obj_name, weather, hpxml_bldg, geothermal_loop, heat_pump, htg_coil, clg_coil, htg_supp_coil)
+  # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
+  # @return [nil]
+  def self.apply_geothermal_loop(model, obj_name, weather, hpxml_bldg, hpxml_header, geothermal_loop, heat_pump,
+                                 air_loop_unitary, htg_coil, clg_coil, htg_supp_coil, control_zone)
     # Check if we already created the plant loop for another GSHP
     plant_loop = model.getPlantLoops.find { |pl| pl.additionalProperties.getFeatureAsString('HPXML_ID').to_s == geothermal_loop.id }
     if plant_loop.nil?
@@ -941,10 +944,13 @@ module HVAC
         name: "#{obj_name} pump",
         rated_power: pump_w
       )
-      pump.additionalProperties.setFeature('HPXML_ID', geothermal_loop.id)
       pump.addToNode(plant_loop.supplyInletNode)
 
       add_fan_pump_disaggregation_ems_program(model, pump, htg_coil, clg_coil, htg_supp_coil, heat_pump)
+      add_pump_power_ems_program(model, pump, air_loop_unitary, heat_pump)
+      if (heat_pump.compressor_type == HPXML::HVACCompressorTypeVariableSpeed) && (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental)
+        add_ghp_pump_mass_flow_rate_ems_program(model, pump, control_zone, htg_coil, clg_coil)
+      end
 
       # Pipes
       chiller_bypass_pipe = Model.add_pipe_adiabatic(model)
@@ -957,15 +963,10 @@ module HVAC
       demand_inlet_pipe.addToNode(plant_loop.demandInletNode)
       demand_outlet_pipe = Model.add_pipe_adiabatic(model)
       demand_outlet_pipe.addToNode(plant_loop.demandOutletNode)
-    else
-      # Get existing pump
-      pump = model.getPumpVariableSpeeds.find { |p| p.additionalProperties.getFeatureAsString('HPXML_ID').to_s == geothermal_loop.id }
     end
 
     plant_loop.addDemandBranchForComponent(htg_coil)
     plant_loop.addDemandBranchForComponent(clg_coil)
-
-    return pump
   end
 
   # Adds the HPXML water-loop heat pump system to the OpenStudio model.
