@@ -338,7 +338,7 @@ If running :ref:`bldg_type_whole_mf_buildings`, values will reflect hours in whi
   .. [#] The unmet heating and cooling numbers represent the number of hours during the heating/cooling season when the conditioned space temperature deviates more than 0.5 deg-F from the heating/cooling setpoint.
          OpenStudio-HPXML will issue a warning if there are more than 300 unmet hours for heating or cooling.
 
-  .. [#] The unmet dehumidification number represents the number of hours when the conditioned space relative humidity (RH) exceeds the dehumidifier RH setpoint by more than 1%.
+  .. [#] The unmet dehumidification number represents the number of hours when the conditioned space relative humidity (RH) exceeds the :ref:`hpxml_dehumidifier` RH setpoint by more than 1%.
          OpenStudio-HPXML will issue a warning if there are more than 300 unmet hours for dehumidification.
 
   .. [#] The unmet EV driving number represents the total time in which the electric vehicle discharge schedule exceeds zero while the EV battery's state of charge is at its minimum level.
