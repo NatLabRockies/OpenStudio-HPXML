@@ -149,6 +149,7 @@ class ReportSimulationOutputTest < Minitest::Test
     "Load: #{LT::HotWaterSolarThermal} (MBtu)",
     "Unmet Hours: #{UHT::Heating} (hr)",
     "Unmet Hours: #{UHT::Cooling} (hr)",
+    "Unmet Hours: #{UHT::Dehumid} (hr)",
     "Unmet Hours: #{UHT::Driving} (hr)",
     "Peak Electricity: #{PFT::Winter} #{TE::Total} (W)",
     "Peak Electricity: #{PFT::Summer} #{TE::Total} (W)",
@@ -334,6 +335,7 @@ class ReportSimulationOutputTest < Minitest::Test
   BaseHPXMLTimeseriesColsUnmetHours = [
     "Unmet Hours: #{UHT::Heating}",
     "Unmet Hours: #{UHT::Cooling}",
+    "Unmet Hours: #{UHT::Dehumid}",
     "Unmet Hours: #{UHT::Driving}",
   ]
 
