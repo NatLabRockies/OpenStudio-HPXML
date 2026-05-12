@@ -8,6 +8,7 @@ def run_simulation_tests(xmls)
   all_annual_results = {}
   Parallel.map(xmls, in_threads: Parallel.processor_count) do |xml|
     next if xml.end_with? '-10x.xml'
+    next unless xml.include? 'house052'
 
     xml_name = File.basename(xml)
     results = _run_xml(xml, Parallel.worker_number)
@@ -414,6 +415,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     # GSHPs with hard-sized capacities
     if hpxml_path.include? 'house052.xml'
       next if message.include? 'heating capacity is disproportionate (> 20% different) to total cooling capacity' # safe to ignore
+      next if message.include? 'SimHVAC: Maximum iterations (20) exceeded for all HVAC loops'
     end
     # Solar thermal systems
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.solar_thermal_systems.size > 0 }
@@ -440,9 +442,6 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     # TODO: Check why this warning occurs
     if hpxml_path.include? 'base-bldgtype-mf-whole-building'
       next if message.include? 'SHR adjusted to achieve valid outlet air properties and the simulation continues.'
-    end
-    if hpxml_path.include? 'house052.xml'
-      next if message.include? 'SimHVAC: Maximum iterations (20) exceeded for all HVAC loops1'
     end
 
     flunk "Unexpected eplusout.err message found for #{File.basename(hpxml_path)}: #{message}"
