@@ -82,8 +82,8 @@ def process_g_functions(filepath)
       add_m_n(json, json2, 13, '5_5', '1')
       add_m_n(json, json2, 14, '4_6', '1')
       add_m_n(json, json2, 15, '3_7', '1')
-    when 'zoned_rectangle_5m_v1.0.json' # there are none for which num_boreholes less than or equal to 10
-      # add_m_n(json, json2, 17, '5_5', '1_1')
+    when 'zoned_rectangle_5m_v1.0.json'
+      # requires larger number of boreholes and is unusual for residential application, skip it
     else
       fail "Unrecognized config_json: #{config_json}"
     end

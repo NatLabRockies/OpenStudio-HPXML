@@ -946,7 +946,9 @@ module HVAC
       )
       pump.addToNode(plant_loop.supplyInletNode)
 
+      # To disaggregate pump power, it's fine to just look at one GSHP since all will be in the same heating vs cooling mode
       add_fan_pump_disaggregation_ems_program(model, pump, htg_coil, clg_coil, htg_supp_coil, heat_pump)
+
       add_pump_power_ems_program(model, pump, air_loop_unitary, heat_pump)
       if (heat_pump.compressor_type == HPXML::HVACCompressorTypeVariableSpeed) && (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental)
         add_ghp_pump_mass_flow_rate_ems_program(model, pump, control_zone, htg_coil, clg_coil)
@@ -2033,41 +2035,41 @@ module HVAC
       pump_program.addLine("Set cooling_pump_vfr_max = #{clg_coil.speeds[-1].referenceUnitRatedWaterFlowRate}")
       pump_program.addLine('Set htg_flow_rate = 0.0')
       pump_program.addLine('Set clg_flow_rate = 0.0')
-      (1..htg_coil.speeds.size).each do |i|
+      for i in 1..htg_coil.speeds.size
         # Initialization
         pump_program.addLine("Set heating_pump_vfr_#{i} = heating_pump_vfr_max * #{hvac_ap.heat_capacity_ratios[i - 1]}")
         pump_program.addLine("Set heating_fraction_time_#{i} = 0.0")
       end
       pump_program.addLine("If #{heating_usl_sensor.name} == 1")
       pump_program.addLine("  Set heating_fraction_time_1 = #{heating_plr_sensor.name}")
-      (1..(htg_coil.speeds.size - 1)).each do |i|
+      for i in 1..(htg_coil.speeds.size - 1)
         pump_program.addLine("ElseIf #{heating_usl_sensor.name} == #{i + 1}")
         pump_program.addLine("  Set heating_fraction_time_#{i} = 1.0 - #{heating_nsl_sensor.name}")
         pump_program.addLine("  Set heating_fraction_time_#{i + 1} = #{heating_nsl_sensor.name}")
       end
       pump_program.addLine('EndIf')
       # sum up to get the actual flow rate
-      (1..htg_coil.speeds.size).each do |i|
+      for i in 1..htg_coil.speeds.size
         pump_program.addLine("Set htg_flow_rate = htg_flow_rate + heating_fraction_time_#{i} * heating_pump_vfr_#{i}")
       end
       pump_program.addLine('Set heating_plr = htg_flow_rate / heating_pump_vfr_max')
 
       # Cooling
-      (1..clg_coil.speeds.size).each do |i|
+      for i in 1..clg_coil.speeds.size
         # Initialization
         pump_program.addLine("Set cooling_pump_vfr_#{i} = cooling_pump_vfr_max * #{hvac_ap.cool_capacity_ratios[i - 1]}")
         pump_program.addLine("Set cooling_fraction_time_#{i} = 0.0")
       end
       pump_program.addLine("If #{cooling_usl_sensor.name} == 1")
       pump_program.addLine("  Set cooling_fraction_time_1 = #{cooling_plr_sensor.name}")
-      (1..(clg_coil.speeds.size - 1)).each do |i|
+      for i in 1..(clg_coil.speeds.size - 1)
         pump_program.addLine("ElseIf (#{cooling_usl_sensor.name}) == #{i + 1}")
         pump_program.addLine("  Set cooling_fraction_time_#{i} = 1.0 - #{cooling_nsl_sensor.name}")
         pump_program.addLine("  Set cooling_fraction_time_#{i + 1} = #{cooling_nsl_sensor.name}")
       end
       pump_program.addLine('EndIf')
       # sum up to get the actual flow rate
-      (1..clg_coil.speeds.size).each do |i|
+      for i in 1..clg_coil.speeds.size
         pump_program.addLine("Set clg_flow_rate = clg_flow_rate + cooling_fraction_time_#{i} * heating_pump_vfr_#{i}")
       end
       pump_program.addLine('Set cooling_plr = clg_flow_rate / cooling_pump_vfr_max')

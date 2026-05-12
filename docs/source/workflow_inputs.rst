@@ -3441,7 +3441,8 @@ Each geothermal loop is entered as a ``/HPXML/Building/BuildingDetails/Systems/H
          \- **Lopsided U**: 6-15
 
   .. [#] BoreholesOrTrenches/Count is only required if extension/BorefieldConfiguration is provided and not **Rectangle**.
-  .. [#] If BoreholesOrTrenches/Count not provided, it is calculated as the required total length of the ground heat exchanger (calculated during sizing) divided by BoreholesOrTrenches/Length if BoreholesOrTrenches/Length is provided, otherwise autosized by assuming 1 for every ton of ground source heat pump cooling capacity (max of 10).
+  .. [#] If BoreholesOrTrenches/Count not provided, it is calculated as the required total length of the ground heat exchanger (calculated during sizing) divided by BoreholesOrTrenches/Length if BoreholesOrTrenches/Length is provided, otherwise assumes 1 borehole for every ton of ground source heat pump cooling capacity.
+         The maximum number of boreholes is 15.
   .. [#] The minimum depth in the g-function library is 80 ft.
          The maximum realistic depth to be used in residential applications is 500 ft.
   .. [#] If BoreholesOrTrenches/Length not provided, it is calculated as the required total length of the ground heat exchanger (calculated during sizing) divided by the total number of boreholes.

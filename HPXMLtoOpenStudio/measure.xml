@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>bf5fb631-5bd9-4a76-a596-a8221ed5ce92</version_id>
-  <version_modified>2026-05-12T14:55:27Z</version_modified>
+  <version_id>e75e0323-d07a-4968-92b0-0e4777cac302</version_id>
+  <version_modified>2026-05-12T22:37:28Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -340,6 +340,66 @@
       <checksum>B1AC362A</checksum>
     </file>
     <file>
+      <filename>data/g_functions/g-function_library_1.0/C_configurations_5m_v1.0.json</filename>
+      <filetype>json</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>E9E73997</checksum>
+    </file>
+    <file>
+      <filename>data/g_functions/g-function_library_1.0/L_configurations_5m_v1.0.json</filename>
+      <filetype>json</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>1265E552</checksum>
+    </file>
+    <file>
+      <filename>data/g_functions/g-function_library_1.0/LibraryAccessExample.py</filename>
+      <filetype>py</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>C9FE5CC2</checksum>
+    </file>
+    <file>
+      <filename>data/g_functions/g-function_library_1.0/LopU_configurations_5m_v1.0.json</filename>
+      <filetype>json</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>72B76187</checksum>
+    </file>
+    <file>
+      <filename>data/g_functions/g-function_library_1.0/Open_configurations_5m_v1.0.json</filename>
+      <filetype>json</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>BCB44A41</checksum>
+    </file>
+    <file>
+      <filename>data/g_functions/g-function_library_1.0/U_configurations_5m_v1.0.json</filename>
+      <filetype>json</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>1620B431</checksum>
+    </file>
+    <file>
+      <filename>data/g_functions/g-function_library_1.0/ZRectsContained.xlsx</filename>
+      <filetype>xlsx</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>BA2559DF</checksum>
+    </file>
+    <file>
+      <filename>data/g_functions/g-function_library_1.0/g-function_library_overview.pdf</filename>
+      <filetype>pdf</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>638C9245</checksum>
+    </file>
+    <file>
+      <filename>data/g_functions/g-function_library_1.0/rectangle_5m_v1.0.json</filename>
+      <filetype>json</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>E90F30A5</checksum>
+    </file>
+    <file>
+      <filename>data/g_functions/g-function_library_1.0/zoned_rectangle_5m_v1.0.json</filename>
+      <filetype>json</filetype>
+      <usage_type>resource</usage_type>
+      <checksum>6A4C47AD</checksum>
+    </file>
+    <file>
       <filename>data/g_functions/rectangle_5m_v1.0.json</filename>
       <filetype>json</filetype>
       <usage_type>resource</usage_type>
@@ -349,7 +409,7 @@
       <filename>data/g_functions/util.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>67D01D0F</checksum>
+      <checksum>DA595BFC</checksum>
     </file>
     <file>
       <filename>data/unavailable_periods.csv</filename>
@@ -433,7 +493,7 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>B33C1DDA</checksum>
+      <checksum>E891A7E0</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>
