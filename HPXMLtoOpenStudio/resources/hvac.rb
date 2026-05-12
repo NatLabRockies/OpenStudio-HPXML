@@ -946,9 +946,18 @@ module HVAC
       )
       pump.addToNode(plant_loop.supplyInletNode)
 
-      # To disaggregate pump power, it's fine to just look at one GSHP since all will be in the same heating vs cooling mode
+      # For all of these pump EMS programs, it's fine to just look at the first GSHP on the
+      # geothermal loop:
+      #
+      # fan_pump_disaggregation_ems_program: The program only cares if the GSHP is in heating
+      #     or cooling mode, and all GSHPs will be in the same mode.
+      #
+      # pump_power_ems_program: The program ultimately calculates the system PLR; the PLR for
+      #     the first GSHP should be a reasonably approximate the average PLR across all GSHPs.
+      #
+      # ghp_pump_mass_flow_rate: The program compares the estimated water flow rate to the
+      #     1st speed rated flow rate; using only the first GSHP should be fine.
       add_fan_pump_disaggregation_ems_program(model, pump, htg_coil, clg_coil, htg_supp_coil, heat_pump)
-
       add_pump_power_ems_program(model, pump, air_loop_unitary, heat_pump)
       if (heat_pump.compressor_type == HPXML::HVACCompressorTypeVariableSpeed) && (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental)
         add_ghp_pump_mass_flow_rate_ems_program(model, pump, control_zone, htg_coil, clg_coil)
