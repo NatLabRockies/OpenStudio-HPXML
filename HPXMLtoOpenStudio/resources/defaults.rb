@@ -7960,7 +7960,7 @@ module Defaults
           # Cooling Curves
           # E+ Capacity and EIR as function of temperature curves(bi-quadratic) generated using E+ HVACCurveFitTool
           # See: https://bigladdersoftware.com/epx/docs/24-2/auxiliary-programs/hvac-performance-curve-fit-tool.html#hvac-performance-curve-fit-tool
-          # Catalog data from : https://files.climatemaster.com/Genesis-GS-Series-Product-Catalog.pdf, p180
+          # Catalog data from : https://www.climatemaster.com/download/18.274be999165850ccd5b5b73/1535543867815/lc377-climatemaster-commercial-tranquility-20-single-stage-ts-series-water-source-heat-pump-submittal-set.pdf
           # Using E+ rated conditions:
           # Cooling: Indoor air at 67F WB, 80F DB; Entering water temperature: 85F
           clg_ap.cool_cap_ft_spec = [[0.3926140238, 0.0297981297, 0.0000000582, 0.0123906803, -0.0003014284, -0.0001113698]]
@@ -8162,7 +8162,7 @@ module Defaults
           # Heating Curves
           # E+ Capacity and EIR as function of temperature curves(bi-quadratic) generated using E+ HVACCurveFitTool
           # See: https://bigladdersoftware.com/epx/docs/24-2/auxiliary-programs/hvac-performance-curve-fit-tool.html#hvac-performance-curve-fit-tool
-          # Catalog data from : https://files.climatemaster.com/Genesis-GS-Series-Product-Catalog.pdf, p180
+          # Catalog data from : https://www.climatemaster.com/download/18.274be999165850ccd5b5b73/1535543867815/lc377-climatemaster-commercial-tranquility-20-single-stage-ts-series-water-source-heat-pump-submittal-set.pdf
           # Using E+ rated conditions:
           # Heating: Indoor air at 70F DB; Entering water temperature: 70F
           htg_ap.heat_cap_ft_spec = [[0.7353127278, -0.0035056759, -0.0000439615, 0.0204411095, -0.0000320781, -0.0001322685]]
