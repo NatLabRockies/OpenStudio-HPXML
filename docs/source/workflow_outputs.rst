@@ -326,16 +326,20 @@ Annual Unmet Hours
 Annual unmet hours are listed below.
 If running :ref:`bldg_type_whole_mf_buildings`, values will reflect hours in which *any* dwelling unit has an unmet condition (i.e., it is not the sum of unmet hours for each dwelling unit).
 
-  ============================  =====
-  Type                          Notes
-  ============================  =====
-  Unmet Hours: Heating (hr)     Number of hours where the heating setpoint is not maintained. [#]_
-  Unmet Hours: Cooling (hr)     Number of hours where the cooling setpoint is not maintained.
-  Unmet Hours: EV Driving (hr)  Number of hours where the EV driving demand is not met. [#]_
-  ============================  =====
+  ==================================  =====
+  Type                                Notes
+  ==================================  =====
+  Unmet Hours: Heating (hr)           Number of hours where the heating setpoint is not maintained. [#]_
+  Unmet Hours: Cooling (hr)           Number of hours where the cooling setpoint is not maintained.
+  Unmet Hours: Dehumidification (hr)  Number of hours where the dehumidifier RH setpoint is not maintained [#]_
+  Unmet Hours: EV Driving (hr)        Number of hours where the EV driving demand is not met. [#]_
+  ==================================  =====
 
-  .. [#] The unmet heating and cooling numbers reflect the number of hours during the heating/cooling season when the conditioned space temperature deviates more than 0.5 deg-F from the heating/cooling setpoint.
+  .. [#] The unmet heating and cooling numbers represent the number of hours during the heating/cooling season when the conditioned space temperature deviates more than 0.5 deg-F from the heating/cooling setpoint.
          OpenStudio-HPXML will issue a warning if there are more than 300 unmet hours for heating or cooling.
+
+  .. [#] The unmet dehumidification number represents the number of hours when the conditioned space relative humidity (RH) exceeds the dehumidifier RH setpoint by more than 0.5%.
+         OpenStudio-HPXML will issue a warning if there are more than 300 unmet hours for dehumidification.
 
   .. [#] The unmet EV driving number represents the total time in which the electric vehicle discharge schedule exceeds zero while the EV battery's state of charge is at its minimum level.
          Unmet EV driving hours indicate unrealized driving events and reduced EV charging energy.
@@ -659,7 +663,7 @@ Depending on the outputs requested, the file may include:
   Hot Water Uses                      ``hotwater``         Water use for each end use type (in gallons).
   Total Loads                         ``loads``            Heating, cooling, and hot water loads (in kBtu).
   Component Loads                     ``componentloads``   Heating and cooling loads (in kBtu) disaggregated by component (e.g., Walls, Windows, Infiltration, Ducts, etc.).
-  Unmet Hours                         ``unmethours``       Heating, cooling, and EV driving unmet hours.
+  Unmet Hours                         ``unmethours``       Heating, cooling, dehumidification, and EV driving unmet hours.
   Zone Temperatures                   ``temperatures``     Zone temperatures for each space (e.g., conditioned space [#]_, attic, garage, basement, crawlspace, etc.) plus heating/cooling setpoints [#]_ (in deg-F).
   Zone Conditions                     ``conditions``       Zone conditions (humidity ratio and relative humidity and dewpoint, radiant, and operative temperatures).
   Airflows                            ``airflows``         Airflow rates (in cfm) for infiltration, mechanical ventilation (including clothes dryer exhaust), natural ventilation, whole house fans.

@@ -104,9 +104,10 @@ module Constants
   ObjectTypeTotalAirflowsProgram = 'total airflows program'
   ObjectTypeTotalLoadsProgram = 'total loads program'
   ObjectTypeUnitHeater = 'unit heater'
-  ObjectTypeUnmetHoursProgram = 'unmet hours program'
+  ObjectTypeUnmetDehumidHoursProgram = 'dehumid unmet hours program'
+  ObjectTypeUnmetHVACHoursProgram = 'hvac unmet hours program'
+  ObjectTypeUnmetVehicleHoursProgram = 'vehicle unmet hours program'
   ObjectTypeVehicle = 'vehicle'
-  ObjectTypeVehicleUnmetHoursProgram = 'vehicle unmet hours program'
   ObjectTypeWaterHeater = 'water heater'
   ObjectTypeWaterHeaterSetpoint = 'water heater setpoint'
   ObjectTypeWaterHeaterAdjustment = 'water heater energy adjustment'
@@ -278,6 +279,7 @@ end
 module UHT
   Heating = 'Heating'
   Cooling = 'Cooling'
+  Dehumid = 'Dehumidification'
   Driving = 'EV Driving'
 end
 

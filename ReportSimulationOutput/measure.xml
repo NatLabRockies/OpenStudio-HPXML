@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>report_simulation_output</name>
   <uid>df9d170c-c21a-4130-866d-0d46b06073fd</uid>
-  <version_id>25e4928a-42ad-4e86-8e5f-8d9f451231cd</version_id>
-  <version_modified>2026-05-11T15:06:08Z</version_modified>
+  <version_id>c1f9d5f9-853a-4998-add3-ed895054c046</version_id>
+  <version_modified>2026-05-12T16:47:37Z</version_modified>
   <xml_checksum>9BF1E6AC</xml_checksum>
   <class_name>ReportSimulationOutput</class_name>
   <display_name>HPXML Simulation Output Report</display_name>
@@ -1608,6 +1608,13 @@
       <model_dependent>false</model_dependent>
     </output>
     <output>
+      <name>unmet_hours_dehumidification_hr</name>
+      <display_name>unmet_hours_dehumidification_hr</display_name>
+      <short_name>unmet_hours_dehumidification_hr</short_name>
+      <type>Double</type>
+      <model_dependent>false</model_dependent>
+    </output>
+    <output>
       <name>unmet_hours_ev_driving_hr</name>
       <display_name>unmet_hours_ev_driving_hr</display_name>
       <short_name>unmet_hours_ev_driving_hr</short_name>
@@ -2012,7 +2019,7 @@
       <filename>README.md</filename>
       <filetype>md</filetype>
       <usage_type>readme</usage_type>
-      <checksum>CE9B7B60</checksum>
+      <checksum>BC4B1362</checksum>
     </file>
     <file>
       <filename>README.md.erb</filename>
@@ -2029,7 +2036,7 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>F8C75CFE</checksum>
+      <checksum>D04C29AE</checksum>
     </file>
     <file>
       <filename>test_report_sim_output.rb</filename>

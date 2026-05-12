@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>ef7c2826-bc15-4c36-9190-ce750680353c</version_id>
-  <version_modified>2026-05-11T17:37:05Z</version_modified>
+  <version_id>586f145e-97e0-4750-9be0-e8eb62afad1f</version_id>
+  <version_modified>2026-05-12T16:47:31Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -235,7 +235,7 @@
       <filename>constants.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>64015603</checksum>
+      <checksum>7F709901</checksum>
     </file>
     <file>
       <filename>constructions.rb</filename>
@@ -499,7 +499,7 @@
       <filename>output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>855DE50B</checksum>
+      <checksum>35E7313A</checksum>
     </file>
     <file>
       <filename>psychrometrics.rb</filename>

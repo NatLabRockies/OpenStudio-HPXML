@@ -39,7 +39,8 @@ module Outputs
   # @param add_component_loads [Boolean] Whether to calculate component loads (since it incurs a runtime speed penalty)
   # @return [nil]
   def self.apply_ems_programs(model, hpxml_osm_map, hpxml_header, add_component_loads)
-    season_day_nums = apply_unmet_hours_ems_program(model, hpxml_osm_map, hpxml_header)
+    season_day_nums = apply_unmet_hvac_hours_ems_program(model, hpxml_osm_map, hpxml_header)
+    apply_unmet_dehumid_hours_ems_program(model, hpxml_osm_map)
     apply_unmet_driving_hours_ems_program(model, hpxml_osm_map)
     loads_data = apply_total_loads_ems_program(model, hpxml_osm_map, hpxml_header)
     if add_component_loads
@@ -59,7 +60,7 @@ module Outputs
   # @param hpxml_osm_map [Hash] Map of HPXML::Building objects => OpenStudio Model objects for each dwelling unit
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @return [Hash] Mapping of unit index => heating/cooling season begin and end dates for use by subsequent programs
-  def self.apply_unmet_hours_ems_program(model, hpxml_osm_map, hpxml_header)
+  def self.apply_unmet_hvac_hours_ems_program(model, hpxml_osm_map, hpxml_header)
     # Create sensors and gather data
     htg_sensors, clg_sensors, htg_avail_sensors, clg_avail_sensors = {}, {}, {}, {}
     zone_air_temp_sensors, htg_sp_sensors, clg_sp_sensors = {}, {}, {}
@@ -123,7 +124,7 @@ module Outputs
       model,
       name: 'unmet hours program'
     )
-    program.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeUnmetHoursProgram)
+    program.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeUnmetHVACHoursProgram)
     program.addLine("Set #{htg_hrs} = 0")
     program.addLine("Set #{clg_hrs} = 0")
     for unit in 0..hpxml_osm_map.size - 1
@@ -182,6 +183,54 @@ module Outputs
     return season_day_nums
   end
 
+  # Creates an EMS program that calculates dehumidification unmet hours (number
+  # of hours where the dehumidifiers' RH setpoint is not met).
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_osm_map [Hash] Map of HPXML::Building objects => OpenStudio Model objects for each dwelling unit
+  # @return [nil]
+  def self.apply_unmet_dehumid_hours_ems_program(model, hpxml_osm_map)
+    return if hpxml_osm_map.keys.map { |hpxml_bldg| hpxml_bldg.dehumidifiers.size }.sum == 0
+
+    rh_sensors, rh_setpoints = {}, {}
+    hpxml_osm_map.each_with_index do |(hpxml_bldg, unit_model), unit|
+      # EMS Sensor
+      rh_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirRH }
+
+      rh_setpoints[unit] = hpxml_bldg.dehumidifiers[0].rh_setpoint * 100.0
+    end
+
+    rh_tol = 0.5 # 0.5% RH
+
+    # EMS program
+    dehum_hrs = 'dehumid_unmet_hours'
+    unit_dehum_hrs = 'unit_dehumid_unmet_hours'
+    program = Model.add_ems_program(
+      model,
+      name: 'unmet dehumid hours program'
+    )
+    program.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeUnmetDehumidHoursProgram)
+    program.addLine("Set #{dehum_hrs} = 0")
+    for unit in 0..hpxml_osm_map.size - 1
+      program.addLine("Set #{unit_dehum_hrs} = 0")
+      program.addLine("Set indoor_rh = #{rh_sensors[unit].name}")
+      program.addLine("If indoor_rh > #{rh_setpoints[unit]} + #{rh_tol}")
+      program.addLine("  Set #{unit_dehum_hrs} = #{unit_dehum_hrs} + ZoneTimestep")
+      program.addLine('EndIf')
+      program.addLine("If #{unit_dehum_hrs} > #{dehum_hrs}") # Use max hourly value across all units
+      program.addLine("  Set #{dehum_hrs} = #{unit_dehum_hrs}")
+      program.addLine('EndIf')
+    end
+
+    # EMS calling manager
+    Model.add_ems_program_calling_manager(
+      model,
+      name: "#{program.name} manager",
+      calling_point: 'EndOfZoneTimestepBeforeZoneReporting',
+      ems_programs: [program]
+    )
+  end
+
   # Creates an EMS program that calculates driving unmet hours (number
   # of hours where the EV driving demand is not met).
   #
@@ -192,13 +241,13 @@ module Outputs
     return if hpxml_osm_map.keys.map { |hpxml_bldg| hpxml_bldg.vehicles.map { |vehicle| vehicle.vehicle_type == HPXML::VehicleTypeBEV && !vehicle.ev_charger_idref.nil? }.size }.sum == 0
 
     # EMS program
-    driving_hrs = 'unmet_driving_hours'
+    driving_hrs = 'driving_unmet_hours'
     unit_driving_hrs = 'unit_driving_unmet_hours'
     program = Model.add_ems_program(
       model,
       name: 'unmet driving hours program'
     )
-    program.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeVehicleUnmetHoursProgram)
+    program.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeUnmetVehicleHoursProgram)
     program.addLine("Set #{driving_hrs} = 0")
 
     hpxml_osm_map.each do |hpxml_bldg, unit_model|
