@@ -200,7 +200,7 @@ module Outputs
       rh_setpoints[unit] = hpxml_bldg.dehumidifiers[0].rh_setpoint * 100.0
     end
 
-    rh_tol = 0.5 # 0.5% RH
+    rh_tol = 1.0 # 1% RH
 
     # EMS program
     dehum_hrs = 'dehumid_unmet_hours'
