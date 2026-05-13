@@ -311,8 +311,8 @@ base-hvac-ground-to-air-heat-pump-2-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3
 base-hvac-ground-to-air-heat-pump-backup-integrated.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,4519.2,3525.6,4519.2,4519.2,3525.6,4519.2,30898.0,25365.0,0.0
 base-hvac-ground-to-air-heat-pump-backup-stove.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,4607.4,3696.9,4607.4,4607.4,3696.9,4607.4,31699.0,25580.0,0.0
 base-hvac-ground-to-air-heat-pump-cooling-only.xml,0.0,0.0,0.0,1286.4,890.5,11468.6,3942.3,2121.6,3568.9,3568.9,2121.6,3568.9,3568.9,0.0,24823.0,0.0
-base-hvac-ground-to-air-heat-pump-detailed-geothermal-loop-multiple.xml,0.0,0.0,0.0,1286.4,890.5,11468.6,3942.3,4101.8,3287.7,4101.8,4101.8,3287.7,4101.8,31144.0,25024.0,0.0
-base-hvac-ground-to-air-heat-pump-detailed-geothermal-loop.xml,0.0,0.0,0.0,1286.4,890.5,11468.6,3942.3,4030.4,3242.1,4030.4,4030.4,3242.1,4030.4,30945.0,25031.0,0.0
+base-hvac-ground-to-air-heat-pump-detailed-geothermal-loop-multiple.xml,0.0,0.0,0.0,1286.4,890.5,11468.6,3942.3,4564.4,3582.8,4564.4,4564.4,3582.8,4564.4,32449.0,25412.0,0.0
+base-hvac-ground-to-air-heat-pump-detailed-geothermal-loop.xml,0.0,0.0,0.0,1286.4,890.5,11468.6,3942.3,4669.8,3511.3,4669.8,4669.8,3511.3,4669.8,32734.0,25378.0,0.0
 base-hvac-ground-to-air-heat-pump-heating-only.xml,0.0,0.0,0.0,1286.4,890.5,11468.6,3942.3,4494.2,1873.4,4494.2,4494.2,1873.4,4494.2,30757.0,0.0,0.0
 base-hvac-ground-to-air-heat-pump-var-speed-experimental.xml,16.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,4420.9,2564.5,4420.9,4420.9,2564.5,4420.9,26657.0,26356.0,0.0
 base-hvac-ground-to-air-heat-pump-var-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,4002.4,2679.4,4002.4,4002.4,2679.4,4002.4,31067.0,25206.0,0.0
