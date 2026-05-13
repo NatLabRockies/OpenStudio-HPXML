@@ -1572,6 +1572,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.site.ground_conductivity = 0.1
       when 'hvac-gshp-invalid-num-bore-holes'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-ground-to-air-heat-pump-detailed-geothermal-loop.xml')
+        hpxml_bldg.geothermal_loops[0].bore_config = HPXML::GeothermalLoopBoreConfigLopsidedU
         hpxml_bldg.geothermal_loops[0].num_bore_holes = 5
       when 'hvac-gshp-invalid-num-bore-holes-autosized'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-ground-to-air-heat-pump-1-speed.xml')

@@ -947,7 +947,7 @@ The geothermal loop configuration if there's a ground-to-air heat pump.
 
 - **Required:** ``false``
 
-- **Choices:** <br/>  - `Default`<br/>  - `Vertical Loop, Enhanced Grout`<br/>  - `Vertical Loop, Enhanced Pipe`<br/>  - `Vertical Loop, Enhanced Grout & Pipe`<br/>  - `Detailed Example: Vertical Loop, Lopsided U, 9 Boreholes`
+- **Choices:** <br/>  - `Default`<br/>  - `Vertical Loop, Enhanced Grout`<br/>  - `Vertical Loop, Enhanced Pipe`<br/>  - `Vertical Loop, Enhanced Grout & Pipe`<br/>  - `Detailed Example: Vertical Loop, L Configuration, 4 Boreholes`
 
 
 - **Default:** `Default`
