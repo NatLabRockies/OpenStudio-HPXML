@@ -2345,9 +2345,8 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         hpxml_bldg.hvac_distributions[-1].ducts << duct.dup
         hpxml_bldg.hvac_distributions[-1].ducts[-1].id = "Ducts#{hpxml_bldg.hvac_distributions[0].ducts.size + hpxml_bldg.hvac_distributions[1].ducts.size}"
       end
-      gl_total_length = hpxml_bldg.geothermal_loops[0].num_bore_holes * hpxml_bldg.geothermal_loops[0].bore_length
-      hpxml_bldg.geothermal_loops[0].num_bore_holes = 6 # Min allowed for Lopsided U configuration
-      hpxml_bldg.geothermal_loops[0].bore_length = ((gl_total_length / hpxml_bldg.geothermal_loops[0].num_bore_holes) / 2).round
+      hpxml_bldg.geothermal_loops[0].num_bore_holes /= 2
+      hpxml_bldg.geothermal_loops[0].bore_config = HPXML::GeothermalLoopBoreConfigRectangle
       hpxml_bldg.geothermal_loops << hpxml_bldg.geothermal_loops[0].dup
       hpxml_bldg.geothermal_loops[-1].id = 'GeothermalLoop2'
       hpxml_bldg.heat_pumps[-1].geothermal_loop_idref = hpxml_bldg.geothermal_loops[-1].id

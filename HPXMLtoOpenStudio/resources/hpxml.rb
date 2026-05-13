@@ -199,17 +199,16 @@ class HPXML < Object
   FuelTypeWoodPellets = 'wood pellets'
   FurnitureMassTypeLightWeight = 'light-weight'
   FurnitureMassTypeHeavyWeight = 'heavy-weight'
-  GeothermalLoopBorefieldConfigurationRectangle = 'Rectangle'
-  GeothermalLoopBorefieldConfigurationZonedRectangle = 'Zoned Rectangle'
-  GeothermalLoopBorefieldConfigurationOpenRectangle = 'Open Rectangle'
-  GeothermalLoopBorefieldConfigurationC = 'C'
-  GeothermalLoopBorefieldConfigurationL = 'L'
-  GeothermalLoopBorefieldConfigurationU = 'U'
-  GeothermalLoopBorefieldConfigurationLopsidedU = 'Lopsided U'
-  GeothermalLoopLoopConfigurationDiagonal = 'diagonal'
-  GeothermalLoopLoopConfigurationHorizontal = 'horizontal'
-  GeothermalLoopLoopConfigurationOther = 'other'
-  GeothermalLoopLoopConfigurationVertical = 'vertical'
+  GeothermalLoopBoreConfigRectangle = 'Rectangle'
+  GeothermalLoopBoreConfigOpenRectangle = 'Open Rectangle'
+  GeothermalLoopBoreConfigC = 'C'
+  GeothermalLoopBoreConfigL = 'L'
+  GeothermalLoopBoreConfigU = 'U'
+  GeothermalLoopBoreConfigLopsidedU = 'Lopsided U'
+  GeothermalLoopConfigDiagonal = 'diagonal'
+  GeothermalLoopConfigHorizontal = 'horizontal'
+  GeothermalLoopConfigOther = 'other'
+  GeothermalLoopConfigVertical = 'vertical'
   GeothermalLoopGroutOrPipeTypeStandard = 'standard'
   GeothermalLoopGroutOrPipeTypeThermallyEnhanced = 'thermally enhanced'
   GroundToAirHeatPumpModelTypeStandard = 'standard'
@@ -7406,9 +7405,9 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/GeothermalLoop.
   class GeothermalLoop < BaseElement
-    ATTRS = [:id, # [String] SystemIdentifier/@id
-             :sameas_id, # [String] SystemIdentifier/@sameas
-             :loop_configuration, # [String] LoopConfiguration (HPXML::GeothermalLoopLoopConfigurationXXX)
+    ATTRS = [:id,                 # [String] SystemIdentifier/@id
+             :sameas_id,          # [String] SystemIdentifier/@sameas
+             :loop_config,        # [String] LoopConfiguration (HPXML::GeothermalLoopConfigXXX)
              :loop_flow,          # [Double] LoopFlow (gal/min)
              :num_bore_holes,     # [Integer] BoreholesOrTrenches/Count
              :bore_length,        # [Double] BoreholesOrTrenches/Length (ft)
@@ -7420,7 +7419,7 @@ class HPXML < Object
              :pipe_conductivity,  # [Double] Pipe/Conductivity (Btu/hr-ft-F)
              :pipe_diameter,      # [Double] Pipe/Diameter (in)
              :shank_spacing,      # [Double] Pipe/ShankSpacing (in)
-             :bore_config]        # [String] extension/BorefieldConfiguration (HPXML::GeothermalLoopBorefieldConfigurationXXX)
+             :bore_config]        # [String] extension/BorefieldConfiguration (HPXML::GeothermalLoopBoreConfigXXX)
     attr_accessor(*ATTRS)
 
     # Returns all heat pumps connect to the geothermal loop.
@@ -7475,7 +7474,7 @@ class HPXML < Object
       sys_id = XMLHelper.add_element(geothermal_loop, 'SystemIdentifier')
       XMLHelper.add_attribute(sys_id, 'id', @id)
       XMLHelper.add_attribute(sys_id, 'sameas', @sameas_id) unless @sameas_id.nil?
-      XMLHelper.add_element(geothermal_loop, 'LoopConfiguration', @loop_configuration, :string, @loop_configuration_isdefaulted) unless @loop_configuration.nil?
+      XMLHelper.add_element(geothermal_loop, 'LoopConfiguration', @loop_config, :string, @loop_config_isdefaulted) unless @loop_config.nil?
       XMLHelper.add_element(geothermal_loop, 'LoopFlow', @loop_flow, :float, @loop_flow_isdefaulted) unless @loop_flow.nil?
       if (not @num_bore_holes.nil?) || (not @bore_spacing.nil?) || (not @bore_length.nil?) || (not @bore_diameter.nil?)
         boreholes_or_trenches = XMLHelper.add_element(geothermal_loop, 'BoreholesOrTrenches')
@@ -7510,7 +7509,7 @@ class HPXML < Object
       return if geothermal_loop.nil?
 
       @id = HPXML::get_id(geothermal_loop)
-      @loop_configuration = XMLHelper.get_value(geothermal_loop, 'LoopConfiguration', :string)
+      @loop_config = XMLHelper.get_value(geothermal_loop, 'LoopConfiguration', :string)
       @loop_flow = XMLHelper.get_value(geothermal_loop, 'LoopFlow', :float)
       @num_bore_holes = XMLHelper.get_value(geothermal_loop, 'BoreholesOrTrenches/Count', :integer)
       @bore_length = XMLHelper.get_value(geothermal_loop, 'BoreholesOrTrenches/Length', :float)

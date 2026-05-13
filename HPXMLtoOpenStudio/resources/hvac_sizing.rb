@@ -3387,7 +3387,7 @@ module HVACSizing
 
     bore_config = geothermal_loop.bore_config
     if bore_config.nil?
-      bore_config = HPXML::GeothermalLoopBorefieldConfigurationRectangle
+      bore_config = HPXML::GeothermalLoopBoreConfigRectangle
     end
 
     g_functions_json = get_geothermal_loop_g_functions_json(get_geothermal_loop_valid_configurations[bore_config])
@@ -3470,7 +3470,7 @@ module HVACSizing
 
   # Returns the geothermal loop g-function response factors.
   #
-  # @param bore_config [String] Borefield configuration (HPXML::GeothermalLoopBorefieldConfigurationXXX)
+  # @param bore_config [String] Borefield configuration (HPXML::GeothermalLoopBoreConfigXXX)
   # @param g_functions_json [JSON] JSON object with g-function data
   # @param geothermal_loop [HPXML::GeothermalLoop] The HPXML geothermal loop of interest
   # @param num_bore_holes [Integer] Total number of boreholes
@@ -3535,14 +3535,14 @@ module HVACSizing
   # Returns the geothermal loop g-function logtimes/values for a specific configuration in the JSON file.
   #
   # @param g_functions_json [JSON] JSON object with g-function data
-  # @param bore_config [String] Borefield configuration (HPXML::GeothermalLoopBorefieldConfigurationXXX)
+  # @param bore_config [String] Borefield configuration (HPXML::GeothermalLoopBoreConfigXXX)
   # @param num_bore_holes [Integer] Total number of boreholes
   # @param b_h_rb [String] The lookup key (B._H._rb) in the g-function data.
   # @return [Array<Array<Double>, Array<Double>>] List of logtimes, list of g-function values
   def self.get_geothermal_loop_g_functions_data_from_json(g_functions_json, bore_config, num_bore_holes, b_h_rb)
     g_functions_json.values.each do |values_1|
-      if [HPXML::GeothermalLoopBorefieldConfigurationRectangle,
-          HPXML::GeothermalLoopBorefieldConfigurationL].include?(bore_config)
+      if [HPXML::GeothermalLoopBoreConfigRectangle,
+          HPXML::GeothermalLoopBoreConfigL].include?(bore_config)
         bore_locations = values_1[:bore_locations]
         next if bore_locations.size != num_bore_holes
 
@@ -3550,10 +3550,10 @@ module HVACSizing
         g = values_1[:g][b_h_rb.to_sym].map { |v| Float(v) }
 
         return logtime, g
-      elsif [HPXML::GeothermalLoopBorefieldConfigurationOpenRectangle,
-             HPXML::GeothermalLoopBorefieldConfigurationC,
-             HPXML::GeothermalLoopBorefieldConfigurationLopsidedU,
-             HPXML::GeothermalLoopBorefieldConfigurationU].include?(bore_config)
+      elsif [HPXML::GeothermalLoopBoreConfigOpenRectangle,
+             HPXML::GeothermalLoopBoreConfigC,
+             HPXML::GeothermalLoopBoreConfigLopsidedU,
+             HPXML::GeothermalLoopBoreConfigU].include?(bore_config)
         values_1.values.each do |values_2|
           bore_locations = values_2[:bore_locations]
           next if bore_locations.size != num_bore_holes
@@ -3571,12 +3571,12 @@ module HVACSizing
   #
   # @return [Hash] Map of configuration => datafile
   def self.get_geothermal_loop_valid_configurations
-    valid_configs = { HPXML::GeothermalLoopBorefieldConfigurationRectangle => 'rectangle_5m_v1.0.json',
-                      HPXML::GeothermalLoopBorefieldConfigurationOpenRectangle => 'Open_configurations_5m_v1.0.json',
-                      HPXML::GeothermalLoopBorefieldConfigurationC => 'C_configurations_5m_v1.0.json',
-                      HPXML::GeothermalLoopBorefieldConfigurationL => 'L_configurations_5m_v1.0.json',
-                      HPXML::GeothermalLoopBorefieldConfigurationU => 'U_configurations_5m_v1.0.json',
-                      HPXML::GeothermalLoopBorefieldConfigurationLopsidedU => 'LopU_configurations_5m_v1.0.json' }
+    valid_configs = { HPXML::GeothermalLoopBoreConfigRectangle => 'rectangle_5m_v1.0.json',
+                      HPXML::GeothermalLoopBoreConfigOpenRectangle => 'Open_configurations_5m_v1.0.json',
+                      HPXML::GeothermalLoopBoreConfigC => 'C_configurations_5m_v1.0.json',
+                      HPXML::GeothermalLoopBoreConfigL => 'L_configurations_5m_v1.0.json',
+                      HPXML::GeothermalLoopBoreConfigU => 'U_configurations_5m_v1.0.json',
+                      HPXML::GeothermalLoopBoreConfigLopsidedU => 'LopU_configurations_5m_v1.0.json' }
     return valid_configs
   end
 
@@ -5776,7 +5776,7 @@ class GeothermalLoopValues
   attr_accessor(:Loop_Flow,     # [Double] Water flow rate (gal/min)
                 :Bore_Holes,    # [Integer] Number of boreholes (#)
                 :Bore_Depth,    # [Double] Depth of each borehole (ft)
-                :Bore_Config,   # [String] Borefield configuration (HPXML::GeothermalLoopBorefieldConfigurationXXX)
+                :Bore_Config,   # [String] Borefield configuration (HPXML::GeothermalLoopBoreConfigXXX)
                 :G_Functions)   # [Array<Array<Double>, Array<Double>>] G-functions
 end
 

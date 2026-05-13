@@ -2392,7 +2392,7 @@ module Defaults
         if heat_pump.geothermal_loop.nil?
           if hpxml_bldg.geothermal_loops.empty? # If there are multiple GSHPs, assign them all to the same geothermal loop
             hpxml_bldg.geothermal_loops.add(id: get_id('GeothermalLoop', hpxml_bldg.geothermal_loops, unit_num),
-                                            loop_configuration: HPXML::GeothermalLoopLoopConfigurationVertical)
+                                            loop_config: HPXML::GeothermalLoopConfigVertical)
           end
           heat_pump.geothermal_loop_idref = hpxml_bldg.geothermal_loops[-1].id
         end
