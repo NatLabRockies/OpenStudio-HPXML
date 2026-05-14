@@ -3846,6 +3846,8 @@ if ARGV[0].to_sym == :create_release_zip
   if ENV['CI']
     # CI doesn't have git, so default to everything
     git_files = Dir['**/*.*']
+    git_files -= Dir['workflow/tests/run*/*.*']
+    git_files -= Dir['workflow/tests/test_results/*.*']
   else
     # Only include files under git version control
     command = 'git ls-files'
