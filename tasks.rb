@@ -3888,6 +3888,7 @@ if ARGV[0].to_sym == :create_release_zip
         if not git_files.include? file
           next
         end
+
         zipfile.add(File.join('OpenStudio-HPXML', file), file)
       end
     end
