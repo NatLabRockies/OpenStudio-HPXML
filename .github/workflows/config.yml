@@ -133,6 +133,8 @@ jobs:
       - name: Run workflow tests
         run: |
           openstudio tasks.rb workflow_tests2
+          rm -rf workflow/tests/run*
+          rm -rf workflow/tests/test_results
 
       - name: Store results
         uses: actions/upload-artifact@v7
