@@ -70,6 +70,10 @@
       <sch:assert role='ERROR' test='count(h:DefrostModelType) = 0'>DefrostModelType has been deprecated</sch:assert>
       <sch:assert role='ERROR' test='count(h:OnOffThermostatDeadbandTemperature) &lt;= 1'>Expected at most one OnOffThermostatDeadbandTemperature</sch:assert>
       <sch:assert role='ERROR' test='number(h:OnOffThermostatDeadbandTemperature) &gt; 0 or not(h:OnOffThermostatDeadbandTemperature)'>Expected OnOffThermostatDeadbandTemperature to be greater than 0</sch:assert>
+      <sch:assert role='ERROR' test='count(h:LatentDegradationModel/h:Enabled) &lt;= 1'>Expected at most one LatentDegradationModel/Enabled</sch:assert>
+      <sch:assert role='ERROR' test='h:LatentDegradationModel/h:Enabled[text()="true" or text()="false"] or not(h:LatentDegradationModel/h:Enabled)'>Expected LatentDegradationModel/Enabled to be 'true' or 'false'</sch:assert>
+      <sch:assert role='ERROR' test='count(h:LatentDegradationModel/h:HVACBlowerOffDelay) &lt;= 1'>Expected at most one LatentDegradationModel/HVACBlowerOffDelay</sch:assert>
+      <sch:assert role='ERROR' test='number(h:LatentDegradationModel/h:HVACBlowerOffDelay) &gt;= 0 or not(h:LatentDegradationModel/h:HVACBlowerOffDelay)'>Expected LatentDegradationModel/HVACBlowerOffDelay to be greater than or equal to 0</sch:assert>
       <sch:assert role='ERROR' test='count(h:HeatPumpBackupCapacityIncrement) &lt;= 1'>Expected at most one HeatPumpBackupCapacityIncrement</sch:assert>
       <sch:assert role='ERROR' test='number(h:HeatPumpBackupCapacityIncrement) &gt; 0 or not (h:HeatPumpBackupCapacityIncrement)'>Expected HeatPumpBackupCapacityIncrement to be greater than 0</sch:assert>
       <sch:assert role='ERROR' test='count(h:GroundToAirHeatPumpModelType) &lt;= 1'>Expected at most one GroundToAirHeatPumpModelType</sch:assert>
@@ -841,7 +845,7 @@
       <sch:assert role='ERROR' test='count(h:FractionHeatLoadServed) = 1 or count(../h:HeatPump/h:BackupSystem) &gt;= 1'>Expected FractionHeatLoadServed</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="Percent"]/h:Value) &lt; 0.95'>Percent efficiency should typically be greater than or equal to 0.95.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -866,7 +870,7 @@
       <sch:assert role='ERROR' test='number(h:extension/h:AirflowDefectRatio) &lt;= 9 or not(h:extension/h:AirflowDefectRatio)'>Expected extension/AirflowDefectRatio to be less than or equal to 9</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="AFUE"]/h:Value) &lt; 0.5'>AFUE should typically be greater than or equal to 0.5.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -882,7 +886,7 @@
       <sch:assert role='ERROR' test='number(h:extension/h:FanPowerWatts) &gt;= 0 or not(h:extension/h:FanPowerWatts)'>Expected extension/FanPowerWatts to be greater than or equal to 0</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="AFUE"]/h:Value) &lt; 0.5'>AFUE should typically be greater than or equal to 0.5.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -898,7 +902,7 @@
       <sch:assert role='ERROR' test='number(h:extension/h:FanPowerWatts) &gt;= 0 or not(h:extension/h:FanPowerWatts)'>Expected extension/FanPowerWatts to be greater than or equal to 0</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="AFUE"]/h:Value) &lt; 0.5'>AFUE should typically be greater than or equal to 0.5.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -913,7 +917,7 @@
       <sch:assert role='ERROR' test='number(h:AnnualHeatingEfficiency[h:Units="AFUE"]/h:Value) &lt;= 1 or not(h:AnnualHeatingEfficiency[h:Units="AFUE"]/h:Value)'>Expected AnnualHeatingEfficiency[Units="AFUE"]/Value to be less than or equal to 1</sch:assert>
       <sch:assert role='ERROR' test='count(h:FractionHeatLoadServed) = 1 or count(../h:HeatPump/h:BackupSystem) &gt;= 1'>Expected FractionHeatLoadServed</sch:assert>
       <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="AFUE"]/h:Value) &lt; 0.5'>AFUE should typically be greater than or equal to 0.5.</sch:report>
     </sch:rule>
   </sch:pattern>
@@ -966,7 +970,7 @@
       <sch:assert role='ERROR' test='number(h:extension/h:FanPowerWatts) &gt;= 0 or not(h:extension/h:FanPowerWatts)'>Expected extension/FanPowerWatts to be greater than or equal to 0</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="Percent"]/h:Value) &lt; 0.5'>Percent efficiency should typically be greater than or equal to 0.5.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -982,7 +986,7 @@
       <sch:assert role='ERROR' test='number(h:extension/h:FanPowerWatts) &gt;= 0 or not(h:extension/h:FanPowerWatts)'>Expected extension/FanPowerWatts to be greater than or equal to 0</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="Percent"]/h:Value) &lt; 0.5'>Percent efficiency should typically be greater than or equal to 0.5.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -997,7 +1001,7 @@
       <sch:assert role='ERROR' test='count(h:FractionHeatLoadServed) = 1 or count(../h:HeatPump/h:BackupSystem) &gt;= 1'>Expected FractionHeatLoadServed</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:FanPowerWatts) &lt;= 1'>Expected at most one extension/FanPowerWatts</sch:assert>
       <sch:assert role='ERROR' test='number(h:extension/h:FanPowerWatts) &gt;= 0 or not(h:extension/h:FanPowerWatts)'>Expected extension/FanPowerWatts to be greater than or equal to 0</sch:assert>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1057,7 +1061,7 @@
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="SEER2"]/h:Value) &lt; 7.6'>SEER2 should typically be greater than or equal to 7.6.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="EER"]/h:Value) &lt; 6'>EER should typically be greater than or equal to 6.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="EER2"]/h:Value) &lt; 5.7'>EER2 should typically be greater than or equal to 5.7.</sch:report>
-      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt;= 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt; 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1073,7 +1077,7 @@
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="EER"]/h:Value) &lt; 6'>EER should typically be greater than or equal to 6.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="CEER"]/h:Value) &lt; 5.9'>CEER should typically be greater than or equal to 5.9.</sch:report>
-      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt;= 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt; 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1084,7 +1088,7 @@
       <sch:assert role='ERROR' test='count(h:FractionCoolLoadServed) = 1'>Expected FractionCoolLoadServed</sch:assert>
       <sch:assert role='ERROR' test='count(h:IntegratedHeatingSystemFuel) = 0'>Expected no IntegratedHeatingSystemFuel</sch:assert>
       <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt;= 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt; 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1119,7 +1123,7 @@
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="SEER2"]/h:Value) &lt; 7.6'>SEER2 should typically be greater than or equal to 7.6.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="EER"]/h:Value) &lt; 6'>EER should typically be greater than or equal to 6.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="EER2"]/h:Value) &lt; 5.7'>EER2 should typically be greater than or equal to 5.7.</sch:report>
-      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt;= 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt; 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1140,7 +1144,7 @@
       <sch:assert role='ERROR' test='count(h:extension/h:SharedLoopWatts) = 1'>Expected extension/SharedLoopWatts</sch:assert>
       <sch:assert role='ERROR' test='number(h:extension/h:SharedLoopWatts) &gt;= 0 or not(h:extension/h:SharedLoopWatts)'>Expected extension/SharedLoopWatts to be greater than or equal to 0</sch:assert>
       <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt;= 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt; 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1187,7 +1191,7 @@
       <sch:assert role='ERROR' test='number(h:IntegratedHeatingSystemAnnualEfficiency[h:Units="Percent"]/h:Value) &lt;= 1 or not(h:IntegratedHeatingSystemAnnualEfficiency[h:Units="Percent"]/h:Value)'>Expected IntegratedHeatingSystemAnnualEfficiency[Units="Percent"]/Value to be less than or equal to 1</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:IntegratedHeatingSystemAnnualEfficiency[h:Units="Percent"]/h:Value) &lt; 0.5'>Percent efficiency should typically be greater than or equal to 0.5.</sch:report>
-      <sch:report role='WARN' test='number(h:IntegratedHeatingSystemCapacity) &lt;= 1000 and number(h:IntegratedHeatingSystemCapacity) &gt; 0 and h:IntegratedHeatingSystemCapacity'>Integrated Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:IntegratedHeatingSystemCapacity) &lt; 1000 and number(h:IntegratedHeatingSystemCapacity) &gt; 0 and h:IntegratedHeatingSystemCapacity'>Integrated Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1260,8 +1264,8 @@
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="EER2"]/h:Value) &lt; 5.7'>EER2 should typically be greater than or equal to 5.7.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="HSPF"]/h:Value) &lt; 6'>HSPF should typically be greater than or equal to 6.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="HSPF2"]/h:Value) &lt; 5.1'>HSPF2 should typically be greater than or equal to 5.1.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
-      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt;= 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt; 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1312,8 +1316,8 @@
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="SEER2"]/h:Value) &lt; 7.6'>SEER2 should typically be greater than or equal to 7.6.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="HSPF"]/h:Value) &lt; 6'>HSPF should typically be greater than or equal to 6.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="HSPF2"]/h:Value) &lt; 5.1'>HSPF2 should typically be greater than or equal to 5.1.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
-      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt;= 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt; 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1349,8 +1353,8 @@
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:AnnualCoolingEfficiency[h:Units="EER"]/h:Value) &lt; 6'>EER should typically be greater than or equal to 6.</sch:report>
       <sch:report role='WARN' test='number(h:AnnualHeatingEfficiency[h:Units="COP"]/h:Value) &lt; 2'>COP should typically be greater than or equal to 2.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
-      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt;= 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt; 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1396,8 +1400,8 @@
       <sch:assert role='ERROR' test='count(h:extension/h:BackupHeatingActiveDuringDefrost) &lt;= 1'>Expected at most one extension/BackupHeatingActiveDuringDefrost</sch:assert>
       <sch:assert role='ERROR' test='h:extension/h:BackupHeatingActiveDuringDefrost[text()="true" or text()="false"] or not(h:extension/h:BackupHeatingActiveDuringDefrost)'>Expected extension/BackupHeatingActiveDuringDefrost to be 'true' or 'false'</sch:assert>
       <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
-      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt;= 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0 and h:HeatingCapacity'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:CoolingCapacity) &lt; 1000 and number(h:CoolingCapacity) &gt; 0 and h:CoolingCapacity'>Cooling capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1427,7 +1431,7 @@
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:BackupAnnualHeatingEfficiency[h:Units="Percent"]/h:Value) &lt; 0.5'>Percent efficiency should typically be greater than or equal to 0.5.</sch:report>
       <sch:report role='WARN' test='number(h:BackupAnnualHeatingEfficiency[h:Units="AFUE"]/h:Value) &lt; 0.5'>AFUE should typically be greater than or equal to 0.5.</sch:report>
-      <sch:report role='WARN' test='number(h:BackupHeatingCapacity) &lt;= 1000 and number(h:BackupHeatingCapacity) &gt; 0 and h:BackupHeatingCapacity'>Backup heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:BackupHeatingCapacity) &lt; 1000 and number(h:BackupHeatingCapacity) &gt; 0 and h:BackupHeatingCapacity'>Backup heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -1706,7 +1710,7 @@
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACPlant/h:GeothermalLoop'>
       <sch:assert role='ERROR' test='h:LoopConfiguration[text()="vertical"]'>Expected LoopConfiguration to be 'vertical'</sch:assert>
       <sch:assert role='ERROR' test='number(h:BoreholesOrTrenches/h:Count) &gt;= 1 or not(h:BoreholesOrTrenches/h:Count)'>Expected BoreholesOrTrenches/Count to be greater than or equal to 1</sch:assert>
-      <sch:assert role='ERROR' test='number(h:BoreholesOrTrenches/h:Count) &lt;= 10 or not(h:BoreholesOrTrenches/h:Count)'>Expected BoreholesOrTrenches/Count to be less than or equal to 10</sch:assert>
+      <sch:assert role='ERROR' test='number(h:BoreholesOrTrenches/h:Count) &lt;= 15 or not(h:BoreholesOrTrenches/h:Count)'>Expected BoreholesOrTrenches/Count to be less than or equal to 15</sch:assert>
       <sch:assert role='ERROR' test='number(h:BoreholesOrTrenches/h:Length) &gt;= 80 or not(h:BoreholesOrTrenches/h:Length)'>Expected BoreholesOrTrenches/Length to be greater than or equal to 80</sch:assert>
       <sch:assert role='ERROR' test='number(h:BoreholesOrTrenches/h:Length) &lt;= 500 or not(h:BoreholesOrTrenches/h:Length)'>Expected BoreholesOrTrenches/Length to be less than or equal to 500</sch:assert>
       <sch:assert role='ERROR' test='number(h:Pipe/h:Diameter) = 0.75 or number(h:Pipe/h:Diameter) = 1.0 or number(h:Pipe/h:Diameter) = 1.25 or not(h:Pipe/h:Diameter)'>Expected Pipe/Diameter to be 0.75, 1.0, or 1.25</sch:assert>
@@ -2087,9 +2091,9 @@
       <sch:assert role='ERROR' test='count(h:extension/h:TankModelType) &lt;= 1'>Expected at most one extension/TankModelType</sch:assert>
       <sch:assert role='ERROR' test='h:extension/h:TankModelType[text()="mixed" or text()="stratified"] or not(h:extension/h:TankModelType)'>Expected extension/TankModelType to be 'mixed' or 'stratified'</sch:assert>
       <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:UniformEnergyFactor) &lt; 0.45'>UniformEnergyFactor should typically be greater than or equal to 0.45.</sch:report>
-      <sch:report role='WARN' test='number(h:EnergyFactor) &lt; 0.45'>EnergyFactor should typically be greater than or equal to 0.45.</sch:report>
-      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt;= 1000 and number(h:HeatingCapacity) &gt; 0'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
+      <sch:report role='WARN' test='number(h:UniformEnergyFactor) &lt; 0.4'>UniformEnergyFactor should typically be greater than or equal to 0.4.</sch:report>
+      <sch:report role='WARN' test='number(h:EnergyFactor) &lt; 0.4'>EnergyFactor should typically be greater than or equal to 0.4.</sch:report>
+      <sch:report role='WARN' test='number(h:HeatingCapacity) &lt; 1000 and number(h:HeatingCapacity) &gt; 0'>Heating capacity should typically be greater than or equal to 1000 Btu/hr.</sch:report>
       <sch:report role='WARN' test='number(h:HotWaterTemperature) &lt; 110'>Hot water setpoint should typically be greater than or equal to 110 deg-F.</sch:report>
     </sch:rule>
   </sch:pattern>
@@ -2111,8 +2115,8 @@
       <sch:assert role='ERROR' test='number(h:UniformEnergyFactor) &lt; 1 or not(h:UniformEnergyFactor)'>Expected UniformEnergyFactor to be less than 1</sch:assert>
       <sch:assert role='ERROR' test='number(h:EnergyFactor) &lt; 1 or not(h:EnergyFactor)'>Expected EnergyFactor to be less than 1</sch:assert>
       <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:UniformEnergyFactor) &lt; 0.45'>UniformEnergyFactor should typically be greater than or equal to 0.45.</sch:report>
-      <sch:report role='WARN' test='number(h:EnergyFactor) &lt; 0.45'>EnergyFactor should typically be greater than or equal to 0.45.</sch:report>
+      <sch:report role='WARN' test='number(h:UniformEnergyFactor) &lt; 0.4'>UniformEnergyFactor should typically be greater than or equal to 0.4.</sch:report>
+      <sch:report role='WARN' test='number(h:EnergyFactor) &lt; 0.4'>EnergyFactor should typically be greater than or equal to 0.4.</sch:report>
       <sch:report role='WARN' test='number(h:HotWaterTemperature) &lt; 110'>Hot water setpoint should typically be greater than or equal to 110 deg-F.</sch:report>
     </sch:rule>
   </sch:pattern>
@@ -2351,7 +2355,7 @@
       <sch:assert role='ERROR' test='number(h:UsableCapacity[h:Units="kWh"]/h:Value) &lt; number(h:NominalCapacity[h:Units="kWh"]/h:Value) or not(h:UsableCapacity[h:Units="kWh"]/h:Value) or not(h:NominalCapacity[h:Units="kWh"]/h:Value)'>Expected UsableCapacity to be less than NominalCapacity</sch:assert>
       <sch:assert role='ERROR' test='number(h:UsableCapacity[h:Units="Ah"]/h:Value) &lt; number(h:NominalCapacity[h:Units="Ah"]/h:Value) or not(h:UsableCapacity[h:Units="Ah"]/h:Value) or not(h:NominalCapacity[h:Units="Ah"]/h:Value)'>Expected UsableCapacity to be less than NominalCapacity</sch:assert>
       <!-- Warnings -->
-      <sch:report role='WARN' test='number(h:RatedPowerOutput) &lt;= 1000 and number(h:RatedPowerOutput) &gt; 0'>Rated power output should typically be greater than or equal to 1000 W.</sch:report>
+      <sch:report role='WARN' test='number(h:RatedPowerOutput) &lt; 1000 and number(h:RatedPowerOutput) &gt; 0'>Rated power output should typically be greater than or equal to 1000 W.</sch:report>
     </sch:rule>
   </sch:pattern>
 

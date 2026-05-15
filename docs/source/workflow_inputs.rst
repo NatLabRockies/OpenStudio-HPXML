@@ -39,14 +39,16 @@ To enable advanced research features, additional information is entered in ``/HP
 
 These features may require shorter timesteps, allow more sophisticated simulation control, and/or impact simulation runtime.
 
-  ======================================  ========  =======  ================  ========  ========  ========================================================
-  Element                                 Type      Units    Constraints       Required  Default   Notes
-  ======================================  ========  =======  ================  ========  ========  ========================================================
-  ``TemperatureCapacitanceMultiplier``    double             > 0               No        7.0 [#]_  Multiplier on air heat capacitance [#]_
-  ``OnOffThermostatDeadbandTemperature``  double    F        > 0 [#]_          No                  Temperature difference between cut-in and cut-out temperature for HVAC operation [#]_
-  ``HeatPumpBackupCapacityIncrement``     double    Btu/hr   > 0 [#]_          No                  Capacity increment of multi-stage heat pump backup systems [#]_
-  ``GroundToAirHeatPumpModelType``        string             See [#]_          No        standard  Ground-to-air heat pump system model type [#]_
-  ======================================  ========  =======  ================  ========  ========  ========================================================
+  =============================================  ========  =======  ================  ========  ========  ========================================================
+  Element                                        Type      Units    Constraints       Required  Default   Notes
+  =============================================  ========  =======  ================  ========  ========  ========================================================
+  ``TemperatureCapacitanceMultiplier``           double             > 0               No        7.0 [#]_  Multiplier on air heat capacitance [#]_
+  ``OnOffThermostatDeadbandTemperature``         double    F        > 0 [#]_          No        <none>    Temperature difference between cut-in and cut-out temperature for HVAC operation [#]_
+  ``LatentDegradationModel/Enabled``             boolean                              No        false     Whether to use the latent degradation model for cooling systems [#]_
+  ``LatentDegradationModel/HVACBlowerOffDelay``  double    sec      >= 0              No        See [#]_  HVAC blower-off delay when using the latent degradation model
+  ``HeatPumpBackupCapacityIncrement``            double    Btu/hr   > 0 [#]_          No        <none>    Capacity increment of multi-stage heat pump backup systems [#]_
+  ``GroundToAirHeatPumpModelType``               string             See [#]_          No        standard  Ground-to-air heat pump system model type [#]_
+  =============================================  ========  =======  ================  ========  ========  ========================================================
 
   .. [#] The default value of 7 is an average value found in the literature when calibrating timeseries EnergyPlus indoor temperatures to field data.
   .. [#] TemperatureCapacitanceMultiplier affects the transient calculation of indoor air temperatures.
@@ -62,6 +64,11 @@ These features may require shorter timesteps, allow more sophisticated simulatio
          When this feature is enabled, the model will also explicitly model cycling, such that it will take several minutes for the HVAC to reach full capacity for single and two speed AC/ASHP systems, and time-based realistic staging (stay at low speed for 5 minutes before transitioning to the higher stage, and stay at high speed until cut-out deadband temperature is reached) for two speed AC/ASHP systems.
          This feature should only be used if detailed power profiles and loads are required.
          Common use cases for this feature are when modeling advanced controls, such as a Home Energy Management System, or if performing co-simulation with a grid model.
+  .. [#] The latent degradation model for cooling systems is suggested when running simulations where latent load or dehumidifier energy use is of interest.
+         This model accounts for latent removal during coil start-up, and moisture re-introduced to the conditioned space during the blower-off delay (forced evaporation) and during the remaining off cycle time after the blower shuts off (natural evaporation).
+         It currently applies to central air conditioners and central air source heat pumps only.
+         See `Understanding the Dehumidification Performance of Air-Conditioning Equipment at Part-Load Conditions <https://www.osti.gov/biblio/881342>_` for more information.
+  .. [#] When the latent degradation model is enabled, the HVAC blower-off delay defaults to 45 seconds.
   .. [#] HeatPumpBackupCapacityIncrement is currently only allowed with a 1 minute timestep.
   .. [#] HeatPumpBackupCapacityIncrement allows modeling multi-stage electric heat pump backup with time-based staging.
          If not provided, the heat pump backup is modeled with a single stage.
@@ -191,7 +198,7 @@ For simple utility rate structures, inputs can be entered using a fixed charge a
   ================================  ========  =======  ===========  ========  ========  ====================
 
   .. [#] If running :ref:`bldg_type_whole_mf_buildings`, the fixed charge will apply to every dwelling unit in the building.
-  .. [#] If MarginalRate not provided, it defaults to state-level value based on 2023 EIA SEDS data, available at ``ReportUtilityBills/resources/simple_rates/pr_all_update.csv``.
+  .. [#] If MarginalRate not provided, it defaults to state-level value based on EIA SEDS data, available at ``ReportUtilityBills/resources/simple_rates/eia_fuel_rates_by_state.csv``.
 
 **Detailed**
 
@@ -227,7 +234,7 @@ For each scenario, fuel rates can be optionally entered as an ``/HPXML/SoftwareI
   .. [#] FuelType choices are "natural gas", "propane", "fuel oil", "coal", "wood", and "wood pellets".
   .. [#] FixedCharge defaults to $12/month for natural gas and $0/month for other fuels.
   .. [#] MarginalRate units are $/therm for natural gas, $/gallon for propane and fuel oil, and $/kBtu for other fuels.
-  .. [#] If MarginalRate not provided, it defaults to state-level value based on 2023 EIA SEDS data, available at ``ReportUtilityBills/resources/simple_rates/pr_all_update.csv``.
+  .. [#] If MarginalRate not provided, it defaults to state-level value based on EIA SEDS data, available at ``ReportUtilityBills/resources/simple_rates/eia_fuel_rates_by_state.csv``.
 
 PV Compensation
 ~~~~~~~~~~~~~~~
@@ -302,7 +309,7 @@ You can create an additional column in the CSV file to define another unavailabl
 
 .. warning::
 
-  It is not possible to eliminate all HVAC/DHW energy use (e.g. crankcase/defrost energy, water heater parasitics) in EnergyPlus during an unavailable period.
+  It is not possible to eliminate all DHW energy use (e.g. water heater parasitics) in EnergyPlus during an unavailable period.
 
 .. _hpxml_electric_panel_calculations:
 
@@ -3356,7 +3363,7 @@ Allowed combinations of CapacityDescription and OutdoorTemperature for a given d
   .. [#] For variable speed equipment, minimum/maximum datapoints must both be provided or both be omitted.
   .. [#] Nominal datapoint at 82F is required for single/two stage equipment and optional for variable speed equipment.
 
-Note that when detailed cooling performance data is provided, some other inputs (like SEER) are ignored.
+Note that when detailed cooling performance data are provided, some other inputs (like SEER) are ignored.
 
 .. _htg_detailed_perf_data:
 
@@ -3377,7 +3384,7 @@ For air-source HVAC systems with detailed heating performance data, performance 
   .. [#] OutdoorTemperature choices are 47F, 17F, 5F, and one optional user-specified temperature less than 5F.
          Datapoints at additional outdoor temperatures are not currently supported.
   .. [#] If Capacity is used, the nominal value for the 47F datapoint must match the HeatingCapacity input (if provided) and the nominal value for the 17F datapoint must match the HeatingCapacity17F input (if provided).
-         If CapacityFractionOfNominal is used, the nominal value for the 95F datapoint must be 1.
+         If CapacityFractionOfNominal is used, the nominal value for the 47F datapoint must be 1.
   .. [#] CapacityDescription choices are "minimum", "nominal", and "maximum".
          See the table below for the allowed combinations of CapacityDescription and OutdoorTemperature.
   .. [#] The COP should not include power required for defrost cycling or drain pan heater operation.
@@ -3397,7 +3404,7 @@ Allowed combinations of CapacityDescription and OutdoorTemperature for a given d
   .. [#] Only variable speed equipment will use CapacityDescription="maximum".
   .. [#] For variable speed equipment, minimum/maximum datapoints must both be provided or both be omitted.
 
-Note that when detailed cooling performance data is provided, some other inputs (like HSPF) are ignored.
+Note that when detailed heating performance data are provided, some other inputs (like HSPF) are ignored.
 
 .. _geothermal_loops:
 
@@ -3412,7 +3419,7 @@ Each geothermal loop is entered as a ``/HPXML/Building/BuildingDetails/Systems/H
   ``SystemIdentifier``                      id                                                 Yes                       Unique identifier
   ``LoopConfiguration``                     string                         vertical            Yes                       Geothermal loop configuration
   ``LoopFlow``                              double            gal/min      > 0                 No        See [#]_        Water flow rate through the geothermal loop
-  ``BoreholesOrTrenches/Count``             integer                        >= 1, <= 10 [#]_    No [#]_   See [#]_        Number of boreholes
+  ``BoreholesOrTrenches/Count``             integer                        >= 1, <= 15 [#]_    No [#]_   See [#]_        Number of boreholes
   ``BoreholesOrTrenches/Length``            double            ft           >= 80, <= 500 [#]_  No        See [#]_        Length (i.e., average depth) of each borehole
   ``BoreholesOrTrenches/Spacing``           double            ft           > 0                 No        16.4            Distance between boreholes
   ``BoreholesOrTrenches/Diameter``          double            in           > 0                 No        5.0             Borehole diameter
@@ -3426,20 +3433,21 @@ Each geothermal loop is entered as a ``/HPXML/Building/BuildingDetails/Systems/H
   .. [#] If LoopFlow not provided, is it autosized as 3 times the maximum of the ground source heat pump's heating/cooling capacity in tons, with a minimum of 3 gal/min.
   .. [#] BoreholesOrTrenches/Count must be one of the following based on the borefield configuration:
 
-         \- **Rectangle**: 1, 2, 3, 4, 5, 6, 7, 8, 9, or 10
+         \- **Rectangle**: 1-15
 
-         \- **Open Rectangle**: 8 or 10
+         \- **Open Rectangle**: 8, 10, 12, 14
 
-         \- **C**: 7 or 9
+         \- **C**: 7, 9, 11, 13-15
 
-         \- **L**: 4, 5, 6, 7, 8, 9, or 10
+         \- **L**: 4-15
 
-         \- **U**: 7, 9, or 10
+         \- **U**: 7, 9-15
 
-         \- **Lopsided U**: 6, 7, 8, 9, or 10
+         \- **Lopsided U**: 6-15
 
   .. [#] BoreholesOrTrenches/Count is only required if extension/BorefieldConfiguration is provided and not **Rectangle**.
-  .. [#] If BoreholesOrTrenches/Count not provided, it is calculated as the required total length of the ground heat exchanger (calculated during sizing) divided by BoreholesOrTrenches/Length if BoreholesOrTrenches/Length is provided, otherwise autosized by assuming 1 for every ton of ground source heat pump cooling capacity (max of 10).
+  .. [#] If BoreholesOrTrenches/Count not provided, it is calculated as the required total length of the ground heat exchanger (calculated during sizing) divided by BoreholesOrTrenches/Length if BoreholesOrTrenches/Length is provided, otherwise assumes 1 borehole for every ton of ground source heat pump cooling capacity.
+         The maximum number of boreholes is 15.
   .. [#] The minimum depth in the g-function library is 80 ft.
          The maximum realistic depth to be used in residential applications is 500 ft.
   .. [#] If BoreholesOrTrenches/Length not provided, it is calculated as the required total length of the ground heat exchanger (calculated during sizing) divided by the total number of boreholes.
@@ -3506,10 +3514,6 @@ If not provided, OpenStudio-HPXML defaults to year-round availability of heating
   ``EndMonth``         integer          >= 1, <= 12  Yes                End month
   ``EndDayOfMonth``    integer          >= 1, <= 31  Yes                End day
   ===================  ========  =====  ===========  ========  =======  ===========
-
-.. warning::
-
-  It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus outside of an HVAC season.
 
 HPXML HVAC Setpoints
 ~~~~~~~~~~~~~~~~~~~~
@@ -4719,7 +4723,7 @@ Many of the inputs are adopted from the `PVWatts model <https://pvwatts.nlr.gov/
   .. [#] ModuleType choices are "standard", "premium", or "thin film".
   .. [#] Tracking choices are "fixed", "1-axis", "1-axis backtracked", or "2-axis".
   .. [#] ArrayOrientation choices are "northeast", "east", "southeast", "south", "southwest", "west", "northwest", or "north"
-  .. [#] SystemLossesFraction default is derived from the `PVWatts documentation <https://www.nlr.gov/docs/fy14osti/62641.pdf>`_, which breaks down the losses as follows.
+  .. [#] SystemLossesFraction default is derived from the `PVWatts documentation <https://docs.nlr.gov/docs/fy14osti/62641.pdf>`_, which breaks down the losses as follows.
          Note that the total loss (14%) is not the sum of the individual losses but is calculated by multiplying the reduction due to each loss.
 
          \- **Soiling**: 2%
@@ -5839,7 +5843,7 @@ The various locations used in an HPXML file are defined as follows:
   crawlspace - conditioned        Below-grade conditioned space maintained at setpoint     EnergyPlus thermal zone calculation                        Any
   garage                          Unconditioned garage (not shared parking garage) [#]_    EnergyPlus thermal zone calculation                        Any
   manufactured home underbelly    Underneath the belly, ambient environment                Weather data                                               Manufactured only
-  manufactured home belly         Within the belly                                         Same as conditioned space                                  Manufactured only
+  manufactured home belly         Within the belly                                         Weighted avg of 85% conditioned space/15% outside          Manufactured only
   other housing unit              E.g., conditioned adjacent unit or conditioned corridor  Same as conditioned space                                  SFA/MF only
   other heated space              E.g., shared laundry/equipment space                     Avg of conditioned space/outside; min of heating setpoint  SFA/MF only
   other multifamily buffer space  E.g., enclosed unconditioned stairwell                   Avg of conditioned space/outside; min of 50F               SFA/MF only

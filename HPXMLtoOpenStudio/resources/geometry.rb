@@ -1441,12 +1441,18 @@ module Geometry
                ground_weight: 1.0,
                f_regain: 0.83 } # From LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P"
     when HPXML::LocationManufacturedHomeBelly
-      # From LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P"
-      # 3.5 Manufactured House Belly Pan Temperatures
+      # Based on 2007 paper by Francisco & Palmiter "Thermal Characterization and Duct Losses of Belly Spaces in Manufactured Homes",
+      # Table 5 shows an average belly space connection to outdoors of 15%.
+      # https://www.researchgate.net/publication/290674828_Thermal_characterization_and_duct_losses_of_belly_spaces_in_manufactured_homes
+      #
+      # Regain assumption is based on LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P";
+      # see Section 3.5: Manufactured Home Belly Pan Temperatures.
+      # https://eta-publications.lbl.gov/sites/default/files/40588.pdf
+      #
       # FUTURE: Consider modeling the belly as a separate thermal zone so that we dynamically calculate temperatures.
       return { temp_min: nil,
-               indoor_weight: 1.0,
-               outdoor_weight: 0.0,
+               indoor_weight: 0.85,
+               outdoor_weight: 0.15,
                ground_weight: 0.0,
                f_regain: 0.62 }
     end
@@ -1589,13 +1595,7 @@ module Geometry
     if location == HPXML::LocationOtherHeatedSpace
       if spaces[HPXML::LocationConditionedSpace].thermalZone.get.thermostatSetpointDualSetpoint.is_initialized
         # Create a sensor to get dynamic heating setpoint
-        htg_sch = spaces[HPXML::LocationConditionedSpace].thermalZone.get.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get
-        space_values[:temp_min] = Model.add_ems_sensor(
-          model,
-          name: 'htg_spt',
-          output_var_or_meter_name: 'Schedule Value',
-          key_name: htg_sch.name
-        )
+        space_values[:temp_min] = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorHeatingSetpointTemp }
         space_values[:temp_min] = space_values[:temp_min].name.to_s
       else
         # No HVAC system; use the defaulted heating setpoint.
@@ -1607,34 +1607,18 @@ module Geometry
     if space_values[:indoor_weight] > 0
       if not spaces[HPXML::LocationConditionedSpace].thermalZone.get.thermostatSetpointDualSetpoint.is_initialized
         # No HVAC system; use the average of defaulted heating/cooling setpoints.
-        sensor_ia = UnitConversions.convert((default_htg_sp + default_clg_sp) / 2.0, 'F', 'C')
+        t_in_sensor = UnitConversions.convert((default_htg_sp + default_clg_sp) / 2.0, 'F', 'C')
       else
-        sensor_ia = Model.add_ems_sensor(
-          model,
-          name: 'cond_zone_temp',
-          output_var_or_meter_name: 'Zone Air Temperature',
-          key_name: spaces[HPXML::LocationConditionedSpace].thermalZone.get.name
-        )
-        sensor_ia = sensor_ia.name
+        t_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirDBTemp }.name
       end
     end
 
     if space_values[:outdoor_weight] > 0
-      sensor_oa = Model.add_ems_sensor(
-        model,
-        name: 'oa_temp',
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: nil
-      )
+      t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }.name
     end
 
     if space_values[:ground_weight] > 0
-      sensor_gnd = Model.add_ems_sensor(
-        model,
-        name: 'ground_temp',
-        output_var_or_meter_name: 'Site Surface Ground Temperature',
-        key_name: nil
-      )
+      t_gnd_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteGroundTemp }.name
     end
 
     actuator = Model.add_ems_actuator(
@@ -1649,14 +1633,14 @@ module Geometry
       name: "#{location} Temperature Program"
     )
     program.addLine("Set #{actuator.name} = 0.0")
-    if not sensor_ia.nil?
-      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{sensor_ia} * #{space_values[:indoor_weight]})")
+    if not t_in_sensor.nil?
+      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{t_in_sensor} * #{space_values[:indoor_weight]})")
     end
-    if not sensor_oa.nil?
-      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{sensor_oa.name} * #{space_values[:outdoor_weight]})")
+    if not t_out_sensor.nil?
+      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{t_out_sensor} * #{space_values[:outdoor_weight]})")
     end
-    if not sensor_gnd.nil?
-      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{sensor_gnd.name} * #{space_values[:ground_weight]})")
+    if not t_gnd_sensor.nil?
+      program.addLine("Set #{actuator.name} = #{actuator.name} + (#{t_gnd_sensor} * #{space_values[:ground_weight]})")
     end
     if not space_values[:temp_min].nil?
       if space_values[:temp_min].is_a? String
@@ -1671,7 +1655,7 @@ module Geometry
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'EndOfSystemTimestepAfterHVACReporting',
       ems_programs: [program]
     )
@@ -1699,7 +1683,8 @@ module Geometry
         HPXML::LocationOtherMultifamilyBufferSpace,
         HPXML::LocationOtherNonFreezingSpace,
         HPXML::LocationExteriorWall,
-        HPXML::LocationUnderSlab].include? location
+        HPXML::LocationUnderSlab,
+        HPXML::LocationManufacturedHomeBelly].include? location
       # if located in spaces where we don't model a thermal zone, create and return temperature schedule
       sch = get_space_temperature_schedule(model, location, spaces)
     else

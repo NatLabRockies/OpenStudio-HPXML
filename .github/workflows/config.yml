@@ -140,6 +140,12 @@ jobs:
           path: workflow/tests/test_results
           name: results-workflow2-tests
 
+      - name: Store release package
+        uses: actions/upload-artifact@v7
+        with:
+          path: OpenStudio-HPXML-*.zip
+          archive: false
+
   run-windows-tests:
     runs-on: windows-latest
     steps:
@@ -264,7 +270,7 @@ jobs:
           if [[ $(git diff --cached --exit-code) ]]; then
             git config --global user.email "github-action@users.noreply.github.com"
             git config --global user.name "GitHub Action"
-            git commit -m "Latest results."
+            git commit -m "Latest results. [skip ci]"
             echo "Pushing to branch: $branch_name"
             git push -u origin $branch_name
           fi

@@ -1337,6 +1337,16 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
       hpxml.header.hvac_onoff_thermostat_deadband = onoff_db
     end
 
+    hvac_bod = args[:advanced_feature_hvac_blower_off_delay]
+    hvac_bod = args[:advanced_feature_2_hvac_blower_off_delay] if hvac_bod.nil?
+    if not hvac_bod.nil?
+      if (not hpxml.header.latent_degradation_model_blower_off_delay.nil?) && (hpxml.header.latent_degradation_model_blower_off_delay != hvac_bod)
+        errors << "Advanced feature 'HVAC Blower-Off Delay' cannot vary across dwelling units."
+      end
+      hpxml.header.latent_degradation_model_blower_off_delay = hvac_bod
+      hpxml.header.latent_degradation_model_enabled = true
+    end
+
     hpbak = args[:advanced_feature_heat_pump_backup_capacity_increment]
     hpbak = args[:advanced_feature_2_heat_pump_backup_capacity_increment] if hpbak.nil?
     if not hpbak.nil?
@@ -2688,7 +2698,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                       '1-1/4" pipe' => 1.25 }[args[:hvac_geothermal_loop_pipe_diameter]]
 
     hpxml_bldg.geothermal_loops.add(id: "GeothermalLoop#{hpxml_bldg.geothermal_loops.size + 1}",
-                                    loop_configuration: args[:hvac_geothermal_loop_configuration],
+                                    loop_config: args[:hvac_geothermal_loop_configuration],
                                     loop_flow: args[:hvac_geothermal_loop_loop_flow],
                                     bore_config: args[:hvac_geothermal_loop_borefield_configuration],
                                     num_bore_holes: args[:hvac_geothermal_loop_boreholes_count],

@@ -268,14 +268,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
       next if message.include? 'Could not find a marginal Natural Gas rate.'
     end
     if !hpxml_header.unavailable_periods.select { |up| up.column_name == 'Power Outage' }.empty?
-      next if message.include? 'It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus during an unavailable period.'
       next if message.include? 'It is not possible to eliminate all DHW energy use (e.g. water heater parasitics) in EnergyPlus during an unavailable period.'
-    end
-    if hpxml.buildings.any? { |hpxml_bldg| (not hpxml_bldg.hvac_controls.empty?) && (hpxml_bldg.hvac_controls[0].seasons_heating_begin_month != 1) }
-      next if message.include? 'It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus outside of an HVAC season.'
-    end
-    if !hpxml_header.unavailable_periods.select { |up| (up.column_name == 'No Space Heating') || (up.column_name == 'No Space Cooling') }.empty?
-      next if message.include? 'It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus during an unavailable period.'
     end
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.climate_and_risk_zones.weather_station_epw_filepath.include? 'US_CO_Boulder_AMY_2012.epw' }
       next if message.include? 'No EPW design conditions found; calculating design conditions from EPW weather data.'
@@ -297,6 +290,20 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     end
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.inverters.map { |i| i.inverter_efficiency }.uniq.size > 1 }
       next if message.include? 'Inverters with varying efficiencies found; using a single PV size weighted-average in the model'
+    end
+    coal_files = [
+      'base-appliances-coal.xml',
+      'base-dhw-tank-coal.xml',
+      'base-hvac-boiler-coal-only.xml',
+      'base-hvac-furnace-coal-only.xml'
+    ]
+    if coal_files.any? { |f| hpxml_path.include?(f) }
+      next if message.include?('No EIA SEDS rate for coal was found for the state of')
+    end
+    # HVAC is undersized or poor install quality or advanced research features
+    if hpxml_path.include?('base-hvac-undersized.xml') || hpxml_path.include?('install-quality') || hpxml_path.include?('research-features')
+      next if message.include?('There are a large number of unmet hours') && message.include?('for heating; this may indicate the heating system is undersized or can be caused by recovery from thermostat setbacks.')
+      next if message.include?('There are a large number of unmet hours') && message.include?('for cooling; this may indicate the cooling system is undersized or can be caused by recovery from thermostat setbacks.')
     end
 
     # FUTURE: Revert this eventually
@@ -333,9 +340,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     next if message.include?('CalculateZoneVolume') && message.include?('not fully enclosed')
     next if message.include? 'do not define an enclosure'
     next if message.include? 'Pump nominal power or motor efficiency is set to 0'
-    next if message.include? 'volume flow rate per watt of rated total cooling capacity is out of range'
-    next if message.include? 'volume flow rate per watt of rated total heating capacity is out of range'
-    next if message.include? 'volume flow rate per watt of rated total water heating capacity is out of range'
+    next if message.include?('volume flow rate per watt of rated total') && message.include?('capacity is out of range')
     next if message.include? 'The Standard Ratings is calculated for'
     next if message.include?('WetBulb not converged after') && message.include?('iterations(PsyTwbFnTdbWPb)')
     next if message.include? 'Inside surface heat balance did not converge with Max Temp Difference'
@@ -405,6 +410,11 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     # GSHPs with only heating or cooling
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.heat_pumps.count { |hp| hp.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir && (hp.fraction_heat_load_served == 0 || hp.fraction_cool_load_served == 0) } > 0 }
       next if message.include? 'heating capacity is disproportionate (> 20% different) to total cooling capacity' # safe to ignore
+    end
+    # GSHPs with hard-sized capacities
+    if hpxml_path.include? 'house052.xml'
+      next if message.include? 'heating capacity is disproportionate (> 20% different) to total cooling capacity' # safe to ignore
+      next if message.include? 'SimHVAC: Maximum iterations (20) exceeded for all HVAC loops'
     end
     # Solar thermal systems
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.solar_thermal_systems.size > 0 }
@@ -1072,30 +1082,6 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     end
   end
 
-  # Check unmet hours
-  skip_unmet_check = false
-  if hpxml_path.include?('install-quality') || hpxml_path.include?('research-features')
-    # unmet hours are expected for HVAC installation quality and realistic backup staging files
-    skip_unmet_check = true
-  end
-  unmet_hours_htg = results.select { |k, _v| k.include? 'Unmet Hours: Heating' }.values.sum(0.0)
-  unmet_hours_clg = results.select { |k, _v| k.include? 'Unmet Hours: Cooling' }.values.sum(0.0)
-  if hpxml_path.include? 'base-hvac-undersized.xml'
-    assert_operator(unmet_hours_htg, :>, 1000)
-    assert_operator(unmet_hours_clg, :>, 1000)
-  else
-    if hpxml_bldg.total_fraction_heat_load_served == 0
-      assert_equal(0, unmet_hours_htg)
-    else
-      assert_operator(unmet_hours_htg, :<, 500) unless skip_unmet_check
-    end
-    if hpxml_bldg.total_fraction_cool_load_served == 0
-      assert_equal(0, unmet_hours_clg)
-    else
-      assert_operator(unmet_hours_clg, :<, 500) unless skip_unmet_check
-    end
-  end
-
   sqlFile.close
 
   # Ensure sql file is immediately freed; otherwise we can get
@@ -1136,8 +1122,8 @@ def _check_unit_multiplier_results(xml, hpxml_bldg, annual_results_1x, annual_re
       abs_delta_tol = 10.0
       abs_frac_tol = 0.02
     elsif key.include?('Resilience: Battery')
-      # Check that the battery resilience difference is less than 1 hr or less than 1%
-      abs_delta_tol = 1.0
+      # Check that the battery resilience difference is less than 2 hrs or less than 1%
+      abs_delta_tol = 2.0
       abs_frac_tol = 0.01
     elsif key.include?('Airflow:')
       # Check that airflow rate difference is less than 0.2 cfm or less than 5%

@@ -175,14 +175,18 @@ module Model
   # @param frac_lost [Double] Fraction of energy consumption that is not heat to the zone (for example, vented to the atmosphere)
   # @param schedule [OpenStudio::Model::Schedule] Schedule fraction (or multiplier) that applies to the design level
   # @return [OpenStudio::Model::ElectricEquipment] The model object
-  def self.add_electric_equipment(model, name:, end_use:, space:, design_level:, frac_radiant:, frac_latent:, frac_lost:, schedule:)
+  def self.add_electric_equipment(model, name:, end_use:, space:, design_level: nil, frac_radiant:, frac_latent:, frac_lost:, schedule:)
     ee_def = OpenStudio::Model::ElectricEquipmentDefinition.new(model)
     ee = OpenStudio::Model::ElectricEquipment.new(ee_def)
     ee.setName(name)
     ee.setEndUseSubcategory(end_use) unless end_use.nil?
     ee.setSpace(space)
     ee_def.setName(name)
-    ee_def.setDesignLevel(design_level) unless design_level.nil? # EMS-actuated if nil
+    if design_level.nil? # EMS-actuated if nil
+      ee_def.setDesignLevel(0)
+    else
+      ee_def.setDesignLevel(design_level)
+    end
     ee_def.setFractionRadiant(frac_radiant)
     ee_def.setFractionLatent(frac_latent)
     ee_def.setFractionLost(frac_lost)
@@ -197,16 +201,16 @@ module Model
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param name [String] Name for the OpenStudio object
-  # @param end_use [String] Name of the end use subcategory for output processing
+  # @param end_use [String] Name of the end use subcategory for output processing, or nil
   # @param space [OpenStudio::Model::Space] The space the object is added to
-  # @param design_level [Double] Maximum energy input (W)
+  # @param design_level [Double] Maximum energy input (W), or nil if EMS-actuated
   # @param frac_radiant [Double] Fraction of energy consumption that is long-wave radiant heat to the zone
   # @param frac_latent [Double] Fraction of energy consumption that is latent heat to the zone
   # @param frac_lost [Double] Fraction of energy consumption that is not heat to the zone (for example, vented to the atmosphere)
   # @param schedule [OpenStudio::Model::Schedule] Schedule fraction (or multiplier) that applies to the design level
-  # @param fuel_type [String] Fuel type if the equipment consumes fuel (HPXML::FuelTypeXXX)
+  # @param fuel_type [String] Fuel type if the equipment consumes fuel (HPXML::FuelTypeXXX), or nil if adding load only (no energy consumption)
   # @return [OpenStudio::Model::OtherEquipment] The model object
-  def self.add_other_equipment(model, name:, end_use:, space:, design_level:, frac_radiant:, frac_latent:, frac_lost:, schedule:, fuel_type:)
+  def self.add_other_equipment(model, name:, end_use: nil, space:, design_level: nil, frac_radiant:, frac_latent:, frac_lost:, schedule:, fuel_type: nil)
     oe_def = OpenStudio::Model::OtherEquipmentDefinition.new(model)
     oe = OpenStudio::Model::OtherEquipment.new(oe_def)
     oe.setName(name)
@@ -214,7 +218,11 @@ module Model
     oe.setFuelType(EPlus.fuel_type(fuel_type)) unless fuel_type.nil?
     oe.setSpace(space)
     oe_def.setName(name)
-    oe_def.setDesignLevel(design_level) unless design_level.nil? # EMS-actuated if nil
+    if design_level.nil? # EMS-actuated if nil
+      oe_def.setDesignLevel(0)
+    else
+      oe_def.setDesignLevel(design_level)
+    end
     oe_def.setFractionRadiant(frac_radiant)
     oe_def.setFractionLatent(frac_latent)
     oe_def.setFractionLost(frac_lost)
@@ -653,17 +661,11 @@ module Model
     rule = OpenStudio::Model::ScheduleRule.new(schedule)
 
     if (not apply_to_days.is_a? Array) || (apply_to_days.size != 7)
-      fail 'Unexpected apply_to_days.'
+      fail "Unexpected apply_to_days for #{schedule.name}."
     end
 
-    # Allow for either 0-based or 1-based array for now
-    # FUTURE: Restrict to 0-based
-    if (not hourly_values.is_a? Array) || (hourly_values.size != 24 && hourly_values.size != 25)
-      fail 'Unexpected hourly_values.'
-    end
-
-    if hourly_values.size == 24
-      hourly_values = [nil] + hourly_values
+    if (not hourly_values.is_a? Array) || (hourly_values.size != 24)
+      fail "Unexpected hourly_values for #{schedule.name}."
     end
 
     if apply_to_days == [1, 1, 1, 1, 1, 1, 1]
@@ -688,12 +690,10 @@ module Model
     day_sch = rule.daySchedule
     day_sch.setName("#{schedule.name} day")
 
-    previous_value = hourly_values[1]
-    for h in 1..24
-      next if (h != 24) && (hourly_values[h + 1] == previous_value)
+    for h in 0..23
+      next if (h != 23) && (hourly_values[h] == hourly_values[h + 1]) # skip if same as next value
 
-      day_sch.addValue(OpenStudio::Time.new(0, h, 0, 0), previous_value)
-      previous_value = hourly_values[h + 1]
+      day_sch.addValue(OpenStudio::Time.new(0, h + 1, 0, 0), hourly_values[h])
     end
 
     return rule
@@ -1195,7 +1195,7 @@ module Model
   # @param unit_number [Integer] index number corresponding to an HPXML Building object
   # @return [String] the new OpenStudio object name with unique unit prefix
   def self.make_unit_variable_name(obj_name, unit_number)
-    if obj_name.to_s.include?(':Zone:')
+    if obj_name.to_s.include? ':Zone:'
       obj_name = obj_name.split(':')
       prefix = obj_name[0..-2].join(':')
       zone_name = make_unit_variable_name(obj_name[-1], unit_number)
@@ -1203,9 +1203,18 @@ module Model
       return new_name
     end
 
+    # Need to fix cooling coil inlet node name (for blower off delay/latent degradation model)
+    clg_coil_node_str = ' Fan - Cooling Coil Node'
+    if obj_name.to_s.include? clg_coil_node_str
+      clg_coil_name = obj_name.split(clg_coil_node_str)[0]
+      clg_coil_name = make_unit_variable_name(clg_coil_name, unit_number)
+      new_name = "#{clg_coil_name}#{clg_coil_node_str}"
+      return new_name
+    end
+
     new_name = ems_friendly_name("unit#{unit_number + 1}_#{obj_name}")
 
-    # Need to fix HWPH outlet node name
+    # Need to fix HWPH outlet node name (for ducting)
     if new_name.include?('_Outlet') && new_name.include?(ems_friendly_name(Constants::ObjectTypeWaterHeater))
       new_name.gsub!('_Outlet', ' Outlet')
     end
