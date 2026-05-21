@@ -3,7 +3,7 @@
 __Features__
 
 __Bugfixes__
-- Fixes ERV supply outlet enthalpy calculation to correct formulation inconsistency.
+- Fixes ERV/HRV supply outlet enthalpy calculation to correct formulation inconsistency.
 
 ## OpenStudio-HPXML v1.12.0
 
