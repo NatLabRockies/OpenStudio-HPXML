@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>6282d883-be7c-48b9-bf0c-60c8729bcf8e</version_id>
-  <version_modified>2026-05-21T19:32:05Z</version_modified>
+  <version_id>033831a5-9516-48c0-9ed2-d9f07b0e1609</version_id>
+  <version_modified>2026-05-21T21:45:00Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -217,7 +217,7 @@
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>0CF17C43</checksum>
+      <checksum>FEB9F10E</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
