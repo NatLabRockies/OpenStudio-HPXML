@@ -1,6 +1,7 @@
 ## OpenStudio-HPXML v1.13.0
 
 __Features__
+- Adds unmet dehumidification hours output for hours where the dehumidifier RH setpoint is exceeded; issues a warning if more than 300 hours.
 
 __Bugfixes__
 
