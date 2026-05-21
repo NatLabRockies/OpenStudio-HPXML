@@ -1864,8 +1864,8 @@ module Airflow
 
           if not vent_mech.total_recovery_efficiency.nil?
             # The following is derived from CSA 439, Clause 9.3.3.2, Eq. 13:
-            #    E_THR = (m_sup,fan * Cp * (h_sup,out - h_sup,in) - P_sup,fan) / (m_exh,fan * Cp * (h_exh,in - h_sup,in) + P_exh,fan)
-            h_sup_out = h_sup_in - (vent_mech.total_recovery_efficiency * (m_fan * (h_sup_in - h_exh_in) + p_fan) + p_fan) / m_fan
+            #    E_THR = (m_sup,fan * (h_sup,out - h_sup,in) - P_sup,fan) / (m_exh,fan * (h_exh,in - h_sup,in) + P_exh,fan)
+            h_sup_out = h_sup_in + (vent_mech.total_recovery_efficiency * (m_fan * (h_exh_in - h_sup_in) + p_fan) + p_fan) / m_fan
           else
             # The following is derived from (taken from CSA 439, Clause 9.2.1, Eq. 7):
             h_sup_out = h_sup_in - (vent_mech.total_recovery_efficiency_adjusted * (h_sup_in - h_exh_in))
