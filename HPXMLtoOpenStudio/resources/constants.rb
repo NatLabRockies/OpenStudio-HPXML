@@ -91,6 +91,7 @@ module Constants
   ObjectTypeSensorIndoorHeatingSetpointTemp = 'indoor heating setpoint temp sensor'
   ObjectTypeSensorScheduleBAHSPCoolingSeason = 'bahsp cooling season sensor'
   ObjectTypeSensorScheduleCoolingAvailability = 'cooling availability sensor'
+  ObjectTypeSensorScheduleDehumidAvailability = 'dehumid availability sensor'
   ObjectTypeSensorScheduleHeatingAvailability = 'heating availability sensor'
   ObjectTypeSensorScheduleVehicleDischarge = 'vehicle discharge schedule sensor'
   ObjectTypeSensorSiteGroundTemp = 'site ground temp sensor'

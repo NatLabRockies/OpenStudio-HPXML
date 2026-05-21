@@ -1507,12 +1507,20 @@ module HVAC
     # Availability Schedule
     dehum_unavailable_periods = Schedule.get_unavailable_periods(runner, SchedulesFile::Columns[:Dehumidifier].name, hpxml_header.unavailable_periods)
     avail_sch = ScheduleConstant.new(model, obj_name + ' schedule', 1.0, EPlus::ScheduleTypeLimitsFraction, unavailable_periods: dehum_unavailable_periods)
-    avail_sch = avail_sch.schedule
+
+    # Add sensor for unmet dehumidification hours EMS program
+    dehumid_avail_sensor = Model.add_ems_sensor(
+      model,
+      name: "#{avail_sch.schedule.name} s",
+      output_var_or_meter_name: 'Schedule Value',
+      key_name: avail_sch.schedule.name
+    )
+    dehumid_avail_sensor.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorScheduleDehumidAvailability)
 
     # Dehumidifier
     dehumidifier = OpenStudio::Model::ZoneHVACDehumidifierDX.new(model, capacity_curve, energy_factor_curve, part_load_frac_curve)
     dehumidifier.setName(obj_name)
-    dehumidifier.setAvailabilitySchedule(avail_sch)
+    dehumidifier.setAvailabilitySchedule(avail_sch.schedule)
     dehumidifier.setRatedWaterRemoval(UnitConversions.convert(total_capacity, 'pint', 'L'))
     dehumidifier.setRatedEnergyFactor(avg_energy_factor / total_fraction_served)
     dehumidifier.setRatedAirFlowRate(UnitConversions.convert(air_flow_rate, 'cfm', 'm^3/s'))

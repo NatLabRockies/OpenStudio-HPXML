@@ -192,12 +192,12 @@ module Outputs
   def self.apply_unmet_dehumid_hours_ems_program(model, hpxml_osm_map)
     return if hpxml_osm_map.keys.map { |hpxml_bldg| hpxml_bldg.dehumidifiers.size }.sum == 0
 
-    rh_sensors, rh_setpoints = {}, {}
+    rh_sensors, rh_setpoints, avail_sensors = {}, {}, {}
     hpxml_osm_map.each_with_index do |(hpxml_bldg, unit_model), unit|
       # EMS Sensor
       rh_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirRH }
-
       rh_setpoints[unit] = hpxml_bldg.dehumidifiers[0].rh_setpoint * 100.0
+      avail_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleDehumidAvailability }
     end
 
     rh_tol = 1.0 # 1% RH
@@ -214,10 +214,12 @@ module Outputs
     for unit in 0..hpxml_osm_map.size - 1
       program.addLine("Set #{unit_dehum_hrs} = 0")
       program.addLine("Set indoor_rh = #{rh_sensors[unit].name}")
-      program.addLine("If indoor_rh > #{rh_setpoints[unit]} + #{rh_tol}")
+      line = "If (indoor_rh > #{rh_setpoints[unit]} + #{rh_tol})"
+      line += " && (#{avail_sensors[unit].name} == 1)" unless avail_sensors[unit].nil?
+      program.addLine(line)
       program.addLine("  Set #{unit_dehum_hrs} = #{unit_dehum_hrs} + ZoneTimestep")
       program.addLine('EndIf')
-      program.addLine("If #{unit_dehum_hrs} > #{dehum_hrs}") # Use max hourly value across all units
+      program.addLine("If (#{unit_dehum_hrs} > #{dehum_hrs})") # Use max hourly value across all units
       program.addLine("  Set #{dehum_hrs} = #{unit_dehum_hrs}")
       program.addLine('EndIf')
     end
