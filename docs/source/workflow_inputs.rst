@@ -628,7 +628,7 @@ Building construction is entered in ``/HPXML/Building/BuildingDetails/BuildingSu
   ``NumberofBedrooms``                     integer              >= 0                               Yes                 Number of bedrooms
   ``NumberofBathrooms``                    integer              > 0                                No        See [#]_  Number of bathrooms
   ``ConditionedFloorArea``                 double    ft2        > 0                                Yes                 Floor area within conditioned space boundary
-  ``ConditionedBuildingVolume``            double    ft3        > 0                                No        See [#]_  Volume within conditioned space boundary (including a conditioned basement/crawlspace)
+  ``ConditionedBuildingVolume``            double    ft3        > 0                                No        See [#]_  Volume within conditioned space boundary (including a conditioned basement)
   =======================================  ========  =========  =================================  ========  ========  =======================================================================
 
   .. [#] YearBuilt is required when :ref:`infil_leakiness_description` is the only air leakage type specified.
@@ -5837,7 +5837,7 @@ The various locations used in an HPXML file are defined as follows:
   roof deck                       Ducts on roof deck (outside)                             Weather data                                               Any
   ==============================  =======================================================  =========================================================  =================
 
-  .. [#] OpenStudio-HXPML does not model "conditioned" crawlspaces that actively maintain setpoint since that is unlikely to occur in practice.
+  .. [#] OpenStudio-HPXML does not model "conditioned" crawlspaces that actively maintain setpoint since that is unlikely to occur in practice.
          Conditioned crawlspaces should be described as unvented crawlspaces, in which the crawlspace temperature will be calculated by EnergyPlus based on how well it's insulated.
          If the crawlspace is well-insulated, its temperature will approach the above-grade conditioned space temperature.
   .. [#] OpenStudio-HPXML does not model "conditioned" or "heated" garages.

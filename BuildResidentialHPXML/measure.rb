@@ -2858,22 +2858,38 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
   def get_location(building_component, location, hpxml_bldg)
     return if location.nil?
 
-    if [HPXML::LocationCrawlspace, HPXML::LocationBasement].include? location
+    if location == HPXML::LocationCrawlspace
       foundation_type = hpxml_bldg.foundations[-1].foundation_type
-      location = HPXML::get_location_from_foundation_type(foundation_type, throw_error: false)
-      if location.nil?
+      case foundation_type
+      when HPXML::FoundationTypeCrawlspaceUnvented
+        return HPXML::LocationCrawlspaceUnvented
+      when HPXML::FoundationTypeCrawlspaceVented
+        return HPXML::LocationCrawlspaceVented
+      else
         fail "Specified '#{location}' for #{building_component} location but foundation type is '#{foundation_type}'."
       end
-
-      return location
-    elsif [HPXML::LocationAttic].include? location
+    elsif location == HPXML::LocationAttic
       attic_type = hpxml_bldg.attics[-1].attic_type
-      location = HPXML::get_location_from_attic_type(attic_type, throw_error: false)
-      if location.nil?
+      case attic_type
+      when HPXML::AtticTypeUnvented
+        return HPXML::LocationAtticUnvented
+      when HPXML::AtticTypeVented
+        return HPXML::LocationAtticVented
+      when HPXML::AtticTypeConditioned
+        return HPXML::LocationConditionedSpace
+      else
         fail "Specified '#{location}' for #{building_component} location but attic type is '#{attic_type}'."
       end
-
-      return location
+    elsif location == HPXML::LocationBasement
+      foundation_type = hpxml_bldg.foundations[-1].foundation_type
+      case foundation_type
+      when HPXML::FoundationTypeBasementConditioned
+        return HPXML::LocationBasementConditioned
+      when HPXML::FoundationTypeBasementUnconditioned
+        return HPXML::LocationBasementUnconditioned
+      else
+        fail "Specified '#{location}' for #{building_component} location but foundation type is '#{foundation_type}'."
+      end
     end
     return location
   end

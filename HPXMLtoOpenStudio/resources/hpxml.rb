@@ -2455,7 +2455,7 @@ class HPXML < Object
   # Object for /HPXML/Building/BuildingDetails/BuildingSummary/BuildingConstruction.
   class BuildingConstruction < BaseElement
     ATTRS = [:year_built,                               # [Integer] YearBuilt
-             :residential_facility_type,                # [String] ResidentialFacilityType (HXPML::ResidentialTypeXXX)
+             :residential_facility_type,                # [String] ResidentialFacilityType (HPXML::ResidentialTypeXXX)
              :unit_height_above_grade,                  # [Double] UnitHeightAboveGrade
              :number_of_units,                          # [Integer] NumberofUnits
              :number_of_units_in_building,              # [Integer] NumberofUnitsInBuilding

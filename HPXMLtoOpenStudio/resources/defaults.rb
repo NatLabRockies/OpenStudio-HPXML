@@ -5047,7 +5047,7 @@ module Defaults
   #
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Equivalent number of bedrooms
   def self.get_equivalent_nbeds(nbeds, n_occ, unit_type)
     if n_occ.nil?
@@ -7480,7 +7480,7 @@ module Defaults
   #
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Array<Double, Double, Double>] Plug loads annual use (kWh), sensible/latent fractions
   def self.get_residual_mels_values(cfa, n_occ = nil, unit_type = nil)
     if n_occ == 0
@@ -7512,7 +7512,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Television annual use (kWh)
   def self.get_televisions_values(cfa, nbeds, n_occ = nil, unit_type = nil)
     if n_occ == 0
@@ -7547,7 +7547,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (kWh/yr)
   def self.get_pool_pump_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7565,7 +7565,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @param type [String] Type of heater (HPXML::HeaterTypeXXX)
   # @return [Array<String, Double>] Energy units (HPXML::UnitsXXX), annual energy use (kWh/yr or therm/yr)
   def self.get_pool_heater_annual_energy(cfa, nbeds, n_occ, unit_type, type)
@@ -7601,7 +7601,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (kWh/yr)
   def self.get_permanent_spa_pump_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7619,7 +7619,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @param type [String] Type of heater (HPXML::HeaterTypeXXX)
   # @return [Array<String, Double>] Energy units (HPXML::UnitsXXX), annual energy use (kWh/yr or therm/yr)
   def self.get_permanent_spa_heater_annual_energy(cfa, nbeds, n_occ, unit_type, type)
@@ -7675,7 +7675,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (kWh/yr)
   def self.get_default_well_pump_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7693,7 +7693,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (therm/yr)
   def self.get_gas_grill_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7711,7 +7711,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (therm/yr)
   def self.get_default_gas_lighting_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7729,7 +7729,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (therm/yr)
   def self.get_gas_fireplace_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7746,7 +7746,7 @@ module Defaults
   #
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @param general_water_use_usage_multiplier [Double] Usage multiplier on internal gains
   # @return [Array<Double, Double>] Sensible/latent internal gains (Btu/yr)
   def self.get_water_use_internal_gains(nbeds, n_occ, unit_type, general_water_use_usage_multiplier = 1.0)
