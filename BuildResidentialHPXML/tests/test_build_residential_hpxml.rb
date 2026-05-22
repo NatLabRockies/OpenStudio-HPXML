@@ -166,8 +166,7 @@ class BuildResidentialHPXMLTest < Minitest::Test
       'error-heating-system-and-heat-pump.xml' => ['Multiple central heating systems are not currently supported.'],
       'error-cooling-system-and-heat-pump.xml' => ['Multiple central cooling systems are not currently supported.'],
       'error-sfd-adiabatic-walls.xml' => ['No adiabatic surfaces can be applied to single-family detached homes.'],
-      'error-mf-conditioned-basement' => ['Conditioned basement/crawlspace foundation type for apartment units is not currently supported.'],
-      'error-mf-conditioned-crawlspace' => ['Conditioned basement/crawlspace foundation type for apartment units is not currently supported.'],
+      'error-mf-conditioned-basement' => ['Conditioned basement foundation type for apartment units is not currently supported.'],
       'error-second-heating-system-but-no-primary-heating.xml' => ['A second heating system was specified without a primary heating system.'],
       'error-sfa-above-apartment.xml' => ['Single-family attached units cannot be above another unit.'],
       'error-sfa-below-apartment.xml' => ['Single-family attached units cannot be below another unit.'],
@@ -682,8 +681,6 @@ class BuildResidentialHPXMLTest < Minitest::Test
       args['geometry_attached_walls'] = '1 Side: Left'
     when 'error-mf-conditioned-basement'
       args['geometry_foundation_type'] = 'Basement, Conditioned'
-    when 'error-mf-conditioned-crawlspace'
-      args['geometry_foundation_type'] = 'Crawlspace, Conditioned'
     when 'error-second-heating-system-but-no-primary-heating.xml'
       args['hvac_heating_system'] = 'None'
       args['hvac_heating_system_2'] = 'Fireplace, 100% Efficiency'

@@ -898,12 +898,11 @@ module Defaults
   # @return [nil]
   def self.apply_building_construction(hpxml_header, hpxml_bldg)
     cond_volume = hpxml_bldg.building_construction.conditioned_building_volume
-    cond_crawl_volume = Geometry.calculate_zone_volume(hpxml_bldg, HPXML::LocationCrawlspaceConditioned)
     cfa = hpxml_bldg.building_construction.conditioned_floor_area
     nbeds = hpxml_bldg.building_construction.number_of_bedrooms
     if hpxml_bldg.building_construction.average_ceiling_height.nil?
       if not cond_volume.nil?
-        hpxml_bldg.building_construction.average_ceiling_height = ((cond_volume - cond_crawl_volume) / cfa).round(2)
+        hpxml_bldg.building_construction.average_ceiling_height = (cond_volume / cfa).round(2)
       else
         if hpxml_bldg.roofs.any? { |r| r.interior_adjacent_to == HPXML::LocationConditionedSpace }
           # This is a very crude estimate for cathedral ceiling and conditioned attic, but better than nothing
@@ -919,7 +918,7 @@ module Defaults
     end
     if hpxml_bldg.building_construction.conditioned_building_volume.nil?
       avg_ceiling_height = hpxml_bldg.building_construction.average_ceiling_height
-      hpxml_bldg.building_construction.conditioned_building_volume = (cfa * avg_ceiling_height + cond_crawl_volume).round
+      hpxml_bldg.building_construction.conditioned_building_volume = (cfa * avg_ceiling_height).round
       hpxml_bldg.building_construction.conditioned_building_volume_isdefaulted = true
     end
     if hpxml_bldg.building_construction.number_of_bathrooms.nil?
@@ -1060,24 +1059,6 @@ module Defaults
       end
       if unvented_crawls.map { |f| f.within_infiltration_volume }.uniq.size != 1
         fail 'All unvented crawlspaces must have the same WithinInfiltrationVolume value.'
-      end
-    end
-
-    if hpxml_bldg.has_location(HPXML::LocationCrawlspaceConditioned)
-      cond_crawls = hpxml_bldg.foundations.select { |f| f.foundation_type == HPXML::FoundationTypeCrawlspaceConditioned }
-      if cond_crawls.empty?
-        hpxml_bldg.foundations.add(id: get_id('ConditionedCrawlspace', hpxml_bldg.foundations, unit_num),
-                                   foundation_type: HPXML::FoundationTypeCrawlspaceConditioned)
-        cond_crawls << hpxml_bldg.foundations[-1]
-      end
-      cond_crawls.each do |cond_crawl|
-        next unless cond_crawl.within_infiltration_volume.nil?
-
-        cond_crawl.within_infiltration_volume = true
-        cond_crawl.within_infiltration_volume_isdefaulted = true
-      end
-      if cond_crawls.map { |f| f.within_infiltration_volume }.uniq.size != 1
-        fail 'All conditioned crawlspaces must have the same WithinInfiltrationVolume value.'
       end
     end
 
@@ -5993,7 +5974,7 @@ module Defaults
       case foundation_type
       when HPXML::FoundationTypeSlab, HPXML::FoundationTypeAboveApartment
         c_foundation -= 0.036992 * area_fraction
-      when HPXML::FoundationTypeBasementConditioned, HPXML::FoundationTypeCrawlspaceUnvented, HPXML::FoundationTypeCrawlspaceConditioned
+      when HPXML::FoundationTypeBasementConditioned, HPXML::FoundationTypeCrawlspaceUnvented
         c_foundation += 0.108713 * area_fraction
       when HPXML::FoundationTypeBasementUnconditioned, HPXML::FoundationTypeCrawlspaceVented, HPXML::FoundationTypeBellyAndWing, HPXML::FoundationTypeAmbient
         c_foundation += 0.180352 * area_fraction
@@ -6567,7 +6548,6 @@ module Defaults
   def self.get_duct_locations(hpxml_bldg)
     primary_duct_location_hierarchy = [HPXML::LocationBasementConditioned,
                                        HPXML::LocationBasementUnconditioned,
-                                       HPXML::LocationCrawlspaceConditioned,
                                        HPXML::LocationCrawlspaceVented,
                                        HPXML::LocationCrawlspaceUnvented,
                                        HPXML::LocationAtticVented,

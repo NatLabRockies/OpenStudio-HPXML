@@ -83,8 +83,8 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                      "The value '-3.0' is less than the minimum value allowed"],
                             'duct-leakage-percent' => ['Expected Value to be less than 1 [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/DuctLeakageMeasurement/DuctLeakage[Units="Percent"], id: "HVACDistribution1"]'],
                             'duct-location' => ['A location is specified as "garage" but no surfaces were found adjacent to this space type.'],
-                            'duct-location-unconditioned-space' => ["Expected DuctLocation to be 'conditioned space' or 'basement - conditioned' or 'basement - unconditioned' or 'crawlspace - vented' or 'crawlspace - unvented' or 'crawlspace - conditioned' or 'attic - vented' or 'attic - unvented' or 'garage' or 'exterior wall' or 'under slab' or 'roof deck' or 'outside' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space' or 'manufactured home belly' [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/Ducts, id: \"Ducts1\"]",
-                                                                    "Expected DuctLocation to be 'conditioned space' or 'basement - conditioned' or 'basement - unconditioned' or 'crawlspace - vented' or 'crawlspace - unvented' or 'crawlspace - conditioned' or 'attic - vented' or 'attic - unvented' or 'garage' or 'exterior wall' or 'under slab' or 'roof deck' or 'outside' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space' or 'manufactured home belly' [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/Ducts, id: \"Ducts2\"]"],
+                            'duct-location-unconditioned-space' => ["Expected DuctLocation to be 'conditioned space' or 'basement - conditioned' or 'basement - unconditioned' or 'crawlspace - vented' or 'crawlspace - unvented' or 'attic - vented' or 'attic - unvented' or 'garage' or 'exterior wall' or 'under slab' or 'roof deck' or 'outside' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space' or 'manufactured home belly' [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/Ducts, id: \"Ducts1\"]",
+                                                                    "Expected DuctLocation to be 'conditioned space' or 'basement - conditioned' or 'basement - unconditioned' or 'crawlspace - vented' or 'crawlspace - unvented' or 'attic - vented' or 'attic - unvented' or 'garage' or 'exterior wall' or 'under slab' or 'roof deck' or 'outside' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space' or 'manufactured home belly' [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/Ducts, id: \"Ducts2\"]"],
                             'emissions-electricity-schedule' => ['Expected NumberofHeaderRows to be greater than or equal to 0',
                                                                  'Expected ColumnNumber to be greater than or equal to 1'],
                             'enclosure-attic-missing-roof' => ['There must be at least one roof adjacent to "attic - unvented". [context: /HPXML/Building/BuildingDetails/Enclosure[*/*[InteriorAdjacentTo="attic - unvented" or ExteriorAdjacentTo="attic - unvented"]], id: "MyBuilding"]'],
@@ -246,7 +246,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                                    'A location is specified as "manufactured home belly" but no surfaces were found adjacent to the "manufactured home underbelly" space type.'],
                             'manufactured-home-reference-water-heater' => ['There are references to "manufactured home belly" or "manufactured home underbelly" but ResidentialFacilityType is not "manufactured home".',
                                                                            'A location is specified as "manufactured home belly" but no surfaces were found adjacent to the "manufactured home underbelly" space type.',
-                                                                           "Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'crawlspace - conditioned' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'"],
+                                                                           "Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'"],
                             'manufactured-home-reference-floor' => ['There are references to "manufactured home belly" or "manufactured home underbelly" but ResidentialFacilityType is not "manufactured home".',
                                                                     'There must be at least one ceiling adjacent to "crawlspace - vented".'],
                             'missing-attached-to-space-wall' => ['Expected AttachedToSpace'],
@@ -293,7 +293,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'vehicle-ev-multiple-BEV' => ['Expected at most one Vehicle/VehicleType/BatteryElectricVehicle [context: /HPXML/Building/BuildingDetails/Systems/Vehicles, id: "MyBuilding"]'],
                             'vehicle-ev-invalid-fuel-economy-units' => ["Expected ../../FuelEconomyCombined/Units to be 'kWh/mile' or 'mile/kWh' or 'mpge' [context: /HPXML/Building/BuildingDetails/Systems/Vehicles/Vehicle/VehicleType/BatteryElectricVehicle, id: \"Vehicle1\"]"],
                             'water-heater-location' => ['A location is specified as "crawlspace - vented" but no surfaces were found adjacent to this space type.'],
-                            'water-heater-location-other' => ["Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'crawlspace - conditioned' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'"],
+                            'water-heater-location-other' => ["Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'"],
                             'water-heater-recovery-efficiency' => ['Expected RecoveryEfficiency to be greater than EnergyFactor'],
                             'wrong-infiltration-method-blower-door' => ['Expected Enclosure/AirInfiltration/AirInfiltrationMeasurement[BuildingAirLeakage/AirLeakage | EffectiveLeakageArea | SpecificLeakageArea]'],
                             'wrong-infiltration-method-default-table' => ['Expected Enclosure/AirInfiltration/AirInfiltrationMeasurement[LeakinessDescription]'] }
@@ -1314,7 +1314,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'inconsistent-uncond-basement-within-infiltration-volume' => ['All unconditioned basements must have the same WithinInfiltrationVolume value.'],
                             'inconsistent-unvented-attic-within-infiltration-volume' => ['All unvented attics must have the same WithinInfiltrationVolume value.'],
                             'inconsistent-unvented-crawl-within-infiltration-volume' => ['All unvented crawlspaces must have the same WithinInfiltrationVolume value.'],
-                            'inconsistent-cond-crawl-within-infiltration-volume' => ['All conditioned crawlspaces must have the same WithinInfiltrationVolume value.'],
                             'inconsistent-vented-attic-ventilation-rate' => ['All vented attics must have the same VentilationRate.'],
                             'inconsistent-vented-attic-ventilation-rate2' => ['All vented attics must have the same VentilationRate.'],
                             'inconsistent-vented-crawl-ventilation-rate' => ['All vented crawlspaces must have the same VentilationRate.'],
@@ -1643,12 +1642,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.foundations << fnd.dup
         hpxml_bldg.foundations[-1].id = 'Duplicate'
         hpxml_bldg.foundations[-1].within_infiltration_volume = true
-      when 'inconsistent-cond-crawl-within-infiltration-volume'
-        hpxml, hpxml_bldg = _create_hpxml('base-foundation-conditioned-crawlspace.xml')
-        fnd = hpxml_bldg.foundations.find { |f| f.foundation_type == HPXML::FoundationTypeCrawlspaceConditioned }
-        hpxml_bldg.foundations << fnd.dup
-        hpxml_bldg.foundations[-1].id = 'Duplicate'
-        hpxml_bldg.foundations[-1].within_infiltration_volume = false
       when 'inconsistent-vented-attic-ventilation-rate'
         hpxml, hpxml_bldg = _create_hpxml('base-atticroof-vented.xml')
         attic = hpxml_bldg.attics.find { |a| a.attic_type == HPXML::AtticTypeVented }
