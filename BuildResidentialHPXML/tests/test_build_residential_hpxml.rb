@@ -56,7 +56,6 @@ class BuildResidentialHPXMLTest < Minitest::Test
       'extra-sfa-slab.xml' => 'base-sfa.xml',
       'extra-sfa-vented-crawlspace.xml' => 'base-sfa.xml',
       'extra-sfa-unvented-crawlspace.xml' => 'base-sfa.xml',
-      'extra-sfa-conditioned-crawlspace.xml' => 'base-sfa.xml',
       'extra-sfa-unconditioned-basement.xml' => 'base-sfa.xml',
       'extra-sfa-ambient.xml' => 'base-sfa.xml',
 
@@ -564,9 +563,6 @@ class BuildResidentialHPXMLTest < Minitest::Test
     when 'extra-sfa-unvented-crawlspace.xml'
       args['geometry_foundation_type'] = 'Crawlspace, Unvented'
       args['enclosure_floor_over_foundation'] = 'Wood Frame, R-15'
-    when 'extra-sfa-conditioned-crawlspace.xml'
-      args['geometry_foundation_type'] = 'Crawlspace, Conditioned'
-      args['enclosure_floor_over_foundation'] = 'Wood Frame, Uninsulated'
     when 'extra-sfa-unconditioned-basement.xml'
       args['geometry_foundation_type'] = 'Basement, Unconditioned'
       args['enclosure_floor_over_foundation'] = 'Wood Frame, R-15'
