@@ -5838,7 +5838,7 @@ The various locations used in an HPXML file are defined as follows:
   ==============================  =======================================================  =========================================================  =================
 
   .. [#] OpenStudio-HXPML does not model "conditioned" crawlspaces that actively maintain setpoint since that is unlikely to occur in practice.
-         Conditioned crawlspaces should be described as unvented crawlspaces, in which the crawlspace temperature will be calculated by EnergyPlus based on how well its insulated and its connection to the above-grade conditioned space.
+         Conditioned crawlspaces should be described as unvented crawlspaces, in which the crawlspace temperature will be calculated by EnergyPlus based on how well it's insulated.
          If the crawlspace is well-insulated, its temperature will approach the above-grade conditioned space temperature.
   .. [#] OpenStudio-HPXML does not model "conditioned" or "heated" garages.
          Many conditioned garages are not conditioned 24/7, rather they are only conditioned for short periods when occupants are in them and turn on the space conditioning equipment, so it is best to assume an unconditioned garage.
