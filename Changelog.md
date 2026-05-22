@@ -3,6 +3,7 @@
 __Features__
 
 __Bugfixes__
+- **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
 
 ## OpenStudio-HPXML v1.12.0
 
