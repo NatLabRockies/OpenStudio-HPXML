@@ -1594,26 +1594,26 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     heat_pump = hpxml_bldg.heat_pumps[0]
     _check_ghp_standard(model, heat_pump, 12.79, 4.94, 962, [12.5, -1.3], [20, 31])
 
-    # args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-1-speed-experimental.xml'))
-    # model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-1-speed-experimental.xml'))
+    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-    # # Get HPXML values
-    # heat_pump = hpxml_bldg.heat_pumps[0]
-    # _check_ghp_experimental(model, heat_pump, [10550.56], [10550.56], [6.14], [4.02], 962, [12.5, -1.3], [20, 31])
+    # Get HPXML values
+    heat_pump = hpxml_bldg.heat_pumps[0]
+    _check_ghp_experimental(model, heat_pump, [10152], [16441], [5.30], [5.86], 962, [12.5, -1.3], [20, 31])
 
-    # args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-2-speed-experimental.xml'))
-    # model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-2-speed-experimental.xml'))
+    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-    # # Get HPXML values
-    # heat_pump = hpxml_bldg.heat_pumps[0]
-    # _check_ghp_experimental(model, heat_pump, [7757.83, 10550.56], [7779.98, 10550.56], [8.29, 7.52], [5.15, 4.44], 962, [12.5, -1.3], [20, 31])
+    # Get HPXML values
+    heat_pump = hpxml_bldg.heat_pumps[0]
+    _check_ghp_experimental(model, heat_pump, [7149, 10211], [11921, 16622], [7.35, 6.62], [7.95, 5.83], 962, [12.5, -1.3], [20, 31])
 
-    # args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-var-speed-experimental.xml'))
-    # model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-var-speed-experimental.xml'))
+    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-    # # Get HPXML values
-    # heat_pump = hpxml_bldg.heat_pumps[0]
-    # _check_ghp_experimental(model, heat_pump, [5066.38, 10550.56], [4719.26, 10550.56], [13.55, 12.79], [5.69, 4.94], 962, [12.5, -1.3], [20, 31])
+    # Get HPXML values
+    heat_pump = hpxml_bldg.heat_pumps[0]
+    _check_ghp_experimental(model, heat_pump, [4574, 10000], [7431, 16575.56], [10.39, 10.79], [8.98, 6.85], 962, [12.5, -1.3], [20, 31])
   end
 
   def test_ground_to_air_heat_pump_integrated_backup
@@ -2500,7 +2500,9 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     assert_equal(1, model.getCoilCoolingWaterToAirHeatPumpVariableSpeedEquationFits.size)
     clg_coil = model.getCoilCoolingWaterToAirHeatPumpVariableSpeedEquationFits[0]
     clg_cops.each_with_index do |clg_cop, i|
+	  puts "cooling COP speed #{i}: #{clg_coil.speeds[i].referenceUnitGrossRatedCoolingCOP}"
       assert_in_epsilon(clg_cop, clg_coil.speeds[i].referenceUnitGrossRatedCoolingCOP, 0.01)
+	  puts "cooling capacity speed #{i}: #{clg_coil.speeds[i].referenceUnitGrossRatedTotalCoolingCapacity}"
       assert_in_epsilon(clg_capacities[i], clg_coil.speeds[i].referenceUnitGrossRatedTotalCoolingCapacity, 0.01)
     end
 
@@ -2508,6 +2510,8 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     assert_equal(1, model.getCoilHeatingWaterToAirHeatPumpVariableSpeedEquationFits.size)
     htg_coil = model.getCoilHeatingWaterToAirHeatPumpVariableSpeedEquationFits[0]
     htg_cops.each_with_index do |htg_cop, i|
+	  puts "heating COP speed #{i}: #{htg_coil.speeds[i].referenceUnitGrossRatedHeatingCOP}"
+	  puts "heating capacity speed #{i}: #{htg_coil.speeds[i].referenceUnitGrossRatedHeatingCapacity}"
       assert_in_epsilon(htg_cop, htg_coil.speeds[i].referenceUnitGrossRatedHeatingCOP, 0.01)
       assert_in_epsilon(htg_capacities[i], htg_coil.speeds[i].referenceUnitGrossRatedHeatingCapacity, 0.01)
     end
