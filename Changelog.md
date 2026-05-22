@@ -1,6 +1,7 @@
 ## OpenStudio-HPXML v1.13.0
 
 __Features__
+  - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
 
 __Bugfixes__
 - **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
