@@ -7973,7 +7973,7 @@ module Defaults
           clg_ap.cool_eir_fwf_spec = [[1.0, 0.0, 0.0]]
           cool_cop_ratios = [1.0]
         when HPXML::HVACCompressorTypeTwoStage
-          clg_ap.cool_capacity_ratios = [0.704, 1.0]
+          clg_ap.cool_capacity_ratios = [0.7353, 1.0]
           # Cooling Curves
           # E+ Capacity and EIR as function of temperature curves(bi-quadratic) generated using E+ HVACCurveFitTool
           # See: https://bigladdersoftware.com/epx/docs/24-2/auxiliary-programs/hvac-performance-curve-fit-tool.html#hvac-performance-curve-fit-tool
@@ -7994,7 +7994,7 @@ module Defaults
                                       [1.5872, -1.055, 0.4678]]
 
           # Rated data from ClimateMaster residential tranquility 30 premier two-stage series Model SE036: https://files.climatemaster.com/RP3001-Residential-SE-Product-Catalog.pdf
-          cool_cop_ratios = [1.1882, 1.0]
+          cool_cop_ratios = [1.102827763, 1.0]
         when HPXML::HVACCompressorTypeVariableSpeed
           clg_ap.cool_capacity_ratios = [0.4802, 1.0]
           # Cooling Curves
@@ -8175,7 +8175,7 @@ module Defaults
           htg_ap.heat_eir_fwf_spec = [[1.0, 0.0, 0.0]]
           heat_cop_ratios = [1.0]
         when HPXML::HVACCompressorTypeTwoStage
-          htg_ap.heat_capacity_ratios = [0.710, 1.0]
+          htg_ap.heat_capacity_ratios = [0.7374, 1.0]
           # Heating Curves
           # E+ Capacity and EIR as function of temperature curves(bi-quadratic) generated using E+ HVACCurveFitTool
           # See: https://bigladdersoftware.com/epx/docs/24-2/auxiliary-programs/hvac-performance-curve-fit-tool.html#hvac-performance-curve-fit-tool
@@ -8195,7 +8195,7 @@ module Defaults
           htg_ap.heat_eir_fwf_spec = [[1.3457, -0.6658, 0.3201],
                                       [1.1679, -0.3215, 0.1535]]
           # Rated data from ClimateMaster residential tranquility 30 premier two-stage series Model SE036: https://files.climatemaster.com/RP3001-Residential-SE-Product-Catalog.pdf
-          heat_cop_ratios = [1.2037, 1.0]
+          heat_cop_ratios = [1.161791639, 1.0]
         when HPXML::HVACCompressorTypeVariableSpeed
           htg_ap.heat_capacity_ratios = [0.4473, 1.0]
           # Heating Curves
