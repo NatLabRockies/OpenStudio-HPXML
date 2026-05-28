@@ -3495,8 +3495,7 @@ def check_hpxml(hpxml_path, hpxml)
       next unless [HPXML::LocationBasementConditioned,
                    HPXML::LocationBasementUnconditioned,
                    HPXML::LocationCrawlspaceUnvented,
-                   HPXML::LocationCrawlspaceVented,
-                   HPXML::LocationCrawlspaceConditioned].include? wall.interior_adjacent_to
+                   HPXML::LocationCrawlspaceVented].include? wall.interior_adjacent_to
 
       found_wall = false
       hpxml_bldg.foundations.each do |fnd|

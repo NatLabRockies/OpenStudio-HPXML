@@ -1,9 +1,11 @@
 ## OpenStudio-HPXML v1.13.0
 
 __Features__
+- **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
 - Adds unmet dehumidification hours output for hours where the dehumidifier RH setpoint is exceeded; issues a warning if more than 300 hours.
 
 __Bugfixes__
+- **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
 
 ## OpenStudio-HPXML v1.12.0
 

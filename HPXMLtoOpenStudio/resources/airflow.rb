@@ -2873,7 +2873,7 @@ module Airflow
   # @param is_balanced [Double] Whether the mechanical ventilation fan is balanced (supply airflow equal to exhaust airflow)
   # @param frac_imbal [Double] The fraction of total mechanical ventilation airflow that is imbalanced
   # @param a_ext [Double] Ratio of exterior envelope area to total envelope area for SFA/MF units
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @param hours_in_operation [Double] Hours/day that the fan is operating
   # @return [Double] Mechanical ventilation fan airflow rate (cfm)
