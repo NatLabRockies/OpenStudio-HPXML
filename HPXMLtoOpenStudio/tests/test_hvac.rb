@@ -1628,7 +1628,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     heat_eir_curve_value_full = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceHeatGLHPRatedEWT, 'F', 'C'), heat_eir_ft_spec_full)
     expected_htg_capacity_full = standard_htg_capacity / heat_capacity_curve_value_full
     expected_htg_cop_full = standard_htg_cop * heat_eir_curve_value_full
-    _check_ghp_experimental(model, hpxml_bldg.heat_pumps[0], [7467, expected_clg_capacity_full], [12381, expected_htg_capacity_full], [6.82, expected_clg_cop_full], [7.68, expected_htg_cop_full], 962, [12.5, -1.3], [20, 31])
+    _check_ghp_experimental(model, hpxml_bldg.heat_pumps[0], [7467, expected_clg_capacity_full], [12257, expected_htg_capacity_full], [6.82, expected_clg_cop_full], [7.68, expected_htg_cop_full], 962, [12.5, -1.3], [20, 31])
 
     args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-ground-to-air-heat-pump-var-speed.xml'))
     model, _hpxml, hpxml_bldg = _test_measure(args_hash)
@@ -1655,7 +1655,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     heat_eir_curve_value_full = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceHeatGLHPRatedEWT, 'F', 'C'), heat_eir_ft_spec_full)
     expected_htg_capacity_full = standard_htg_capacity / heat_capacity_curve_value_full
     expected_htg_cop_full = standard_htg_cop * heat_eir_curve_value_full
-    _check_ghp_experimental(model, hpxml_bldg.heat_pumps[0], [4574, expected_clg_capacity_full], [7431, expected_htg_capacity_full], [10.39, expected_clg_cop_full], [8.98, expected_htg_cop_full], 962, [12.5, -1.3], [20, 31])
+    _check_ghp_experimental(model, hpxml_bldg.heat_pumps[0], [4802, expected_clg_capacity_full], [7431, expected_htg_capacity_full], [10.39, expected_clg_cop_full], [8.98, expected_htg_cop_full], 962, [12.5, -1.3], [20, 31])
   end
 
   def test_ground_to_air_heat_pump_integrated_backup
