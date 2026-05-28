@@ -670,6 +670,8 @@ module HVAC
           min_x: 0, max_x: 1, min_y: 0.7, max_y: 1
         )
       end
+      # convert GLHP rated capacities to E+ rated
+      clg_capacity_rated_eplus = UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'W') / get_experimental_ghp_rated_condition_conversion(:clg, hp_ap.cool_cap_ft_spec[i])
       clg_coil = OpenStudio::Model::CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFit.new(model, plf_fplr_curve)
       clg_coil.setName(obj_name + ' clg coil')
       clg_coil.setNominalTimeforCondensatetoBeginLeavingtheCoil(1000)
@@ -678,7 +680,7 @@ module HVAC
       clg_coil.setRatedAirFlowRateAtSelectedNominalSpeedLevel(clg_air_flow_rated)
       clg_coil.setRatedWaterFlowRateAtSelectedNominalSpeedLevel(UnitConversions.convert(geothermal_loop.loop_flow, 'gal/min', 'm^3/s'))
       # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
-      clg_coil.setGrossRatedTotalCoolingCapacityAtSelectedNominalSpeedLevel(UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'W'))
+      clg_coil.setGrossRatedTotalCoolingCapacityAtSelectedNominalSpeedLevel(clg_capacity_rated_eplus)
       for i in 0..(num_speeds - 1)
         cap_ft_curve = Model.add_curve_biquadratic(
           model,
@@ -723,11 +725,10 @@ module HVAC
           coeff: [1, 0, 0, 0, 0, 0]
         )
         speed = OpenStudio::Model::CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFitSpeedData.new(model, cap_ft_curve, cap_faf_curve, cap_fwf_curve, eir_ft_curve, eir_faf_curve, eir_fwf_curve, waste_heat_ft)
-        # convert GLHP rated COPs/capacities to E+ rated
-		rated_capacity_eplus = UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'W') / get_experimental_ghp_rated_condition_conversion(:clg, hp_ap.cool_cap_ft_spec[i]) * hp_ap.cool_capacity_ratios[i]
-		rated_cop_eplus = hp_ap.cool_rated_cops[i] * get_experimental_ghp_rated_condition_conversion(:clg, hp_ap.cool_eir_ft_spec[i])
+        # convert GLHP rated COPs to E+ rated
+        rated_cop_eplus = hp_ap.cool_rated_cops[i] * get_experimental_ghp_rated_condition_conversion(:clg, hp_ap.cool_eir_ft_spec[i])
         # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
-        speed.setReferenceUnitGrossRatedTotalCoolingCapacity(rated_capacity_eplus)
+        speed.setReferenceUnitGrossRatedTotalCoolingCapacity(clg_capacity_rated_eplus * hp_ap.cool_capacity_ratios[i])
         speed.setReferenceUnitGrossRatedSensibleHeatRatio(hp_ap.cool_rated_shr_gross)
         speed.setReferenceUnitGrossRatedCoolingCOP(rated_cop_eplus)
         speed.setReferenceUnitRatedAirFlowRate(UnitConversions.convert(UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'ton') * hp_ap.cool_capacity_ratios[i] * hp_ap.cool_rated_cfm_per_ton, 'cfm', 'm^3/s'))
@@ -754,10 +755,12 @@ module HVAC
       htg_coil = OpenStudio::Model::CoilHeatingWaterToAirHeatPumpVariableSpeedEquationFit.new(model, plf_fplr_curve)
       htg_coil.setName(obj_name + ' htg coil')
       htg_coil.setNominalSpeedLevel(num_speeds)
+      # convert GLHP rated capacities to E+ rated
+      htg_capacity_rated_eplus = UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'W') / get_experimental_ghp_rated_condition_conversion(:htg, hp_ap.heat_cap_ft_spec[i])
       htg_coil.setRatedAirFlowRateAtSelectedNominalSpeedLevel(htg_air_flow_rated)
       htg_coil.setRatedWaterFlowRateAtSelectedNominalSpeedLevel(UnitConversions.convert(geothermal_loop.loop_flow, 'gal/min', 'm^3/s'))
       # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
-      htg_coil.setRatedHeatingCapacityAtSelectedNominalSpeedLevel(UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'W'))
+      htg_coil.setRatedHeatingCapacityAtSelectedNominalSpeedLevel(htg_capacity_rated_eplus)
       for i in 0..(num_speeds - 1)
         cap_ft_curve = Model.add_curve_biquadratic(
           model,
@@ -801,12 +804,11 @@ module HVAC
           name: "WasteHeat-FT#{i + 1}",
           coeff: [1, 0, 0, 0, 0, 0]
         )
-        # convert GLHP rated COPs/capacities to E+ rated
         speed = OpenStudio::Model::CoilHeatingWaterToAirHeatPumpVariableSpeedEquationFitSpeedData.new(model, cap_ft_curve, cap_faf_curve, cap_fwf_curve, eir_ft_curve, eir_faf_curve, eir_fwf_curve, waste_heat_ft)
-		rated_capacity_eplus = UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'W') / get_experimental_ghp_rated_condition_conversion(:htg, hp_ap.heat_cap_ft_spec[i]) * hp_ap.heat_capacity_ratios[i]
-		rated_cop_eplus = hp_ap.heat_rated_cops[i] * get_experimental_ghp_rated_condition_conversion(:htg, hp_ap.heat_eir_ft_spec[i])
+        # convert GLHP rated COPs to E+ rated
+        rated_cop_eplus = hp_ap.heat_rated_cops[i] * get_experimental_ghp_rated_condition_conversion(:htg, hp_ap.heat_eir_ft_spec[i])
         # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
-        speed.setReferenceUnitGrossRatedHeatingCapacity(rated_capacity_eplus)
+        speed.setReferenceUnitGrossRatedHeatingCapacity(htg_capacity_rated_eplus * hp_ap.heat_capacity_ratios[i])
         speed.setReferenceUnitGrossRatedHeatingCOP(rated_cop_eplus)
         speed.setReferenceUnitRatedAirFlow(UnitConversions.convert(UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'ton') * hp_ap.heat_capacity_ratios[i] * hp_ap.heat_rated_cfm_per_ton, 'cfm', 'm^3/s'))
         speed.setReferenceUnitRatedWaterFlowRate(UnitConversions.convert(geothermal_loop.loop_flow, 'gal/min', 'm^3/s') * hp_ap.heat_capacity_ratios[i])
@@ -857,11 +859,18 @@ module HVAC
   # @param biquadratic_spec [Array<Double>] EIR or Capacity function of temperature biquadratic curve coefficients
   # @return [Double] Curve value at GLHP rated conditions for conversion
   def self.get_experimental_ghp_rated_condition_conversion(mode, biquadratic_spec)
-    if mode == :clg
-	  return MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceCoolRatedIWB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceCoolGLHPRatedEWT, 'F', 'C'), biquadratic_spec)
-	elsif mode == :htg
-	  return MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceHeatGLHPRatedEWT, 'F', 'C'), biquadratic_spec)
-	end
+     case mode
+     when :clg
+       return MathTools.biquadratic(UnitConversions.convert(GroundSourceCoolRatedIWB, 'F', 'C'),
+                                    UnitConversions.convert(GroundSourceCoolGLHPRatedEWT, 'F', 'C'),
+                                    biquadratic_spec)
+     when :htg
+       return MathTools.biquadratic(UnitConversions.convert(GroundSourceHeatRatedIDB, 'F', 'C'),
+                                    UnitConversions.convert(GroundSourceHeatGLHPRatedEWT, 'F', 'C'),
+                                    biquadratic_spec)
+     else
+       fail "Unexpected mode: #{mode}."
+     end
   end
 
   # Adds the HPXML GeothermalLoop to the OpenStudio model. If it has already been
