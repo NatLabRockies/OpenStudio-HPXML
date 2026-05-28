@@ -1317,7 +1317,6 @@ module Geometry
         HPXML::LocationBasementUnconditioned,
         HPXML::LocationCrawlspaceUnvented,
         HPXML::LocationCrawlspaceVented,
-        HPXML::LocationCrawlspaceConditioned,
         HPXML::LocationGarage].include? location
       floor_area = hpxml_bldg.slabs.select { |s| s.interior_adjacent_to == location }.map { |s| s.area }.sum(0.0)
       height = calculate_zone_height(hpxml_bldg, location)
@@ -1342,7 +1341,6 @@ module Geometry
         HPXML::LocationBasementUnconditioned,
         HPXML::LocationCrawlspaceUnvented,
         HPXML::LocationCrawlspaceVented,
-        HPXML::LocationCrawlspaceConditioned,
         HPXML::LocationGarage].include? location
       if above_grade
         height = hpxml_bldg.foundation_walls.select { |w| w.interior_adjacent_to == location }.map { |w| w.height - w.depth_below_grade }.max
@@ -1354,7 +1352,6 @@ module Geometry
                    HPXML::LocationBasementUnconditioned => 8,
                    HPXML::LocationCrawlspaceUnvented => 3,
                    HPXML::LocationCrawlspaceVented => 3,
-                   HPXML::LocationCrawlspaceConditioned => 3,
                    HPXML::LocationGarage => 8 }[location]
       end
     elsif [HPXML::LocationAtticUnvented,
