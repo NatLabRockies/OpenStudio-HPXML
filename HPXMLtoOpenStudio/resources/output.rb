@@ -194,6 +194,8 @@ module Outputs
 
     rh_sensors, rh_setpoints, avail_sensors = {}, {}, {}
     hpxml_osm_map.each_with_index do |(hpxml_bldg, unit_model), unit|
+      next if hpxml_bldg.dehumidifiers.empty?
+
       # EMS Sensor
       rh_sensors[unit] = unit_model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirRH }
       rh_setpoints[unit] = hpxml_bldg.dehumidifiers[0].rh_setpoint * 100.0
@@ -212,6 +214,8 @@ module Outputs
     program.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeUnmetDehumidHoursProgram)
     program.addLine("Set #{dehum_hrs} = 0")
     for unit in 0..hpxml_osm_map.size - 1
+      next if rh_sensors[unit].nil?
+
       program.addLine("Set #{unit_dehum_hrs} = 0")
       program.addLine("Set indoor_rh = #{rh_sensors[unit].name}")
       line = "If (indoor_rh > #{rh_setpoints[unit]} + #{rh_tol})"
