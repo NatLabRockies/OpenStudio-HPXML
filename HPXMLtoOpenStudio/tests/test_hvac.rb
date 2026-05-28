@@ -1651,10 +1651,10 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
 	expected_clg_cop_full = standard_clg_cop * cool_eir_curve_value_full
     heat_cap_ft_spec_full = [0.6975737864, -0.0028810803, -0.0000005015, 0.0206468583, -0.0000891526, -0.0000733087]
     heat_eir_ft_spec_full = [0.7627294076, 0.0273612308, 0.0001023412, -0.0145638547, 0.0001886431, -0.0003647958]
-	heat_capacity_curve_value_full = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceHeatGLHPRatedEWT, 'F', 'C'), heat_cap_ft_spec_full)
-	heat_eir_curve_value_full = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceHeatGLHPRatedEWT, 'F', 'C'), heat_eir_ft_spec_full)
-	expected_htg_capacity_full = standard_clg_capacity / heat_capacity_curve_value_full
-	expected_htg_cop_full = standard_htg_cop * heat_eir_curve_value_full
+    heat_capacity_curve_value_full = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceHeatGLHPRatedEWT, 'F', 'C'), heat_cap_ft_spec_full)
+    heat_eir_curve_value_full = MathTools.biquadratic(UnitConversions.convert(HVAC::GroundSourceHeatRatedIDB, 'F', 'C'), UnitConversions.convert(HVAC::GroundSourceHeatGLHPRatedEWT, 'F', 'C'), heat_eir_ft_spec_full)
+    expected_htg_capacity_full = standard_htg_capacity / heat_capacity_curve_value_full
+    expected_htg_cop_full = standard_htg_cop * heat_eir_curve_value_full
     _check_ghp_experimental(model, hpxml_bldg.heat_pumps[0], [4574, expected_clg_capacity_full], [7431, expected_htg_capacity_full], [10.39, expected_clg_cop_full], [8.98, expected_htg_cop_full], 962, [12.5, -1.3], [20, 31])
   end
 
