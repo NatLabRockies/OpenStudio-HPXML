@@ -443,6 +443,11 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
       next if message.include? 'SHR adjusted to achieve valid outlet air properties and the simulation continues.'
     end
 
+    # Different cooling/heating capacities after converting to E+ rated conditions
+    if hpxml_path.include? 'experimental'
+      next if message.include? 'heating capacity is disproportionate (> 20% different) to total cooling capacity'
+    end
+
     flunk "Unexpected eplusout.err message found for #{File.basename(hpxml_path)}: #{message}"
   end
 
