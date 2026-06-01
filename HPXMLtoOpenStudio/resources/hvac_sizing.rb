@@ -2912,7 +2912,7 @@ module HVACSizing
       gl_ap = hvac_heating.geothermal_loop.additional_properties
       hvac_heating_speed = get_nominal_speed(htg_ap, false)
       htg_cap_curve_value = calc_gshp_htg_curve_value(htg_ap, hpxml_header, mj.heat_setpoint, gl_ap.design_hw, hvac_heating_speed)
-      hvac_sizings.Heat_Capacity = hvac_sizings.Heat_Load / htg_cap_curve_value
+      hvac_sizings.Heat_Capacity = [hvac_sizings.Heat_Load / htg_cap_curve_value, hvac_sizings.Heat_Load].max
       hvac_sizings.Heat_Capacity_Supp = hvac_sizings.Heat_Load_Supp
       if hvac_sizings.Cool_Capacity > 0
         if (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeStandard) && (hvac_heating.compressor_type == HPXML::HVACCompressorTypeSingleStage)
