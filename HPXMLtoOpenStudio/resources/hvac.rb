@@ -858,6 +858,11 @@ module HVAC
   # @param mode [Symbol] Heating or cooling
   # @param biquadratic_spec [Array<Double>] EIR or Capacity function of temperature biquadratic curve coefficients
   # @return [Double] Curve value at GLHP rated conditions for conversion
+  # Get the curve value at GLHP rated conditions (Only used for experimental model because E+ rated conditions are different from GLHP rated conditions)
+  #
+  # @param mode [Symbol] Heating or cooling
+  # @param biquadratic_spec [Array<Double>] EIR or Capacity function of temperature biquadratic curve coefficients
+  # @return [Double] Curve value at GLHP rated conditions for conversion
   def self.get_experimental_ghp_rated_condition_conversion(mode, biquadratic_spec)
     case mode
     when :clg
