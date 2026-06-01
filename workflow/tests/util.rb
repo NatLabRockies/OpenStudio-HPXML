@@ -444,7 +444,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     end
 
     # Different cooling/heating capacities after converting to E+ rated conditions
-    if hpxml_path.include? 'experimental'
+    if hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental
       next if message.include? 'heating capacity is disproportionate (> 20% different) to total cooling capacity'
     end
 
