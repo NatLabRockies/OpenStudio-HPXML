@@ -2321,6 +2321,36 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.heat_pumps[0].heating_efficiency_hspf2 = nil
       hpxml_bldg.heat_pumps[0].heating_efficiency_hspf = 7.7
     end
+    if ['base-hvac-ground-to-air-heat-pump-detailed-geothermal-loop-multiple.xml'].include? hpxml_file
+      # Split into 2 GSHPs, each with its own geothermal loop
+      hpxml_bldg.heat_pumps[0].fraction_heat_load_served /= 2
+      hpxml_bldg.heat_pumps[0].fraction_cool_load_served /= 2
+      hpxml_bldg.heat_pumps[0].heating_capacity /= 2
+      hpxml_bldg.heat_pumps[0].cooling_capacity /= 2
+      hpxml_bldg.heat_pumps << hpxml_bldg.heat_pumps[0].dup
+      hpxml_bldg.heat_pumps[-1].id = 'HeatPump2'
+      hpxml_bldg.heat_pumps[-1].primary_heating_system = false
+      hpxml_bldg.heat_pumps[-1].primary_cooling_system = false
+      hpxml_bldg.hvac_distributions[0].duct_leakage_measurements[0].duct_leakage_value /= 2
+      hpxml_bldg.hvac_distributions[0].duct_leakage_measurements[1].duct_leakage_value /= 2
+      hpxml_bldg.hvac_distributions[0].conditioned_floor_area_served /= 2
+      hpxml_bldg.hvac_distributions.add(id: "HVACDistribution#{hpxml_bldg.hvac_distributions.size + 1}",
+                                        distribution_system_type: HPXML::HVACDistributionTypeAir,
+                                        air_type: HPXML::AirTypeRegularVelocity,
+                                        conditioned_floor_area_served: hpxml_bldg.hvac_distributions[0].conditioned_floor_area_served)
+      hpxml_bldg.heat_pumps[-1].distribution_system_idref = hpxml_bldg.hvac_distributions[-1].id
+      hpxml_bldg.hvac_distributions[-1].duct_leakage_measurements << hpxml_bldg.hvac_distributions[0].duct_leakage_measurements[0].dup
+      hpxml_bldg.hvac_distributions[-1].duct_leakage_measurements << hpxml_bldg.hvac_distributions[0].duct_leakage_measurements[1].dup
+      hpxml_bldg.hvac_distributions[0].ducts.each do |duct|
+        hpxml_bldg.hvac_distributions[-1].ducts << duct.dup
+        hpxml_bldg.hvac_distributions[-1].ducts[-1].id = "Ducts#{hpxml_bldg.hvac_distributions[0].ducts.size + hpxml_bldg.hvac_distributions[1].ducts.size}"
+      end
+      hpxml_bldg.geothermal_loops[0].num_bore_holes /= 2
+      hpxml_bldg.geothermal_loops[0].bore_config = HPXML::GeothermalLoopBoreConfigRectangle
+      hpxml_bldg.geothermal_loops << hpxml_bldg.geothermal_loops[0].dup
+      hpxml_bldg.geothermal_loops[-1].id = 'GeothermalLoop2'
+      hpxml_bldg.heat_pumps[-1].geothermal_loop_idref = hpxml_bldg.geothermal_loops[-1].id
+    end
 
     # ------------------ #
     # HPXML WaterHeating #
@@ -3465,8 +3495,7 @@ def check_hpxml(hpxml_path, hpxml)
       next unless [HPXML::LocationBasementConditioned,
                    HPXML::LocationBasementUnconditioned,
                    HPXML::LocationCrawlspaceUnvented,
-                   HPXML::LocationCrawlspaceVented,
-                   HPXML::LocationCrawlspaceConditioned].include? wall.interior_adjacent_to
+                   HPXML::LocationCrawlspaceVented].include? wall.interior_adjacent_to
 
       found_wall = false
       hpxml_bldg.foundations.each do |fnd|
@@ -3816,6 +3845,8 @@ if ARGV[0].to_sym == :create_release_zip
   if ENV['CI']
     # CI doesn't have git, so default to everything
     git_files = Dir['**/*.*']
+    git_files -= Dir['workflow/tests/run*/**/*.*']
+    git_files -= Dir['workflow/tests/test_results/*.*']
   else
     # Only include files under git version control
     command = 'git ls-files'
@@ -3845,31 +3876,7 @@ if ARGV[0].to_sym == :create_release_zip
            'workflow/sample_files/*.xml',
            'workflow/tests/*.rb',
            'workflow/tests/**/*.xml',
-           'workflow/tests/**/*.csv',
-           'documentation/index.html',
-           'documentation/_static/**/*.*']
-
-  if not ENV['CI']
-    # Generate documentation
-    puts 'Generating documentation...'
-    command = 'sphinx-build -b singlehtml docs/source documentation'
-    begin
-      `#{command}`
-      if not File.exist? File.join(File.dirname(__FILE__), 'documentation', 'index.html')
-        puts 'Documentation was not successfully generated. Aborting...'
-        exit!
-      end
-    rescue
-      puts "Command failed: '#{command}'. Perhaps sphinx needs to be installed?"
-      exit!
-    end
-
-    # Remove large fonts dir to keep package smaller
-    fonts_dir = File.join(File.dirname(__FILE__), 'documentation', '_static', 'css', 'fonts')
-    if Dir.exist? fonts_dir
-      FileUtils.rm_r(fonts_dir)
-    end
-  end
+           'workflow/tests/**/*.csv']
 
   # Create zip files
   require 'zip'
@@ -3879,24 +3886,15 @@ if ARGV[0].to_sym == :create_release_zip
   Zip::File.open(zip_path, create: true) do |zipfile|
     files.each do |f|
       Dir[f].each do |file|
-        if file.start_with? 'documentation'
-          # always include
-        else
-          if not git_files.include? file
-            next
-          end
+        if not git_files.include? file
+          next
         end
+
         zipfile.add(File.join('OpenStudio-HPXML', file), file)
       end
     end
   end
   puts "Wrote file at #{zip_path}."
-
-  # Cleanup
-  if not ENV['CI']
-    FileUtils.rm_r(File.join(File.dirname(__FILE__), 'documentation'))
-  end
-
   puts 'Done.'
 end
 

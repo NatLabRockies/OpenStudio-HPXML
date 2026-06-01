@@ -898,12 +898,11 @@ module Defaults
   # @return [nil]
   def self.apply_building_construction(hpxml_header, hpxml_bldg)
     cond_volume = hpxml_bldg.building_construction.conditioned_building_volume
-    cond_crawl_volume = Geometry.calculate_zone_volume(hpxml_bldg, HPXML::LocationCrawlspaceConditioned)
     cfa = hpxml_bldg.building_construction.conditioned_floor_area
     nbeds = hpxml_bldg.building_construction.number_of_bedrooms
     if hpxml_bldg.building_construction.average_ceiling_height.nil?
       if not cond_volume.nil?
-        hpxml_bldg.building_construction.average_ceiling_height = ((cond_volume - cond_crawl_volume) / cfa).round(2)
+        hpxml_bldg.building_construction.average_ceiling_height = (cond_volume / cfa).round(2)
       else
         if hpxml_bldg.roofs.any? { |r| r.interior_adjacent_to == HPXML::LocationConditionedSpace }
           # This is a very crude estimate for cathedral ceiling and conditioned attic, but better than nothing
@@ -919,7 +918,7 @@ module Defaults
     end
     if hpxml_bldg.building_construction.conditioned_building_volume.nil?
       avg_ceiling_height = hpxml_bldg.building_construction.average_ceiling_height
-      hpxml_bldg.building_construction.conditioned_building_volume = (cfa * avg_ceiling_height + cond_crawl_volume).round
+      hpxml_bldg.building_construction.conditioned_building_volume = (cfa * avg_ceiling_height).round
       hpxml_bldg.building_construction.conditioned_building_volume_isdefaulted = true
     end
     if hpxml_bldg.building_construction.number_of_bathrooms.nil?
@@ -1060,24 +1059,6 @@ module Defaults
       end
       if unvented_crawls.map { |f| f.within_infiltration_volume }.uniq.size != 1
         fail 'All unvented crawlspaces must have the same WithinInfiltrationVolume value.'
-      end
-    end
-
-    if hpxml_bldg.has_location(HPXML::LocationCrawlspaceConditioned)
-      cond_crawls = hpxml_bldg.foundations.select { |f| f.foundation_type == HPXML::FoundationTypeCrawlspaceConditioned }
-      if cond_crawls.empty?
-        hpxml_bldg.foundations.add(id: get_id('ConditionedCrawlspace', hpxml_bldg.foundations, unit_num),
-                                   foundation_type: HPXML::FoundationTypeCrawlspaceConditioned)
-        cond_crawls << hpxml_bldg.foundations[-1]
-      end
-      cond_crawls.each do |cond_crawl|
-        next unless cond_crawl.within_infiltration_volume.nil?
-
-        cond_crawl.within_infiltration_volume = true
-        cond_crawl.within_infiltration_volume_isdefaulted = true
-      end
-      if cond_crawls.map { |f| f.within_infiltration_volume }.uniq.size != 1
-        fail 'All conditioned crawlspaces must have the same WithinInfiltrationVolume value.'
       end
     end
 
@@ -2390,8 +2371,10 @@ module Defaults
         set_hvac_heating_performance(heat_pump, hpxml_header)
 
         if heat_pump.geothermal_loop.nil?
-          hpxml_bldg.geothermal_loops.add(id: get_id('GeothermalLoop', hpxml_bldg.geothermal_loops, unit_num),
-                                          loop_configuration: HPXML::GeothermalLoopLoopConfigurationVertical)
+          if hpxml_bldg.geothermal_loops.empty? # If there are multiple GSHPs, assign them all to the same geothermal loop
+            hpxml_bldg.geothermal_loops.add(id: get_id('GeothermalLoop', hpxml_bldg.geothermal_loops, unit_num),
+                                            loop_config: HPXML::GeothermalLoopConfigVertical)
+          end
           heat_pump.geothermal_loop_idref = hpxml_bldg.geothermal_loops[-1].id
         end
 
@@ -2441,8 +2424,8 @@ module Defaults
         end
 
         if heat_pump.geothermal_loop.shank_spacing.nil?
-          hp_ap = heat_pump.additional_properties
-          heat_pump.geothermal_loop.shank_spacing = (hp_ap.u_tube_spacing + hp_ap.pipe_od).round(2) # Distance from center of pipe to center of pipe
+          gl_ap = heat_pump.geothermal_loop.additional_properties
+          heat_pump.geothermal_loop.shank_spacing = (gl_ap.u_tube_spacing + gl_ap.pipe_od).round(2) # Distance from center of pipe to center of pipe
           heat_pump.geothermal_loop.shank_spacing_isdefaulted = true
         end
       when HPXML::HVACTypeHeatPumpWaterLoopToAir
@@ -5064,7 +5047,7 @@ module Defaults
   #
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Equivalent number of bedrooms
   def self.get_equivalent_nbeds(nbeds, n_occ, unit_type)
     if n_occ.nil?
@@ -5991,7 +5974,7 @@ module Defaults
       case foundation_type
       when HPXML::FoundationTypeSlab, HPXML::FoundationTypeAboveApartment
         c_foundation -= 0.036992 * area_fraction
-      when HPXML::FoundationTypeBasementConditioned, HPXML::FoundationTypeCrawlspaceUnvented, HPXML::FoundationTypeCrawlspaceConditioned
+      when HPXML::FoundationTypeBasementConditioned, HPXML::FoundationTypeCrawlspaceUnvented
         c_foundation += 0.108713 * area_fraction
       when HPXML::FoundationTypeBasementUnconditioned, HPXML::FoundationTypeCrawlspaceVented, HPXML::FoundationTypeBellyAndWing, HPXML::FoundationTypeAmbient
         c_foundation += 0.180352 * area_fraction
@@ -6565,7 +6548,6 @@ module Defaults
   def self.get_duct_locations(hpxml_bldg)
     primary_duct_location_hierarchy = [HPXML::LocationBasementConditioned,
                                        HPXML::LocationBasementUnconditioned,
-                                       HPXML::LocationCrawlspaceConditioned,
                                        HPXML::LocationCrawlspaceVented,
                                        HPXML::LocationCrawlspaceUnvented,
                                        HPXML::LocationAtticVented,
@@ -7498,7 +7480,7 @@ module Defaults
   #
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Array<Double, Double, Double>] Plug loads annual use (kWh), sensible/latent fractions
   def self.get_residual_mels_values(cfa, n_occ = nil, unit_type = nil)
     if n_occ == 0
@@ -7530,7 +7512,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Television annual use (kWh)
   def self.get_televisions_values(cfa, nbeds, n_occ = nil, unit_type = nil)
     if n_occ == 0
@@ -7565,7 +7547,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (kWh/yr)
   def self.get_pool_pump_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7583,7 +7565,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @param type [String] Type of heater (HPXML::HeaterTypeXXX)
   # @return [Array<String, Double>] Energy units (HPXML::UnitsXXX), annual energy use (kWh/yr or therm/yr)
   def self.get_pool_heater_annual_energy(cfa, nbeds, n_occ, unit_type, type)
@@ -7619,7 +7601,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (kWh/yr)
   def self.get_permanent_spa_pump_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7637,7 +7619,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @param type [String] Type of heater (HPXML::HeaterTypeXXX)
   # @return [Array<String, Double>] Energy units (HPXML::UnitsXXX), annual energy use (kWh/yr or therm/yr)
   def self.get_permanent_spa_heater_annual_energy(cfa, nbeds, n_occ, unit_type, type)
@@ -7693,7 +7675,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (kWh/yr)
   def self.get_default_well_pump_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7711,7 +7693,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (therm/yr)
   def self.get_gas_grill_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7729,7 +7711,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (therm/yr)
   def self.get_default_gas_lighting_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7747,7 +7729,7 @@ module Defaults
   # @param cfa [Double] Conditioned floor area in the dwelling unit (ft2)
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @return [Double] Annual energy use (therm/yr)
   def self.get_gas_fireplace_annual_energy(cfa, nbeds, n_occ, unit_type)
     if n_occ == 0
@@ -7764,7 +7746,7 @@ module Defaults
   #
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @param n_occ [Double] Number of occupants in the dwelling unit
-  # @param unit_type [String] Type of dwelling unit (HXPML::ResidentialTypeXXX)
+  # @param unit_type [String] Type of dwelling unit (HPXML::ResidentialTypeXXX)
   # @param general_water_use_usage_multiplier [Double] Usage multiplier on internal gains
   # @return [Array<Double, Double>] Sensible/latent internal gains (Btu/yr)
   def self.get_water_use_internal_gains(nbeds, n_occ, unit_type, general_water_use_usage_multiplier = 1.0)
@@ -8627,47 +8609,47 @@ module Defaults
   # @param weather [WeatherFile] Weather object containing EPW information
   # @return [nil]
   def self.set_geothermal_loop_assumptions(heat_pump, weather)
-    hp_ap = heat_pump.additional_properties
     geothermal_loop = heat_pump.geothermal_loop
+    gl_ap = geothermal_loop.additional_properties
 
-    hp_ap.design_chw = [85.0, weather.design.CoolingDrybulb - 15.0, weather.data.DeepGroundAnnualTemp + 10.0].max # Temperature of water entering indoor coil, use 85F as lower bound
-    hp_ap.design_delta_t = 10.0
-    hp_ap.fluid_type = EPlus::FluidPropyleneGlycol
-    hp_ap.frac_glycol = 0.2 # This was changed from 0.3 to 0.2 -- more typical based on experts/spec sheets
-    if hp_ap.fluid_type == EPlus::FluidWater
-      hp_ap.design_hw = [45.0, weather.design.HeatingDrybulb + 35.0, weather.data.DeepGroundAnnualTemp - 10.0].max # Temperature of fluid entering indoor coil, use 45F as lower bound for water
+    gl_ap.design_chw = [85.0, weather.design.CoolingDrybulb - 15.0, weather.data.DeepGroundAnnualTemp + 10.0].max # Temperature of water entering indoor coil, use 85F as lower bound
+    gl_ap.design_delta_t = 10.0
+    gl_ap.fluid_type = EPlus::FluidPropyleneGlycol
+    gl_ap.frac_glycol = 0.2 # This was changed from 0.3 to 0.2 -- more typical based on experts/spec sheets
+    if gl_ap.fluid_type == EPlus::FluidWater
+      gl_ap.design_hw = [45.0, weather.design.HeatingDrybulb + 35.0, weather.data.DeepGroundAnnualTemp - 10.0].max # Temperature of fluid entering indoor coil, use 45F as lower bound for water
     else
-      hp_ap.design_hw = [35.0, weather.design.HeatingDrybulb + 35.0, weather.data.DeepGroundAnnualTemp - 10.0].min # Temperature of fluid entering indoor coil, use 35F as upper bound
+      gl_ap.design_hw = [35.0, weather.design.HeatingDrybulb + 35.0, weather.data.DeepGroundAnnualTemp - 10.0].min # Temperature of fluid entering indoor coil, use 35F as upper bound
     end
 
     # Pipe nominal size conversion to pipe outside diameter and inside diameter,
     # only pipe sizes <= 2" are used here with DR11 (dimension ratio)
     case geothermal_loop.pipe_diameter
     when 0.75 # 3/4" pipe
-      hp_ap.pipe_od = 1.050 # in
-      hp_ap.pipe_id = 0.859 # in
+      gl_ap.pipe_od = 1.050 # in
+      gl_ap.pipe_id = 0.859 # in
     when 1.0 # 1" pipe
-      hp_ap.pipe_od = 1.315 # in
-      hp_ap.pipe_id = 1.076 # in
+      gl_ap.pipe_od = 1.315 # in
+      gl_ap.pipe_id = 1.076 # in
     when 1.25 # 1-1/4" pipe
-      hp_ap.pipe_od = 1.660 # in
-      hp_ap.pipe_id = 1.358 # in
+      gl_ap.pipe_od = 1.660 # in
+      gl_ap.pipe_id = 1.358 # in
     else
       fail "Unexpected pipe size: #{geothermal_loop.pipe_diameter}"
     end
 
     # Calculate distance between pipes
-    hp_ap.u_tube_spacing_type = 'b' # Currently not exposed to the user
-    case hp_ap.u_tube_spacing_type
+    gl_ap.u_tube_spacing_type = 'b' # Currently not exposed to the user
+    case gl_ap.u_tube_spacing_type
     when 'as'
       # Two tubes, spaced 1/8” apart at the center of the borehole
-      hp_ap.u_tube_spacing = 0.125
+      gl_ap.u_tube_spacing = 0.125
     when 'b'
       # Two tubes equally spaced between the borehole edges
-      hp_ap.u_tube_spacing = 0.9661
+      gl_ap.u_tube_spacing = 0.9661
     when 'c'
       # Both tubes placed against outer edge of borehole
-      hp_ap.u_tube_spacing = geothermal_loop.bore_diameter - 2 * hp_ap.pipe_od
+      gl_ap.u_tube_spacing = geothermal_loop.bore_diameter - 2 * gl_ap.pipe_od
     end
   end
 end

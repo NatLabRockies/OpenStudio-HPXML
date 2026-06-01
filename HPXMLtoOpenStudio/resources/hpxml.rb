@@ -154,7 +154,6 @@ class HPXML < Object
   FoundationTypeBasementUnconditioned = 'UnconditionedBasement'
   FoundationTypeBasementUnknown = 'UnknownBasement'
   FoundationTypeCombination = 'Combination'
-  FoundationTypeCrawlspaceConditioned = 'ConditionedCrawlspace'
   FoundationTypeCrawlspaceUnvented = 'UnventedCrawlspace'
   FoundationTypeCrawlspaceUnknown = 'UnknownCrawlspace'
   FoundationTypeCrawlspaceVented = 'VentedCrawlspace'
@@ -199,17 +198,16 @@ class HPXML < Object
   FuelTypeWoodPellets = 'wood pellets'
   FurnitureMassTypeLightWeight = 'light-weight'
   FurnitureMassTypeHeavyWeight = 'heavy-weight'
-  GeothermalLoopBorefieldConfigurationRectangle = 'Rectangle'
-  GeothermalLoopBorefieldConfigurationZonedRectangle = 'Zoned Rectangle'
-  GeothermalLoopBorefieldConfigurationOpenRectangle = 'Open Rectangle'
-  GeothermalLoopBorefieldConfigurationC = 'C'
-  GeothermalLoopBorefieldConfigurationL = 'L'
-  GeothermalLoopBorefieldConfigurationU = 'U'
-  GeothermalLoopBorefieldConfigurationLopsidedU = 'Lopsided U'
-  GeothermalLoopLoopConfigurationDiagonal = 'diagonal'
-  GeothermalLoopLoopConfigurationHorizontal = 'horizontal'
-  GeothermalLoopLoopConfigurationOther = 'other'
-  GeothermalLoopLoopConfigurationVertical = 'vertical'
+  GeothermalLoopBoreConfigRectangle = 'Rectangle'
+  GeothermalLoopBoreConfigOpenRectangle = 'Open Rectangle'
+  GeothermalLoopBoreConfigC = 'C'
+  GeothermalLoopBoreConfigL = 'L'
+  GeothermalLoopBoreConfigU = 'U'
+  GeothermalLoopBoreConfigLopsidedU = 'Lopsided U'
+  GeothermalLoopConfigDiagonal = 'diagonal'
+  GeothermalLoopConfigHorizontal = 'horizontal'
+  GeothermalLoopConfigOther = 'other'
+  GeothermalLoopConfigVertical = 'vertical'
   GeothermalLoopGroutOrPipeTypeStandard = 'standard'
   GeothermalLoopGroutOrPipeTypeThermallyEnhanced = 'thermally enhanced'
   GroundToAirHeatPumpModelTypeStandard = 'standard'
@@ -303,7 +301,6 @@ class HPXML < Object
   LocationBath = 'bath'
   LocationConditionedSpace = 'conditioned space'
   LocationCrawlspace = 'crawlspace'
-  LocationCrawlspaceConditioned = 'crawlspace - conditioned'
   LocationCrawlspaceUnvented = 'crawlspace - unvented'
   LocationCrawlspaceVented = 'crawlspace - vented'
   LocationExterior = 'exterior'
@@ -2458,7 +2455,7 @@ class HPXML < Object
   # Object for /HPXML/Building/BuildingDetails/BuildingSummary/BuildingConstruction.
   class BuildingConstruction < BaseElement
     ATTRS = [:year_built,                               # [Integer] YearBuilt
-             :residential_facility_type,                # [String] ResidentialFacilityType (HXPML::ResidentialTypeXXX)
+             :residential_facility_type,                # [String] ResidentialFacilityType (HPXML::ResidentialTypeXXX)
              :unit_height_above_grade,                  # [Double] UnitHeightAboveGrade
              :number_of_units,                          # [Integer] NumberofUnits
              :number_of_units_in_building,              # [Integer] NumberofUnitsInBuilding
@@ -3403,21 +3400,7 @@ class HPXML < Object
     #
     # @return [String] Adjacent location (HPXML::LocationXXX)
     def to_location
-      return if @attic_type.nil?
-
-      case @attic_type
-      when AtticTypeCathedral, AtticTypeConditioned,
-           AtticTypeFlatRoof, AtticTypeBelowApartment
-        return LocationConditionedSpace
-      when AtticTypeUnvented
-        return LocationAtticUnvented
-      when AtticTypeVented
-        return LocationAtticVented
-      when AtticTypeUnknown, AtticTypeOther
-        return # Not currently used
-      else
-        fail "Unexpected attic type: '#{@attic_type}'."
-      end
+      return HPXML::get_location_from_attic_type(@attic_type)
     end
 
     # Deletes the current object from the array.
@@ -3661,35 +3644,7 @@ class HPXML < Object
     #
     # @return [String] Adjacent location (HPXML::LocationXXX)
     def to_location
-      return if @foundation_type.nil?
-
-      case @foundation_type
-      when FoundationTypeSlab, FoundationTypeAboveApartment
-        return LocationConditionedSpace
-      when FoundationTypeAmbient
-        return LocationOutside
-      when FoundationTypeBasementConditioned
-        return LocationBasementConditioned
-      when FoundationTypeBasementUnconditioned
-        return LocationBasementUnconditioned
-      when FoundationTypeCrawlspaceUnvented
-        return LocationCrawlspaceUnvented
-      when FoundationTypeCrawlspaceVented
-        return LocationCrawlspaceVented
-      when FoundationTypeCrawlspaceConditioned
-        return LocationCrawlspaceConditioned
-      when FoundationTypeBellyAndWing
-        return LocationManufacturedHomeUnderBelly
-      when FoundationTypeBasementUnknown,
-           FoundationTypeCrawlspaceUnknown,
-           FoundationTypeGarage,
-           FoundationTypeRubbleStone,
-           FoundationTypeOther,
-           FoundationTypeCombination
-        return # Not currently used
-      else
-        fail "Unexpected foundation type: '#{@foundation_type}'."
-      end
+      return HPXML::get_location_from_foundation_type(@foundation_type)
     end
 
     # Calculates the foundation footprint area.
@@ -3769,9 +3724,6 @@ class HPXML < Object
         when FoundationTypeCrawlspaceUnvented
           crawlspace = XMLHelper.add_element(foundation_type_el, 'Crawlspace')
           XMLHelper.add_element(crawlspace, 'Vented', false, :boolean)
-        when FoundationTypeCrawlspaceConditioned
-          crawlspace = XMLHelper.add_element(foundation_type_el, 'Crawlspace')
-          XMLHelper.add_element(crawlspace, 'Conditioned', true, :boolean)
         when FoundationTypeCrawlspaceUnknown
           XMLHelper.add_element(foundation_type_el, 'Crawlspace')
         when FoundationTypeBellyAndWing
@@ -3844,8 +3796,6 @@ class HPXML < Object
         @foundation_type = FoundationTypeCrawlspaceUnvented
       elsif XMLHelper.has_element(foundation, "FoundationType/Crawlspace[Vented='true']")
         @foundation_type = FoundationTypeCrawlspaceVented
-      elsif XMLHelper.has_element(foundation, "FoundationType/Crawlspace[Conditioned='true']")
-        @foundation_type = FoundationTypeCrawlspaceConditioned
       elsif XMLHelper.has_element(foundation, 'FoundationType/Crawlspace')
         @foundation_type = FoundationTypeCrawlspaceUnknown
       elsif XMLHelper.has_element(foundation, 'FoundationType/Ambient')
@@ -7406,9 +7356,9 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/GeothermalLoop.
   class GeothermalLoop < BaseElement
-    ATTRS = [:id, # [String] SystemIdentifier/@id
-             :sameas_id, # [String] SystemIdentifier/@sameas
-             :loop_configuration, # [String] LoopConfiguration (HPXML::GeothermalLoopLoopConfigurationXXX)
+    ATTRS = [:id,                 # [String] SystemIdentifier/@id
+             :sameas_id,          # [String] SystemIdentifier/@sameas
+             :loop_config,        # [String] LoopConfiguration (HPXML::GeothermalLoopConfigXXX)
              :loop_flow,          # [Double] LoopFlow (gal/min)
              :num_bore_holes,     # [Integer] BoreholesOrTrenches/Count
              :bore_length,        # [Double] BoreholesOrTrenches/Length (ft)
@@ -7420,13 +7370,13 @@ class HPXML < Object
              :pipe_conductivity,  # [Double] Pipe/Conductivity (Btu/hr-ft-F)
              :pipe_diameter,      # [Double] Pipe/Diameter (in)
              :shank_spacing,      # [Double] Pipe/ShankSpacing (in)
-             :bore_config]        # [String] extension/BorefieldConfiguration (HPXML::GeothermalLoopBorefieldConfigurationXXX)
+             :bore_config]        # [String] extension/BorefieldConfiguration (HPXML::GeothermalLoopBoreConfigXXX)
     attr_accessor(*ATTRS)
 
     # Returns all heat pumps connect to the geothermal loop.
     #
     # @return [Array<HPXML::HeatPump>] List of heat pump objects
-    def heat_pump
+    def heat_pumps
       list = []
       @parent_object.heat_pumps.each do |heat_pump|
         next if heat_pump.geothermal_loop_idref.nil?
@@ -7437,9 +7387,9 @@ class HPXML < Object
 
       if list.size == 0
         fail "Geothermal loop '#{@id}' found but no heat pump attached to it."
-      elsif list.size > 1
-        fail "Multiple heat pumps found attached to geothermal loop '#{@id}'."
       end
+
+      return list
     end
 
     # Deletes the current object from the array.
@@ -7459,7 +7409,7 @@ class HPXML < Object
     # @return [Array<String>] List of error messages
     def check_for_errors
       errors = []
-      begin; heat_pump; rescue StandardError => e; errors << e.message; end
+      begin; heat_pumps; rescue StandardError => e; errors << e.message; end
       return errors
     end
 
@@ -7475,7 +7425,7 @@ class HPXML < Object
       sys_id = XMLHelper.add_element(geothermal_loop, 'SystemIdentifier')
       XMLHelper.add_attribute(sys_id, 'id', @id)
       XMLHelper.add_attribute(sys_id, 'sameas', @sameas_id) unless @sameas_id.nil?
-      XMLHelper.add_element(geothermal_loop, 'LoopConfiguration', @loop_configuration, :string, @loop_configuration_isdefaulted) unless @loop_configuration.nil?
+      XMLHelper.add_element(geothermal_loop, 'LoopConfiguration', @loop_config, :string, @loop_config_isdefaulted) unless @loop_config.nil?
       XMLHelper.add_element(geothermal_loop, 'LoopFlow', @loop_flow, :float, @loop_flow_isdefaulted) unless @loop_flow.nil?
       if (not @num_bore_holes.nil?) || (not @bore_spacing.nil?) || (not @bore_length.nil?) || (not @bore_diameter.nil?)
         boreholes_or_trenches = XMLHelper.add_element(geothermal_loop, 'BoreholesOrTrenches')
@@ -7510,7 +7460,7 @@ class HPXML < Object
       return if geothermal_loop.nil?
 
       @id = HPXML::get_id(geothermal_loop)
-      @loop_configuration = XMLHelper.get_value(geothermal_loop, 'LoopConfiguration', :string)
+      @loop_config = XMLHelper.get_value(geothermal_loop, 'LoopConfiguration', :string)
       @loop_flow = XMLHelper.get_value(geothermal_loop, 'LoopFlow', :float)
       @num_bore_holes = XMLHelper.get_value(geothermal_loop, 'BoreholesOrTrenches/Count', :integer)
       @bore_length = XMLHelper.get_value(geothermal_loop, 'BoreholesOrTrenches/Length', :float)
@@ -12312,7 +12262,6 @@ class HPXML < Object
   def self.conditioned_locations
     return [HPXML::LocationConditionedSpace,
             HPXML::LocationBasementConditioned,
-            HPXML::LocationCrawlspaceConditioned,
             HPXML::LocationOtherHousingUnit]
   end
 
@@ -12331,8 +12280,7 @@ class HPXML < Object
   # @return [Array<String>] List of conditioned locations (HPXML::LocationXXX)
   def self.conditioned_locations_this_unit
     return [HPXML::LocationConditionedSpace,
-            HPXML::LocationBasementConditioned,
-            HPXML::LocationCrawlspaceConditioned]
+            HPXML::LocationBasementConditioned]
   end
 
   # Returns the set of all location types that are conditioned and assumed to
@@ -12348,8 +12296,7 @@ class HPXML < Object
   #
   # @return [Array<String>] List of conditioned, below-grade locations (HPXML::LocationXXX)
   def self.conditioned_below_grade_locations
-    return [HPXML::LocationBasementConditioned,
-            HPXML::LocationCrawlspaceConditioned]
+    return [HPXML::LocationBasementConditioned]
   end
 
   # Returns whether the surface is adjacent to conditioned space.
@@ -12414,6 +12361,72 @@ class HPXML < Object
       # If we don't explicitly know, assume a floor
       return false
     end
+  end
+
+  # Returns the HPXML location that corresponds to the HPXML foundation type.
+  #
+  # @param foundation_type [String] HPXML foundation type (HPXML::FoundationTypeXXX)
+  # @param throw_error [Boolean] Throw an error if foundation type is not handled
+  # @return [String] HPXML location (HPXML::LocationXXX)
+  def self.get_location_from_foundation_type(foundation_type, throw_error: true)
+    return if foundation_type.nil?
+
+    case foundation_type
+    when FoundationTypeSlab,
+         FoundationTypeAboveApartment
+      return LocationConditionedSpace
+    when FoundationTypeAmbient
+      return LocationOutside
+    when FoundationTypeBasementConditioned
+      return LocationBasementConditioned
+    when FoundationTypeBasementUnconditioned
+      return LocationBasementUnconditioned
+    when FoundationTypeCrawlspaceUnvented
+      return LocationCrawlspaceUnvented
+    when FoundationTypeCrawlspaceVented
+      return LocationCrawlspaceVented
+    when FoundationTypeBellyAndWing
+      return LocationManufacturedHomeUnderBelly
+    when FoundationTypeBasementUnknown,
+         FoundationTypeCrawlspaceUnknown,
+         FoundationTypeGarage,
+         FoundationTypeRubbleStone,
+         FoundationTypeOther,
+         FoundationTypeCombination
+      return # Not currently used
+    end
+
+    fail "Unexpected foundation type: '#{foundation_type}'." if throw_error
+
+    return
+  end
+
+  # Returns the HPXML location that corresponds to the HPXML attic type.
+  #
+  # @param attic_type [String] HPXML attic type (HPXML::AtticTypeXXX)
+  # @param throw_error [Boolean] Throw an error if attic type is not handled
+  # @return [String] HPXML location (HPXML::LocationXXX)
+  def self.get_location_from_attic_type(attic_type, throw_error: true)
+    return if attic_type.nil?
+
+    case attic_type
+    when AtticTypeCathedral,
+         AtticTypeConditioned,
+         AtticTypeFlatRoof,
+         AtticTypeBelowApartment
+      return LocationConditionedSpace
+    when AtticTypeUnvented
+      return LocationAtticUnvented
+    when AtticTypeVented
+      return LocationAtticVented
+    when AtticTypeUnknown,
+         AtticTypeOther
+      return # Not currently used
+    end
+
+    fail "Unexpected attic type: '#{attic_type}'." if throw_error
+
+    return
   end
 
   # Gets the ID attribute for the given element.

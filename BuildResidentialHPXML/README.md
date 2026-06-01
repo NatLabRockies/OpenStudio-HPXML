@@ -276,7 +276,7 @@ The foundation type of the building. Garages are assumed to be over slab-on-grad
 
 - **Required:** ``true``
 
-- **Choices:** <br/>  - `Slab-on-Grade`<br/>  - `Crawlspace, Vented`<br/>  - `Crawlspace, Unvented`<br/>  - `Crawlspace, Conditioned`<br/>  - `Basement, Unconditioned`<br/>  - `Basement, Unconditioned, Half Above-Grade`<br/>  - `Basement, Conditioned`<br/>  - `Basement, Conditioned, Half Above-Grade`<br/>  - `Ambient`<br/>  - `Above Apartment`<br/>  - `Belly and Wing, With Skirt`<br/>  - `Belly and Wing, No Skirt`<br/>  - `Detailed Example: Crawlspace, Vented, Above-Grade`<br/>  - `ASHRAE 140 Tests: Basement, Conditioned`<br/>  - `ASHRAE 140 Tests: Basement, Unconditioned`
+- **Choices:** <br/>  - `Slab-on-Grade`<br/>  - `Crawlspace, Vented`<br/>  - `Crawlspace, Unvented`<br/>  - `Basement, Unconditioned`<br/>  - `Basement, Unconditioned, Half Above-Grade`<br/>  - `Basement, Conditioned`<br/>  - `Basement, Conditioned, Half Above-Grade`<br/>  - `Ambient`<br/>  - `Above Apartment`<br/>  - `Belly and Wing, With Skirt`<br/>  - `Belly and Wing, No Skirt`<br/>  - `Detailed Example: Crawlspace, Vented, Above-Grade`<br/>  - `ASHRAE 140 Tests: Basement, Conditioned`<br/>  - `ASHRAE 140 Tests: Basement, Unconditioned`
 
 
 - **Default:** `Crawlspace, Vented`
@@ -947,7 +947,7 @@ The geothermal loop configuration if there's a ground-to-air heat pump.
 
 - **Required:** ``false``
 
-- **Choices:** <br/>  - `Default`<br/>  - `Vertical Loop, Enhanced Grout`<br/>  - `Vertical Loop, Enhanced Pipe`<br/>  - `Vertical Loop, Enhanced Grout & Pipe`<br/>  - `Detailed Example: Lopsided U Configuration, 10 Boreholes`
+- **Choices:** <br/>  - `Default`<br/>  - `Vertical Loop, Enhanced Grout`<br/>  - `Vertical Loop, Enhanced Pipe`<br/>  - `Vertical Loop, Enhanced Grout & Pipe`<br/>  - `Detailed Example: Vertical Loop, L Configuration, 4 Boreholes`
 
 
 - **Default:** `Default`
