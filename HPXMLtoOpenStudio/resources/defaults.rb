@@ -8137,8 +8137,8 @@ module Defaults
 		# FIXME: Update heating coefficients with 9.0 gpm
 
         # Heating Curves
-        htg_ap.heat_cap_curve_spec = [[-3.75031847962047, -2.18062040443483, 6.8363364819032, 0.188376814356582, 0.0869274802923634]]
-        htg_ap.heat_power_curve_spec = [[-8.4754723813072, 8.10952801956388, 1.38771494628738, -0.33766445915032, 0.0223085217874051]]
+        htg_ap.heat_cap_curve_spec = [[-4.15575838697543, -2.41636319256641, 7.57540001609313, 0.208741878970691, 0.19265009478362]]
+        htg_ap.heat_power_curve_spec = [[-10.1331922905183, 9.69567277321437, 1.65913848367526, -0.403708340999133, 0.0533437030572159]]
         heat_cop_ratios = [1.0]
       when HPXML::GroundToAirHeatPumpModelTypeExperimental
         case heating_system.compressor_type
