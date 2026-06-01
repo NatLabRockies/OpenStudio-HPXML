@@ -859,18 +859,18 @@ module HVAC
   # @param biquadratic_spec [Array<Double>] EIR or Capacity function of temperature biquadratic curve coefficients
   # @return [Double] Curve value at GLHP rated conditions for conversion
   def self.get_experimental_ghp_rated_condition_conversion(mode, biquadratic_spec)
-     case mode
-     when :clg
-       return MathTools.biquadratic(UnitConversions.convert(GroundSourceCoolRatedIWB, 'F', 'C'),
-                                    UnitConversions.convert(GroundSourceCoolGLHPRatedEWT, 'F', 'C'),
-                                    biquadratic_spec)
-     when :htg
-       return MathTools.biquadratic(UnitConversions.convert(GroundSourceHeatRatedIDB, 'F', 'C'),
-                                    UnitConversions.convert(GroundSourceHeatGLHPRatedEWT, 'F', 'C'),
-                                    biquadratic_spec)
-     else
-       fail "Unexpected mode: #{mode}."
-     end
+    case mode
+    when :clg
+      return MathTools.biquadratic(UnitConversions.convert(GroundSourceCoolRatedIWB, 'F', 'C'),
+                                   UnitConversions.convert(GroundSourceCoolGLHPRatedEWT, 'F', 'C'),
+                                   biquadratic_spec)
+    when :htg
+      return MathTools.biquadratic(UnitConversions.convert(GroundSourceHeatRatedIDB, 'F', 'C'),
+                                   UnitConversions.convert(GroundSourceHeatGLHPRatedEWT, 'F', 'C'),
+                                   biquadratic_spec)
+    else
+      fail "Unexpected mode: #{mode}."
+    end
   end
 
   # Adds the HPXML GeothermalLoop to the OpenStudio model. If it has already been
