@@ -91,6 +91,7 @@ module Constants
   ObjectTypeSensorIndoorHeatingSetpointTemp = 'indoor heating setpoint temp sensor'
   ObjectTypeSensorScheduleBAHSPCoolingSeason = 'bahsp cooling season sensor'
   ObjectTypeSensorScheduleCoolingAvailability = 'cooling availability sensor'
+  ObjectTypeSensorScheduleDehumidAvailability = 'dehumid availability sensor'
   ObjectTypeSensorScheduleHeatingAvailability = 'heating availability sensor'
   ObjectTypeSensorScheduleVehicleDischarge = 'vehicle discharge schedule sensor'
   ObjectTypeSensorSiteGroundTemp = 'site ground temp sensor'
@@ -104,9 +105,10 @@ module Constants
   ObjectTypeTotalAirflowsProgram = 'total airflows program'
   ObjectTypeTotalLoadsProgram = 'total loads program'
   ObjectTypeUnitHeater = 'unit heater'
-  ObjectTypeUnmetHoursProgram = 'unmet hours program'
+  ObjectTypeUnmetDehumidHoursProgram = 'dehumid unmet hours program'
+  ObjectTypeUnmetHVACHoursProgram = 'hvac unmet hours program'
+  ObjectTypeUnmetVehicleHoursProgram = 'vehicle unmet hours program'
   ObjectTypeVehicle = 'vehicle'
-  ObjectTypeVehicleUnmetHoursProgram = 'vehicle unmet hours program'
   ObjectTypeWaterHeater = 'water heater'
   ObjectTypeWaterHeaterSetpoint = 'water heater setpoint'
   ObjectTypeWaterHeaterAdjustment = 'water heater energy adjustment'
@@ -278,6 +280,7 @@ end
 module UHT
   Heating = 'Heating'
   Cooling = 'Cooling'
+  Dehumid = 'Dehumidification'
   Driving = 'EV Driving'
 end
 

@@ -1,7 +1,8 @@
 ## OpenStudio-HPXML v1.13.0
 
 __Features__
-  - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
+- **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
+- Adds unmet dehumidification hours output for hours where the dehumidifier RH setpoint is exceeded; issues a warning if more than 300 hours.
 
 __Bugfixes__
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.

@@ -373,11 +373,12 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       return false
     end
 
-    unmet_hours_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeUnmetHoursProgram }
+    unmet_hvac_hours_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeUnmetHVACHoursProgram }
+    unmet_driving_hrs_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeUnmetVehicleHoursProgram }
+    unmet_dehumid_hrs_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeUnmetDehumidHoursProgram }
     total_loads_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeTotalLoadsProgram }
     comp_loads_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeComponentLoadsProgram }
     total_airflows_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeTotalAirflowsProgram }
-    unmet_driving_hrs_program = model.getEnergyManagementSystemPrograms.find { |p| p.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeVehicleUnmetHoursProgram }
     heated_zones = eval(model.getBuilding.additionalProperties.getFeatureAsString('heated_zones').get)
     cooled_zones = eval(model.getBuilding.additionalProperties.getFeatureAsString('cooled_zones').get)
 
@@ -488,9 +489,13 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     # Unmet Hours (annual only)
     @unmet_hours.each do |key, unmet_hour|
-      next if key == UHT::Driving && unmet_driving_hrs_program.nil?
-
-      ems_program = key == UHT::Driving ? unmet_driving_hrs_program : unmet_hours_program
+      ems_program = {
+        UHT::Driving => unmet_driving_hrs_program,
+        UHT::Dehumid => unmet_dehumid_hrs_program,
+        UHT::Heating => unmet_hvac_hours_program,
+        UHT::Cooling => unmet_hvac_hours_program
+      }[key]
+      next if ems_program.nil?
 
       ems_ov = Model.add_ems_output_variable(model, name: "#{unmet_hour.ems_variable}_annual_outvar", ems_variable_name: unmet_hour.ems_variable, type_of_data: 'Summed', update_frequency: 'ZoneTimestep', ems_program_or_subroutine: ems_program, units: 'hr')
       Model.add_output_variable(model, key_value: '*', variable_name: ems_ov.name.to_s, reporting_frequency: 'runperiod')
@@ -901,6 +906,8 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         runner.registerWarning("There are a large number of unmet hours (#{unmet_hour.annual_output}) for heating; this may indicate the heating system is undersized or can be caused by recovery from thermostat setbacks.")
       elsif key == UHT::Cooling && unmet_hour.annual_output > 300
         runner.registerWarning("There are a large number of unmet hours (#{unmet_hour.annual_output}) for cooling; this may indicate the cooling system is undersized or can be caused by recovery from thermostat setbacks.")
+      elsif key == UHT::Dehumid && unmet_hour.annual_output > 300
+        runner.registerWarning("There are a large number of unmet hours (#{unmet_hour.annual_output}) for dehumidification; this may indicate the dehumidification system is undersized.")
       end
     end
 
@@ -2932,7 +2939,8 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     @unmet_hours = {}
     @unmet_hours[UHT::Heating] = UnmetHours.new(ems_variable: 'htg_unmet_hours')
     @unmet_hours[UHT::Cooling] = UnmetHours.new(ems_variable: 'clg_unmet_hours')
-    @unmet_hours[UHT::Driving] = UnmetHours.new(ems_variable: 'unmet_driving_hours')
+    @unmet_hours[UHT::Dehumid] = UnmetHours.new(ems_variable: 'dehumid_unmet_hours')
+    @unmet_hours[UHT::Driving] = UnmetHours.new(ems_variable: 'driving_unmet_hours')
 
     @unmet_hours.each do |load_type, unmet_hour|
       unmet_hour.name = "Unmet Hours: #{load_type}"
