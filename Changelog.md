@@ -5,6 +5,7 @@ __Features__
 - Adds unmet dehumidification hours output for hours where the dehumidifier RH setpoint is exceeded; issues a warning if more than 300 hours.
 
 __Bugfixes__
+- Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
 - **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
 
 ## OpenStudio-HPXML v1.12.0
