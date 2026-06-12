@@ -3372,7 +3372,7 @@ module Defaults
           elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated
             water_heating_system.heating_capacity = (UnitConversions.convert(0.422, 'kW', 'Btu/hr') * water_heating_system.additional_properties.cop).round
           else # 120V shared
-            water_heating_system.heating_capacity = (UnitConversions.convert(0.357, 'kW', 'Btu/hr') * water_heating_system.additional_properties.cop).round
+            water_heating_system.heating_capacity = (UnitConversions.convert(0.424, 'kW', 'Btu/hr') * water_heating_system.additional_properties.cop).round
           end
           water_heating_system.heating_capacity_isdefaulted = true
         end
@@ -6319,10 +6319,10 @@ module Defaults
           cop = 1.1022 * uef - 0.0877
         end
       end
-    elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated
-      cop = 3.6
+    elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated #FIXME: function of uef (need to run simulations to fit)
+      cop = 2.71
     else # 120V shared
-      cop = 4.2
+      cop = 3.44
     end
     return cop
   end
