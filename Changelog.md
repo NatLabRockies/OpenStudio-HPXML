@@ -1,9 +1,11 @@
 ## OpenStudio-HPXML v1.13.0
 
 __Features__
+  - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
 
 __Bugfixes__
-- Fixes ERV/HRV supply outlet enthalpy calculation to correct formulation inconsistency.
+- Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
+- **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
 
 ## OpenStudio-HPXML v1.12.0
 
