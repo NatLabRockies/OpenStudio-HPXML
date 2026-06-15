@@ -1317,7 +1317,6 @@ module Geometry
         HPXML::LocationBasementUnconditioned,
         HPXML::LocationCrawlspaceUnvented,
         HPXML::LocationCrawlspaceVented,
-        HPXML::LocationCrawlspaceConditioned,
         HPXML::LocationGarage].include? location
       floor_area = hpxml_bldg.slabs.select { |s| s.interior_adjacent_to == location }.map { |s| s.area }.sum(0.0)
       height = calculate_zone_height(hpxml_bldg, location)
@@ -1342,7 +1341,6 @@ module Geometry
         HPXML::LocationBasementUnconditioned,
         HPXML::LocationCrawlspaceUnvented,
         HPXML::LocationCrawlspaceVented,
-        HPXML::LocationCrawlspaceConditioned,
         HPXML::LocationGarage].include? location
       if above_grade
         height = hpxml_bldg.foundation_walls.select { |w| w.interior_adjacent_to == location }.map { |w| w.height - w.depth_below_grade }.max
@@ -1354,7 +1352,6 @@ module Geometry
                    HPXML::LocationBasementUnconditioned => 8,
                    HPXML::LocationCrawlspaceUnvented => 3,
                    HPXML::LocationCrawlspaceVented => 3,
-                   HPXML::LocationCrawlspaceConditioned => 3,
                    HPXML::LocationGarage => 8 }[location]
       end
     elsif [HPXML::LocationAtticUnvented,
@@ -1441,12 +1438,18 @@ module Geometry
                ground_weight: 1.0,
                f_regain: 0.83 } # From LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P"
     when HPXML::LocationManufacturedHomeBelly
-      # From LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P"
-      # 3.5 Manufactured House Belly Pan Temperatures
+      # Based on 2007 paper by Francisco & Palmiter "Thermal Characterization and Duct Losses of Belly Spaces in Manufactured Homes",
+      # Table 5 shows an average belly space connection to outdoors of 15%.
+      # https://www.researchgate.net/publication/290674828_Thermal_characterization_and_duct_losses_of_belly_spaces_in_manufactured_homes
+      #
+      # Regain assumption is based on LBNL's "Technical Background for default values used for Forced Air Systems in Proposed ASHRAE Standard 152P";
+      # see Section 3.5: Manufactured Home Belly Pan Temperatures.
+      # https://eta-publications.lbl.gov/sites/default/files/40588.pdf
+      #
       # FUTURE: Consider modeling the belly as a separate thermal zone so that we dynamically calculate temperatures.
       return { temp_min: nil,
-               indoor_weight: 1.0,
-               outdoor_weight: 0.0,
+               indoor_weight: 0.85,
+               outdoor_weight: 0.15,
                ground_weight: 0.0,
                f_regain: 0.62 }
     end
@@ -1649,7 +1652,7 @@ module Geometry
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{program.name} calling manager",
+      name: "#{program.name} manager",
       calling_point: 'EndOfSystemTimestepAfterHVACReporting',
       ems_programs: [program]
     )
@@ -1677,7 +1680,8 @@ module Geometry
         HPXML::LocationOtherMultifamilyBufferSpace,
         HPXML::LocationOtherNonFreezingSpace,
         HPXML::LocationExteriorWall,
-        HPXML::LocationUnderSlab].include? location
+        HPXML::LocationUnderSlab,
+        HPXML::LocationManufacturedHomeBelly].include? location
       # if located in spaces where we don't model a thermal zone, create and return temperature schedule
       sch = get_space_temperature_schedule(model, location, spaces)
     else

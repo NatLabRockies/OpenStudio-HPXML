@@ -167,7 +167,7 @@ module Vehicle
 
     Model.add_ems_program_calling_manager(
       model,
-      name: 'ev_discharge_pcm',
+      name: "#{ev_discharge_program.name} manager",
       calling_point: 'BeginTimestepBeforePredictor',
       ems_programs: [ev_discharge_program]
     )

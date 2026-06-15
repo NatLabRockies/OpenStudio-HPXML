@@ -254,7 +254,7 @@ module Waterheater
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{obj_name} ProgramManager",
+      name: "#{hpwh_ctrl_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [hpwh_ctrl_program, hpwh_zone_heat_gain_program]
     )
@@ -606,7 +606,7 @@ module Waterheater
       # ProgramCallingManagers
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{combi_sys_id} ProgramManager",
+        name: "#{combi_ctrl_program.name} manager",
         calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
         ems_programs: [combi_ctrl_program]
       )
@@ -893,7 +893,7 @@ module Waterheater
     # Program
     swh_program = Model.add_ems_program(
       model,
-      name: "#{obj_name} Controller"
+      name: "#{obj_name} controls"
     )
     swh_program.addLine("If #{coll_sensor.name} > #{tank_source_sensor.name}")
     swh_program.addLine("Set #{swh_pump_actuator.name} = 100 * #{unit_multiplier}")
@@ -904,7 +904,7 @@ module Waterheater
     # ProgramCallingManager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{obj_name} Control",
+      name: "#{swh_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [swh_program]
     )
@@ -1014,17 +1014,32 @@ module Waterheater
     cop = water_heating_system.additional_properties.cop
 
     # Adjust COP based on RESNET HERS Addendum 77
-    if not water_heating_system.hpwh_containment_volume.nil?
+    cv = water_heating_system.hpwh_containment_volume
+    if not cv.nil?
+      # Very small containment volume and low COP can result in E+ error (Rated total cooling capacity is zero or less)
+      # Prevent that by setting a minimum CV value that avoids the error
+      # Equation determined empirically by running different combinations of CV & UEF using base-dhw-tank-heat-pump-confined-space.xml
+      #   UEF  | COP  | Min CV
+      #   ---  | ---  | ------
+      #   2.00 | 2.09 | 105
+      #   2.25 | 2.37 | 85
+      #   2.50 | 2.64 | 70
+      #   2.75 | 2.91 | 60
+      #   3.00 | 3.19 | 55
+      #   3.25 | 3.46 | 45
+      min_cv = 347.57 * cop**-1.631
+      cv = [cv, min_cv].max
+
       if not water_heating_system.hpwh_confined_space_without_mitigation
-        if water_heating_system.hpwh_containment_volume < 1000.0
+        if cv < 1000.0
           runner.registerWarning("HPWH COP adjustment based on HPWHContainmentVolume will not be applied to #{water_heating_system.id} because HPWHInConfinedSpaceWithoutMitigation is not 'true'.")
         end
       else
         # FUTURE: apply for 120V HPWH and other system types that the correction may not be accurate for
-        if water_heating_system.hpwh_containment_volume < 450.0 && (water_heating_system.backup_heating_capacity == 0.0)
+        if cv < 450.0 && (water_heating_system.backup_heating_capacity == 0.0)
           runner.registerWarning("Heat pump water heater: #{water_heating_system.id} has no backup electric resistance element, COP adjustment for confined space may not be accurate when the containment space volume is below 450 cubic feet.")
         end
-        rv = [water_heating_system.hpwh_containment_volume / 1500.0, 1.0].min
+        rv = [cv / 1500.0, 1.0].min
         cop = (cop - 0.92) * (1 - (1.009 * Math.exp(-5.492 * rv))) + 0.92
       end
     end
@@ -1221,14 +1236,11 @@ module Waterheater
       hpwh_sens = Model.add_other_equipment(
         model,
         name: "#{obj_name} sens",
-        end_use: nil,
         space: loc_space,
-        design_level: 0,
         frac_radiant: 0,
         frac_latent: 0,
         frac_lost: 0,
-        schedule: model.alwaysOnDiscreteSchedule,
-        fuel_type: nil
+        schedule: model.alwaysOnDiscreteSchedule
       )
       sens_act_actuator = Model.add_ems_actuator(
         name: "#{hpwh_sens.name} act",
@@ -1239,14 +1251,11 @@ module Waterheater
       hpwh_lat = Model.add_other_equipment(
         model,
         name: "#{obj_name} lat",
-        end_use: nil,
         space: loc_space,
-        design_level: 0,
         frac_radiant: 0,
         frac_latent: 1,
         frac_lost: 0,
-        schedule: model.alwaysOnDiscreteSchedule,
-        fuel_type: nil
+        schedule: model.alwaysOnDiscreteSchedule
       )
       lat_act_actuator = Model.add_ems_actuator(
         name: "#{hpwh_lat.name} act",
@@ -1712,7 +1721,6 @@ module Waterheater
       name: "#{Constants::ObjectTypeWaterHeaterAdjustment}#{cnt + 1}",
       end_use: "#{Constants::ObjectTypeWaterHeaterAdjustment}#{cnt + 1}",
       space: model.getSpaces[0],
-      design_level: 0.01,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 1,
@@ -1744,7 +1752,7 @@ module Waterheater
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{ec_adj_program.name} calling manager",
+      name: "#{ec_adj_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [ec_adj_program]
     )
