@@ -154,7 +154,6 @@ class HPXML < Object
   FoundationTypeBasementUnconditioned = 'UnconditionedBasement'
   FoundationTypeBasementUnknown = 'UnknownBasement'
   FoundationTypeCombination = 'Combination'
-  FoundationTypeCrawlspaceConditioned = 'ConditionedCrawlspace'
   FoundationTypeCrawlspaceUnvented = 'UnventedCrawlspace'
   FoundationTypeCrawlspaceUnknown = 'UnknownCrawlspace'
   FoundationTypeCrawlspaceVented = 'VentedCrawlspace'
@@ -199,17 +198,16 @@ class HPXML < Object
   FuelTypeWoodPellets = 'wood pellets'
   FurnitureMassTypeLightWeight = 'light-weight'
   FurnitureMassTypeHeavyWeight = 'heavy-weight'
-  GeothermalLoopBorefieldConfigurationRectangle = 'Rectangle'
-  GeothermalLoopBorefieldConfigurationZonedRectangle = 'Zoned Rectangle'
-  GeothermalLoopBorefieldConfigurationOpenRectangle = 'Open Rectangle'
-  GeothermalLoopBorefieldConfigurationC = 'C'
-  GeothermalLoopBorefieldConfigurationL = 'L'
-  GeothermalLoopBorefieldConfigurationU = 'U'
-  GeothermalLoopBorefieldConfigurationLopsidedU = 'Lopsided U'
-  GeothermalLoopLoopConfigurationDiagonal = 'diagonal'
-  GeothermalLoopLoopConfigurationHorizontal = 'horizontal'
-  GeothermalLoopLoopConfigurationOther = 'other'
-  GeothermalLoopLoopConfigurationVertical = 'vertical'
+  GeothermalLoopBoreConfigRectangle = 'Rectangle'
+  GeothermalLoopBoreConfigOpenRectangle = 'Open Rectangle'
+  GeothermalLoopBoreConfigC = 'C'
+  GeothermalLoopBoreConfigL = 'L'
+  GeothermalLoopBoreConfigU = 'U'
+  GeothermalLoopBoreConfigLopsidedU = 'Lopsided U'
+  GeothermalLoopConfigDiagonal = 'diagonal'
+  GeothermalLoopConfigHorizontal = 'horizontal'
+  GeothermalLoopConfigOther = 'other'
+  GeothermalLoopConfigVertical = 'vertical'
   GeothermalLoopGroutOrPipeTypeStandard = 'standard'
   GeothermalLoopGroutOrPipeTypeThermallyEnhanced = 'thermally enhanced'
   GroundToAirHeatPumpModelTypeStandard = 'standard'
@@ -307,7 +305,6 @@ class HPXML < Object
   LocationBath = 'bath'
   LocationConditionedSpace = 'conditioned space'
   LocationCrawlspace = 'crawlspace'
-  LocationCrawlspaceConditioned = 'crawlspace - conditioned'
   LocationCrawlspaceUnvented = 'crawlspace - unvented'
   LocationCrawlspaceVented = 'crawlspace - vented'
   LocationExterior = 'exterior'
@@ -928,6 +925,8 @@ class HPXML < Object
              :temperature_capacitance_multiplier,          # [Double] SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/TemperatureCapacitanceMultiplier
              :ground_to_air_heat_pump_model_type,          # [String] SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/GroundToAirHeatPumpModelType (HPXML::GroundToAirHeatPumpModelTypeXXX)
              :hvac_onoff_thermostat_deadband,              # [Double] SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/OnOffThermostatDeadbandTemperature (F)
+             :latent_degradation_model_enabled,            # [Boolean] SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/LatentDegradationModel/Enabled
+             :latent_degradation_model_blower_off_delay,   # [Double] SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/LatentDegradationModel/HVACBlowerOffDelay (sec)
              :heat_pump_backup_heating_capacity_increment, # [Double] SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/HeatPumpBackupCapacityIncrement (Btu/hr)
              :service_feeders_load_calculation_types]      # [Array<String>] SoftwareInfo/extension/ElectricPanelLoadCalculations/ServiceFeeders/Type
     attr_reader(*CLASS_ATTRS)
@@ -992,7 +991,7 @@ class HPXML < Object
           XMLHelper.add_element(calculation, 'Version', calculation_version, :string)
         end
       end
-      if (not @timestep.nil?) || (not @sim_begin_month.nil?) || (not @sim_begin_day.nil?) || (not @sim_end_month.nil?) || (not @sim_end_day.nil?) || (not @sim_calendar_year.nil?) || (not @temperature_capacitance_multiplier.nil?) || (not @hvac_onoff_thermostat_deadband.nil?) || (not @heat_pump_backup_heating_capacity_increment.nil?) || (not @ground_to_air_heat_pump_model_type.nil?)
+      if (not @timestep.nil?) || (not @sim_begin_month.nil?) || (not @sim_begin_day.nil?) || (not @sim_end_month.nil?) || (not @sim_end_day.nil?) || (not @sim_calendar_year.nil?) || (not @temperature_capacitance_multiplier.nil?) || (not @hvac_onoff_thermostat_deadband.nil?) || (not @latent_degradation_model_enabled.nil?) || (not @latent_degradation_model_blower_off_delay.nil?) || (not @heat_pump_backup_heating_capacity_increment.nil?) || (not @ground_to_air_heat_pump_model_type.nil?)
         extension = XMLHelper.create_elements_as_needed(software_info, ['extension'])
         simulation_control = XMLHelper.add_element(extension, 'SimulationControl')
         XMLHelper.add_element(simulation_control, 'Timestep', @timestep, :integer, @timestep_isdefaulted) unless @timestep.nil?
@@ -1001,10 +1000,15 @@ class HPXML < Object
         XMLHelper.add_element(simulation_control, 'EndMonth', @sim_end_month, :integer, @sim_end_month_isdefaulted) unless @sim_end_month.nil?
         XMLHelper.add_element(simulation_control, 'EndDayOfMonth', @sim_end_day, :integer, @sim_end_day_isdefaulted) unless @sim_end_day.nil?
         XMLHelper.add_element(simulation_control, 'CalendarYear', @sim_calendar_year, :integer, @sim_calendar_year_isdefaulted) unless @sim_calendar_year.nil?
-        if (not @temperature_capacitance_multiplier.nil?) || (not @hvac_onoff_thermostat_deadband.nil?) || (not @heat_pump_backup_heating_capacity_increment.nil?) || (not @ground_to_air_heat_pump_model_type.nil?)
+        if (not @temperature_capacitance_multiplier.nil?) || (not @hvac_onoff_thermostat_deadband.nil?) || (not @latent_degradation_model_enabled.nil?) || (not @latent_degradation_model_blower_off_delay.nil?) || (not @heat_pump_backup_heating_capacity_increment.nil?) || (not @ground_to_air_heat_pump_model_type.nil?)
           advanced_research_features = XMLHelper.create_elements_as_needed(simulation_control, ['AdvancedResearchFeatures'])
           XMLHelper.add_element(advanced_research_features, 'TemperatureCapacitanceMultiplier', @temperature_capacitance_multiplier, :float, @temperature_capacitance_multiplier_isdefaulted) unless @temperature_capacitance_multiplier.nil?
           XMLHelper.add_element(advanced_research_features, 'OnOffThermostatDeadbandTemperature', @hvac_onoff_thermostat_deadband, :float, @hvac_onoff_thermostat_deadband_isdefaulted) unless @hvac_onoff_thermostat_deadband.nil?
+          if (not @latent_degradation_model_enabled.nil?) || (not @latent_degradation_model_blower_off_delay.nil?)
+            latent_degradation_model = XMLHelper.add_element(advanced_research_features, 'LatentDegradationModel')
+            XMLHelper.add_element(latent_degradation_model, 'Enabled', @latent_degradation_model_enabled, :boolean, @latent_degradation_model_enabled_isdefaulted) unless @latent_degradation_model_enabled.nil?
+            XMLHelper.add_element(latent_degradation_model, 'HVACBlowerOffDelay', @latent_degradation_model_blower_off_delay, :float, @latent_degradation_model_blower_off_delay_isdefaulted) unless @latent_degradation_model_blower_off_delay.nil?
+          end
           XMLHelper.add_element(advanced_research_features, 'HeatPumpBackupCapacityIncrement', @heat_pump_backup_heating_capacity_increment, :float, @heat_pump_backup_heating_capacity_increment_isdefaulted) unless @heat_pump_backup_heating_capacity_increment.nil?
           XMLHelper.add_element(advanced_research_features, 'GroundToAirHeatPumpModelType', @ground_to_air_heat_pump_model_type, :string, @ground_to_air_heat_pump_model_type_isdefaulted) unless @ground_to_air_heat_pump_model_type.nil?
         end
@@ -1048,6 +1052,8 @@ class HPXML < Object
       @sim_calendar_year = XMLHelper.get_value(hpxml, 'SoftwareInfo/extension/SimulationControl/CalendarYear', :integer)
       @temperature_capacitance_multiplier = XMLHelper.get_value(hpxml, 'SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/TemperatureCapacitanceMultiplier', :float)
       @hvac_onoff_thermostat_deadband = XMLHelper.get_value(hpxml, 'SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/OnOffThermostatDeadbandTemperature', :float)
+      @latent_degradation_model_enabled = XMLHelper.get_value(hpxml, 'SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/LatentDegradationModel/Enabled', :boolean)
+      @latent_degradation_model_blower_off_delay = XMLHelper.get_value(hpxml, 'SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/LatentDegradationModel/HVACBlowerOffDelay', :float)
       @heat_pump_backup_heating_capacity_increment = XMLHelper.get_value(hpxml, 'SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/HeatPumpBackupCapacityIncrement', :float)
       @ground_to_air_heat_pump_model_type = XMLHelper.get_value(hpxml, 'SoftwareInfo/extension/SimulationControl/AdvancedResearchFeatures/GroundToAirHeatPumpModelType', :string)
       @apply_ashrae140_assumptions = XMLHelper.get_value(hpxml, 'SoftwareInfo/extension/ApplyASHRAE140Assumptions', :boolean)
@@ -2453,7 +2459,7 @@ class HPXML < Object
   # Object for /HPXML/Building/BuildingDetails/BuildingSummary/BuildingConstruction.
   class BuildingConstruction < BaseElement
     ATTRS = [:year_built,                               # [Integer] YearBuilt
-             :residential_facility_type,                # [String] ResidentialFacilityType (HXPML::ResidentialTypeXXX)
+             :residential_facility_type,                # [String] ResidentialFacilityType (HPXML::ResidentialTypeXXX)
              :unit_height_above_grade,                  # [Double] UnitHeightAboveGrade
              :number_of_units,                          # [Integer] NumberofUnits
              :number_of_units_in_building,              # [Integer] NumberofUnitsInBuilding
@@ -3398,21 +3404,7 @@ class HPXML < Object
     #
     # @return [String] Adjacent location (HPXML::LocationXXX)
     def to_location
-      return if @attic_type.nil?
-
-      case @attic_type
-      when AtticTypeCathedral, AtticTypeConditioned,
-           AtticTypeFlatRoof, AtticTypeBelowApartment
-        return LocationConditionedSpace
-      when AtticTypeUnvented
-        return LocationAtticUnvented
-      when AtticTypeVented
-        return LocationAtticVented
-      when AtticTypeUnknown, AtticTypeOther
-        return # Not currently used
-      else
-        fail "Unexpected attic type: '#{@attic_type}'."
-      end
+      return HPXML::get_location_from_attic_type(@attic_type)
     end
 
     # Deletes the current object from the array.
@@ -3656,35 +3648,7 @@ class HPXML < Object
     #
     # @return [String] Adjacent location (HPXML::LocationXXX)
     def to_location
-      return if @foundation_type.nil?
-
-      case @foundation_type
-      when FoundationTypeSlab, FoundationTypeAboveApartment
-        return LocationConditionedSpace
-      when FoundationTypeAmbient
-        return LocationOutside
-      when FoundationTypeBasementConditioned
-        return LocationBasementConditioned
-      when FoundationTypeBasementUnconditioned
-        return LocationBasementUnconditioned
-      when FoundationTypeCrawlspaceUnvented
-        return LocationCrawlspaceUnvented
-      when FoundationTypeCrawlspaceVented
-        return LocationCrawlspaceVented
-      when FoundationTypeCrawlspaceConditioned
-        return LocationCrawlspaceConditioned
-      when FoundationTypeBellyAndWing
-        return LocationManufacturedHomeUnderBelly
-      when FoundationTypeBasementUnknown,
-           FoundationTypeCrawlspaceUnknown,
-           FoundationTypeGarage,
-           FoundationTypeRubbleStone,
-           FoundationTypeOther,
-           FoundationTypeCombination
-        return # Not currently used
-      else
-        fail "Unexpected foundation type: '#{@foundation_type}'."
-      end
+      return HPXML::get_location_from_foundation_type(@foundation_type)
     end
 
     # Calculates the foundation footprint area.
@@ -3764,9 +3728,6 @@ class HPXML < Object
         when FoundationTypeCrawlspaceUnvented
           crawlspace = XMLHelper.add_element(foundation_type_el, 'Crawlspace')
           XMLHelper.add_element(crawlspace, 'Vented', false, :boolean)
-        when FoundationTypeCrawlspaceConditioned
-          crawlspace = XMLHelper.add_element(foundation_type_el, 'Crawlspace')
-          XMLHelper.add_element(crawlspace, 'Conditioned', true, :boolean)
         when FoundationTypeCrawlspaceUnknown
           XMLHelper.add_element(foundation_type_el, 'Crawlspace')
         when FoundationTypeBellyAndWing
@@ -3839,8 +3800,6 @@ class HPXML < Object
         @foundation_type = FoundationTypeCrawlspaceUnvented
       elsif XMLHelper.has_element(foundation, "FoundationType/Crawlspace[Vented='true']")
         @foundation_type = FoundationTypeCrawlspaceVented
-      elsif XMLHelper.has_element(foundation, "FoundationType/Crawlspace[Conditioned='true']")
-        @foundation_type = FoundationTypeCrawlspaceConditioned
       elsif XMLHelper.has_element(foundation, 'FoundationType/Crawlspace')
         @foundation_type = FoundationTypeCrawlspaceUnknown
       elsif XMLHelper.has_element(foundation, 'FoundationType/Ambient')
@@ -7401,9 +7360,9 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/GeothermalLoop.
   class GeothermalLoop < BaseElement
-    ATTRS = [:id, # [String] SystemIdentifier/@id
-             :sameas_id, # [String] SystemIdentifier/@sameas
-             :loop_configuration, # [String] LoopConfiguration (HPXML::GeothermalLoopLoopConfigurationXXX)
+    ATTRS = [:id,                 # [String] SystemIdentifier/@id
+             :sameas_id,          # [String] SystemIdentifier/@sameas
+             :loop_config,        # [String] LoopConfiguration (HPXML::GeothermalLoopConfigXXX)
              :loop_flow,          # [Double] LoopFlow (gal/min)
              :num_bore_holes,     # [Integer] BoreholesOrTrenches/Count
              :bore_length,        # [Double] BoreholesOrTrenches/Length (ft)
@@ -7415,13 +7374,13 @@ class HPXML < Object
              :pipe_conductivity,  # [Double] Pipe/Conductivity (Btu/hr-ft-F)
              :pipe_diameter,      # [Double] Pipe/Diameter (in)
              :shank_spacing,      # [Double] Pipe/ShankSpacing (in)
-             :bore_config]        # [String] extension/BorefieldConfiguration (HPXML::GeothermalLoopBorefieldConfigurationXXX)
+             :bore_config]        # [String] extension/BorefieldConfiguration (HPXML::GeothermalLoopBoreConfigXXX)
     attr_accessor(*ATTRS)
 
     # Returns all heat pumps connect to the geothermal loop.
     #
     # @return [Array<HPXML::HeatPump>] List of heat pump objects
-    def heat_pump
+    def heat_pumps
       list = []
       @parent_object.heat_pumps.each do |heat_pump|
         next if heat_pump.geothermal_loop_idref.nil?
@@ -7432,9 +7391,9 @@ class HPXML < Object
 
       if list.size == 0
         fail "Geothermal loop '#{@id}' found but no heat pump attached to it."
-      elsif list.size > 1
-        fail "Multiple heat pumps found attached to geothermal loop '#{@id}'."
       end
+
+      return list
     end
 
     # Deletes the current object from the array.
@@ -7454,7 +7413,7 @@ class HPXML < Object
     # @return [Array<String>] List of error messages
     def check_for_errors
       errors = []
-      begin; heat_pump; rescue StandardError => e; errors << e.message; end
+      begin; heat_pumps; rescue StandardError => e; errors << e.message; end
       return errors
     end
 
@@ -7470,7 +7429,7 @@ class HPXML < Object
       sys_id = XMLHelper.add_element(geothermal_loop, 'SystemIdentifier')
       XMLHelper.add_attribute(sys_id, 'id', @id)
       XMLHelper.add_attribute(sys_id, 'sameas', @sameas_id) unless @sameas_id.nil?
-      XMLHelper.add_element(geothermal_loop, 'LoopConfiguration', @loop_configuration, :string, @loop_configuration_isdefaulted) unless @loop_configuration.nil?
+      XMLHelper.add_element(geothermal_loop, 'LoopConfiguration', @loop_config, :string, @loop_config_isdefaulted) unless @loop_config.nil?
       XMLHelper.add_element(geothermal_loop, 'LoopFlow', @loop_flow, :float, @loop_flow_isdefaulted) unless @loop_flow.nil?
       if (not @num_bore_holes.nil?) || (not @bore_spacing.nil?) || (not @bore_length.nil?) || (not @bore_diameter.nil?)
         boreholes_or_trenches = XMLHelper.add_element(geothermal_loop, 'BoreholesOrTrenches')
@@ -7505,7 +7464,7 @@ class HPXML < Object
       return if geothermal_loop.nil?
 
       @id = HPXML::get_id(geothermal_loop)
-      @loop_configuration = XMLHelper.get_value(geothermal_loop, 'LoopConfiguration', :string)
+      @loop_config = XMLHelper.get_value(geothermal_loop, 'LoopConfiguration', :string)
       @loop_flow = XMLHelper.get_value(geothermal_loop, 'LoopFlow', :float)
       @num_bore_holes = XMLHelper.get_value(geothermal_loop, 'BoreholesOrTrenches/Count', :integer)
       @bore_length = XMLHelper.get_value(geothermal_loop, 'BoreholesOrTrenches/Length', :float)
@@ -12316,7 +12275,6 @@ class HPXML < Object
   def self.conditioned_locations
     return [HPXML::LocationConditionedSpace,
             HPXML::LocationBasementConditioned,
-            HPXML::LocationCrawlspaceConditioned,
             HPXML::LocationOtherHousingUnit]
   end
 
@@ -12335,8 +12293,7 @@ class HPXML < Object
   # @return [Array<String>] List of conditioned locations (HPXML::LocationXXX)
   def self.conditioned_locations_this_unit
     return [HPXML::LocationConditionedSpace,
-            HPXML::LocationBasementConditioned,
-            HPXML::LocationCrawlspaceConditioned]
+            HPXML::LocationBasementConditioned]
   end
 
   # Returns the set of all location types that are conditioned and assumed to
@@ -12352,8 +12309,7 @@ class HPXML < Object
   #
   # @return [Array<String>] List of conditioned, below-grade locations (HPXML::LocationXXX)
   def self.conditioned_below_grade_locations
-    return [HPXML::LocationBasementConditioned,
-            HPXML::LocationCrawlspaceConditioned]
+    return [HPXML::LocationBasementConditioned]
   end
 
   # Returns whether the surface is adjacent to conditioned space.
@@ -12418,6 +12374,72 @@ class HPXML < Object
       # If we don't explicitly know, assume a floor
       return false
     end
+  end
+
+  # Returns the HPXML location that corresponds to the HPXML foundation type.
+  #
+  # @param foundation_type [String] HPXML foundation type (HPXML::FoundationTypeXXX)
+  # @param throw_error [Boolean] Throw an error if foundation type is not handled
+  # @return [String] HPXML location (HPXML::LocationXXX)
+  def self.get_location_from_foundation_type(foundation_type, throw_error: true)
+    return if foundation_type.nil?
+
+    case foundation_type
+    when FoundationTypeSlab,
+         FoundationTypeAboveApartment
+      return LocationConditionedSpace
+    when FoundationTypeAmbient
+      return LocationOutside
+    when FoundationTypeBasementConditioned
+      return LocationBasementConditioned
+    when FoundationTypeBasementUnconditioned
+      return LocationBasementUnconditioned
+    when FoundationTypeCrawlspaceUnvented
+      return LocationCrawlspaceUnvented
+    when FoundationTypeCrawlspaceVented
+      return LocationCrawlspaceVented
+    when FoundationTypeBellyAndWing
+      return LocationManufacturedHomeUnderBelly
+    when FoundationTypeBasementUnknown,
+         FoundationTypeCrawlspaceUnknown,
+         FoundationTypeGarage,
+         FoundationTypeRubbleStone,
+         FoundationTypeOther,
+         FoundationTypeCombination
+      return # Not currently used
+    end
+
+    fail "Unexpected foundation type: '#{foundation_type}'." if throw_error
+
+    return
+  end
+
+  # Returns the HPXML location that corresponds to the HPXML attic type.
+  #
+  # @param attic_type [String] HPXML attic type (HPXML::AtticTypeXXX)
+  # @param throw_error [Boolean] Throw an error if attic type is not handled
+  # @return [String] HPXML location (HPXML::LocationXXX)
+  def self.get_location_from_attic_type(attic_type, throw_error: true)
+    return if attic_type.nil?
+
+    case attic_type
+    when AtticTypeCathedral,
+         AtticTypeConditioned,
+         AtticTypeFlatRoof,
+         AtticTypeBelowApartment
+      return LocationConditionedSpace
+    when AtticTypeUnvented
+      return LocationAtticUnvented
+    when AtticTypeVented
+      return LocationAtticVented
+    when AtticTypeUnknown,
+         AtticTypeOther
+      return # Not currently used
+    end
+
+    fail "Unexpected attic type: '#{attic_type}'." if throw_error
+
+    return
   end
 
   # Gets the ID attribute for the given element.

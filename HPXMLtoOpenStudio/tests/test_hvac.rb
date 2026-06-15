@@ -582,14 +582,14 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Test w/ max power ratio
 
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-central-ac-only-var-speed-max-power-ratio-schedule.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-central-ac-only-var-speed-research-features.xml'))
     model, _hpxml = _test_measure(args_hash)
 
     _check_max_power_ratio_EMS_multispeed(model, nil, nil, expected_clg_capacities_95, expected_clg_cops_95)
 
     # Test w/ furnace & max power ratio
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-furnace-gas-central-ac-var-speed-max-power-ratio-schedule.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-furnace-gas-central-ac-var-speed-research-features.xml'))
     model, _hpxml = _test_measure(args_hash)
 
     _check_max_power_ratio_EMS_multispeed(model, nil, nil, expected_clg_capacities_95, expected_clg_cops_95)
@@ -1179,7 +1179,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Test w/ two systems and max power ratio
 
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-var-speed-max-power-ratio-schedule-two-systems.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-var-speed-research-features-two-systems.xml'))
     model, _hpxml = _test_measure(args_hash)
 
     _check_max_power_ratio_EMS_multispeed(model, expected_htg_capacities_47, expected_htg_cops_47, expected_clg_capacities_95, expected_clg_cops_95, 2, 0)
@@ -1344,7 +1344,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
 
     # Two heat pump test
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-var-speed-max-power-ratio-schedule-two-systems.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-var-speed-research-features-two-systems.xml'))
     model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
     # Get HPXML values
@@ -1368,7 +1368,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
 
     assert_equal(1, model.getCoilHeatingDXMultiSpeeds.size)
     htg_coil = model.getCoilHeatingDXMultiSpeeds[0]
-    _check_defrost_and_pan_heater_and_crankcase_heater(model, htg_coil, 0.0, 0.0, backup_fuel, 0.06667, 0.0, 150.0, 15.0)
+    _check_defrost_and_pan_heater_and_crankcase_heater(model, htg_coil, 0.0, 0.0, backup_fuel, 0.06667, 0.0, 150.0, 20.0)
   end
 
   def test_mini_split_heat_pump_ductless
@@ -1491,7 +1491,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Test w/ max power ratio
 
     args_hash = {}
-    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-mini-split-heat-pump-ducted-max-power-ratio-schedule.xml'))
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-mini-split-heat-pump-ducted-research-features.xml'))
     model, _hpxml = _test_measure(args_hash)
 
     _check_max_power_ratio_EMS_multispeed(model, expected_htg_capacities_47, expected_htg_cops_47, expected_clg_capacities_95, expected_clg_cops_95)
@@ -1691,9 +1691,8 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
 
     # Check G-Functions
     # Expected values
-    # 4_4: 1: g: 5._96._0.075 from "LopU_configurations_5m_v1.0.json"
     lntts = [-8.5, -7.8, -7.2, -6.5, -5.9, -5.2, -4.5, -3.963, -3.27, -2.864, -2.577, -2.171, -1.884, -1.191, -0.497, -0.274, -0.051, 0.196, 0.419, 0.642, 0.873, 1.112, 1.335, 1.679, 2.028, 2.275, 3.003]
-    gfnc_coeff = [2.21, 2.56, 2.85, 3.20, 3.52, 4.0, 4.67, 5.36, 6.55, 7.43, 8.12, 9.17, 9.95, 11.78, 13.4, 13.85, 14.26, 14.66, 14.96, 15.22, 15.45, 15.64, 15.78, 15.94, 16.05, 16.1, 16.19]
+    gfnc_coeff = [1.50, 1.84, 2.13, 2.47, 2.77, 3.11, 3.47, 3.80, 4.34, 4.72, 5.02, 5.48, 5.82, 6.66, 7.42, 7.64, 7.84, 8.04, 8.20, 8.33, 8.45, 8.55, 8.62, 8.70, 8.76, 8.79, 8.84]
     gFunctions = lntts.zip(gfnc_coeff)
     ghx.gFunctions.each_with_index do |gFunction, i|
       assert_in_epsilon(gFunction.lnValue, gFunctions[i][0], 0.01)
@@ -1904,8 +1903,8 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
         program_values = _check_install_quality_multispeed_ratio(heat_pump, model, heat_pump)
       end
 
-      cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
-      heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
+      cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+      heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
       for i in 0.._get_num_speeds(heat_pump.compressor_type) - 1
         assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][i], 0.01)
         assert_in_epsilon(heat_rated_airflow_ratio, program_values['FF_AF_htg'][i], 0.01)
@@ -1948,7 +1947,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
         program_values = _check_install_quality_multispeed_ratio(cooling_system, model)
       end
 
-      cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+      cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
       for i in 0.._get_num_speeds(cooling_system.compressor_type) - 1
         assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][i], 0.01)
       end
@@ -1999,8 +1998,8 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     program_values = get_ems_values(model.getEnergyManagementSystemPrograms, "#{unitary_system.name} install quality program")
     assert_in_epsilon(program_values['F_CH'].sum, charge_defect, 0.01)
 
-    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
-    heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
+    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+    heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
     assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][0], 0.01)
     assert_in_epsilon(heat_rated_airflow_ratio, program_values['FF_AF_htg'][0], 0.01)
 
@@ -2057,7 +2056,7 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Check installation quality EMS
     program_values = _check_install_quality_multispeed_ratio(cooling_system, model)
 
-    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
     for i in 0.._get_num_speeds(cooling_system.compressor_type) - 1
       assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][i], 0.01)
     end
@@ -2079,8 +2078,8 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Check installation quality EMS
     program_values = _check_install_quality_multispeed_ratio(heat_pump, model, heat_pump)
 
-    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
-    heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTon * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
+    cool_rated_airflow_ratio = cool_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(cool_capacity, 'Btu/hr', 'ton'))
+    heat_rated_airflow_ratio = heat_design_airflow_cfm * (1 + airflow_defect) / (HVAC::RatedCFMPerTonDX * UnitConversions.convert(heat_capacity, 'Btu/hr', 'ton'))
     for i in 0.._get_num_speeds(heat_pump.compressor_type) - 1
       assert_in_epsilon(cool_rated_airflow_ratio, program_values['FF_AF_clg'][i], 0.01)
       assert_in_epsilon(heat_rated_airflow_ratio, program_values['FF_AF_htg'][i], 0.01)
