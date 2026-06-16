@@ -4144,7 +4144,7 @@ Each conventional storage water heater is entered as a ``/HPXML/Building/Buildin
   ``RecoveryEfficiency``                         double             frac           > 0, <= 1 [#]_                  No        See [#]_  Recovery efficiency
   ``WaterHeaterInsulation/Jacket/JacketRValue``  double             F-ft2-hr/Btu   >= 0                            No        0         R-value of additional tank insulation wrap
   ``HotWaterTemperature``                        double             F              >= 105                          No        125       Water heater setpoint [#]_
-  ``HasMixingValve``                             boolean                                                           No        false     Presence of a water heater mixing value?
+  ``HasMixingValve``                             boolean                                                           No        See [#]_  Presence of a water heater mixing value?
   ``MixingValveSetpoint``                        double             F              >= 105, <= HotWaterTemperature  No        See [#]_  Temperature setpoint for the mixing valve
   ``UsesDesuperheater``                          boolean                                                           No        false     Presence of desuperheater? [#]_
   ``extension/TankModelType``                    string                            See [#]_                        No        mixed     Tank model type
@@ -4177,6 +4177,7 @@ Each conventional storage water heater is entered as a ``/HPXML/Building/Buildin
          \- **Non-electric, EnergyFactor >= 0.75**: 0.561 * EnergyFactor + 0.439
 
   .. [#] The water heater setpoint can alternatively be defined using :ref:`schedules_detailed`.
+  .. [#] If HasMixingValve not provided, defaults to true if HotWaterTemperature is greater than 140F, otherwise false.
   .. [#] If MixingValveSetpoint not provided and HasMixingValve=true, defaults to the lesser of 125 deg-F and HotWaterTemperature.
   .. [#] Additional desuperheater inputs are described in :ref:`water_heater_desuperheater`.
   .. [#] TankModelType choices are "mixed" or "stratified". Only currently allowed if FuelType is "electricity".

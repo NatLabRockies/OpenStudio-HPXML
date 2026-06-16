@@ -3396,8 +3396,11 @@ module Defaults
       end
 
       if water_heating_system.has_mixing_valve.nil?
-        if water_heating_system.water_heater_type == HPXML::WaterHeaterTypeHeatPump && water_heating_system.hpwh_voltage != HPXML::HPWHVoltage240
-          # 120V HPWH
+        if not water_heating_system.mixing_valve_setpoint.nil?
+          water_heating_system.has_mixing_valve = true
+        elsif water_heating_system.temperature.to_f > 140
+          # Assuming 140F because most water heaters have that as the maximum setpoint, so anything above that
+          # would be a special case where the scalding risk goes up dramatically.
           water_heating_system.has_mixing_valve = true
         else
           water_heating_system.has_mixing_valve = false
@@ -3406,7 +3409,7 @@ module Defaults
       end
 
       if water_heating_system.has_mixing_valve && water_heating_system.mixing_valve_setpoint.nil?
-        water_heating_system.mixing_valve_setpoint = [125.0, water_heating_system.temperature].min
+        water_heating_system.mixing_valve_setpoint = [125.0, water_heating_system.temperature.to_f].min
         water_heating_system.mixing_valve_setpoint_isdefaulted = true
       end
 
