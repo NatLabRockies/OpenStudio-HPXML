@@ -1097,14 +1097,35 @@ module Waterheater
     # https://neea.org/img/documents/hpwh-lab-report_ao-smith_hptu_12-09-2015.pdf.
     # More recent products do not show much change to UA values, see 2021 report:
     # https://neea.org/img/documents/Laboratory-Assessment-of-Rheem-Generation-5-Series-HPWH.pdf.
-    # FIXME: Is this close enough to the right value for 120V, or do we need new UA values?
-    if water_heating_system.tank_volume <= 58.0
-      tank_ua = 3.6 # Btu/hr-F
-    elsif water_heating_system.tank_volume <= 73.0
-      tank_ua = 4.0 # Btu/hr-F
-    else
-      tank_ua = 4.7 # Btu/hr-F
+    # For 120V units, use values from HPWHSim models for Rheem units.
+    if water_heating_system.hpwh_voltage == HPXML::HPWHVoltage240
+      if water_heating_system.tank_volume <= 58.0
+        tank_ua = 3.6 # Btu/hr-F
+      elsif water_heating_system.tank_volume <= 73.0
+        tank_ua = 4.0 # Btu/hr-F
+      else
+        tank_ua = 4.7 # Btu/hr-F
+      end
+    elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated
+      if water_heating_system.tank_volume <= 58.0
+        tank_ua = 3.2 # Btu/hr-F
+      elsif water_heating_system.tank_volume <= 73.0
+        tank_ua = 4.2 # Btu/hr-F
+      else
+        tank_ua = 4.7 # Btu/hr-F
+      end
+    else # 120V shared
+      if water_heating_system.tank_volume <= 58.0
+        tank_ua = 5.0 # Btu/hr-F
+      elsif water_heating_system.tank_volume <= 73.0
+        tank_ua = 5.6 # Btu/hr-F
+      else
+        tank_ua = 5.7 # Btu/hr-F
+      end
     end
+
+
+
     tank_ua = apply_tank_jacket(water_heating_system, tank_ua, side_a)
     tank_ua = apply_shared_adjustment(water_heating_system, tank_ua, nbeds) # shared losses
     tank_u = tank_ua / tank_a # Btu/hr-ft^2-F
