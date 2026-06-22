@@ -4144,7 +4144,7 @@ Each conventional storage water heater is entered as a ``/HPXML/Building/Buildin
   ``RecoveryEfficiency``                         double             frac           > 0, <= 1 [#]_                  No        See [#]_  Recovery efficiency
   ``WaterHeaterInsulation/Jacket/JacketRValue``  double             F-ft2-hr/Btu   >= 0                            No        0         R-value of additional tank insulation wrap
   ``HotWaterTemperature``                        double             F              >= 105                          No        125       Water heater setpoint [#]_
-  ``HasMixingValve``                             boolean                                                           No        false     Presence of a water heater mixing value?
+  ``HasMixingValve``                             boolean                                                           No        See [#]_  Presence of a water heater mixing value?
   ``MixingValveSetpoint``                        double             F              >= 105, <= HotWaterTemperature  No        See [#]_  Temperature setpoint for the mixing valve
   ``UsesDesuperheater``                          boolean                                                           No        false     Presence of desuperheater? [#]_
   ``extension/TankModelType``                    string                            See [#]_                        No        mixed     Tank model type
@@ -4177,6 +4177,7 @@ Each conventional storage water heater is entered as a ``/HPXML/Building/Buildin
          \- **Non-electric, EnergyFactor >= 0.75**: 0.561 * EnergyFactor + 0.439
 
   .. [#] The water heater setpoint can alternatively be defined using :ref:`schedules_detailed`.
+  .. [#] If HasMixingValve not provided, defaults to true if HotWaterTemperature is greater than 140F, otherwise false.
   .. [#] If MixingValveSetpoint not provided and HasMixingValve=true, defaults to the lesser of 125 deg-F and HotWaterTemperature.
   .. [#] Additional desuperheater inputs are described in :ref:`water_heater_desuperheater`.
   .. [#] TankModelType choices are "mixed" or "stratified". Only currently allowed if FuelType is "electricity".
@@ -4203,7 +4204,7 @@ Each instantaneous tankless water heater is entered as a ``/HPXML/Building/Build
   ``FractionDHWLoadServed``                    double   frac          >= 0, <= 1 [#]_                 Yes                     Fraction of hot water load served [#]_
   ``UniformEnergyFactor`` or ``EnergyFactor``  double   frac          < 1                             Yes                     EnergyGuide label rated efficiency
   ``HotWaterTemperature``                      double   F             >= 105                          No            125       Water heater setpoint [#]_
-  ``HasMixingValve``                           boolean                                                No            false     Presence of a water heater mixing value?
+  ``HasMixingValve``                           boolean                                                No            See [#]_  Presence of a water heater mixing value?
   ``MixingValveSetpoint``                      double   F             >= 105, <= HotWaterTemperature  No            See [#]_  Temperature setpoint for the mixing valve
   ``UsesDesuperheater``                        boolean                                                No            false     Presence of desuperheater? [#]_
   ``extension/NumberofBedroomsServed``         integer                > NumberofBedrooms              See [#]_                Number of bedrooms served directly or indirectly
@@ -4223,6 +4224,7 @@ Each instantaneous tankless water heater is entered as a ``/HPXML/Building/Build
   .. [#] FractionDHWLoadServed represents only the fraction of the hot water load associated with the hot water **fixtures**.
          Additional hot water load from clothes washers/dishwashers will be automatically assigned to the appropriate water heater(s).
   .. [#] The water heater setpoint can alternatively be defined using :ref:`schedules_detailed`.
+  .. [#] If HasMixingValve not provided, defaults to true if HotWaterTemperature is greater than 140F, otherwise false.
   .. [#] If MixingValveSetpoint not provided and HasMixingValve=true, defaults to the lesser of 125 deg-F and HotWaterTemperature.
   .. [#] Additional desuperheater inputs are described in :ref:`water_heater_desuperheater`.
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.
@@ -4291,7 +4293,7 @@ Each heat pump water heater is entered as a ``/HPXML/Building/BuildingDetails/Sy
          If neither UsageBin nor FirstHourRating provided, UsageBin defaults to "medium".
          If FirstHourRating provided and UsageBin not provided, UsageBin is determined based on the FirstHourRating value.
   .. [#] The water heater setpoint can alternatively be defined using :ref:`schedules_detailed`.
-  .. [#] If HasMixingValve not provided, defaults to true for a 120V HPWH and otherwise false.
+  .. [#] If HasMixingValve not provided, defaults to true if HotWaterTemperature is greater than 140F, otherwise false.
   .. [#] If MixingValveSetpoint not provided and HasMixingValve=true, defaults to the lesser of 125 deg-F and HotWaterTemperature.
   .. [#] Additional desuperheater inputs are described in :ref:`water_heater_desuperheater`.
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.
@@ -4324,7 +4326,7 @@ Each combination boiler w/ storage tank (sometimes referred to as an indirect wa
   ``WaterHeaterInsulation/Jacket/JacketRValue``  double   F-ft2-hr/Btu  >= 0                                    No            0         R-value of additional storage tank insulation wrap
   ``StandbyLoss[Units="F/hr"]/Value``            double   F/hr          > 0                                     No            See [#]_  Storage tank standby losses
   ``HotWaterTemperature``                        double   F             >= 105                                  No            125       Water heater setpoint [#]_
-  ``HasMixingValve``                             boolean                                                        No            false     Presence of a water heater mixing value?
+  ``HasMixingValve``                             boolean                                                        No            See [#]_  Presence of a water heater mixing value?
   ``MixingValveSetpoint``                        double   F             >= 105, <= HotWaterTemperature          No            See [#]_  Temperature setpoint for the mixing valve
   ``RelatedHVACSystem``                          idref                  See [#]_                                Yes                     ID of boiler
   ``extension/NumberofBedroomsServed``           integer                > NumberofBedrooms                      See [#]_                Number of bedrooms served directly or indirectly
@@ -4344,6 +4346,7 @@ Each combination boiler w/ storage tank (sometimes referred to as an indirect wa
          Additional hot water load from clothes washers/dishwashers will be automatically assigned to the appropriate water heater(s).
   .. [#] If StandbyLoss not provided, defaults based on a regression analysis of `AHRI Directory of Certified Product Performance <https://www.ahridirectory.org>`_.
   .. [#] The water heater setpoint can alternatively be defined using :ref:`schedules_detailed`.
+  .. [#] If HasMixingValve not provided, defaults to true if HotWaterTemperature is greater than 140F, otherwise false.
   .. [#] If MixingValveSetpoint not provided and HasMixingValve=true, defaults to the lesser of 125 deg-F and HotWaterTemperature.
   .. [#] RelatedHVACSystem must reference a ``HeatingSystem`` (Boiler).
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.
@@ -4366,7 +4369,7 @@ Each combination boiler w/ tankless coil is entered as a ``/HPXML/Building/Build
   ``IsSharedSystem``                    boolean                                                  No            false     Whether it serves multiple dwelling units or shared laundry room
   ``FractionDHWLoadServed``             double   frac   >= 0, <= 1 [#]_                          Yes                     Fraction of hot water load served [#]_
   ``HotWaterTemperature``               double   F      >= 105                                   No            125       Water heater setpoint [#]_
-  ``HasMixingValve``                    boolean                                                  No            false     Presence of a water heater mixing value?
+  ``HasMixingValve``                    boolean                                                  No            See [#]_  Presence of a water heater mixing value?
   ``MixingValveSetpoint``               double   F      >= 105, <= HotWaterTemperature           No            See [#]_  Temperature setpoint for the mixing valve
   ``RelatedHVACSystem``                 idref           See [#]_                                 Yes                     ID of boiler
   ``extension/NumberofBedroomsServed``  integer         > NumberofBedrooms                       See [#]_                Number of bedrooms served directly or indirectly
@@ -4384,6 +4387,7 @@ Each combination boiler w/ tankless coil is entered as a ``/HPXML/Building/Build
   .. [#] FractionDHWLoadServed represents only the fraction of the hot water load associated with the hot water **fixtures**.
          Additional hot water load from clothes washers/dishwashers will be automatically assigned to the appropriate water heater(s).
   .. [#] The water heater setpoint can alternatively be defined using :ref:`schedules_detailed`.
+  .. [#] If HasMixingValve not provided, defaults to true if HotWaterTemperature is greater than 140F, otherwise false.
   .. [#] If MixingValveSetpoint not provided and HasMixingValve=true, defaults to the lesser of 125 deg-F and HotWaterTemperature.
   .. [#] RelatedHVACSystem must reference a ``HeatingSystem`` (Boiler).
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.

@@ -3647,16 +3647,18 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.water_heating_systems[0].mixing_valve_setpoint = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_heat_pump_water_heater_values(default_hpxml_bldg, [66.0, HPXML::WaterHeaterHPWHOperatingModeHybridAuto, HPXML::HPWHVoltage120Shared, 4965.0, 0.0, false, true, 125])
+    _test_default_heat_pump_water_heater_values(default_hpxml_bldg, [66.0, HPXML::WaterHeaterHPWHOperatingModeHybridAuto, HPXML::HPWHVoltage120Shared, 4965.0, 0.0, false, false, nil])
 
-    # Test defaults w/ 120V (unspecified circuit)
+    # Test defaults w/ 120V (unspecified circuit) and high setpoint temp
     hpxml_bldg.water_heating_systems[0].hpwh_voltage = HPXML::HPWHVoltage120
+    hpxml_bldg.water_heating_systems[0].temperature = 150
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
     _test_default_heat_pump_water_heater_values(default_hpxml_bldg, [66.0, HPXML::WaterHeaterHPWHOperatingModeHybridAuto, HPXML::HPWHVoltage120, 4965.0, 0.0, false, true, 125])
 
     # Test defaults w/ num occupants = 1, num bedrooms = 1
     hpxml_bldg.water_heating_systems[0].hpwh_voltage = nil
+    hpxml_bldg.water_heating_systems[0].temperature = nil
     hpxml_bldg.building_construction.number_of_bedrooms = 1
     hpxml_bldg.building_occupancy.number_of_residents = 1
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
