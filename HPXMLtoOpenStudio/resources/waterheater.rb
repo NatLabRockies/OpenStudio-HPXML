@@ -1093,12 +1093,11 @@ module Waterheater
 
     e_cap = UnitConversions.convert(water_heating_system.backup_heating_capacity, 'Btu/hr', 'W') # W
     parasitics = 3.0 # W
-    # Based on Ecotope lab testing of AO Smith HPWHs (series HPTU), see 2015 report:
-    # https://neea.org/img/documents/hpwh-lab-report_ao-smith_hptu_12-09-2015.pdf.
-    # More recent products do not show much change to UA values, see 2021 report:
-    # https://neea.org/img/documents/Laboratory-Assessment-of-Rheem-Generation-5-Series-HPWH.pdf.
-    # For 120V units, use values from HPWHSim models for Rheem units.
     if water_heating_system.hpwh_voltage == HPXML::HPWHVoltage240
+      # Based on Ecotope lab testing of AO Smith HPWHs (series HPTU), see 2015 report:
+      # https://neea.org/img/documents/hpwh-lab-report_ao-smith_hptu_12-09-2015.pdf.
+      # More recent products do not show much change to UA values, see 2021 report:
+      # https://neea.org/img/documents/Laboratory-Assessment-of-Rheem-Generation-5-Series-HPWH.pdf.
       if water_heating_system.tank_volume <= 58.0
         tank_ua = 3.6 # Btu/hr-F
       elsif water_heating_system.tank_volume <= 73.0
@@ -1107,6 +1106,7 @@ module Waterheater
         tank_ua = 4.7 # Btu/hr-F
       end
     elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated
+      # Values from HPWHSim models for Rheem units
       if water_heating_system.tank_volume <= 58.0
         tank_ua = 3.2 # Btu/hr-F
       elsif water_heating_system.tank_volume <= 73.0
@@ -1115,6 +1115,7 @@ module Waterheater
         tank_ua = 4.7 # Btu/hr-F
       end
     else # 120V shared
+      # Values from HPWHSim models for Rheem units
       if water_heating_system.tank_volume <= 58.0
         tank_ua = 5.0 # Btu/hr-F
       elsif water_heating_system.tank_volume <= 73.0
@@ -1123,8 +1124,6 @@ module Waterheater
         tank_ua = 5.7 # Btu/hr-F
       end
     end
-
-
 
     tank_ua = apply_tank_jacket(water_heating_system, tank_ua, side_a)
     tank_ua = apply_shared_adjustment(water_heating_system, tank_ua, nbeds) # shared losses

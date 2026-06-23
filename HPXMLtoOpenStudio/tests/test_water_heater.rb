@@ -964,16 +964,19 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
       if hpxml_name == 'base-dhw-tank-heat-pump-ef.xml'
         u = 0.92
         cop = 3.60
-        tank_height = 1.5975
+      elsif hpxml_name == 'base-dhw-tank-heat-pump-120v.xml'
+        u = 1.296
+        cop = 3.44
+      elsif hpxml_name == 'base-dhw-tank-heat-pump-120v-dedicated-circuit.xml'
+        u = 0.972
+        cop = 2.71
       else
         u = 0.926
-        if hpxml_name == 'base-dhw-tank-heat-pump-120v.xml'
-          cop = 3.44
-        elsif hpxml_name == 'base-dhw-tank-heat-pump-120v-dedicated-circuit.xml'
-          cop = 2.71
-        else # 240V
-          cop = 3.731
-        end
+        cop = 3.731
+      end
+      if hpxml_name == 'base-dhw-tank-heat-pump-ef.xml'
+        tank_height = 1.5975
+      else
         tank_height = 1.3343
       end
       ther_eff = 1.0
