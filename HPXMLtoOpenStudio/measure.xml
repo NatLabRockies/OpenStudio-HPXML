@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>94711da9-1580-4b00-99c6-473b2dcf2af2</version_id>
-  <version_modified>2026-06-01T22:06:14Z</version_modified>
+  <version_id>6c3db74d-5621-4418-a1ef-debecc6a5128</version_id>
+  <version_modified>2026-06-23T21:41:26Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -217,7 +217,7 @@
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>C298D22B</checksum>
+      <checksum>50E3B7E9</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
@@ -367,7 +367,7 @@
       <filename>defaults.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>3FAD0E6C</checksum>
+      <checksum>9A4EA919</checksum>
     </file>
     <file>
       <filename>electric_panel.rb</filename>
@@ -439,7 +439,7 @@
       <filename>hvac_sizing.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>CC053A51</checksum>
+      <checksum>5654061C</checksum>
     </file>
     <file>
       <filename>internal_gains.rb</filename>
