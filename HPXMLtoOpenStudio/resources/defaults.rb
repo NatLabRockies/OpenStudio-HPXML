@@ -7968,10 +7968,10 @@ module Defaults
                                         [0.8551, 0.1688, -0.0238]]
           clg_ap.cool_eir_fflow_spec = [[0.7931, 0.2623, -0.0552],
                                         [0.8241, 0.1523, 0.0234]]
-          clg_ap.cool_cap_fwf_spec = [[0.8387, 0.2903, -0.129],
-                                      [0.815, 0.325, -0.14]]
-          clg_ap.cool_eir_fwf_spec = [[1.7131, -1.3055, 0.5924],
-                                      [1.5872, -1.055, 0.4678]]
+          clg_ap.cool_cap_fwf_spec = [[0.7902, 0.3776, -0.1678],
+                                      [0.7943, 0.3702, -0.1645]]
+          clg_ap.cool_eir_fwf_spec = [[1.7536, -1.3865, 0.6329],
+                                      [1.6235, -1.1466, 0.5231]]
 
           # Rated data from ClimateMaster residential tranquility 30 premier two-stage series Model SE036: https://files.climatemaster.com/RP3001-Residential-SE-Product-Catalog.pdf
           cool_cop_ratios = [1.102827763, 1.0]
@@ -8170,10 +8170,10 @@ module Defaults
                                         [0.8264, 0.1593, 0.0143]]
           htg_ap.heat_eir_fflow_spec = [[1.2006, -0.1943, -0.0062],
                                         [1.2568, -0.2856, 0.0288]]
-          htg_ap.heat_cap_fwf_spec = [[0.7112, 0.5027, -0.2139],
-                                      [0.769, 0.399, -0.168]]
-          htg_ap.heat_eir_fwf_spec = [[1.3457, -0.6658, 0.3201],
-                                      [1.1679, -0.3215, 0.1535]]
+          htg_ap.heat_cap_fwf_spec = [[0.7438, 0.427, -0.1708],
+                                      [0.765, 0.4231, -0.188]]
+          htg_ap.heat_eir_fwf_spec = [[1.2141, -0.3231, 0.109],
+                                      [1.1339, -0.2726, 0.1387]]
           # Rated data from ClimateMaster residential tranquility 30 premier two-stage series Model SE036: https://files.climatemaster.com/RP3001-Residential-SE-Product-Catalog.pdf
           heat_cop_ratios = [1.161791639, 1.0]
         when HPXML::HVACCompressorTypeVariableSpeed
