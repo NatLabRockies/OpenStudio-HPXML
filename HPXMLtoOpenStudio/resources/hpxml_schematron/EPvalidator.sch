@@ -2147,8 +2147,24 @@
   </sch:pattern>
 
   <sch:pattern>
+    <sch:title>[WaterHeatingSystemType=HPWHon120vDedicatedCircuit]</sch:title>
+    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:WaterHeating/h:WaterHeatingSystem[h:WaterHeaterType="heat pump water heater" and h:HPWHVoltage="120V dedicated circuit"]'>
+      <!-- Warnings -->
+      <sch:report role='WARN' test='number(h:BackupHeatingCapacity) &gt; 2000'>BackupHeatingCapacity should typically be less than 2000 Btu/hr for a HPWH on a 120V dedicated circuit.</sch:report>
+    </sch:rule>
+  </sch:pattern>
+
+  <sch:pattern>
+    <sch:title>[WaterHeatingSystemType=HPWHon120vSharedCircuit]</sch:title>
+    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:WaterHeating/h:WaterHeatingSystem[h:WaterHeaterType="heat pump water heater" and (h:HPWHVoltage="120V shared circuit" or h:HPWHVoltage="120V")]'>
+      <!-- Warnings -->
+      <sch:report role='WARN' test='number(h:BackupHeatingCapacity) &gt; 1000'>BackupHeatingCapacity should typically be less than 1000 Btu/hr for a HPWH on a 120V shared circuit.</sch:report>
+    </sch:rule>
+  </sch:pattern>
+
+  <sch:pattern>
     <sch:title>[WaterHeatingSystemType=HPWHInConfinedSpaceWithoutMitigation]</sch:title>
-    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:WaterHeating/h:WaterHeatingSystem/h:extension[h:HPWHInConfinedSpaceWithoutMitigation="true"]'>
+    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:WaterHeating/h:WaterHeatingSystem[h:WaterHeaterType="heat pump water heater"]/h:extension[h:HPWHInConfinedSpaceWithoutMitigation="true"]'>
       <sch:assert role='ERROR' test='count(h:HPWHContainmentVolume) = 1'>Expected HPWHContainmentVolume if HPWHInConfinedSpaceWithoutMitigation="true"</sch:assert>
       <sch:assert role='ERROR' test='number(h:HPWHContainmentVolume) &gt;= 32 or not(h:HPWHContainmentVolume)'>Expected HPWHContainmentVolume to be greater than or equal to 32.</sch:assert>
       <!-- Warnings -->

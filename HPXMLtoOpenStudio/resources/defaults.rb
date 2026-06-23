@@ -6146,7 +6146,6 @@ module Defaults
   # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @return [Double] Water heater setpoint temperature (F)
   def self.get_water_heater_temperature(eri_version)
-    # FIXME: Should we default to a different value for 120V HPWHs?
     if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2014A')
       # 2014 w/ Addendum A or newer
       return 125.0

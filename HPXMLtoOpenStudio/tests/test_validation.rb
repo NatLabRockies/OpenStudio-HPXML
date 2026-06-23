@@ -1016,6 +1016,8 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                               'heat-pump-defrost-backup' => ['BackupHeatingActiveDuringDefrost does not apply when system has separate backup heating'],
                               'heat-pump-low-backup-switchover-temp' => ['BackupHeatingSwitchoverTemperature is below 30 deg-F; this may result in significant unmet hours if the heat pump does not have sufficient capacity.'],
                               'heat-pump-low-backup-lockout-temp' => ['BackupHeatingLockoutTemperature is below 30 deg-F; this may result in significant unmet hours if the heat pump does not have sufficient capacity.'],
+                              'hpwh-120-dedicated-circuit-backup-capacity' => ['BackupHeatingCapacity should typically be less than 2000 Btu/hr for a HPWH on a 120V dedicated circuit.'],
+                              'hpwh-120-shared-circuit-backup-capacity' => ['BackupHeatingCapacity should typically be less than 1000 Btu/hr for a HPWH on a 120V shared circuit.'],
                               'hvac-dse-low' => ['Heating DSE should typically be greater than or equal to 0.5.',
                                                  'Cooling DSE should typically be greater than or equal to 0.5.'],
                               'hvac-capacities-low' => ['Heating capacity should typically be greater than or equal to 1000 Btu/hr.',
@@ -1134,6 +1136,12 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
       when 'heat-pump-low-backup-lockout-temp'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-air-to-air-heat-pump-1-speed-lockout-temperatures.xml')
         hpxml_bldg.heat_pumps[0].backup_heating_lockout_temp = 25.0
+      when 'hpwh-120-dedicated-circuit-backup-capacity'
+        hpxml, hpxml_bldg = _create_hpxml('base-dhw-tank-heat-pump-120v-dedicated-circuit.xml')
+        hpxml_bldg.water_heating_systems[0].backup_heating_capacity = 2200
+      when 'hpwh-120-shared-circuit-backup-capacity'
+        hpxml, hpxml_bldg = _create_hpxml('base-dhw-tank-heat-pump-120v.xml')
+        hpxml_bldg.water_heating_systems[0].backup_heating_capacity = 1100
       when 'hvac-dse-low'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-dse.xml')
         hpxml_bldg.hvac_distributions[0].annual_heating_dse = 0.1
