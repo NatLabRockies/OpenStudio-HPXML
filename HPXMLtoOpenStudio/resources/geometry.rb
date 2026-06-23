@@ -788,21 +788,8 @@ module Geometry
     floor_surface.additionalProperties.setFeature('SurfaceType', 'InferredFloor')
     floor_surface.additionalProperties.setFeature('Tilt', 0.0)
 
-    # Add ceiling surface
-    vertices = create_ceiling_vertices(floor_length, floor_width, z_origin, default_azimuths)
-    ceiling_surface = OpenStudio::Model::Surface.new(vertices, model)
-
-    ceiling_surface.setSunExposure(EPlus::SurfaceSunExposureNo)
-    ceiling_surface.setWindExposure(EPlus::SurfaceWindExposureNo)
-    ceiling_surface.setName('inferred conditioned ceiling')
-    ceiling_surface.setSurfaceType(EPlus::SurfaceTypeRoofCeiling)
-    ceiling_surface.setSpace(create_or_get_space(model, spaces, HPXML::LocationConditionedSpace, hpxml_bldg))
-    ceiling_surface.setOutsideBoundaryCondition(EPlus::BoundaryConditionAdiabatic)
-    ceiling_surface.additionalProperties.setFeature('SurfaceType', 'InferredCeiling')
-    ceiling_surface.additionalProperties.setFeature('Tilt', 0.0)
-
     # Apply Construction
-    Constructions.apply_adiabatic_construction(model, [floor_surface, ceiling_surface], 'floor')
+    Constructions.apply_adiabatic_construction(model, [floor_surface], 'floor')
   end
 
   # Calls construction methods for applying partition walls and furniture to the OpenStudio model.
