@@ -6,6 +6,7 @@ __Features__
 __Bugfixes__
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
 - **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
+- Removes the redundant adiabatic ceilings between conditioned stories in the model.
 
 ## OpenStudio-HPXML v1.12.0
 
