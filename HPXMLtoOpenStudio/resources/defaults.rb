@@ -3354,7 +3354,7 @@ module Defaults
         water_heating_system.additional_properties.cop = get_water_heater_heat_pump_cop(water_heating_system)
 
         if water_heating_system.heating_capacity.nil?
-          water_heating_system.heating_capacity = (UnitConversions.convert(0.5, 'kW', 'Btu/hr') * water_heating_system.additional_properties.cop).round
+          water_heating_system.heating_capacity = UnitConversions.convert(0.5, 'kW', 'Btu/hr').round
           water_heating_system.heating_capacity_isdefaulted = true
         end
 
@@ -6493,7 +6493,7 @@ module Defaults
 
   # Gets the default compressor type for a HVAC system.
   #
-  # @param [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump]
+  # @param hvac_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
   # @return [String] Compressor type (HPXML::HVACCompressorTypeXXX)
   def self.get_hvac_compressor_type(hvac_system)
     if HVAC.is_room_dx_hvac_system(hvac_system)
@@ -6505,7 +6505,7 @@ module Defaults
 
   # Gets the default EER for a HVAC system.
   #
-  # @param [HPXML::CoolingSystem or HPXML::HeatPump]
+  # @param hvac_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
   # @return [Double] Cooling EER2 (Btu/Wh)
   def self.get_hvac_eer2(hvac_system)
     seer2 = hvac_system.cooling_efficiency_seer2
@@ -7102,7 +7102,7 @@ module Defaults
         if water_heating_system.water_heater_type == HPXML::WaterHeaterTypeStorage
           watts += UnitConversions.convert(water_heating_system.heating_capacity, 'btu/hr', 'w')
         elsif water_heating_system.water_heater_type == HPXML::WaterHeaterTypeHeatPump
-          watts += [UnitConversions.convert(Waterheater.get_heating_input_capacity(water_heating_system.heating_capacity, water_heating_system.additional_properties.cop), 'btu/hr', 'w'),
+          watts += [UnitConversions.convert(water_heating_system.heating_capacity, 'btu/hr', 'w'),
                     UnitConversions.convert(water_heating_system.backup_heating_capacity, 'btu/hr', 'w')].max
         elsif water_heating_system.water_heater_type == HPXML::WaterHeaterTypeTankless
           if hpxml_bldg.building_construction.number_of_bathrooms == 1
