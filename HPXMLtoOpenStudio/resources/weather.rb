@@ -426,10 +426,10 @@ class WeatherFile
       new_dist = (v1 - v2).magnitude
       next unless new_dist < dist
 
-      raw_values = row[5..9]
-      next if raw_values.nil? || raw_values.any? { |v| v.nil? || v.strip.empty? }
+      row_values = row[5..9].map(&:to_f)
+      next unless not row_values.empty?
 
-      temperatures_amplitudes = raw_values.map(&:to_f)
+      temperatures_amplitudes = row_values
       dist = new_dist
     end
 
