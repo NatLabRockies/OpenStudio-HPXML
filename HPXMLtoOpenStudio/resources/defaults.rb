@@ -549,7 +549,7 @@ module Defaults
 
       if has_fuel[HPXML::FuelTypeNaturalGas]
         if scenario.natural_gas_fixed_charge.nil?
-          scenario.natural_gas_fixed_charge = 12.0 # https://www.aga.org/sites/default/files/aga_energy_analysis_-_natural_gas_utility_rate_structure.pdf says $11.25/month in 2015
+          scenario.natural_gas_fixed_charge = 12.0 # https://www.ourenergypolicy.org/wp-content/uploads/2016/01/ea_2015-03_customercharge2015.pdf says $11.25/month in 2015
           scenario.natural_gas_fixed_charge_isdefaulted = true
         end
         if scenario.natural_gas_marginal_rate.nil?
