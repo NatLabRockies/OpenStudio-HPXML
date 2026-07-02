@@ -662,11 +662,10 @@ module HVAC
           min_x: 0, max_x: 1, min_y: 0.7, max_y: 1
         )
       else
-        # Derived from: https://www.e3s-conferences.org/articles/e3sconf/pdf/2018/19/e3sconf_eko-dok2018_00139.pdf
         plf_fplr_curve = Model.add_curve_cubic(
           model,
           name: 'Cool-PLF-fPLR',
-          coeff: [0.4603, 1.6416, -1.8588, 0.7605],
+          coeff: hp_ap.plf_fplr_spec,
           min_x: 0, max_x: 1, min_y: 0.7, max_y: 1
         )
       end
@@ -744,11 +743,10 @@ module HVAC
           min_x: 0, max_x: 1, min_y: 0.7, max_y: 1
         )
       else
-        # Derived from: https://www.e3s-conferences.org/articles/e3sconf/pdf/2018/19/e3sconf_eko-dok2018_00139.pdf
         plf_fplr_curve = Model.add_curve_cubic(
           model,
           name: 'Heat-PLF-fPLR',
-          coeff: [0.4603, 1.6416, -1.8588, 0.7605],
+          coeff: hp_ap.plf_fplr_spec,
           min_x: 0, max_x: 1, min_y: 0.7, max_y: 1
         )
       end

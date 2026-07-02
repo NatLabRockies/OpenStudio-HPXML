@@ -8002,6 +8002,7 @@ module Defaults
       end
 
       set_ground_to_air_heat_pump_cops(cooling_system, cool_cop_ratios, :clg)
+      set_hvac_degradation_coefficient(cooling_system)
       return
     end
 
@@ -8202,6 +8203,7 @@ module Defaults
       end
 
       set_ground_to_air_heat_pump_cops(heating_system, heat_cop_ratios, :htg)
+      set_hvac_degradation_coefficient(heating_system)
       return
     end
 
