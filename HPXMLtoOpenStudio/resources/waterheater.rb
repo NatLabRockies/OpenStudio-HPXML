@@ -973,7 +973,8 @@ module Waterheater
     )
 
     # Assumptions and values
-    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W') * unit_multiplier # kW
+    cop = water_heating_system.additional_properties.cop
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W') * cop * unit_multiplier # W, output capacity
     shr = 0.88 # unitless
 
     # Calculate an altitude adjusted rated evaporator wetbulb temperature
@@ -986,8 +987,6 @@ module Waterheater
     p_atm = Psychrometrics.Pstd_fZ(elevation)
     w_adj = Psychrometrics.w_fT_Twb_P(dp_rated, dp_rated, p_atm)
     twb_adj = Psychrometrics.Twb_fT_w_P(runner, rated_edb_F, w_adj, p_atm)
-
-    cop = water_heating_system.additional_properties.cop
 
     # Adjust COP based on RESNET HERS Addendum 77
     cv = water_heating_system.hpwh_containment_volume
@@ -1037,15 +1036,6 @@ module Waterheater
     coil.additionalProperties.setFeature('HPXML_ID', water_heating_system.id) # Used by reporting measure
 
     return coil
-  end
-
-  # Returns the heating input capacity, calculated as the heating rated (output) capacity divided by the rated efficiency.
-  #
-  # @param heating_capacity [Double]
-  # @param heating_efficiency_cop [Double] Rated efficiency [COP]
-  # @return [Double] The heating input capacity [Btu/hr]
-  def self.get_heating_input_capacity(heating_capacity, heating_efficiency_cop)
-    return heating_capacity / UnitConversions.convert(heating_efficiency_cop, 'btu/hr', 'w')
   end
 
   # Adds a WaterHeaterStratified object for the HPWH to the OpenStudio model.
