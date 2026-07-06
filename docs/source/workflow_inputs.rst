@@ -1443,9 +1443,9 @@ Any wall surface in contact with the ground is considered a foundation wall.
   .. [#] AttachedToSpace only required if zone-level and space-level HVAC design load calculations are desired (see :ref:`zones_spaces`) and the surface is adjacent to conditioned space (and not adiabatic).
   .. [#] ExteriorAdjacentTo choices are "ground", "basement - conditioned", "basement - unconditioned", "crawlspace - vented", "crawlspace - unvented", "garage", "other housing unit", "other heated space", "other multifamily buffer space", or "other non-freezing space".
          See :ref:`hpxml_locations` for descriptions.
+  .. [#] Interior foundation walls (e.g., between basement and crawlspace) should **not** use "ground" even if the foundation wall has some contact with the ground due to the difference in below-grade depths of the two adjacent spaces.
   .. [#] InteriorAdjacentTo choices are "basement - conditioned", "basement - unconditioned", "crawlspace - vented", "crawlspace - unvented", or "garage".
          See :ref:`hpxml_locations` for descriptions.
-  .. [#] Interior foundation walls (e.g., between basement and crawlspace) should **not** use "ground" even if the foundation wall has some contact with the ground due to the difference in below-grade depths of the two adjacent spaces.
   .. [#] Type choices are "solid concrete", "concrete block", "concrete block foam core", "concrete block vermiculite core", "concrete block perlite core", "concrete block solid core", "double brick", or "wood".
   .. [#] Orientation choices are "northeast", "east", "southeast", "south", "southwest", "west", "northwest", or "north"
   .. [#] If neither Azimuth nor Orientation provided, and it's an *exterior* foundation wall, modeled as four surfaces of equal area facing every direction.
@@ -4138,7 +4138,7 @@ Each conventional storage water heater is entered as a ``/HPXML/Building/Buildin
   ``IsSharedSystem``                             boolean                                                 No        false     Whether it serves multiple dwelling units or shared laundry room
   ``TankVolume``                                 double             gal            > 0                   No        See [#]_  Nominal tank volume
   ``FractionDHWLoadServed``                      double             frac           >= 0, <= 1 [#]_       Yes                 Fraction of hot water load served [#]_
-  ``HeatingCapacity``                            double             Btu/hr         > 0                   No        See [#]_  Heating capacity
+  ``HeatingCapacity``                            double             Btu/hr         > 0                   No        See [#]_  Heating input capacity
   ``UniformEnergyFactor`` or ``EnergyFactor``    double             frac           < 1                   Yes                 EnergyGuide label rated efficiency
   ``UsageBin`` or ``FirstHourRating``            string or double   str or gal/hr  See [#]_ or > 0       No        See [#]_  EnergyGuide label usage bin/first hour rating
   ``RecoveryEfficiency``                         double             frac           > 0, <= 1 [#]_        No        See [#]_  Recovery efficiency
@@ -4239,7 +4239,7 @@ Each heat pump water heater is entered as a ``/HPXML/Building/BuildingDetails/Sy
   ``IsSharedSystem``                                   boolean                                                  No        false           Whether it serves multiple dwelling units or shared laundry room
   ``TankVolume``                                       double            gal            > 0                     No        See [#]_        Nominal tank volume
   ``FractionDHWLoadServed``                            double            frac           >= 0, <= 1 [#]_         Yes                       Fraction of hot water load served [#]_
-  ``HeatingCapacity``                                  double            Btu/hr         > 0                     No        See [#]_        Heating output capacity
+  ``HeatingCapacity``                                  double            Btu/hr         > 0                     No        See [#]_        Heating input capacity
   ``BackupHeatingCapacity``                            double            Btu/hr         >= 0                    No        15355 (4.5 kW)  Heating capacity of the electric resistance backup
   ``UniformEnergyFactor`` or ``EnergyFactor``          double            frac           > 1, <= 5               Yes                       EnergyGuide label rated efficiency
   ``HPWHDucting/ExhaustAirTermination``                string                           See [#]_                No        <none>          The location where HPWH exhaust air is ducted to
@@ -4270,7 +4270,7 @@ Each heat pump water heater is entered as a ``/HPXML/Building/BuildingDetails/Sy
   .. [#] The sum of all ``FractionDHWLoadServed`` (across all WaterHeatingSystems) must equal to 1.
   .. [#] FractionDHWLoadServed represents only the fraction of the hot water load associated with the hot water **fixtures**.
          Additional hot water load from clothes washers/dishwashers will be automatically assigned to the appropriate water heater(s).
-  .. [#] If HeatingCapacity not provided, defaults to 1706 Btu/hr (0.5 kW) multiplied by the heat pump COP.
+  .. [#] If HeatingCapacity not provided, defaults to 1706 Btu/hr (0.5 kW).
   .. [#] OpenStudio-HPXML currently only supports ExhaustAirTermination="outside" for heat pump water heaters located in conditioned space.
          Any other combination of ExhaustAirTermination value and water heater location will be ignored w/ a warning.
   .. [#] HPWHOperatingMode choices are "hybrid/auto" or "heat pump only".

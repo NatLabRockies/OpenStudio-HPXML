@@ -2,6 +2,7 @@
 
 __Features__
   - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
+  - **Breaking change**: For heat pump water heaters, ``HeatingCapacity`` is now *input* rather than *output* capacity, similar to other water heater types.
 
 __Bugfixes__
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.

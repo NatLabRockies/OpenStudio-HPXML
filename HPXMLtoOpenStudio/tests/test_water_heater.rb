@@ -1034,7 +1034,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
     ther_eff = 1.0
     cop = 3.731
     tank_height = 1.3343
-    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W') # W
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W') * cop # W
     backup_cap = UnitConversions.convert(water_heating_system.backup_heating_capacity, 'Btu/hr', 'W') # W
 
     # Check water heater
