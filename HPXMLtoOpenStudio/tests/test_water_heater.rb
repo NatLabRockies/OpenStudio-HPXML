@@ -959,7 +959,6 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
       # Expected value
       tank_volume = UnitConversions.convert(water_heating_system.tank_volume * 0.9, 'gal', 'm^3') # convert to actual volume
       fuel = EPlus.fuel_type(water_heating_system.fuel_type)
-      cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W') # W
       backup_cap = UnitConversions.convert(water_heating_system.backup_heating_capacity, 'Btu/hr', 'W') # W
       if hpxml_name == 'base-dhw-tank-heat-pump-ef.xml'
         u = 0.92
@@ -974,6 +973,7 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
         u = 0.926
         cop = 3.731
       end
+      cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W') * cop # W
       if hpxml_name == 'base-dhw-tank-heat-pump-ef.xml'
         tank_height = 1.5975
       else
