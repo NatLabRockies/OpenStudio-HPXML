@@ -662,7 +662,7 @@ module HVAC
           min_x: 0, max_x: 1, min_y: 0.7, max_y: 1
         )
       else
-        plf_fplr_curve = Model.add_curve_cubic(
+        plf_fplr_curve = Model.add_curve_quadratic(
           model,
           name: 'Cool-PLF-fPLR',
           coeff: hp_ap.plf_fplr_spec,
@@ -743,7 +743,7 @@ module HVAC
           min_x: 0, max_x: 1, min_y: 0.7, max_y: 1
         )
       else
-        plf_fplr_curve = Model.add_curve_cubic(
+        plf_fplr_curve = Model.add_curve_quadratic(
           model,
           name: 'Heat-PLF-fPLR',
           coeff: hp_ap.plf_fplr_spec,
