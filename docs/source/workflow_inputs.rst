@@ -791,8 +791,8 @@ Additional autosizing factor inputs are available at the system level, see :ref:
   ===================================  ========  =====  ===========  ========  =========  ============================================
   Element                              Type      Units  Constraints  Required  Default    Notes
   ===================================  ========  =====  ===========  ========  =========  ============================================
-  ``HeatPumpSizingMethodology``        string           See [#]_     No        HERS       Logic for autosized heat pumps
-  ``HeatPumpBackupSizingMethodology``  string           See [#]_     No        emergency  Logic for autosized heat pump backup
+  ``HeatPumpSizingMethodology``        string           See [#]_     No        HERS       Logic for autosized air-source heat pumps
+  ``HeatPumpBackupSizingMethodology``  string           See [#]_     No        emergency  Logic for autosized air-source heat pump backup
   ``AllowIncreasedFixedCapacities``    boolean                       No        false      Logic for fixed capacity HVAC equipment [#]_
   ===================================  ========  =====  ===========  ========  =========  ============================================
 
