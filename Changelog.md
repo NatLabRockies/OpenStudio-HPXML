@@ -3,6 +3,7 @@
 __Features__
   - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
   - **Breaking change**: For heat pump water heaters, ``HeatingCapacity`` is now *input* rather than *output* capacity, similar to other water heater types.
+- Updates garage ventilation rate to be SLA=1/150 (same as a vented crawlspace).
 
 __Bugfixes__
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
