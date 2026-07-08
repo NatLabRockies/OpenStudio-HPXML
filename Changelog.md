@@ -3,6 +3,7 @@
 __Features__
 - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
 - **Breaking change**: For heat pump water heaters, ``HeatingCapacity`` is now *input* rather than *output* capacity, similar to other water heater types.
+- Updates garage ventilation rate to be SLA=1/150 (same as a vented crawlspace).
 
 __Bugfixes__
 - **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
