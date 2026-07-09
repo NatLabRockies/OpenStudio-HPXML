@@ -51,7 +51,7 @@ class HPXMLtoOpenStudioHVACSizingTest < Minitest::Test
         _remove_hardsized_capacities(hpxml_bldg)
 
         hp_backup_sizing_methodologies = [nil]
-        if hpxml_bldg.heat_pumps.size > 0
+        if hpxml_bldg.heat_pumps.any? { |hp| hp.heat_pump_type != HPXML::HVACTypeHeatPumpGroundToAir }
           hp_sizing_methodologies = [HPXML::HeatPumpSizingACCA,
                                      HPXML::HeatPumpSizingHERS,
                                      HPXML::HeatPumpSizingMaxLoad]
