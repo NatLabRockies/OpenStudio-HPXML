@@ -3678,13 +3678,10 @@ module HVACSizing
       # sized based on the larger of heating/cooling design loads, while taking into
       # account the heat pump's reduced capacity at the design temperature, such that
       # no backup heating should be necessary.
-      if hvac_heating.fraction_cool_load_served > 0 && hvac_heating.fraction_heat_load_served > 0
-        hp_capacity = [heat_cap_rated, hvac_sizings.Cool_Capacity].max
-      elsif hvac_heating.fraction_heat_load_served > 0
-        hp_capacity = heat_cap_rated
-      else
-        hp_capacity = hvac_sizings.Cool_Capacity
-      end
+      hp_capacities = []
+      hp_capacities << hvac_sizings.Cool_Capacity if hvac_heating.fraction_cool_load_served > 0
+      hp_capacities << heat_cap_rated if hvac_heating.fraction_heat_load_served > 0
+      hp_capacity = hp_capacities.max
       if hvac_heating.fraction_cool_load_served > 0
         scaling_factor = hp_capacity / hvac_sizings.Cool_Capacity
         hvac_sizings.Cool_Capacity = hp_capacity
@@ -3719,13 +3716,10 @@ module HVACSizing
       # HERS sizing methodology: same as ACCA except autosized heat pumps have their
       # nominal capacity sized equal to at least the larger of heating and sensible
       # cooling design loads.
-      if hvac_heating.fraction_cool_load_served > 0 && hvac_heating.fraction_heat_load_served > 0
-        min_hp_capacity = [heating_load, hvac_sizings.Cool_Load_Sens].max
-      elsif hvac_heating.fraction_heat_load_served > 0
-        min_hp_capacity = heating_load
-      else
-        min_hp_capacity = hvac_sizings.Cool_Load_Sens
-      end
+      hp_loads = []
+      hp_loads << hvac_sizings.Cool_Load_Sens if hvac_heating.fraction_cool_load_served > 0
+      hp_loads << heating_load if hvac_heating.fraction_heat_load_served > 0
+      min_hp_capacity = hp_loads.max
       if hvac_heating.fraction_cool_load_served > 0 && hvac_sizings.Cool_Capacity < min_hp_capacity
         scaling_factor = min_hp_capacity / hvac_sizings.Cool_Capacity
         hvac_sizings.Cool_Capacity = min_hp_capacity
