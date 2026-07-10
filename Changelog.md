@@ -7,6 +7,7 @@ __Features__
 
 __Bugfixes__
 - **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
+- Fixes for MaxLoad heat pump sizing methodology.
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
 - Removes duplicated ceiling/floor internal mass surfaces between conditioned stories.
 
