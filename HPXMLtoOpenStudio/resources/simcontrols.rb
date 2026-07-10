@@ -34,6 +34,7 @@ module SimControls
 
     convlim = model.getConvergenceLimits
     convlim.setMinimumSystemTimestep(0) # Speed improvement with minimal effect on results
+    convlim.setMaximumHVACIterations(10)
 
     run_period = model.getRunPeriod
     run_period.setBeginMonth(hpxml_header.sim_begin_month)
