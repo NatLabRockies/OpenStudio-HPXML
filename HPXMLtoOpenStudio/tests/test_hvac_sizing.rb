@@ -1051,6 +1051,27 @@ class HPXMLtoOpenStudioHVACSizingTest < Minitest::Test
     assert_equal(hpxml_bldg2.heat_pumps[0].heating_capacity, hpxml_bldg3.heat_pumps[0].heating_capacity)
   end
 
+  def test_heat_pump_supplemental_backup_sizing
+    # Test that the supplemental heating capacity is reduced when we switch
+    # from ACCA to HERS sizing methodology (which increases the HP capacity)
+    args_hash = {}
+    args_hash['hpxml_path'] = File.absolute_path(@tmp_hpxml_path)
+
+    hpxml, hpxml_bldg = _create_hpxml('base-hvac-air-to-air-heat-pump-1-speed.xml')
+    _remove_hardsized_capacities(hpxml_bldg)
+    hpxml_bldg.header.heat_pump_sizing_methodology = HPXML::HeatPumpSizingACCA
+    hpxml_bldg.header.heat_pump_backup_sizing_methodology = HPXML::HeatPumpBackupSizingSupplemental
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _model, _hpxml, hpxml_bldg_acca = _test_measure(args_hash)
+
+    hpxml_bldg.header.heat_pump_sizing_methodology = HPXML::HeatPumpSizingHERS
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _model, _hpxml, hpxml_bldg_hers = _test_measure(args_hash)
+
+    assert_operator(hpxml_bldg_hers.heat_pumps[0].heating_capacity, :>, hpxml_bldg_acca.heat_pumps[0].heating_capacity)
+    assert_operator(hpxml_bldg_hers.heat_pumps[0].backup_heating_capacity, :<, hpxml_bldg_acca.heat_pumps[0].backup_heating_capacity)
+  end
+
   def test_allow_increased_fixed_capacities
     for allow_increased_fixed_capacities in [true, false]
       # Test hard-sized capacities are increased (or not) for various equipment types

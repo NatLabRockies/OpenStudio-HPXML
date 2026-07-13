@@ -3692,8 +3692,8 @@ module HVACSizing
         hvac_sizings.Heat_Capacity = hp_capacity
       end
     elsif cool_cap_adj_factor.nil? # Heat pump has no cooling
-      # Size equal to heating design load
-      hvac_sizings.Heat_Capacity = heat_cap_rated
+      # Size equal to heating design load (arbitrary)
+      hvac_sizings.Heat_Capacity = hvac_sizings.Heat_Load
     elsif heat_cap_rated < hvac_sizings.Cool_Capacity
       # Size based on cooling
       hvac_sizings.Heat_Capacity = hvac_sizings.Cool_Capacity
