@@ -2749,38 +2749,34 @@ module HVACSizing
       oversize_limit, oversize_delta, undersize_limit = get_hvac_size_limits(hvac_cooling)
     end
 
-    if hvac_sizings.Cool_Load_Tot <= 0
+    if cooling_type.nil? || (hvac_sizings.Cool_Load_Tot <= 0) || (cooling_type == HPXML::HVACTypeHeatPumpWaterLoopToAir)
 
+      # No cooling system or no cooling load or WLHP (currently only used for heating)
       hvac_sizings.Cool_Capacity = 0.0
       hvac_sizings.Cool_Capacity_Sens = 0.0
       hvac_sizings.Cool_Airflow = 0.0
 
     elsif [HPXML::HVACTypeCentralAirConditioner,
-           HPXML::HVACTypeHeatPumpAirToAir].include?(cooling_type) ||
-          ([HPXML::HVACTypeMiniSplitAirConditioner,
-            HPXML::HVACTypeHeatPumpMiniSplit].include?(cooling_type) && is_ducted)
-      # For central systems, the installer can take steps to try to meet both sensible and latent loads,
-      # such as different indoor/outdoor coil combinations and different blower settings.
-      # Ductless systems don't offer this flexibility.
-
-      entering_temp = hpxml_bldg.header.manualj_cooling_design_temp
-      idb_adj = adjust_heat_pump_capacity_for_indoor_condition(entering_temp, mj.cool_indoor_wetbulb, hvac_cooling, :clg)
-      odb_adj = adjust_heat_pump_capacity_for_outdoor_condition(entering_temp, hvac_cooling, :clg)
-      total_cap_curve_value = odb_adj * idb_adj
-      calculate_cooling_capacities(mj, clg_ap, hvac_sizings, hpxml_bldg.header.manualj_humidity_setpoint, total_cap_curve_value, undersize_limit,
-                                   oversize_limit, HVAC::AirSourceCoolRatedIDB, HVAC::AirSourceCoolRatedIWB, hvac_cooling, hpxml_bldg)
-
-    elsif [HPXML::HVACTypeHeatPumpMiniSplit,
-           HPXML::HVACTypeMiniSplitAirConditioner].include?(cooling_type) && !is_ducted
+           HPXML::HVACTypeMiniSplitAirConditioner,
+           HPXML::HVACTypeHeatPumpAirToAir,
+           HPXML::HVACTypeHeatPumpMiniSplit].include? cooling_type
 
       entering_temp = hpxml_bldg.header.manualj_cooling_design_temp
       idb_adj = adjust_heat_pump_capacity_for_indoor_condition(entering_temp, mj.cool_indoor_wetbulb, hvac_cooling, :clg)
       odb_adj = adjust_heat_pump_capacity_for_outdoor_condition(entering_temp, hvac_cooling, :clg)
       total_cap_curve_value = odb_adj * idb_adj
 
-      hvac_sizings.Cool_Capacity = (hvac_sizings.Cool_Load_Tot / total_cap_curve_value)
-      hvac_sizings.Cool_Capacity_Sens = hvac_sizings.Cool_Capacity * clg_ap.cool_rated_shr_gross
-      hvac_sizings.Cool_Airflow = calc_airflow_rate(:clg, hvac_cooling, hvac_sizings.Cool_Capacity, hpxml_bldg)
+      if is_ducted
+        # For central systems, the installer can take steps to try to meet both sensible and latent loads,
+        # such as different indoor/outdoor coil combinations and different blower settings.
+        # Ductless systems don't offer this flexibility.
+        calculate_cooling_capacities(mj, clg_ap, hvac_sizings, hpxml_bldg.header.manualj_humidity_setpoint, total_cap_curve_value, undersize_limit,
+                                     oversize_limit, HVAC::AirSourceCoolRatedIDB, HVAC::AirSourceCoolRatedIWB, hvac_cooling, hpxml_bldg)
+      else
+        hvac_sizings.Cool_Capacity = (hvac_sizings.Cool_Load_Tot / total_cap_curve_value)
+        hvac_sizings.Cool_Capacity_Sens = hvac_sizings.Cool_Capacity * clg_ap.cool_rated_shr_gross
+        hvac_sizings.Cool_Airflow = calc_airflow_rate(:clg, hvac_cooling, hvac_sizings.Cool_Capacity, hpxml_bldg)
+      end
 
     elsif [HPXML::HVACTypeRoomAirConditioner,
            HPXML::HVACTypePTAC,
@@ -2827,26 +2823,15 @@ module HVACSizing
         hvac_sizings.Cool_Airflow = calc_airflow_rate(:clg, hvac_cooling, hvac_sizings.Cool_Capacity, hpxml_bldg)
       elsif [HPXML::GroundToAirHeatPumpModelTypeExperimental].include? hpxml_header.ground_to_air_heat_pump_model_type
         total_cap_curve_value = MathTools.biquadratic(UnitConversions.convert(mj.cool_indoor_wetbulb, 'F', 'C'), UnitConversions.convert(entering_temp, 'F', 'C'), clg_ap.cool_cap_ft_spec[hvac_cooling_speed])
-        calculate_cooling_capacities(mj, clg_ap, hvac_sizings, hpxml_bldg.header.manualj_humidity_setpoint, total_cap_curve_value, undersize_limit, oversize_limit, HVAC::GroundSourceCoolRatedIDB, HVAC::GroundSourceCoolRatedIWB, hvac_cooling, hpxml_bldg)
+        calculate_cooling_capacities(mj, clg_ap, hvac_sizings, hpxml_bldg.header.manualj_humidity_setpoint, total_cap_curve_value, undersize_limit,
+                                     oversize_limit, HVAC::GroundSourceCoolRatedIDB, HVAC::GroundSourceCoolRatedIWB, hvac_cooling, hpxml_bldg)
       end
+
     elsif HPXML::HVACTypeEvaporativeCooler == cooling_type
 
       hvac_sizings.Cool_Capacity = hvac_sizings.Cool_Load_Tot
       hvac_sizings.Cool_Capacity_Sens = hvac_sizings.Cool_Load_Sens
       hvac_sizings.Cool_Airflow = calc_airflow_rate(:clg, hvac_cooling, hvac_sizings.Cool_Capacity, hpxml_bldg)
-
-    elsif HPXML::HVACTypeHeatPumpWaterLoopToAir == cooling_type
-
-      # Model only currently used for heating
-      hvac_sizings.Cool_Capacity = 0.0
-      hvac_sizings.Cool_Capacity_Sens = 0.0
-      hvac_sizings.Cool_Airflow = 0.0
-
-    elsif cooling_type.nil?
-
-      hvac_sizings.Cool_Capacity = 0.0
-      hvac_sizings.Cool_Capacity_Sens = 0.0
-      hvac_sizings.Cool_Airflow = 0.0
 
     else
 
