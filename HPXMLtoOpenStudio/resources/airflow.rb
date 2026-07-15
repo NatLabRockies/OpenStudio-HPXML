@@ -81,7 +81,7 @@ module Airflow
     apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values)
 
     # Infiltration/ventilation
-    apply_infiltration_to_garage(model, spaces, hpxml_bldg, infil_values, duct_lk_imbals)
+    apply_infiltration_to_garage(model, spaces, weather, duct_lk_imbals)
     apply_infiltration_to_unconditioned_basement(model, spaces, duct_lk_imbals)
     apply_infiltration_to_vented_crawlspace(model, spaces, weather, hpxml_bldg, duct_lk_imbals)
     apply_infiltration_to_unvented_crawlspace(model, spaces, duct_lk_imbals)
@@ -1587,24 +1587,23 @@ module Airflow
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
-  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
-  # @param infil_values [Hash] Map with various infiltration key-value pairs (SLA, infiltration volume & height, etc.)
+  # @param weather [WeatherFile] Weather object containing EPW information
   # @param duct_lk_imbals [Array] List of duct leakage imbalance information
   # @return [nil]
-  def self.apply_infiltration_to_garage(model, spaces, hpxml_bldg, infil_values, duct_lk_imbals)
+  def self.apply_infiltration_to_garage(model, spaces, weather, duct_lk_imbals)
     return if spaces[HPXML::LocationGarage].nil?
 
-    ach50 = infil_values[:ach50] * infil_values[:a_ext]
-
     space = spaces[HPXML::LocationGarage]
-    area = UnitConversions.convert(space.floorArea, 'm^2', 'ft^2')
-    volume = UnitConversions.convert(space.volume, 'm^3', 'ft^3')
-    hor_lk_frac = 0.4 # DOE-2 Default
-    neutral_level = 0.5 # DOE-2 Default
-    sla = get_infiltration_SLA_from_ACH50(ach50, volume / area)
-    ela = sla * area
-    c_w_SG, c_s_SG = calc_wind_stack_coeffs(hpxml_bldg, hor_lk_frac, neutral_level, HPXML::LocationGarage)
-    apply_infiltration_to_unconditioned_space(model, space, nil, ela, c_w_SG, c_s_SG, duct_lk_imbals)
+    height = 8.0
+
+    # Assumed to be same ventilation rate as a vented crawlspace when you consider
+    # leakage around garage doors, doors being opened, etc.
+    # FUTURE: Connect to HPXML's Garage/VentilationRate input when available;
+    # see https://github.com/hpxmlwg/hpxml/pull/483
+    sla = (1.0 / 150.0).round(6)
+
+    ach = get_infiltration_ACH_from_SLA(sla, height, ReferenceHeight, weather)
+    apply_infiltration_to_unconditioned_space(model, space, ach, nil, nil, nil, duct_lk_imbals)
   end
 
   # Adds infiltration to the OpenStudio unconditioned basement space.
