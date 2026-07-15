@@ -7,6 +7,7 @@ __Features__
 
 __Bugfixes__
 - **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
+- **Breaking change**: HPWH `EnergyFactor`/`UniformEnergyFactor` must now be greater than 2 (previously greater than 1).
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
 - Removes duplicated ceiling/floor internal mass surfaces between conditioned stories.
 
