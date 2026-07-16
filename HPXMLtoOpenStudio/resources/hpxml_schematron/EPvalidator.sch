@@ -2139,8 +2139,8 @@
       <sch:assert role='ERROR' test='count(h:FractionDHWLoadServed) = 1'>Expected FractionDHWLoadServed</sch:assert>
       <sch:assert role='ERROR' test='number(h:HeatingCapacity) &gt; 0 or not(h:HeatingCapacity)'>Expected HeatingCapacity to be greater than 0.</sch:assert>
       <sch:assert role='ERROR' test='count(h:UniformEnergyFactor) + count(h:EnergyFactor) = 1'>Expected UniformEnergyFactor or EnergyFactor but not both</sch:assert>
-      <sch:assert role='ERROR' test='number(h:UniformEnergyFactor) &gt; 1 or not(h:UniformEnergyFactor)'>Expected UniformEnergyFactor to be greater than 1</sch:assert>
-      <sch:assert role='ERROR' test='number(h:EnergyFactor) &gt; 1 or not(h:EnergyFactor)'>Expected EnergyFactor to be greater than 1</sch:assert>
+      <sch:assert role='ERROR' test='number(h:UniformEnergyFactor) &gt;= 2 or not(h:UniformEnergyFactor)'>Expected UniformEnergyFactor to be greater than or equal to 2</sch:assert>
+      <sch:assert role='ERROR' test='number(h:EnergyFactor) &gt;= 2 or not(h:EnergyFactor)'>Expected EnergyFactor to be greater than or equal to 2</sch:assert>
       <sch:assert role='ERROR' test='h:HPWHOperatingMode[text()="hybrid/auto" or text()="heat pump only"] or not(h:HPWHOperatingMode)'>Expected HPWHOperatingMode to be 'hybrid/auto' or 'heat pump only'</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:HPWHInConfinedSpaceWithoutMitigation) &lt;= 1'>Expected at most one extension/HPWHInConfinedSpaceWithoutMitigation</sch:assert>
       <sch:assert role='ERROR' test='h:extension/h:HPWHInConfinedSpaceWithoutMitigation[text()="true" or text()="false"] or not(h:extension/h:HPWHInConfinedSpaceWithoutMitigation)'>Expected extension/HPWHInConfinedSpaceWithoutMitigation to be 'true' or 'false'</sch:assert>
