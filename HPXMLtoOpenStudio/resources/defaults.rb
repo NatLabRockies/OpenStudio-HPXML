@@ -5487,8 +5487,8 @@ module Defaults
   def self.get_num_bathrooms(nbeds)
     nbaths = nbeds / 2.0 + 0.5 # From BA HSP
 
-    # Prevent 0, which is disallowed by the HPXML schema
-    # FUTURE: Revert this when https://github.com/hpxmlwg/hpxml/pull/485 is available
+    # Ensure at least 1 bathroom (which the HPXML schema requires).
+    # Even a studio apartment w/ zero bedrooms would have a bathroom.
     nbaths = [nbaths, 1].max
 
     return nbaths.to_i
