@@ -6149,10 +6149,6 @@ module Defaults
   # @param nbaths [Integer] Number of bathrooms in the dwelling unit
   # @return [Double] Water heater heating capacity (Btu/hr)
   def self.get_water_heater_heating_capacity(fuel, nbeds, num_water_heaters, nbaths = nil)
-    if nbaths.nil?
-      nbaths = get_num_bathrooms(nbeds)
-    end
-
     # Adjust the heating capacity if there are multiple water heaters in the home
     nbaths /= num_water_heaters.to_f
 
@@ -6199,10 +6195,6 @@ module Defaults
   def self.get_water_heater_tank_volume(fuel, is_hpwh, nbeds, nbaths, n_occ)
     # FUTURE: Take into account usage multipliers
     # FUTURE: Incorporate number of occupants for conventional elec/gas storage WHs.
-
-    if nbaths.nil?
-      nbaths = get_num_bathrooms(nbeds)
-    end
 
     if is_hpwh && !n_occ.nil? # Heat pump water heater
       # Source: Jeff Maguire recommendation for ResStock when num occupants is known
