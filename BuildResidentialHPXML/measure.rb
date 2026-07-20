@@ -80,7 +80,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
 
     arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('location_site_type', choices[:location_site_type], false)
     arg.setDisplayName('Location: Site Type')
-    arg.setDescription("The terrain/shielding of the home, for the infiltration model. Defaults to 'Suburban, Normal' for single-family detached and manufactured home and 'Suburban, Well-Shielded' for single-family attached and apartment units.")
+    arg.setDescription('The terrain/shielding of the home, for the infiltration model.')
     arg.setDefaultValue('Default')
     args << arg
 
@@ -136,7 +136,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
 
     arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('geometry_unit_num_bathrooms', choices[:geometry_unit_num_bathrooms], false)
     arg.setDisplayName('Geometry: Unit Number of Bathrooms')
-    arg.setDescription('The number of bathrooms in the unit. Defaults to NumberofBedrooms/2 + 0.5.')
+    arg.setDescription('The number of bathrooms in the unit.')
     arg.setDefaultValue('Default')
     args << arg
 

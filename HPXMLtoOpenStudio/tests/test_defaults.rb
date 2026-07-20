@@ -530,6 +530,12 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     _default_hpxml, default_hpxml_bldg = _test_measure()
     _test_default_building_construction_values(default_hpxml_bldg, 21600, 8.0, 2, 1, -7)
 
+    # Test defaults w/ zero bedrooms
+    hpxml_bldg.building_construction.number_of_bedrooms = 0
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _default_hpxml, default_hpxml_bldg = _test_measure()
+    _test_default_building_construction_values(default_hpxml_bldg, 21600, 8.0, 1, 1, -7)
+
     # Test defaults w/ belly-and-wing foundation
     hpxml, hpxml_bldg = _create_hpxml('base-foundation-belly-wing-skirt.xml')
     hpxml_bldg.building_construction.conditioned_building_volume = nil
