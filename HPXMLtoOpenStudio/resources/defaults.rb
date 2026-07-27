@@ -7976,28 +7976,38 @@ module Defaults
           # Rated data from ClimateMaster residential tranquility 30 premier two-stage series Model SE036: https://files.climatemaster.com/RP3001-Residential-SE-Product-Catalog.pdf
           cool_cop_ratios = [1.102827763, 1.0]
         when HPXML::HVACCompressorTypeVariableSpeed
-          clg_ap.cool_capacity_ratios = [0.4802, 1.0]
+          clg_ap.cool_capacity_ratios = [0.272316384, 0.4802, 1.0]
           # Cooling Curves
           # E+ Capacity and EIR as function of temperature curves(bi-quadratic) generated using E+ HVACCurveFitTool
           # See: https://bigladdersoftware.com/epx/docs/24-2/auxiliary-programs/hvac-performance-curve-fit-tool.html#hvac-performance-curve-fit-tool
           # Catalog data from WaterFurnace 7 Series 700A11: https://www.waterfurnace.com/literature/7series/SDW7-0018W.pdf
           # Using E+ rated conditions:
           # Cooling: Indoor air at 67F WB, 80F DB; Entering water temperature: 85F
-          clg_ap.cool_cap_ft_spec = [[1.3397293008, -0.0474800765, 0.0021636831, 0.0055773535, -0.0002350114, -0.0002458509],
+          # Min speed performance curves are extrapolated from middle speed and full speed
+          clg_ap.cool_cap_ft_spec = [[1.5239509263, -0.0497676932, 0.0023554017, 0.0009908415, -0.0001881503, -0.0003479852],
+                                     [1.3397293008, -0.0474800765, 0.0021636831, 0.0055773535, -0.0002350114, -0.0002458509],
                                      [1.2143128834, -0.0459226877, 0.0020331628, 0.0086998093, -0.0002669140, -0.0001763187]]
-          clg_ap.cool_eir_ft_spec = [[-0.0049682877, 0.0554193005, -0.0015790347, -0.0010670650, 0.0011493038, -0.0008236210],
+          clg_ap.cool_eir_ft_spec = [[-0.0720330992, 0.0600574046, -0.0016160488, -0.0148327491, 0.0016550930, -0.0009827004],
+                                     [-0.0049682877, 0.0554193005, -0.0015790347, -0.0010670650, 0.0011493038, -0.0008236210],
                                      [0.0569949694, 0.0527820535, -0.0015763180, 0.0077339260, 0.0008175629, -0.0007157989]]
+          # Same air flow curves at first two speeds,
+          # because the manufacturer data described the air flow corrections to be applicable to lower speeds
           clg_ap.cool_cap_fflow_spec = [[1.1092, -0.5299, 0.4312],
+                                        [1.1092, -0.5299, 0.4312],
                                         [0.9216, -0.1021, 0.1874]]
           clg_ap.cool_eir_fflow_spec = [[2.2938, -2.2648, 0.9631],
+                                        [2.2938, -2.2648, 0.9631],
                                         [1.9175, -1.374, 0.4646]]
+          # Fixme: do we use the same curves for water flow rates at min speed?
           clg_ap.cool_cap_fwf_spec = [[1.0386, -0.2037, 0.1651],
+                                      [1.0386, -0.2037, 0.1651],
                                       [0.8606, 0.2687, -0.1293]]
           clg_ap.cool_eir_fwf_spec = [[1.066, 0.052, -0.118],
+                                      [1.066, 0.052, -0.118],
                                       [1.2961, -0.4762, 0.18]]
 
           # Catalog data from WaterFurnace 7 Series 700A11: https://www.waterfurnace.com/literature/7series/SDW7-0018W.pdf
-          cool_cop_ratios = [1.059467645, 1.0]
+          cool_cop_ratios = [1.160870642, 1.059467645, 1.0]
         end
       end
 
@@ -8178,27 +8188,36 @@ module Defaults
           # Rated data from ClimateMaster residential tranquility 30 premier two-stage series Model SE036: https://files.climatemaster.com/RP3001-Residential-SE-Product-Catalog.pdf
           heat_cop_ratios = [1.161791639, 1.0]
         when HPXML::HVACCompressorTypeVariableSpeed
-          htg_ap.heat_capacity_ratios = [0.4473, 1.0]
+          htg_ap.heat_capacity_ratios = [0.226181818, 0.447273, 1.0]
           # Heating Curves
           # E+ Capacity and EIR as function of temperature curves(bi-quadratic) generated using E+ HVACCurveFitTool
           # See: https://bigladdersoftware.com/epx/docs/24-2/auxiliary-programs/hvac-performance-curve-fit-tool.html#hvac-performance-curve-fit-tool
           # Catalog data from WaterFurnace 7 Series 700A11: https://www.waterfurnace.com/literature/7series/SDW7-0018W.pdf
           # Using E+ rated conditions:
           # Heating: Indoor air at 70F DB; Entering water temperature: 70F
-          htg_ap.heat_cap_ft_spec = [[0.6955336002, -0.0028528869, -0.0000005012, 0.0201138223, -0.0000590002, -0.0000749701],
+          htg_ap.heat_cap_ft_spec = [[0.6919254828, -0.0028030272, -0.0000005007, 0.0191711542, -0.0000056760, -0.0000779081],
+                                     [0.6955336002, -0.0028528869, -0.0000005012, 0.0201138223, -0.0000590002, -0.0000749701],
                                      [0.6975737864, -0.0028810803, -0.0000005015, 0.0206468583, -0.0000891526, -0.0000733087]]
-          htg_ap.heat_eir_ft_spec = [[0.8755777079, 0.0309984461, 0.0001099592, -0.0174543325, 0.0001819203, -0.0004948405],
+          htg_ap.heat_eir_ft_spec = [[1.1359346308, 0.0409860734, 0.0001310737, -0.0259511424, 0.0001834931, -0.0008492701],
+                                     [0.8755777079, 0.0309984461, 0.0001099592, -0.0174543325, 0.0001819203, -0.0004948405],
                                      [0.7627294076, 0.0273612308, 0.0001023412, -0.0145638547, 0.0001886431, -0.0003647958]]
+          # Same air flow curves at first two speeds,
+          # because the manufacturer data described the air flow corrections to be applicable to lower speeds
           htg_ap.heat_cap_fflow_spec = [[0.8676, 0.1122, 0.0195],
+                                        [0.8676, 0.1122, 0.0195],
                                         [0.9498, -0.0298, 0.0812]]
           htg_ap.heat_eir_fflow_spec = [[1.4426, -0.4465, 0.0064],
+                                        [1.4426, -0.4465, 0.0064],
                                         [1.1158, 0.282, -0.4071]]
+          # Fixme: do we use the same curves for water flow rates at min speed?
           htg_ap.heat_cap_fwf_spec = [[0.8364, 0.197, -0.0333],
+                                      [0.8364, 0.197, -0.0333],
                                       [0.727, 0.55, -0.277]]
           htg_ap.heat_eir_fwf_spec = [[1.3491, -0.7744, 0.4253],
+                                      [1.3491, -0.7744, 0.4253],
                                       [1.0833, -0.1351, 0.0517]]
           # Catalog data from WaterFurnace 7 Series 700A11: https://www.waterfurnace.com/literature/7series/SDW7-0018W.pdf
-          heat_cop_ratios = [1.15012987, 1.0]
+          heat_cop_ratios = [1.565874126, 1.15012987, 1.0]
         end
       end
 
