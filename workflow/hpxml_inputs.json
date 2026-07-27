@@ -1092,6 +1092,11 @@
     "enclosure_floor_over_garage": "Wood Frame, R-38",
     "enclosure_carpet": "80% Carpet"
   },
+  "sample_files/base-enclosure-beds-0.xml": {
+    "parent_hpxml": "sample_files/base.xml",
+    "geometry_unit_num_bedrooms": "0",
+    "geometry_unit_num_bathrooms": "Default"
+  },
   "sample_files/base-enclosure-beds-1.xml": {
     "parent_hpxml": "sample_files/base.xml",
     "geometry_unit_num_bedrooms": "1",

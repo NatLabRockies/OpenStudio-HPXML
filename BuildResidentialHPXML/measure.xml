@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>build_residential_hpxml</name>
   <uid>a13a8983-2b01-4930-8af2-42030b6e4233</uid>
-  <version_id>f4f37f65-5e30-41a0-b3dc-7a4a1fa57f44</version_id>
-  <version_modified>2026-05-22T21:28:29Z</version_modified>
+  <version_id>8c6a6855-95e8-491e-8fb6-6820b622531e</version_id>
+  <version_modified>2026-07-17T21:33:32Z</version_modified>
   <xml_checksum>2C38F48B</xml_checksum>
   <class_name>BuildResidentialHPXML</class_name>
   <display_name>HPXML Builder</display_name>
@@ -108,7 +108,7 @@
     <argument>
       <name>location_site_type</name>
       <display_name>Location: Site Type</display_name>
-      <description>The terrain/shielding of the home, for the infiltration model. Defaults to 'Suburban, Normal' for single-family detached and manufactured home and 'Suburban, Well-Shielded' for single-family attached and apartment units.</description>
+      <description>The terrain/shielding of the home, for the infiltration model.</description>
       <type>Choice</type>
       <required>false</required>
       <model_dependent>false</model_dependent>
@@ -595,7 +595,7 @@
     <argument>
       <name>geometry_unit_num_bathrooms</name>
       <display_name>Geometry: Unit Number of Bathrooms</display_name>
-      <description>The number of bathrooms in the unit. Defaults to NumberofBedrooms/2 + 0.5.</description>
+      <description>The number of bathrooms in the unit.</description>
       <type>Choice</type>
       <required>false</required>
       <model_dependent>false</model_dependent>
@@ -11433,7 +11433,7 @@
       <filename>README.md</filename>
       <filetype>md</filetype>
       <usage_type>readme</usage_type>
-      <checksum>40789597</checksum>
+      <checksum>E343E87E</checksum>
     </file>
     <file>
       <filename>README.md.erb</filename>
@@ -11450,7 +11450,7 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>E3E200DA</checksum>
+      <checksum>93E3B4F6</checksum>
     </file>
     <file>
       <filename>constants.rb</filename>

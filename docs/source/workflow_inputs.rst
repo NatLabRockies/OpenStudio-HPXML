@@ -651,7 +651,7 @@ Building construction is entered in ``/HPXML/Building/BuildingDetails/BuildingSu
 
   .. [#] If AverageCeilingHeight not provided, defaults to (ConditionedBuildingVolume - ConditionedCrawlspaceVolume) / ConditionedFloorArea if ConditionedBuildingVolume is provided.
          If ConditionedBuildingVolume not provided, AverageCeilingHeight defaults to 8.0 ft (unless there is a cathedral ceiling, in which case the value is adjusted).
-  .. [#] If NumberofBathrooms not provided, calculated as NumberofBedrooms/2 + 0.5 based on the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_.
+  .. [#] If NumberofBathrooms not provided, calculated as NumberofBedrooms/2 + 0.5 (rounded down, with a minimum of 1) based on the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_.
   .. [#] If ConditionedBuildingVolume not provided, defaults to ConditionedFloorArea * AverageCeilingHeight + ConditionedCrawlspaceVolume.
 
 HPXML Schedules
@@ -4241,7 +4241,7 @@ Each heat pump water heater is entered as a ``/HPXML/Building/BuildingDetails/Sy
   ``FractionDHWLoadServed``                            double            frac           >= 0, <= 1 [#]_         Yes                       Fraction of hot water load served [#]_
   ``HeatingCapacity``                                  double            Btu/hr         > 0                     No        See [#]_        Heating input capacity
   ``BackupHeatingCapacity``                            double            Btu/hr         >= 0                    No        15355 (4.5 kW)  Heating capacity of the electric resistance backup
-  ``UniformEnergyFactor`` or ``EnergyFactor``          double            frac           > 1, <= 5               Yes                       EnergyGuide label rated efficiency
+  ``UniformEnergyFactor`` or ``EnergyFactor``          double            frac           >= 1.45, <= 5           Yes                       EnergyGuide label rated efficiency
   ``HPWHDucting/ExhaustAirTermination``                string                           See [#]_                No        <none>          The location where HPWH exhaust air is ducted to
   ``HPWHOperatingMode``                                string                           See [#]_                No        hybrid/auto     Operating mode [#]_
   ``UsageBin`` or ``FirstHourRating``                  string or double  str or gal/hr  See [#]_ or > 0         No        See [#]_        EnergyGuide label usage bin/first hour rating
