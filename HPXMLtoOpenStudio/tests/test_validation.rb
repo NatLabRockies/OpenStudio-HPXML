@@ -75,7 +75,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'dehumidifier-fraction-served' => ['Expected sum(FractionDehumidificationLoadServed) to be less than or equal to 1 [context: /HPXML/Building/BuildingDetails, id: "MyBuilding"]'],
                             'dhw-frac-load-served' => ['Expected sum(FractionDHWLoadServed) to be 1 [context: /HPXML/Building/BuildingDetails, id: "MyBuilding"]'],
                             'dhw-invalid-ef-tank' => ['Expected EnergyFactor to be less than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="storage water heater"], id: "WaterHeatingSystem1"]'],
-                            'dhw-invalid-uef-tank-heat-pump' => ['Expected UniformEnergyFactor to be greater than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="heat pump water heater"], id: "WaterHeatingSystem1"]'],
+                            'dhw-invalid-uef-tank-heat-pump' => ['Expected UniformEnergyFactor to be greater than or equal to 1.45 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="heat pump water heater"], id: "WaterHeatingSystem1"]'],
                             'dishwasher-location' => ['A location is specified as "garage" but no surfaces were found adjacent to this space type.'],
                             'duct-leakage-cfm25' => ["The value '-2.0' is less than the minimum value allowed",
                                                      "The value '-3.0' is less than the minimum value allowed"],
@@ -326,7 +326,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.water_heating_systems[0].recovery_efficiency = nil
       when 'dhw-invalid-uef-tank-heat-pump'
         hpxml, hpxml_bldg = _create_hpxml('base-dhw-tank-heat-pump.xml')
-        hpxml_bldg.water_heating_systems[0].uniform_energy_factor = 1.0
+        hpxml_bldg.water_heating_systems[0].uniform_energy_factor = 1.4
       when 'dishwasher-location'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.dishwashers[0].location = HPXML::LocationGarage
