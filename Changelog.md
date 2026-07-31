@@ -9,6 +9,7 @@ __Bugfixes__
 - **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
 - **Breaking change**: HPWH `EnergyFactor`/`UniformEnergyFactor` must now be >= 1.45 (previously > 1).
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
+- Runs EnergyPlus without an intermediate shell, fixing failures for weather file paths containing shell metacharacters (and allowing use in shell-less containers).
 - Removes duplicated ceiling/floor internal mass surfaces between conditioned stories.
 - Fixes error if `NumberofBedrooms=0` and `NumberofBathrooms` is omitted.
 
