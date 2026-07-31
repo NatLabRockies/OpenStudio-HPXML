@@ -798,7 +798,7 @@ Additional autosizing factor inputs are available at the system level, see :ref:
 
   .. [#] HeatPumpSizingMethodology choices are 'ACCA', 'HERS', or 'MaxLoad', and are described as follows:
 
-         \- **ACCA**: autosized heat pumps have their nominal capacity sized per ACCA Manual J/S based on cooling design loads, with some oversizing allowances for larger heating design loads.
+         \- **ACCA**: autosized heat pumps have their nominal capacity sized per ACCA Manual S 2014 based on cooling design loads, with some oversizing allowances for larger heating design loads.
 
          \- **HERS**: same as **ACCA** except autosized heat pumps have their nominal capacity sized equal to at least the larger of heating and sensible cooling design loads.
 
