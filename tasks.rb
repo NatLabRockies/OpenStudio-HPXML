@@ -1946,7 +1946,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                      heating_system_type: HPXML::HVACTypeFurnace,
                                      heating_system_fuel: HPXML::FuelTypeElectricity,
                                      heating_capacity: 6400,
-                                     heating_efficiency_afue: 1,
+                                     heating_efficiency_percent: 1,
                                      fraction_heat_load_served: 0.1)
       hpxml_bldg.heating_systems.add(id: "HeatingSystem#{hpxml_bldg.heating_systems.size + 1}",
                                      distribution_system_idref: hpxml_bldg.hvac_distributions[1].id,
@@ -1960,7 +1960,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                      heating_system_type: HPXML::HVACTypeBoiler,
                                      heating_system_fuel: HPXML::FuelTypeElectricity,
                                      heating_capacity: 6400,
-                                     heating_efficiency_afue: 1,
+                                     heating_efficiency_percent: 1,
                                      fraction_heat_load_served: 0.1)
       hpxml_bldg.heating_systems.add(id: "HeatingSystem#{hpxml_bldg.heating_systems.size + 1}",
                                      distribution_system_idref: hpxml_bldg.hvac_distributions[3].id,
