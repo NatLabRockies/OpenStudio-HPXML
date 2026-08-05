@@ -1711,7 +1711,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
                                    distribution_system_idref: hpxml_bldg.hvac_distributions[0].id,
                                    heating_system_type: HPXML::HVACTypeFurnace,
                                    heating_system_fuel: HPXML::FuelTypeElectricity,
-                                   heating_efficiency_afue: 1,
+                                   heating_efficiency_percent: 1,
                                    fraction_heat_load_served: 1.0,
                                    fan_watts_per_cfm: 0.55,
                                    fan_motor_type: HPXML::HVACFanMotorTypeBPM)
