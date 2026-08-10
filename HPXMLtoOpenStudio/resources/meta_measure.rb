@@ -70,6 +70,14 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
     end
   end
 
+  # Remove sizing objects that we don't use
+  # Remove this case when https://github.com/NatLabRockies/OpenStudio/issues/5601 is addressed
+  ['Sizing:Parameters', 'Sizing:System'].each do |sizing_type|
+    workspace.getObjectsByType(sizing_type.to_IddObjectType).each do |sizing_obj|
+      sizing_obj.remove
+    end
+  end
+
   if not success
     print "Creating input unsuccessful.\n"
     print "See #{File.join(rundir, 'run.log')} for details.\n"
@@ -105,15 +113,16 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
   print "Running simulation...\n" unless suppress_print
   ep_path = File.absolute_path(File.join(OpenStudio.getOpenStudioCLI.to_s, '..', '..', 'EnergyPlus', 'energyplus')) # getEnergyPlusDirectory can be unreliable, using getOpenStudioCLI instead
   simulation_start = Time.now
-  command = "\"#{ep_path}\" -w \"#{model.getWeatherFile.path.get}\" #{ep_input_filename}"
+  # Passed to system() in argv form below, so the path is not shell-interpreted
+  command = [ep_path, '-w', model.getWeatherFile.path.get.to_s, ep_input_filename]
   if debug
     File.open(File.join(rundir, 'run.log'), 'a') do |f|
-      f << "Executing command '#{command}' from working directory '#{rundir}'.\n"
+      f << "Executing command '#{command.join(' ')}' from working directory '#{rundir}'.\n"
     end
   end
   pwd = Dir.pwd
   Dir.chdir(rundir) do
-    system(command, out: [File.join(rundir, 'stdout-energyplus.log'), 'w'], err: [File.join(rundir, 'stderr-energyplus.log'), 'w'])
+    system(*command, out: [File.join(rundir, 'stdout-energyplus.log'), 'w'], err: [File.join(rundir, 'stderr-energyplus.log'), 'w'])
   end
   Dir.chdir(pwd) # Prevent OS "restoring original_directory" warning
   sim_time = (Time.now - simulation_start).round(1)

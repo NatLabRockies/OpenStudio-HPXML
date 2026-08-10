@@ -29,11 +29,13 @@ module SimControls
 
     # 15 is based on EPA'sIndoor Humidity Assessment Tool (IHAT) Reference Manual and previous
     # studies for simulation of residential buildings by Hugh Henderson
-    # See https://docs.nrel.gov/docs/fy11osti/49899.pdf
+    # See https://docs.nlr.gov/docs/fy11osti/49899.pdf
     zonecap.setHumidityCapacityMultiplier(15)
 
+    # Speed improvements with minimal effect on results
     convlim = model.getConvergenceLimits
-    convlim.setMinimumSystemTimestep(0) # Speed improvement with minimal effect on results
+    convlim.setMinimumSystemTimestep(0)
+    convlim.setMaximumHVACIterations(8)
 
     run_period = model.getRunPeriod
     run_period.setBeginMonth(hpxml_header.sim_begin_month)

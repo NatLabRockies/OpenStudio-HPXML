@@ -2,7 +2,6 @@
 
 require_relative '../resources/minitest_helper'
 require 'openstudio'
-require 'openstudio/measure/ShowRunnerOutput'
 require 'fileutils'
 require_relative '../measure.rb'
 require_relative '../resources/util.rb'
@@ -87,9 +86,9 @@ class HPXMLtoOpenStudioElectricPanelTest < Minitest::Test
     _model, _hpxml, hpxml_bldg = _test_measure(args_hash)
     electric_panel = hpxml_bldg.electric_panels[0]
 
-    assert_equal(17, electric_panel.rated_total_spaces)
+    assert_equal(16, electric_panel.rated_total_spaces)
     assert_equal(17, electric_panel.occupied_spaces)
-    assert_equal(0, electric_panel.headroom_spaces)
+    assert_equal(-1, electric_panel.headroom_spaces)
 
     # Load-Based Part A
     assert_in_epsilon(24662.0, electric_panel.capacity_total_watts[0], 0.001)
@@ -110,9 +109,9 @@ class HPXMLtoOpenStudioElectricPanelTest < Minitest::Test
     _model, _hpxml, hpxml_bldg = _test_measure(args_hash)
     electric_panel = hpxml_bldg.electric_panels[0]
 
-    assert_equal(17, electric_panel.rated_total_spaces)
+    assert_equal(16, electric_panel.rated_total_spaces)
     assert_equal(17, electric_panel.occupied_spaces)
-    assert_equal(0, electric_panel.headroom_spaces)
+    assert_equal(-1, electric_panel.headroom_spaces)
 
     # Load-Based Part B
     assert_in_epsilon(34827.2, electric_panel.capacity_total_watts[0], 0.001)
@@ -452,8 +451,8 @@ class HPXMLtoOpenStudioElectricPanelTest < Minitest::Test
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-    _test_service_feeder_power(hpxml_bldg, HPXML::ElectricPanelLoadTypeHeating, 3412)
-    _test_service_feeder_power(hpxml_bldg, HPXML::ElectricPanelLoadTypeCooling, 3316)
+    _test_service_feeder_power(hpxml_bldg, HPXML::ElectricPanelLoadTypeHeating, 4388)
+    _test_service_feeder_power(hpxml_bldg, HPXML::ElectricPanelLoadTypeCooling, 4292)
     _test_occupied_spaces(hpxml_bldg, [HPXML::ElectricPanelLoadTypeHeating, HPXML::ElectricPanelLoadTypeCooling], 5)
   end
 
@@ -633,7 +632,7 @@ class HPXMLtoOpenStudioElectricPanelTest < Minitest::Test
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-    _test_service_feeder_power(hpxml_bldg, HPXML::ElectricPanelLoadTypeWaterHeater, 804)
+    _test_service_feeder_power(hpxml_bldg, HPXML::ElectricPanelLoadTypeWaterHeater, 879)
     _test_occupied_spaces(hpxml_bldg, [HPXML::ElectricPanelLoadTypeWaterHeater], 2)
   end
 
@@ -949,9 +948,9 @@ class HPXMLtoOpenStudioElectricPanelTest < Minitest::Test
     electric_panel_path = File.absolute_path(File.join(File.dirname(__FILE__), 'results_panel.json'))
     json = JSON.parse(File.read(electric_panel_path))
 
-    assert_equal(27, json['Electric Panel Breaker Spaces']['Total Count'])
+    assert_equal(16, json['Electric Panel Breaker Spaces']['Total Count'])
     assert_equal(27, json['Electric Panel Breaker Spaces']['Occupied Count'])
-    assert_equal(0, json['Electric Panel Breaker Spaces']['Headroom Count'])
+    assert_equal(-11, json['Electric Panel Breaker Spaces']['Headroom Count'])
     assert_equal(37463.6, json['Electric Panel Load']['2023 Existing Dwelling Load-Based: Total Load (W)'])
     assert_equal(156.1, json['Electric Panel Load']['2023 Existing Dwelling Load-Based: Total Capacity (A)'])
     assert_in_epsilon(100.0 - 156.1, json['Electric Panel Load']['2023 Existing Dwelling Load-Based: Headroom Capacity (A)'], 0.01)
@@ -1012,7 +1011,7 @@ class HPXMLtoOpenStudioElectricPanelTest < Minitest::Test
 
   def _test_measure(args_hash)
     # create an instance of the measure
-    measure = HPXMLtoOpenStudio.new
+    measure = HPXMLToOpenStudio.new
 
     runner = OpenStudio::Measure::OSRunner.new(OpenStudio::WorkflowJSON.new)
     model = OpenStudio::Model::Model.new
@@ -1036,7 +1035,7 @@ class HPXMLtoOpenStudioElectricPanelTest < Minitest::Test
     result = runner.result
 
     # show the output
-    show_output(result) unless result.value.valueName == 'Success'
+    result.showOutput() unless result.value.valueName == 'Success'
 
     # assert that it ran correctly
     assert_equal('Success', result.value.valueName)

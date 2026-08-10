@@ -1,7 +1,77 @@
+## OpenStudio-HPXML v1.13.0
+
+__Features__
+- **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
+- **Breaking change**: For heat pump water heaters, ``HeatingCapacity`` is now *input* rather than *output* capacity, similar to other water heater types.
+- For furnaces/boilers, allows heating efficiency with units of "Percent" as an alternative to "AFUE"; the two units are modeled identically.
+- Updates garage ventilation rate to be SLA=1/150 (same as a vented crawlspace).
+
+__Bugfixes__
+- **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
+- **Breaking change**: HPWH `EnergyFactor`/`UniformEnergyFactor` must now be >= 1.45 (previously > 1).
+- Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
+- Runs EnergyPlus without an intermediate shell when using run_simulation.rb or meta_measure.rb.
+- Removes duplicated ceiling/floor internal mass surfaces between conditioned stories.
+- Fixes error if `NumberofBedrooms=0` and `NumberofBathrooms` is omitted.
+
+## OpenStudio-HPXML v1.12.0
+
+__Features__
+- HVAC updates:
+  - Adds a warning if there are more than 300 unmet hours for heating or cooling; setpoint tolerance increased from 0.36 deg-F (0.2 deg-C) to 0.5 deg-F.
+  - Dual-fuel heat pumps with switchover temperatures > 25F are now autosized based on 25F to allow some additional heating capacity buffer.
+  - Improves handling of duct leakage specified using cfm25/cfm50.
+  - Allows multiple ground-source heat pumps attached to a single geothermal loop; yields runtime speed improvements.
+  - Crankcase heating energy is now disabled during unavailable periods, e.g., power outages.
+  - Adds advanced research feature to model latent degradation for cooling systems, including an input to specify an HVAC blower-off delay.
+- Output updates:
+  - **Breaking change**: Annual peak load outputs for heating and cooling now use units of Btu/h instead of kBtu/h for consistency with other outputs.
+  - **Breaking change**: Replaces "UnitX" prefixes with Building IDs in whole SFA/MF building timeseries outputs.
+  - For whole SFA/MF building simulations, reports energy/fuel use by dwelling unit (i.e., "Dwelling Unit Energy Use: \*" and "Dwelling Unit Fuel Use: \*"). Timeseries outputs are also available.
+  - Allows calculating utility bills for homes with HVAC distribution systems using simplified heating/cooling DSE values (previously unsupported).
+- Whole SFA/MF buildings:
+  - Allows modeling batteries in individual dwelling units (previously unsupported).
+- Utility bill calculations:
+  - Updated default state-average utility rates to EIA State Energy Data System (SEDS) 2024 data.
+  - Updates `openei_rates.zip` with the latest residential utility rates from the [OpenEI U.S. Utility Rate database](https://apps.openei.org/USURDB/).
+- Allows "other" for `SoilType`; adds variation to dry/wet soil conductivity and diffusivity values for unknown/other/loam soil types.
+- Updates schematron validation error messages to be more user friendly.
+- Adds a `run_simulation.rb --ems-debug` argument to generate the EnergyPlus EDD file for debugging EMS programs.
+
+__Bugfixes__
+- Fixes a misleading warning about adjusting inverted setpoints when heating setpoint is greater than cooling setpoint during non-overlapping heating/cooling seasons.
+- Fixes possible incorrect unmet hours outputs for unavailable periods with no space heating only (or no space cooling only).
+- Fixes PanHeaterControlType="heat pump mode" incorrectly disallowed for mini-split heat pumps.
+- Fixes the design cooling temperature calculations for some vented attic roof types (shingles, plastic/rubber/synthetic sheeting, concrete, cool roof, expanded polystyrene sheathing)
+- Fixes unit multiplier ignored for EV charging using `Vehicles`.
+- Fixes handling of battery losses in the battery resilience output.
+- Fixes handling of zero occupants (i.e., unoccupied dwelling unit):
+  - Fixes lighting and plug/fuel load energy use to not be zeroed out when a kWh/year or therm/year value is provided.
+  - Fixes pool/spa energy use to be zeroed out when a kWh/year or therm/year value is not provided, or when there is a "Vacancy" unavailable period.
+- Fixes incorrect hot water (gallons) output for solar thermal systems using `SolarFraction`.
+- Small bugfixes when using the on/off thermostat deadband advanced research feature:
+  - Fixes unmet hours outputs, which could be missing some periods of unmet hours.
+  - Fixes timeseries outputs for heating/cooling setpoints.
+- Fixes logic in HP multi-stage backup advanced research feature.
+- Fixes PV grid connection fee applying in utility bill calculation even if the home has no PV.
+- Fixes possible "Failed to process String" EnergyPlus error when requesting component loads.
+- Fixes ducts in manufactured home belly from being incorrectly modeled as if they were outside.
+
+## OpenStudio-HPXML v1.11.1
+
+__Bugfixes__
+- Fixes heat pump heating performance sensitivity to indoor temperatures.
+
 ## OpenStudio-HPXML v1.11.0
 
-__New Features__
-- Updates to HPXML v4.2.
+__Features__
+- Updates to OpenStudio 3.11/EnergyPlus 25.2.
+- Updates to HPXML v5.0-rc1.
+  - **Breaking change**: HPXML namespace changed from http://hpxmlonline.com/2023/09 to http://hpxmlonline.com/2025/12.
+  - **Breaking change**: Replaces "none" with "not present" for `InteriorFinish/Type`, `Siding`, `ExteriorShading/Type`, `InteriorShading/Type`, `Pool/Type`, `PermanentSpa/Type`, `Pump/Type`, and `Heater/Type`.
+  - Allows "stone veneer" for `Wall/Siding` and `RimJoist/Siding`.
+  - Allows "medium light" for `Roof/RoofColor`, `RimJoist/Color`, and `Wall/Color`.
+  - Allows `SpecificLeakageArea` for air infiltration measurements.
 - BuildResidentialHPXML measure:
   - **Breaking change**: New, simpler, easier to use option-based arguments (rather than detailed property arguments).
   - Automatically adjusts garage dimensions for dwelling units with small footprints to avoid errors.
@@ -9,11 +79,15 @@ __New Features__
   - Updates default heating capacities at 17F per RESNET HERS Addendum 82 and NEEP database.
   - Updates supplemental heating energy use during defrost based on RESNET HERS Addendum 82.
   - Updates shared pump power for ground-source heat pumps on a shared recirculation loop to cycle with heating/cooling load rather than operate continuously per RESNET HERS Addendum 94.
+  - Allows desuperheaters to be used with the experimental ground-source heat pump model.
+  - Adds `PanHeaterControlType="heat pump mode"`, in which the pan heater will run when the HP is running (and the outdoor temperature is below 32F).
+  - Updates `PanHeaterControlType="continuous"` to avoid pan heater operation when the outdoor temperature is below the minimum compressor temperature.
 - Allows optional `UsageMultiplier` for electric vehicles described using `Vehicles`.
 - Water heater improvements:
-  - Improves electric water heater tank losses when using `EnergyFactor` as the metric; now consistent with how `UniformEnergyFactor` is handled.
-  - Improves HPWH tank volume defaulting, particularly when `NumberofResidents` is provided.
+  - Allows HPWHs to have exhaust air ducted to the outside using `HPWHDucting/ExhaustAirTermination="outside"`.
   - Allows HPWH performance adjustment when installed in confined space per RESNET HERS Addendum 77. When `extension/HPWHInConfinedSpaceWithoutMitigation` is "true", `extension/HPWHContainmentVolume` is used to calculate the adjustment.
+  - Improves HPWH tank volume defaulting, particularly when `NumberofResidents` is provided.
+  - Improves electric water heater tank losses when using `EnergyFactor` as the metric; now consistent with how `UniformEnergyFactor` is handled.
 - Updated site defaults:
   - `Address/CityMunicipality`, `Address/StateCode`, `GeoLocation/Latitude`, `GeoLocation/Longitude`, and `TimeZone/UTCOffset` now default based on zip code if available.
   - `TimeZone/DSTObserved` now defaults to false if `Address/StateCode` is 'AZ' or 'HI'.
@@ -23,11 +97,18 @@ __New Features__
 - For storm windows, removes minimum base window U-factor limit and throws a warning instead if the base window U-factor is below 0.3.
 - Whole SFA/MF buildings:
   - Allows modeling inter-unit heat transfer using the `@sameas` attribute.
+  - Allows modeling detailed electric vehicles.
   - Documents a workaround for modeling common spaces (conditioned or unconditioned).
   - See the [documentation](https://openstudio-hpxml.readthedocs.io/en/latest/workflow_inputs.html#whole-sfa-mf-buildings) for more information.
+- Updated default utility bill rates per EIA energy cost data for 2023.
+- Adds "Electric Panel Load: Max Current Rating (A)" output to results_panel.csv.
+- Adds error-checking for when the sum of supply/return duct leakage to outside values is too high.
+- Adds error-checking for when `HeatPump/HeatingCapacity17F` is provided but `HeatPump/HeatingCapacity` is not.
 
 __Bugfixes__
-- Fixes ground-source heat pump plant loop fluid type (workaround for OpenStudio bug).
+- Fixes incorrect cooling design conditions when using TMYx weather files (OpenStudio bug).
+- Fixes ground-source heat pump plant loop fluid type (OpenStudio bug).
+- Fixes HERS sizing methodology when compressor lockout temperature is above the heating design temperature.
 - Fixes default hours driven per week for electric vehicles (8.88 -> 9.5).
 - Fixes empty TimeDST/TimeUTC columns in JSON timeseries data.
 - Fixes an EMS bug in heat pump defrost models that over-estimates defrost fractions.
@@ -35,10 +116,12 @@ __Bugfixes__
 - Fixes requested EnergyPlus timeseries output variables/meters not displayed in DView if they don't have units.
 - Fixes possible errors when small water flow rates for variable-speed experimental ground-source heat pump model.
 - Fixes possible ground-source heat pump sizing error if the heating or cooling design temperature differences are zero.
+- Fixes EMS discharge power program and assignment of default discharging schedule for detailed electric vehicles.
+- Avoids thin interior/exterior roof construction layers to help prevent attic temperature out of bounds errors.
 
 ## OpenStudio-HPXML v1.10.0
 
-__New Features__
+__Features__
 - Updates to OpenStudio 3.10/EnergyPlus 25.1/HPXML v4.2-rc2.
 - HVAC modeling updates per RESNET HERS Addendum 82:
   - **Breaking change**: `CompressorType` required for central and mini-split air conditioners and heat pumps as well as ground-to-air heat pumps.
@@ -108,7 +191,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.9.1
 
-__New Features__
+__Features__
 - Now can be used to obtain ACCA Manual J approval; see the [OpenStudio-HPXML documentation](https://openstudio-hpxml.readthedocs.io/en/latest/intro.html#capabilities).
 
 __Bugfixes__
@@ -116,7 +199,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.9.0
 
-__New Features__
+__Features__
 - Updates to OpenStudio 3.9/EnergyPlus 24.2/HPXML v4.1-rc1.
 - Allows `Site/Address/ZipCode` to be provided instead of `ClimateandRiskZones/WeatherStation/extension/EPWFilePath`, in which case the closest TMY3 weather station will be automatically selected.
 - Allows optional inputs for modeling skylight curbs and/or shafts.
@@ -182,7 +265,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.8.0
 
-__New Features__
+__Features__
 - Updates to OpenStudio 3.8/EnergyPlus 24.1/HPXML v4.0-rc4.
 - Adds BPI-2400 HPXML test files and results; see [Testing Framework](https://openstudio-hpxml.readthedocs.io/en/latest/testing_framework.html) for more information.
 - Updates per ANSI/RESNET/ICC 301-2022 w/ Addendum C:
@@ -277,7 +360,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.7.0
 
-__New Features__
+__Features__
 - Updates to OpenStudio 3.7.0/EnergyPlus 23.2.
 - **Breaking change**: Updates to HPXML v4.0-rc2:
   - HPXML namespace changed from http://hpxmlonline.com/2019/10 to http://hpxmlonline.com/2023/09.
@@ -333,7 +416,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.6.0
 
-__New Features__
+__Features__
 - Updates to OpenStudio 3.6.1/EnergyPlus 23.1.
 - **Breaking change**: Updates to newer proposed HPXML v4.0:
   - Replaces `VentilationFan/Quantity` and `CeilingFan/Quantity` with `Count`.
@@ -403,7 +486,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.5.1
 
-__New Features__
+__Features__
 - When `Battery/Location` not provided, now defaults to garage if present, otherwise outside.
 - BuildResidentialScheduleFile measure:
   - Allows requesting a subset of end uses (columns) to be generated.
@@ -414,7 +497,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.5.0
 
-__New Features__
+__Features__
 - Updates to OpenStudio 3.5.0/EnergyPlus 22.2.
 - **Breaking change**: Updates to newer proposed HPXML v4.0:
   - Replaces `FrameFloors/FrameFloor` with `Floors/Floor`.
@@ -479,7 +562,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.4.0
 
-__New Features__
+__Features__
 - Updates to OpenStudio 3.4.0/EnergyPlus 22.1.
 - High-level optional `OccupancyCalculationType` input to specify operational vs asset calculation. Defaults to asset. If operational, `NumberofResidents` is required.
 - Allows calculating one or more emissions scenarios (e.g., high renewable penetration vs business as usual) for different emissions types (e.g., CO2e).
@@ -548,7 +631,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.3.0
 
-__New Features__
+__Features__
 - Updates to OpenStudio 3.3.0/EnergyPlus 9.6.0.
 - **Breaking change**: Replaces "Unmet Load" outputs with "Unmet Hours".
 - **Breaking change**: Renames "Load: Heating" and "Peak Load: Heating" (and Cooling) outputs to include "Delivered".
@@ -627,7 +710,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.2.0
 
-__New Features__
+__Features__
 - **Breaking change**: Heating/cooling component loads no longer calculated by default for faster performance; use `--add-component-loads` argument if desired.
 - **Breaking change**: Replaces `Site/extension/ShelterCoefficient` with `Site/ShieldingofHome`.
 - Allows `DuctLeakageMeasurement` & `ConditionedFloorAreaServed` to not be specified for ductless fan coil systems; **Breaking change**: `AirDistributionType` is now required for all air distribution systems.
@@ -651,7 +734,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.1.0
 
-__New Features__
+__Features__
 - **Breaking change**: `Type` is now a required input for dehumidifiers; can be "portable" or "whole-home".
 - **Breaking change**: `Location` is now a required input for dehumidifiers; must be "living space" as dehumidifiers are currently modeled as located in living space.
 - **Breaking change**: `Type` is now a required input for Pool, PoolPump, HotTub, and HotTubPump.
@@ -691,7 +774,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v1.0.0
 
-__New Features__
+__Features__
 - Updates to OpenStudio 3.1.0/EnergyPlus 9.4.0.
 - **Breaking change**: Deprecates `WeatherStation/WMO` HPXML input, use `WeatherStation/extension/EPWFilePath` instead; also removes `weather_dir` argument from HPXMLtoOpenStudio measure.
 - Implements water heater Uniform Energy Factor (UEF) model; replaces RESNET UEF->EF regression. **Breaking change**: `FirstHourRating` is now a required input for storage water heaters when UEF is provided.
@@ -717,7 +800,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v0.11.0 Beta
 
-__New Features__
+__Features__
 - New [Schematron](http://schematron.com) validation (EPvalidator.xml) replaces custom ruby validation (EPvalidator.rb)
 - **[Breaking change]** `BuildingConstruction/ResidentialFacilityType` ("single-family detached", "single-family attached", "apartment unit", or "manufactured home") is a required input
 - Ability to model shared systems for Attached/Multifamily dwelling units
@@ -764,7 +847,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v0.10.0 Beta
 
-__New Features__
+__Features__
 - Dwelling units of single-family attached/multifamily buildings:
   - Adds new generic space types "other heated space", "other multifamily buffer space", and "other non-freezing space" for surface `ExteriorAdjacentTo` elements. "other housing unit", i.e. adiabatic surfaces, was already supported.
   - **[Breaking change]** For `FrameFloors`, replaces "other housing unit above" and "other housing unit below" enumerations with "other housing unit". All four "other ..." spaces must have an `extension/OtherSpaceAboveOrBelow` property set to either "above" or "below".
@@ -811,7 +894,7 @@ __Bugfixes__
 
 ## OpenStudio-HPXML v0.9.0 Beta
 
-__New Features__
+__Features__
 - **[Breaking change]** Updates to OpenStudio v3.0.0 and EnergyPlus 9.3
 - Numerous HPXML inputs are now optional with built-in defaulting, particularly for water heating, appliances, and PV. Set the `debug` argument to true to output a in.xml HPXML file with defaults applied for inspection. See the documentation for defaulting equations/assumptions/references.
 - **[Breaking change]** If clothes washer efficiency inputs are provided, `LabelUsage` is now required.
@@ -848,7 +931,7 @@ __Breaking changes__
 - `extension/StandbyLoss` changed to `StandbyLoss` for indirect water heaters.
 - `Site/extension/DisableNaturalVentilation` changed to `BuildingConstruction/extension/FractionofOperableWindowArea` for more granularity.
 
-__New Features__
+__Features__
 - Adds a SimulationOutputReport reporting measure that provides a variety of annual/timeseries outputs in CSV format.
 - Allows modeling of whole-house fans to address cooling.
 - Improved natural ventilation algorithm that reduces the potential for incurring additional heating energy.

@@ -328,27 +328,22 @@ module HotWaterAndAppliances
     if hpxml_bldg.hot_water_distributions.size > 0
       hot_water_distribution = hpxml_bldg.hot_water_distributions[0]
 
-      # Calculate mixed water fractions
       t_mix = 105.0 # F, Temperature of mixed water at fixtures
-      avg_setpoint_temp = 0.0 # WH Setpoint: Weighted average by fraction DHW load served
-      hpxml_bldg.water_heating_systems.each do |water_heating_system|
-        wh_setpoint = water_heating_system.temperature
-        wh_setpoint = Defaults.get_water_heater_temperature(eri_version) if wh_setpoint.nil? # using detailed schedules
-        avg_setpoint_temp += wh_setpoint * water_heating_system.fraction_dhw_load_served
-      end
-      daily_wh_inlet_temperatures = calc_water_heater_daily_inlet_temperatures(weather, hpxml_bldg)
-      daily_wh_inlet_temperatures_c = daily_wh_inlet_temperatures.map { |t| UnitConversions.convert(t, 'F', 'C') }
-      daily_mw_fractions = calc_mixed_water_daily_fractions(daily_wh_inlet_temperatures, avg_setpoint_temp, t_mix)
 
-      # Schedules
-      # Replace mains water temperature schedule with water heater inlet temperature schedule.
-      # These are identical unless there is a DWHR.
-      start_date = OpenStudio::Date.new(OpenStudio::MonthOfYear.new(1), 1, hpxml_header.sim_calendar_year)
-      timestep_day = OpenStudio::Time.new(1, 0)
-      time_series_tmains = OpenStudio::TimeSeries.new(start_date, timestep_day, OpenStudio::createVector(daily_wh_inlet_temperatures_c), 'C')
-      schedule_tmains = OpenStudio::Model::ScheduleInterval.fromTimeSeries(time_series_tmains, model).get
-      schedule_tmains.setName('mains temperature schedule')
-      model.getSiteWaterMainsTemperature.setTemperatureSchedule(schedule_tmains)
+      # Set mains water temperature
+      swmt = model.getSiteWaterMainsTemperature
+      swmt.setCalculationMethod('Correlation')
+      swmt.setAnnualAverageOutdoorAirTemperature(UnitConversions.convert(weather.data.AnnualAvgDrybulb, 'F', 'C'))
+      swmt.setMaximumDifferenceInMonthlyAverageOutdoorAirTemperatures(UnitConversions.convert(weather.data.MonthlyAvgDrybulbs.max - weather.data.MonthlyAvgDrybulbs.min, 'deltaF', 'deltaC'))
+      if not hot_water_distribution.dwhr_efficiency.nil?
+        # Calculate DWHR temperature multiplier/offset
+        dwhr_factor, dhwr_in_t = get_dwhr_values(hpxml_bldg)
+        temp_mult = 1.0 - dwhr_factor
+        temp_offset = dwhr_factor * dhwr_in_t
+        temp_offset_c = 5.0 / 9.0 * (32.0 * temp_mult + temp_offset - 32.0) # Convert adjustment to EnergyPlus input of deg-C
+        swmt.setTemperatureMultiplier(temp_mult)
+        swmt.setTemperatureOffset(temp_offset_c)
+      end
 
       mw_temp_schedule = Model.add_schedule_constant(
         model,
@@ -377,13 +372,18 @@ module HotWaterAndAppliances
       end
     end
 
+    if Constants::ERIVersions.index(eri_version) < Constants::ERIVersions.index('2014A')
+      # Calculate annual average mixed water fraction
+      avg_mw_fraction = calc_mixed_water_fraction(eri_version, hpxml_bldg, t_mix, weather)
+    end
+
     hpxml_bldg.water_heating_systems.each do |water_heating_system|
       non_solar_fraction = 1.0 - Waterheater.get_water_heater_solar_fraction(water_heating_system, hpxml_bldg)
 
       gpd_frac = water_heating_system.fraction_dhw_load_served # Fixtures fraction
       if gpd_frac > 0
 
-        fx_gpd = get_fixtures_gpd(eri_version, hpxml_bldg, daily_mw_fractions)
+        fx_gpd = get_fixtures_gpd(eri_version, hpxml_bldg, avg_mw_fraction)
         w_gpd = get_dist_waste_gpd(eri_version, hpxml_bldg)
 
         fx_peak_flow = nil
@@ -397,7 +397,7 @@ module HotWaterAndAppliances
         end
 
         # Fixtures (showers, sinks, baths)
-        Model.add_water_use_equipment(
+        fx_wue = Model.add_water_use_equipment(
           model,
           name: fixtures_obj_name,
           end_use: fixtures_obj_name,
@@ -406,9 +406,10 @@ module HotWaterAndAppliances
           water_use_connections: water_use_connections[water_heating_system.id],
           target_temperature_schedule: mw_temp_schedule
         )
+        fx_wue.additionalProperties.setFeature('HPXML_ID', water_heating_system.id) # Used by reporting measure
 
         # Distribution waste (primary driven by fixture draws)
-        Model.add_water_use_equipment(
+        dist_wue = Model.add_water_use_equipment(
           model,
           name: Constants::ObjectTypeDistributionWaste,
           end_use: Constants::ObjectTypeDistributionWaste,
@@ -417,6 +418,7 @@ module HotWaterAndAppliances
           water_use_connections: water_use_connections[water_heating_system.id],
           target_temperature_schedule: mw_temp_schedule
         )
+        dist_wue.additionalProperties.setFeature('HPXML_ID', water_heating_system.id) # Used by reporting measure
 
         # Recirculation pump
         recirc_pump_annual_kwh = get_hwdist_recirc_pump_energy(hpxml_bldg)
@@ -480,7 +482,7 @@ module HotWaterAndAppliances
             water_cw_schedule = cw_schedule_obj.schedule
           end
 
-          Model.add_water_use_equipment(
+          cw_wue = Model.add_water_use_equipment(
             model,
             name: cw_object_name,
             end_use: cw_object_name,
@@ -489,6 +491,7 @@ module HotWaterAndAppliances
             water_use_connections: water_use_connections[water_heating_system.id],
             target_temperature_schedule: nil
           )
+          cw_wue.additionalProperties.setFeature('HPXML_ID', water_heating_system.id) # Used by reporting measure
         end
       end
 
@@ -516,7 +519,7 @@ module HotWaterAndAppliances
         water_dw_schedule = dw_schedule_obj.schedule
       end
 
-      Model.add_water_use_equipment(
+      dw_wue = Model.add_water_use_equipment(
         model,
         name: dw_obj_name,
         end_use: dw_obj_name,
@@ -525,6 +528,7 @@ module HotWaterAndAppliances
         water_use_connections: water_use_connections[water_heating_system.id],
         target_temperature_schedule: nil
       )
+      dw_wue.additionalProperties.setFeature('HPXML_ID', water_heating_system.id) # Used by reporting measure
     end
   end
 
@@ -611,11 +615,12 @@ module HotWaterAndAppliances
     end
 
     if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2019A')
-      if dishwasher.rated_annual_kwh.nil?
-        dishwasher.rated_annual_kwh = calc_dishwasher_annual_kwh_from_ef(dishwasher.energy_factor)
+      rated_annual_kwh = dishwasher.rated_annual_kwh
+      if rated_annual_kwh.nil?
+        rated_annual_kwh = calc_dishwasher_annual_kwh_from_ef(dishwasher.energy_factor)
       end
       lcy = dishwasher.label_usage * 52.0
-      kwh_per_cyc = ((dishwasher.label_annual_gas_cost * 0.5497 / dishwasher.label_gas_rate - dishwasher.rated_annual_kwh * dishwasher.label_electric_rate * 0.02504 / dishwasher.label_electric_rate) / (dishwasher.label_electric_rate * 0.5497 / dishwasher.label_gas_rate - 0.02504)) / lcy
+      kwh_per_cyc = ((dishwasher.label_annual_gas_cost * 0.5497 / dishwasher.label_gas_rate - rated_annual_kwh * dishwasher.label_electric_rate * 0.02504 / dishwasher.label_electric_rate) / (dishwasher.label_electric_rate * 0.5497 / dishwasher.label_gas_rate - 0.02504)) / lcy
       if n_occ.nil? # Asset calculation
         if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('latest') # FIXME: Change from 'latest' when incorporated in 301 standard
           # RESNET HERS Addendum 81 Eq. 4.2-36a
@@ -633,18 +638,19 @@ module HotWaterAndAppliances
       dwcpy = scy * (12.0 / dishwasher.place_setting_capacity)
       annual_kwh = kwh_per_cyc * dwcpy
 
-      gpd = (dishwasher.rated_annual_kwh - kwh_per_cyc * lcy) * 0.02504 * dwcpy / 365.0
+      gpd = (rated_annual_kwh - kwh_per_cyc * lcy) * 0.02504 * dwcpy / 365.0
     else
-      if dishwasher.energy_factor.nil?
-        dishwasher.energy_factor = calc_dishwasher_ef_from_annual_kwh(dishwasher.rated_annual_kwh)
+      energy_factor = dishwasher.energy_factor
+      if energy_factor.nil?
+        energy_factor = calc_dishwasher_ef_from_annual_kwh(dishwasher.rated_annual_kwh)
       end
       dwcpy = (88.4 + 34.9 * nbeds) * (12.0 / dishwasher.place_setting_capacity)
-      annual_kwh = ((86.3 + 47.73 / dishwasher.energy_factor) / 215.0) * dwcpy
+      annual_kwh = ((86.3 + 47.73 / energy_factor) / 215.0) * dwcpy
 
       if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2014A')
-        gpd = dwcpy * (4.6415 * (1.0 / dishwasher.energy_factor) - 1.9295) / 365.0
+        gpd = dwcpy * (4.6415 * (1.0 / energy_factor) - 1.9295) / 365.0
       else
-        gpd = ((88.4 + 34.9 * nbeds) * 8.16 - (88.4 + 34.9 * nbeds) * 12.0 / dishwasher.place_setting_capacity * (4.6415 * (1.0 / dishwasher.energy_factor) - 1.9295)) / 365.0
+        gpd = ((88.4 + 34.9 * nbeds) * 8.16 - (88.4 + 34.9 * nbeds) * 12.0 / dishwasher.place_setting_capacity * (4.6415 * (1.0 / energy_factor) - 1.9295)) / 365.0
       end
     end
 
@@ -710,13 +716,15 @@ module HotWaterAndAppliances
     end
 
     if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2019A')
-      if clothes_dryer.combined_energy_factor.nil?
-        clothes_dryer.combined_energy_factor = calc_clothes_dryer_cef_from_ef(clothes_dryer.energy_factor)
+      combined_energy_factor = clothes_dryer.combined_energy_factor
+      if combined_energy_factor.nil?
+        combined_energy_factor = calc_clothes_dryer_cef_from_ef(clothes_dryer.energy_factor)
       end
-      if clothes_washer.integrated_modified_energy_factor.nil?
-        clothes_washer.integrated_modified_energy_factor = calc_clothes_washer_imef_from_mef(clothes_washer.modified_energy_factor)
+      integrated_modified_energy_factor = clothes_washer.integrated_modified_energy_factor
+      if integrated_modified_energy_factor.nil?
+        integrated_modified_energy_factor = calc_clothes_washer_imef_from_mef(clothes_washer.modified_energy_factor)
       end
-      rmc = (0.97 * (clothes_washer.capacity / clothes_washer.integrated_modified_energy_factor) - clothes_washer.rated_annual_kwh / 312.0) / ((2.0104 * clothes_washer.capacity + 1.4242) * 0.455) + 0.04
+      rmc = (0.97 * (clothes_washer.capacity / integrated_modified_energy_factor) - clothes_washer.rated_annual_kwh / 312.0) / ((2.0104 * clothes_washer.capacity + 1.4242) * 0.455) + 0.04
       if n_occ.nil? # Asset calculation
         if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('latest') # FIXME: Change from 'latest' when incorporated in 301 standard
           # RESNET HERS Addendum 81 Eq. 4.2-34
@@ -732,7 +740,7 @@ module HotWaterAndAppliances
         scy = 123.0 + 61.0 * n_occ # Eq. 1 from http://www.fsec.ucf.edu/en/publications/pdf/fsec-pf-464-15.pdf
       end
       acy = scy * ((3.0 * 2.08 + 1.59) / (clothes_washer.capacity * 2.08 + 1.59))
-      annual_kwh = (((rmc - 0.04) * 100) / 55.5) * (8.45 / clothes_dryer.combined_energy_factor) * acy
+      annual_kwh = (((rmc - 0.04) * 100) / 55.5) * (8.45 / combined_energy_factor) * acy
       if clothes_dryer.fuel_type == HPXML::FuelTypeElectricity
         annual_therm = 0.0
       else
@@ -740,11 +748,13 @@ module HotWaterAndAppliances
         annual_kwh = annual_kwh * 0.07 * (3.73 / 3.30)
       end
     else
-      if clothes_dryer.energy_factor.nil?
-        clothes_dryer.energy_factor = calc_clothes_dryer_ef_from_cef(clothes_dryer.combined_energy_factor)
+      energy_factor = clothes_dryer.energy_factor
+      if energy_factor.nil?
+        energy_factor = calc_clothes_dryer_ef_from_cef(clothes_dryer.combined_energy_factor)
       end
-      if clothes_washer.modified_energy_factor.nil?
-        clothes_washer.modified_energy_factor = calc_clothes_washer_mef_from_imef(clothes_washer.integrated_modified_energy_factor)
+      modified_energy_factor = clothes_washer.modified_energy_factor
+      if modified_energy_factor.nil?
+        modified_energy_factor = calc_clothes_washer_mef_from_imef(clothes_washer.integrated_modified_energy_factor)
       end
       if clothes_dryer.control_type == HPXML::ClothesDryerControlTypeTimer
         field_util_factor = 1.18
@@ -752,12 +762,12 @@ module HotWaterAndAppliances
         field_util_factor = 1.04
       end
       if clothes_dryer.fuel_type == HPXML::FuelTypeElectricity
-        annual_kwh = 12.5 * (164.0 + 46.5 * nbeds) * (field_util_factor / clothes_dryer.energy_factor) * ((clothes_washer.capacity / clothes_washer.modified_energy_factor) - clothes_washer.rated_annual_kwh / 392.0) / (0.2184 * (clothes_washer.capacity * 4.08 + 0.24))
+        annual_kwh = 12.5 * (164.0 + 46.5 * nbeds) * (field_util_factor / energy_factor) * ((clothes_washer.capacity / modified_energy_factor) - clothes_washer.rated_annual_kwh / 392.0) / (0.2184 * (clothes_washer.capacity * 4.08 + 0.24))
         annual_therm = 0.0
       else
-        annual_kwh = 12.5 * (164.0 + 46.5 * nbeds) * (field_util_factor / 3.01) * ((clothes_washer.capacity / clothes_washer.modified_energy_factor) - clothes_washer.rated_annual_kwh / 392.0) / (0.2184 * (clothes_washer.capacity * 4.08 + 0.24))
-        annual_therm = annual_kwh * 3412.0 * (1.0 - 0.07) * (3.01 / clothes_dryer.energy_factor) / 100000
-        annual_kwh = annual_kwh * 0.07 * (3.01 / clothes_dryer.energy_factor)
+        annual_kwh = 12.5 * (164.0 + 46.5 * nbeds) * (field_util_factor / 3.01) * ((clothes_washer.capacity / modified_energy_factor) - clothes_washer.rated_annual_kwh / 392.0) / (0.2184 * (clothes_washer.capacity * 4.08 + 0.24))
+        annual_therm = annual_kwh * 3412.0 * (1.0 - 0.07) * (3.01 / energy_factor) / 100000
+        annual_kwh = annual_kwh * 0.07 * (3.01 / energy_factor)
       end
     end
 
@@ -1009,7 +1019,7 @@ module HotWaterAndAppliances
 
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{schedule.name} program calling manager",
+      name: "#{schedule_program.name} manager",
       calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
       ems_programs: [schedule_program]
     )
@@ -1017,13 +1027,13 @@ module HotWaterAndAppliances
     return schedule
   end
 
-  # Calculates Drain Water Heat Recovery (DWHR) factors.
+  # Returns Drain Water Heat Recovery (DWHR) aggregate factor and temperature.
   #
   # Source: ANSI/RESNET/ICC 301
   #
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
-  # @return [Array<Double, Double, Double, Double, Double>] Effectiveness (frac), fraction of water impacted by DWHR, piping loss coefficient, location factor, fixture factor
-  def self.get_dwhr_factors(hpxml_bldg)
+  # @return [Array<Double, Double>] Aggregate factor and inlet temperature (F)
+  def self.get_dwhr_values(hpxml_bldg)
     nbeds = hpxml_bldg.building_construction.number_of_bedrooms
     n_occ = hpxml_bldg.building_occupancy.number_of_residents
     unit_type = hpxml_bldg.building_construction.residential_facility_type
@@ -1064,25 +1074,40 @@ module HotWaterAndAppliances
       fix_f = 0.5
     end
 
-    return eff_adj, i_frac, plc, loc_f, fix_f
+    dwhr_factor = eff_adj * i_frac * plc * loc_f * fix_f * hot_water_distribution.dwhr_efficiency # Aggregate factor
+    dhwr_in_t = 97.0 # deg-F
+
+    return dwhr_factor, dhwr_in_t
   end
 
-  # Calculates daily water heater inlet temperatures, which includes an adjustment if
-  # there is a drain water heat recovery device.
+  # Calculates the annual average mixed water adjustment fraction. The fraction converts from
+  # gallons of mixed water to gallons of hot water that needs to be served by the water heater.
   #
-  # @param weather [WeatherFile] Weather object containing EPW information
+  # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
-  # @return [Array<Double>] Daily water heater inlet temperatures (F)
-  def self.calc_water_heater_daily_inlet_temperatures(weather, hpxml_bldg)
+  # @param t_mix [Double] Temperature of mixed water at fixtures (F)
+  # @param weather [WeatherFile] Weather object containing EPW information
+  # @return [Double] Annual average mixed water adjustment fraction
+  def self.calc_mixed_water_fraction(eri_version, hpxml_bldg, t_mix, weather)
     hot_water_distribution = hpxml_bldg.hot_water_distributions[0]
+
+    # WH Setpoint: Weighted average by fraction DHW load served
+    t_set = 0.0
+    hpxml_bldg.water_heating_systems.each do |water_heating_system|
+      wh_setpoint = water_heating_system.temperature
+      wh_setpoint = Defaults.get_water_heater_temperature(eri_version) if wh_setpoint.nil? # using detailed schedules
+      t_set += wh_setpoint * water_heating_system.fraction_dhw_load_served
+    end
+
+    # Calculates daily water heater inlet temperatures, which includes an adjustment if
+    # there is a drain water heat recovery device.
     wh_temps_daily = weather.data.MainsDailyTemps.dup
-    if (not hot_water_distribution.dwhr_efficiency.nil?)
-      # Per ANSI/RESNET/ICC 301
-      dwhr_eff_adj, dwhr_iFrac, dwhr_plc, dwhr_locF, dwhr_fixF = get_dwhr_factors(hpxml_bldg)
+    if not hot_water_distribution.dwhr_efficiency.nil?
+      dwhr_factor, dhwr_in_t = get_dwhr_values(hpxml_bldg)
+
       # Adjust inlet temperatures
-      dwhr_inT = 97.0 # F
       for day in 0..wh_temps_daily.size - 1
-        dwhr_WHinTadj = dwhr_iFrac * (dwhr_inT - wh_temps_daily[day]) * hot_water_distribution.dwhr_efficiency * dwhr_eff_adj * dwhr_plc * dwhr_locF * dwhr_fixF
+        dwhr_WHinTadj = (dhwr_in_t - wh_temps_daily[day]) * dwhr_factor
         wh_temps_daily[day] = (wh_temps_daily[day] + dwhr_WHinTadj).round(3)
       end
     else
@@ -1091,24 +1116,13 @@ module HotWaterAndAppliances
       end
     end
 
-    return wh_temps_daily
-  end
-
-  # Calculates the daily mixed water adjustment fractions. These fractions convert from
-  # gallons of mixed water to gallons of hot water that needs to be served by the water heater.
-  #
-  # @param daily_wh_inlet_temperatures [Array<Double>] Daily water heater inlet temperatures (F)
-  # @param t_set [Double] Water heater setpoint temperature (F)
-  # @param t_use [Double] Temperature of mixed water at fixtures (F)
-  # @return [Array<Double>] Daily mixed water adjustment fractions
-  def self.calc_mixed_water_daily_fractions(daily_wh_inlet_temperatures, t_set, t_use)
-    # Per ANSI/RESNET/ICC 301
+    # Calculate daily adjustment fractions
     adj_f_mix = []
-    for day in 0..daily_wh_inlet_temperatures.size - 1
-      adj_f_mix << (1.0 - ((t_set - t_use) / (t_set - daily_wh_inlet_temperatures[day]))).round(4)
+    for day in 0..wh_temps_daily.size - 1
+      adj_f_mix << (1.0 - ((t_set - t_mix) / (t_set - wh_temps_daily[day]))).round(4)
     end
 
-    return adj_f_mix
+    return adj_f_mix.sum / Float(adj_f_mix.size)
   end
 
   # Calculates annual energy use for a recirculation (or shared recirculation) hot water
@@ -1180,9 +1194,9 @@ module HotWaterAndAppliances
   #
   # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
-  # @param daily_mw_fractions [Array<Double>] Daily mixed water adjustment fractions
+  # @param avg_mw_fraction [Double] Annual average mixed water fraction
   # @return [Double] Mixed water use (gal/day)
-  def self.get_fixtures_gpd(eri_version, hpxml_bldg, daily_mw_fractions)
+  def self.get_fixtures_gpd(eri_version, hpxml_bldg, avg_mw_fraction)
     nbeds = hpxml_bldg.building_construction.number_of_bedrooms
     n_occ = hpxml_bldg.building_occupancy.number_of_residents
     unit_type = hpxml_bldg.building_construction.residential_facility_type
@@ -1207,9 +1221,8 @@ module HotWaterAndAppliances
       return f_eff * ref_f_gpd * fixtures_usage_multiplier
     else
       hw_gpd = 30.0 + 10.0 * nbeds # Table 4.2.2(1) Service water heating systems
-      # Convert to mixed water gpd
-      avg_mw_fraction = daily_mw_fractions.reduce(:+) / daily_mw_fractions.size.to_f
-      return hw_gpd / avg_mw_fraction * fixtures_usage_multiplier
+      mw_gpd = hw_gpd / avg_mw_fraction # Convert to mixed water gpd
+      return mw_gpd * fixtures_usage_multiplier
     end
   end
 

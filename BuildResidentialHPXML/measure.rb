@@ -80,7 +80,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
 
     arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('location_site_type', choices[:location_site_type], false)
     arg.setDisplayName('Location: Site Type')
-    arg.setDescription("The terrain/shielding of the home, for the infiltration model. Defaults to 'Suburban, Normal' for single-family detached and manufactured home and 'Suburban, Well-Shielded' for single-family attached and apartment units.")
+    arg.setDescription('The terrain/shielding of the home, for the infiltration model.')
     arg.setDefaultValue('Default')
     args << arg
 
@@ -136,7 +136,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
 
     arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('geometry_unit_num_bathrooms', choices[:geometry_unit_num_bathrooms], false)
     arg.setDisplayName('Geometry: Unit Number of Bathrooms')
-    arg.setDescription('The number of bathrooms in the unit. Defaults to NumberofBedrooms/2 + 0.5.')
+    arg.setDescription('The number of bathrooms in the unit.')
     arg.setDefaultValue('Default')
     args << arg
 
@@ -943,8 +943,8 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     error = ![HPXML::FoundationTypeSlab, HPXML::FoundationTypeAboveApartment].include?(args[:geometry_foundation_type_type]) && (args[:geometry_foundation_type_height] == 0)
     errors << "Foundation type of '#{args[:geometry_foundation_type_type]}' cannot have a height of zero." if error
 
-    error = (args[:geometry_unit_type_facility_type] == HPXML::ResidentialTypeApartment) && ([HPXML::FoundationTypeBasementConditioned, HPXML::FoundationTypeCrawlspaceConditioned].include? args[:geometry_foundation_type_type])
-    errors << 'Conditioned basement/crawlspace foundation type for apartment units is not currently supported.' if error
+    error = (args[:geometry_unit_type_facility_type] == HPXML::ResidentialTypeApartment) && (args[:geometry_foundation_type_type] == HPXML::FoundationTypeBasementConditioned)
+    errors << 'Conditioned basement foundation type for apartment units is not currently supported.' if error
 
     error = (args[:hvac_heating_system] == 'None') && (args[:hvac_heat_pump] == 'None') && (args[:hvac_heating_system_2] != 'None')
     errors << 'A second heating system was specified without a primary heating system.' if error
@@ -1036,7 +1036,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
   # @param hpxml_path [String] Path to the created HPXML file
   # @return [Oga::XML::Element] Root XML element of the updated HPXML document
   def create(runner, model, args, hpxml_path)
-    weather = get_weather_if_needed(runner, args)
+    weather = get_weather_if_needed(runner, model, args)
     return false if !weather.nil? && !weather
 
     success = create_geometry_envelope(runner, model, args)
@@ -1145,27 +1145,32 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
   # Returns the WeatherFile object if we determine we need it for subsequent processing.
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param args [Hash] Map of :argument_name => value
   # @return [WeatherFile] Weather object containing EPW information
-  def get_weather_if_needed(runner, args)
+  def get_weather_if_needed(runner, model, args)
+    epw_path = args[:location_epw_path]
+    if epw_path.nil?
+      # Get EPW path from zip code
+      epw_path = Defaults.lookup_weather_data_from_zipcode(args[:location_zip_code])[:station_filename]
+    end
+
+    # Error-checking
+    if not File.exist? epw_path
+      epw_path = File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', 'weather')), epw_path) # a filename was entered for location_epw_path
+    end
+    if not File.exist? epw_path
+      runner.registerError("Could not find EPW file at '#{epw_path}'.")
+      return false
+    end
+
+    # Suppress log messages ("'UseWeatherFile' is selected in YearDescription, but there are no weather file set for the model.")
+    epw_file = OpenStudio::EpwFile.new(epw_path, false)
+    OpenStudio::Model::WeatherFile.setWeatherFile(model, epw_file)
+
     if (args[:hvac_control_heating_season_period].to_s == Constants::BuildingAmerica) ||
        (args[:hvac_control_cooling_season_period].to_s == Constants::BuildingAmerica) ||
        (args[:apply_defaults])
-      epw_path = args[:location_epw_path]
-      if epw_path.nil?
-        # Get EPW path from zip code
-        epw_path = Defaults.lookup_weather_data_from_zipcode(args[:location_zip_code])[:station_filename]
-      end
-
-      # Error-checking
-      if not File.exist? epw_path
-        epw_path = File.join(File.expand_path(File.join(File.dirname(__FILE__), '..', 'weather')), epw_path) # a filename was entered for location_epw_path
-      end
-      if not File.exist? epw_path
-        runner.registerError("Could not find EPW file at '#{epw_path}'.")
-        return false
-      end
-
       return WeatherFile.new(epw_path: epw_path, runner: nil)
     end
 
@@ -1258,6 +1263,13 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     success = Geometry.create_windows_and_skylights(runner, model, **args)
     return false if not success
 
+    # Suppress log messages (e.g., "No construction for either surface 'Surface 1', and 'Surface 23'")
+    mat = Model.add_massless_material(model, name: 'arbitary material', rvalue: 20)
+    constr = Model.add_construction(model, name: 'arbitrary construction', layers: [mat])
+    model.getSurfaces.each do |s|
+      s.setConstruction(constr)
+    end
+
     return true
   end
 
@@ -1323,6 +1335,16 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
         errors << "Advanced feature 'HVAC On-Off Thermostat Deadband Temperature' cannot vary across dwelling units."
       end
       hpxml.header.hvac_onoff_thermostat_deadband = onoff_db
+    end
+
+    hvac_bod = args[:advanced_feature_hvac_blower_off_delay]
+    hvac_bod = args[:advanced_feature_2_hvac_blower_off_delay] if hvac_bod.nil?
+    if not hvac_bod.nil?
+      if (not hpxml.header.latent_degradation_model_blower_off_delay.nil?) && (hpxml.header.latent_degradation_model_blower_off_delay != hvac_bod)
+        errors << "Advanced feature 'HVAC Blower-Off Delay' cannot vary across dwelling units."
+      end
+      hpxml.header.latent_degradation_model_blower_off_delay = hvac_bod
+      hpxml.header.latent_degradation_model_enabled = true
     end
 
     hpbak = args[:advanced_feature_heat_pump_backup_capacity_increment]
@@ -1595,11 +1617,10 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
   # @return [nil]
   def set_air_infiltration_measurements(hpxml_bldg, args)
     if args[:enclosure_air_leakage_value]
-      if args[:enclosure_air_leakage_units] == HPXML::UnitsELA
+      if args[:enclosure_air_leakage_units] == 'EffectiveLeakageArea'
         effective_leakage_area = args[:enclosure_air_leakage_value]
-      elsif args[:enclosure_air_leakage_units] == HPXML::UnitsSLA
-        # FUTURE: Translate directly to HPXML when https://github.com/hpxmlwg/hpxml/issues/454 is available
-        effective_leakage_area = UnitConversions.convert(args[:enclosure_air_leakage_value] * args[:geometry_unit_conditioned_floor_area], 'ft^2', 'in^2').round(1)
+      elsif args[:enclosure_air_leakage_units] == 'SpecificLeakageArea'
+        specific_leakage_area = args[:enclosure_air_leakage_value]
       else
         unit_of_measure = args[:enclosure_air_leakage_units]
         air_leakage = args[:enclosure_air_leakage_value]
@@ -1621,6 +1642,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                                                  unit_of_measure: unit_of_measure,
                                                  air_leakage: air_leakage,
                                                  effective_leakage_area: effective_leakage_area,
+                                                 specific_leakage_area: specific_leakage_area,
                                                  infiltration_type: air_leakage_type,
                                                  leakiness_description: leakiness_description)
   end
@@ -1659,20 +1681,21 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                            solar_absorptance: args[:enclosure_roof_material_solar_absorptance],
                            emittance: args[:enclosure_roof_material_emittance],
                            pitch: args[:geometry_roof_pitch])
-      @surface_ids[surface.name.to_s] = hpxml_bldg.roofs[-1].id
+      hpxml_roof = hpxml_bldg.roofs[-1]
+      @surface_ids[surface.name.to_s] = hpxml_roof.id
 
-      if hpxml_bldg.roofs[-1].is_thermal_boundary
-        hpxml_bldg.roofs[-1].insulation_assembly_r_value = args[:enclosure_roof_conditioned_assembly_r_value]
-      elsif hpxml_bldg.roofs[-1].interior_adjacent_to != HPXML::LocationGarage
-        hpxml_bldg.roofs[-1].insulation_assembly_r_value = args[:enclosure_roof_unconditioned_assembly_r_value]
+      if hpxml_roof.is_thermal_boundary
+        hpxml_roof.insulation_assembly_r_value = args[:enclosure_roof_conditioned_assembly_r_value]
+      elsif hpxml_roof.interior_adjacent_to != HPXML::LocationGarage
+        hpxml_roof.insulation_assembly_r_value = args[:enclosure_roof_unconditioned_assembly_r_value]
       else
-        hpxml_bldg.roofs[-1].insulation_assembly_r_value = 2.3 # Uninsulated
+        hpxml_roof.insulation_assembly_r_value = 2.3 # Uninsulated
       end
 
       next unless [HPXML::RadiantBarrierLocationAtticRoofOnly, HPXML::RadiantBarrierLocationAtticRoofAndGableWalls].include?(args[:enclosure_radiant_barrier_location].to_s)
-      next unless [HPXML::LocationAtticUnvented, HPXML::LocationAtticVented].include?(hpxml_bldg.roofs[-1].interior_adjacent_to)
+      next unless [HPXML::LocationAtticUnvented, HPXML::LocationAtticVented].include?(hpxml_roof.interior_adjacent_to)
 
-      hpxml_bldg.roofs[-1].radiant_barrier = true
+      hpxml_roof.radiant_barrier = true
     end
   end
 
@@ -1693,8 +1716,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
       next unless [HPXML::LocationBasementConditioned,
                    HPXML::LocationBasementUnconditioned,
                    HPXML::LocationCrawlspaceUnvented,
-                   HPXML::LocationCrawlspaceVented,
-                   HPXML::LocationCrawlspaceConditioned].include? interior_adjacent_to
+                   HPXML::LocationCrawlspaceVented].include? interior_adjacent_to
 
       exterior_adjacent_to = HPXML::LocationOutside
       if surface.outsideBoundaryCondition == EPlus::BoundaryConditionAdiabatic # can be adjacent to foundation space
@@ -1713,12 +1735,8 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
 
       if exterior_adjacent_to == HPXML::LocationOutside
         siding = args[:enclosure_wall_siding_type]
-      end
-
-      if interior_adjacent_to == exterior_adjacent_to
-        insulation_assembly_r_value = 4.0 # Uninsulated
       else
-        insulation_assembly_r_value = (args[:enclosure_rim_joist_assembly_r_value] + args[:enclosure_wall_siding_r_value]).round(2)
+        siding = nil
       end
 
       if exterior_adjacent_to == HPXML::LocationOutside
@@ -1741,9 +1759,21 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                                 siding: siding,
                                 color: color,
                                 solar_absorptance: solar_absorptance,
-                                emittance: emittance,
-                                insulation_assembly_r_value: insulation_assembly_r_value)
-      @surface_ids[surface.name.to_s] = hpxml_bldg.rim_joists[-1].id
+                                emittance: emittance)
+      hpxml_rim_joist = hpxml_bldg.rim_joists[-1]
+      @surface_ids[surface.name.to_s] = hpxml_rim_joist.id
+
+      if interior_adjacent_to != exterior_adjacent_to
+        if args[:enclosure_rim_joist].include? 'IECC U-'
+          assembly_r_value = args[:enclosure_rim_joist_assembly_r_value]
+        else
+          assembly_r_value = args[:enclosure_rim_joist_assembly_r_value]
+          assembly_r_value += args[:enclosure_wall_siding_r_value] if exterior_adjacent_to == HPXML::LocationOutside
+        end
+      else
+        assembly_r_value = 4.0 # Uninsulated
+      end
+      hpxml_rim_joist.insulation_assembly_r_value = assembly_r_value.round(2)
     end
   end
 
@@ -1790,12 +1820,12 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
         wall_type = HPXML::WallTypeWoodStud
       end
 
-      if exterior_adjacent_to == HPXML::LocationOutside && (not args[:enclosure_wall_siding_type].nil?)
-        if (attic_locations.include? interior_adjacent_to) && (args[:enclosure_wall_siding_type] == HPXML::SidingTypeNone)
-          siding = nil
-        else
-          siding = args[:enclosure_wall_siding_type]
-        end
+      if (attic_locations.include? interior_adjacent_to) && (args[:enclosure_wall_siding_type] == HPXML::SidingTypeNotPresent)
+        siding = nil # Attic wall, don't even bother to say no siding
+      elsif exterior_adjacent_to == HPXML::LocationOutside
+        siding = args[:enclosure_wall_siding_type]
+      else
+        siding = nil
       end
 
       if exterior_adjacent_to == HPXML::LocationOutside
@@ -1821,31 +1851,27 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                            solar_absorptance: solar_absorptance,
                            emittance: emittance,
                            area: UnitConversions.convert(surface.grossArea, 'm^2', 'ft^2'))
-      @surface_ids[surface.name.to_s] = hpxml_bldg.walls[-1].id
+      hpxml_wall = hpxml_bldg.walls[-1]
+      @surface_ids[surface.name.to_s] = hpxml_wall.id
 
-      is_uncond_attic_roof_insulated = false
-      if attic_locations.include? interior_adjacent_to
-        hpxml_bldg.roofs.each do |roof|
-          next unless (roof.interior_adjacent_to == interior_adjacent_to) && (roof.insulation_assembly_r_value > 4.0)
+      is_uncond_attic_roof_insulated = (attic_locations.include?(interior_adjacent_to) && !args[:enclosure_roof].include?('Uninsulated'))
 
-          is_uncond_attic_roof_insulated = true
-        end
-      end
-
-      if hpxml_bldg.walls[-1].is_thermal_boundary || is_uncond_attic_roof_insulated # Assume wall is insulated if roof is insulated
+      if hpxml_wall.is_thermal_boundary || is_uncond_attic_roof_insulated # Assume wall is insulated if roof is insulated
         if args[:enclosure_wall].include? 'IECC U-'
-          hpxml_bldg.walls[-1].insulation_assembly_r_value = args[:enclosure_wall_assembly_r_value] # Don't add an e.g. siding R-value to the specified assembly U-factor
+          assembly_r_value = args[:enclosure_wall_assembly_r_value]
         else
-          hpxml_bldg.walls[-1].insulation_assembly_r_value = (args[:enclosure_wall_assembly_r_value] + args[:enclosure_wall_continuous_insulation_r_value] + args[:enclosure_wall_siding_r_value]).round(2)
+          assembly_r_value = args[:enclosure_wall_assembly_r_value] + args[:enclosure_wall_continuous_insulation_r_value]
+          assembly_r_value += args[:enclosure_wall_siding_r_value] if exterior_adjacent_to == HPXML::LocationOutside
         end
       else
-        hpxml_bldg.walls[-1].insulation_assembly_r_value = 4.0 # Uninsulated
+        assembly_r_value = 4.0 # Uninsulated
       end
+      hpxml_wall.insulation_assembly_r_value = assembly_r_value.round(2)
 
-      next unless hpxml_bldg.walls[-1].attic_wall_type == HPXML::AtticWallTypeGable && args[:enclosure_radiant_barrier_location].to_s == HPXML::RadiantBarrierLocationAtticRoofAndGableWalls
-      next unless [HPXML::LocationAtticUnvented, HPXML::LocationAtticVented].include?(hpxml_bldg.walls[-1].interior_adjacent_to)
+      next unless hpxml_wall.attic_wall_type == HPXML::AtticWallTypeGable && args[:enclosure_radiant_barrier_location].to_s == HPXML::RadiantBarrierLocationAtticRoofAndGableWalls
+      next unless [HPXML::LocationAtticUnvented, HPXML::LocationAtticVented].include?(hpxml_wall.interior_adjacent_to)
 
-      hpxml_bldg.walls[-1].radiant_barrier = true
+      hpxml_wall.radiant_barrier = true
     end
   end
 
@@ -1866,8 +1892,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
       next unless [HPXML::LocationBasementConditioned,
                    HPXML::LocationBasementUnconditioned,
                    HPXML::LocationCrawlspaceUnvented,
-                   HPXML::LocationCrawlspaceVented,
-                   HPXML::LocationCrawlspaceConditioned].include? interior_adjacent_to
+                   HPXML::LocationCrawlspaceVented].include? interior_adjacent_to
 
       exterior_adjacent_to = HPXML::LocationGround
       if surface.outsideBoundaryCondition == EPlus::BoundaryConditionAdiabatic # can be adjacent to foundation space
@@ -1929,7 +1954,8 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                                       insulation_exterior_r_value: insulation_exterior_r_value,
                                       insulation_exterior_distance_to_top: insulation_exterior_distance_to_top,
                                       insulation_exterior_distance_to_bottom: insulation_exterior_distance_to_bottom)
-      @surface_ids[surface.name.to_s] = hpxml_bldg.foundation_walls[-1].id
+      hpxml_fnd_wall = hpxml_bldg.foundation_walls[-1]
+      @surface_ids[surface.name.to_s] = hpxml_fnd_wall.id
     end
   end
 
@@ -1962,8 +1988,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
       next if interior_adjacent_to == exterior_adjacent_to
       next if (surface.surfaceType == EPlus::SurfaceTypeRoofCeiling) && (exterior_adjacent_to == HPXML::LocationOutside)
       next if [HPXML::LocationConditionedSpace,
-               HPXML::LocationBasementConditioned,
-               HPXML::LocationCrawlspaceConditioned].include? exterior_adjacent_to
+               HPXML::LocationBasementConditioned].include? exterior_adjacent_to
 
       hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                             exterior_adjacent_to: exterior_adjacent_to,
@@ -1971,48 +1996,50 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                             floor_type: HPXML::FloorTypeWoodFrame, # May be overridden below
                             area: UnitConversions.convert(surface.grossArea, 'm^2', 'ft^2'),
                             floor_or_ceiling: floor_or_ceiling)
-      if hpxml_bldg.floors[-1].floor_or_ceiling.nil?
-        if hpxml_bldg.floors[-1].is_floor
-          hpxml_bldg.floors[-1].floor_or_ceiling = HPXML::FloorOrCeilingFloor
-        elsif hpxml_bldg.floors[-1].is_ceiling
-          hpxml_bldg.floors[-1].floor_or_ceiling = HPXML::FloorOrCeilingCeiling
+      hpxml_floor = hpxml_bldg.floors[-1]
+      @surface_ids[surface.name.to_s] = hpxml_floor.id
+
+      if hpxml_floor.floor_or_ceiling.nil?
+        if hpxml_floor.is_floor
+          hpxml_floor.floor_or_ceiling = HPXML::FloorOrCeilingFloor
+        elsif hpxml_floor.is_ceiling
+          hpxml_floor.floor_or_ceiling = HPXML::FloorOrCeilingCeiling
         end
       end
-      @surface_ids[surface.name.to_s] = hpxml_bldg.floors[-1].id
 
       carpet_r = args[:enclosure_carpet_fraction] * args[:enclosure_carpet_r_value]
 
-      if hpxml_bldg.floors[-1].is_thermal_boundary
+      if hpxml_floor.is_thermal_boundary
         case exterior_adjacent_to
         when HPXML::LocationAtticUnvented, HPXML::LocationAtticVented
-          hpxml_bldg.floors[-1].insulation_assembly_r_value = args[:enclosure_ceiling_assembly_r_value]
+          hpxml_floor.insulation_assembly_r_value = args[:enclosure_ceiling_assembly_r_value]
         when HPXML::LocationGarage
           if args[:enclosure_floor_over_garage].include? 'IECC U-'
-            hpxml_bldg.floors[-1].insulation_assembly_r_value = args[:enclosure_floor_over_garage_assembly_r_value]
+            hpxml_floor.insulation_assembly_r_value = args[:enclosure_floor_over_garage_assembly_r_value]
           else
-            hpxml_bldg.floors[-1].insulation_assembly_r_value = (args[:enclosure_floor_over_garage_assembly_r_value] + carpet_r).round(2)
+            hpxml_floor.insulation_assembly_r_value = (args[:enclosure_floor_over_garage_assembly_r_value] + carpet_r).round(2)
           end
-          hpxml_bldg.floors[-1].floor_type = args[:enclosure_floor_over_garage_type]
+          hpxml_floor.floor_type = args[:enclosure_floor_over_garage_type]
         else
           if args[:enclosure_floor_over_foundation].include? 'IECC U-'
-            hpxml_bldg.floors[-1].insulation_assembly_r_value = args[:enclosure_floor_over_foundation_assembly_r_value]
+            hpxml_floor.insulation_assembly_r_value = args[:enclosure_floor_over_foundation_assembly_r_value]
           else
-            hpxml_bldg.floors[-1].insulation_assembly_r_value = (args[:enclosure_floor_over_foundation_assembly_r_value] + carpet_r).round(2)
+            hpxml_floor.insulation_assembly_r_value = (args[:enclosure_floor_over_foundation_assembly_r_value] + carpet_r).round(2)
           end
-          hpxml_bldg.floors[-1].floor_type = args[:enclosure_floor_over_foundation_type]
+          hpxml_floor.floor_type = args[:enclosure_floor_over_foundation_type]
         end
       else
         if floor_or_ceiling == HPXML::FloorOrCeilingFloor
-          hpxml_bldg.floors[-1].insulation_assembly_r_value = (3.7 + carpet_r).round(2) # Matches uninsulated option in enclosure_floor_over_foundation.tsv
+          hpxml_floor.insulation_assembly_r_value = (3.7 + carpet_r).round(2) # Matches uninsulated option in enclosure_floor_over_foundation.tsv
         else
-          hpxml_bldg.floors[-1].insulation_assembly_r_value = 2.1 # Matches uninsulated option in enclosure_ceiling.tsv
+          hpxml_floor.insulation_assembly_r_value = 2.1 # Matches uninsulated option in enclosure_ceiling.tsv
         end
       end
 
       next unless args[:enclosure_radiant_barrier_location].to_s == HPXML::RadiantBarrierLocationAtticFloor
-      next unless [HPXML::LocationAtticUnvented, HPXML::LocationAtticVented].include?(hpxml_bldg.floors[-1].exterior_adjacent_to) && hpxml_bldg.floors[-1].interior_adjacent_to == HPXML::LocationConditionedSpace
+      next unless [HPXML::LocationAtticUnvented, HPXML::LocationAtticVented].include?(hpxml_floor.exterior_adjacent_to) && hpxml_floor.interior_adjacent_to == HPXML::LocationConditionedSpace
 
-      hpxml_bldg.floors[-1].radiant_barrier = true
+      hpxml_floor.radiant_barrier = true
     end
   end
 
@@ -2034,7 +2061,6 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
       has_foundation_walls = false
       if [HPXML::LocationCrawlspaceVented,
           HPXML::LocationCrawlspaceUnvented,
-          HPXML::LocationCrawlspaceConditioned,
           HPXML::LocationBasementUnconditioned,
           HPXML::LocationBasementConditioned].include? interior_adjacent_to
         has_foundation_walls = true
@@ -2046,10 +2072,23 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
         exposed_perimeter -= Geometry.get_unexposed_garage_perimeter(**args)
       end
 
-      if args[:enclosure_slab_under_slab_insulation_width].to_f >= 999
-        under_slab_insulation_spans_entire_slab = true
+      if interior_adjacent_to == HPXML::LocationGarage
+        perimeter_insulation_r_value = 0
+        perimeter_insulation_depth = 0
+        under_slab_insulation_width = 0
+        under_slab_insulation_r_value = 0
       else
-        under_slab_insulation_width = args[:enclosure_slab_under_slab_insulation_width]
+        perimeter_insulation_r_value = args[:enclosure_slab_perimeter_insulation_nominal_r_value]
+        perimeter_insulation_depth = args[:enclosure_slab_perimeter_insulation_depth]
+        exterior_horizontal_insulation_r_value = args[:enclosure_slab_exterior_horizontal_insulation_nominal_r_value]
+        exterior_horizontal_insulation_width = args[:enclosure_slab_exterior_horizontal_insulation_width]
+        exterior_horizontal_insulation_depth_below_grade = args[:enclosure_slab_exterior_horizontal_insulation_depth_below_grade]
+        if args[:enclosure_slab_under_slab_insulation_width].to_f >= 999
+          under_slab_insulation_spans_entire_slab = true
+        else
+          under_slab_insulation_width = args[:enclosure_slab_under_slab_insulation_width]
+        end
+        under_slab_insulation_r_value = args[:enclosure_slab_under_slab_insulation_nominal_r_value]
       end
 
       hpxml_bldg.slabs.add(id: "Slab#{hpxml_bldg.slabs.size + 1}",
@@ -2057,26 +2096,21 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                            area: UnitConversions.convert(surface.grossArea, 'm^2', 'ft^2'),
                            thickness: args[:enclosure_slab_thickness],
                            exposed_perimeter: exposed_perimeter,
-                           perimeter_insulation_r_value: args[:enclosure_slab_perimeter_insulation_nominal_r_value],
-                           perimeter_insulation_depth: args[:enclosure_slab_perimeter_insulation_depth],
-                           exterior_horizontal_insulation_r_value: args[:enclosure_slab_exterior_horizontal_insulation_nominal_r_value],
-                           exterior_horizontal_insulation_width: args[:enclosure_slab_exterior_horizontal_insulation_width],
-                           exterior_horizontal_insulation_depth_below_grade: args[:enclosure_slab_exterior_horizontal_insulation_depth_below_grade],
+                           perimeter_insulation_r_value: perimeter_insulation_r_value,
+                           perimeter_insulation_depth: perimeter_insulation_depth,
+                           exterior_horizontal_insulation_r_value: exterior_horizontal_insulation_r_value,
+                           exterior_horizontal_insulation_width: exterior_horizontal_insulation_width,
+                           exterior_horizontal_insulation_depth_below_grade: exterior_horizontal_insulation_depth_below_grade,
                            under_slab_insulation_width: under_slab_insulation_width,
-                           under_slab_insulation_r_value: args[:enclosure_slab_under_slab_insulation_nominal_r_value],
+                           under_slab_insulation_r_value: under_slab_insulation_r_value,
                            under_slab_insulation_spans_entire_slab: under_slab_insulation_spans_entire_slab)
-      @surface_ids[surface.name.to_s] = hpxml_bldg.slabs[-1].id
+      hpxml_slab = hpxml_bldg.slabs[-1]
+      @surface_ids[surface.name.to_s] = hpxml_slab.id
 
       if [HPXML::LocationConditionedSpace, HPXML::LocationBasementConditioned].include? interior_adjacent_to
-        hpxml_bldg.slabs[-1].carpet_fraction = args[:enclosure_carpet_fraction]
-        hpxml_bldg.slabs[-1].carpet_r_value = args[:enclosure_carpet_r_value]
+        hpxml_slab.carpet_fraction = args[:enclosure_carpet_fraction]
+        hpxml_slab.carpet_r_value = args[:enclosure_carpet_r_value]
       end
-
-      next unless interior_adjacent_to == HPXML::LocationCrawlspaceConditioned
-
-      # Increase Conditioned Building Volume
-      conditioned_crawlspace_volume = hpxml_bldg.slabs[-1].area * args[:geometry_foundation_type_height]
-      hpxml_bldg.building_construction.conditioned_building_volume += conditioned_crawlspace_volume
     end
   end
 
@@ -2244,23 +2278,19 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                  'walls' => { 'surfaces' => hpxml_bldg.walls, 'ids' => [] },
                  'floors' => { 'surfaces' => hpxml_bldg.floors, 'ids' => [] } }
 
-    attic_locations = [HPXML::LocationAtticUnconditioned, HPXML::LocationAtticUnvented, HPXML::LocationAtticVented]
-    surf_ids.values.each do |surf_hash|
+    attic_locations = [HPXML::LocationAtticUnconditioned,
+                       HPXML::LocationAtticUnvented,
+                       HPXML::LocationAtticVented]
+
+    surf_ids.each do |surf_type, surf_hash|
       surf_hash['surfaces'].each do |surface|
-        next if (not attic_locations.include? surface.interior_adjacent_to) &&
-                (not attic_locations.include? surface.exterior_adjacent_to)
+        next unless (attic_locations.include? surface.interior_adjacent_to) ||
+                    (attic_locations.include? surface.exterior_adjacent_to) ||
+                    (surf_type == 'roofs' && [surface.interior_adjacent_to, surface.exterior_adjacent_to].include?(HPXML::LocationConditionedSpace)) ||
+                    (surf_type == 'floors' && surface.exterior_adjacent_to == HPXML::LocationOtherHousingUnit && surface.floor_or_ceiling == HPXML::FloorOrCeilingCeiling)
 
         surf_hash['ids'] << surface.id
       end
-    end
-
-    # Add attached roofs for cathedral ceiling
-    conditioned_space = HPXML::LocationConditionedSpace
-    surf_ids['roofs']['surfaces'].each do |surface|
-      next if (conditioned_space != surface.interior_adjacent_to) &&
-              (conditioned_space != surface.exterior_adjacent_to)
-
-      surf_ids['roofs']['ids'] << surface.id
     end
 
     hpxml_bldg.attics.add(id: "Attic#{hpxml_bldg.attics.size + 1}",
@@ -2285,15 +2315,15 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     foundation_locations = [HPXML::LocationBasementConditioned,
                             HPXML::LocationBasementUnconditioned,
                             HPXML::LocationCrawlspaceUnvented,
-                            HPXML::LocationCrawlspaceVented,
-                            HPXML::LocationCrawlspaceConditioned]
+                            HPXML::LocationCrawlspaceVented]
 
     surf_ids.each do |surf_type, surf_hash|
       surf_hash['surfaces'].each do |surface|
         next unless (foundation_locations.include? surface.interior_adjacent_to) ||
                     (foundation_locations.include? surface.exterior_adjacent_to) ||
                     (surf_type == 'slabs' && surface.interior_adjacent_to == HPXML::LocationConditionedSpace) ||
-                    (surf_type == 'floors' && [HPXML::LocationOutside, HPXML::LocationManufacturedHomeUnderBelly].include?(surface.exterior_adjacent_to))
+                    (surf_type == 'floors' && [HPXML::LocationOutside, HPXML::LocationManufacturedHomeUnderBelly].include?(surface.exterior_adjacent_to)) ||
+                    (surf_type == 'floors' && surface.exterior_adjacent_to == HPXML::LocationOtherHousingUnit && surface.floor_or_ceiling == HPXML::FloorOrCeilingFloor)
 
         surf_hash['ids'] << surface.id
       end
@@ -2335,7 +2365,12 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     if [HPXML::HVACTypeFurnace,
         HPXML::HVACTypeWallFurnace,
         HPXML::HVACTypeFloorFurnace].include?(heating_system_type) || heating_system_type.include?(HPXML::HVACTypeBoiler)
-      heating_efficiency_afue = args[:hvac_heating_system_heating_efficiency]
+      if args[:hvac_heating_system_fuel_type] == HPXML::FuelTypeElectricity
+        # AFUE does not apply to electricity
+        heating_efficiency_percent = args[:hvac_heating_system_heating_efficiency]
+      else
+        heating_efficiency_afue = args[:hvac_heating_system_heating_efficiency]
+      end
     elsif [HPXML::HVACTypeElectricResistance,
            HPXML::HVACTypeStove,
            HPXML::HVACTypeSpaceHeater,
@@ -2463,6 +2498,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
       backup_heating_capacity = args[:hvac_heat_pump_backup_capacity_capacity]
 
       if backup_heating_fuel == HPXML::FuelTypeElectricity
+        # AFUE does not apply to electricity
         backup_heating_efficiency_percent = args[:hvac_heat_pump_backup_heating_efficiency]
       else
         backup_heating_efficiency_afue = args[:hvac_heat_pump_backup_heating_efficiency]
@@ -2657,7 +2693,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                       '1-1/4" pipe' => 1.25 }[args[:hvac_geothermal_loop_pipe_diameter]]
 
     hpxml_bldg.geothermal_loops.add(id: "GeothermalLoop#{hpxml_bldg.geothermal_loops.size + 1}",
-                                    loop_configuration: args[:hvac_geothermal_loop_configuration],
+                                    loop_config: args[:hvac_geothermal_loop_configuration],
                                     loop_flow: args[:hvac_geothermal_loop_loop_flow],
                                     bore_config: args[:hvac_geothermal_loop_borefield_configuration],
                                     num_bore_holes: args[:hvac_geothermal_loop_boreholes_count],
@@ -2683,9 +2719,19 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
 
     heating_system_type = args[:hvac_heating_system_2_type]
 
-    if [HPXML::HVACTypeFurnace, HPXML::HVACTypeWallFurnace, HPXML::HVACTypeFloorFurnace].include?(heating_system_type) || heating_system_type.include?(HPXML::HVACTypeBoiler)
-      heating_efficiency_afue = args[:hvac_heating_system_2_heating_efficiency]
-    elsif [HPXML::HVACTypeElectricResistance, HPXML::HVACTypeStove, HPXML::HVACTypeSpaceHeater, HPXML::HVACTypeFireplace].include?(heating_system_type)
+    if [HPXML::HVACTypeFurnace,
+        HPXML::HVACTypeWallFurnace,
+        HPXML::HVACTypeFloorFurnace].include?(heating_system_type) || heating_system_type.include?(HPXML::HVACTypeBoiler)
+      if args[:hvac_heating_system_2_fuel_type] == HPXML::FuelTypeElectricity
+        # AFUE does not apply to electricity
+        heating_efficiency_percent = args[:hvac_heating_system_2_heating_efficiency]
+      else
+        heating_efficiency_afue = args[:hvac_heating_system_2_heating_efficiency]
+      end
+    elsif [HPXML::HVACTypeElectricResistance,
+           HPXML::HVACTypeStove,
+           HPXML::HVACTypeSpaceHeater,
+           HPXML::HVACTypeFireplace].include?(heating_system_type)
       heating_efficiency_percent = args[:hvac_heating_system_2_heating_efficiency]
     end
 
@@ -2823,24 +2869,23 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
   #
   # @param building_component [String] the building component of interest
   # @param location [String] the location of interest (HPXML::LocationCrawlspace or HPXML::LocationAttic)
-  # @param foundation_type [String] the specific HPXML foundation type (unvented crawlspace, vented crawlspace, conditioned crawlspace)
-  # @param attic_type [String] the specific HPXML attic type (unvented attic, vented attic, conditioned attic)
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @return [nil]
-  def get_location(building_component, location, foundation_type, attic_type)
+  def get_location(building_component, location, hpxml_bldg)
     return if location.nil?
 
     if location == HPXML::LocationCrawlspace
+      foundation_type = hpxml_bldg.foundations[-1].foundation_type
       case foundation_type
       when HPXML::FoundationTypeCrawlspaceUnvented
         return HPXML::LocationCrawlspaceUnvented
       when HPXML::FoundationTypeCrawlspaceVented
         return HPXML::LocationCrawlspaceVented
-      when HPXML::FoundationTypeCrawlspaceConditioned
-        return HPXML::LocationCrawlspaceConditioned
       else
         fail "Specified '#{location}' for #{building_component} location but foundation type is '#{foundation_type}'."
       end
     elsif location == HPXML::LocationAttic
+      attic_type = hpxml_bldg.attics[-1].attic_type
       case attic_type
       when HPXML::AtticTypeUnvented
         return HPXML::LocationAtticUnvented
@@ -2852,6 +2897,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
         fail "Specified '#{location}' for #{building_component} location but attic type is '#{attic_type}'."
       end
     elsif location == HPXML::LocationBasement
+      foundation_type = hpxml_bldg.foundations[-1].foundation_type
       case foundation_type
       when HPXML::FoundationTypeBasementConditioned
         return HPXML::LocationBasementConditioned
@@ -2871,8 +2917,8 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
   # @param hvac_distribution [HPXML::HVACDistribution] HPXML HVAC Distribution object
   # @return [nil]
   def set_ducts(hpxml_bldg, args, hvac_distribution)
-    ducts_supply_location = get_location('supply ducts', args[:hvac_ducts_supply_location_location], hpxml_bldg.foundations[-1].foundation_type, hpxml_bldg.attics[-1].attic_type)
-    ducts_return_location = get_location('return ducts', args[:hvac_ducts_return_location_location], hpxml_bldg.foundations[-1].foundation_type, hpxml_bldg.attics[-1].attic_type)
+    ducts_supply_location = get_location('supply ducts', args[:hvac_ducts_supply_location_location], hpxml_bldg)
+    ducts_return_location = get_location('return ducts', args[:hvac_ducts_return_location_location], hpxml_bldg)
 
     ncfl = hpxml_bldg.building_construction.number_of_conditioned_floors
     ncfl_ag = hpxml_bldg.building_construction.number_of_conditioned_floors_above_grade
@@ -3105,7 +3151,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
   def set_water_heating_systems(hpxml_bldg, args)
     return if args[:dhw_water_heater] == 'None'
 
-    location = get_location('water heater', args[:dhw_water_heater_location_location], hpxml_bldg.foundations[-1].foundation_type, hpxml_bldg.attics[-1].attic_type)
+    location = get_location('water heater', args[:dhw_water_heater_location_location], hpxml_bldg)
 
     if not [HPXML::WaterHeaterTypeCombiStorage, HPXML::WaterHeaterTypeCombiTankless].include? args[:dhw_water_heater_type]
       case args[:dhw_water_heater_efficiency_type]

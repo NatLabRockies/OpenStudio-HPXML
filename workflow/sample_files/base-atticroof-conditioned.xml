@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<HPXML xmlns='http://hpxmlonline.com/2023/09' schemaVersion='4.2'>
+<HPXML xmlns='http://hpxmlonline.com/2025/12' schemaVersion='5.0'>
   <XMLTransactionHeaderInformation>
     <XMLType>HPXML</XMLType>
     <XMLGeneratedBy>tasks.rb</XMLGeneratedBy>
@@ -83,6 +83,8 @@
               </Attic>
             </AtticType>
             <AttachedToRoof idref='Roof1'/>
+            <AttachedToWall idref='Wall2'/>
+            <AttachedToWall idref='Wall3'/>
           </Attic>
           <Attic>
             <SystemIdentifier id='Attic2'/>
@@ -92,6 +94,10 @@
               </Attic>
             </AtticType>
             <WithinInfiltrationVolume>false</WithinInfiltrationVolume>
+            <AttachedToRoof idref='Roof2'/>
+            <AttachedToWall idref='Wall2'/>
+            <AttachedToWall idref='Wall4'/>
+            <AttachedToFloor idref='Floor1'/>
           </Attic>
         </Attics>
         <Foundations>
