@@ -2365,7 +2365,12 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     if [HPXML::HVACTypeFurnace,
         HPXML::HVACTypeWallFurnace,
         HPXML::HVACTypeFloorFurnace].include?(heating_system_type) || heating_system_type.include?(HPXML::HVACTypeBoiler)
-      heating_efficiency_afue = args[:hvac_heating_system_heating_efficiency]
+      if args[:hvac_heating_system_fuel_type] == HPXML::FuelTypeElectricity
+        # AFUE does not apply to electricity
+        heating_efficiency_percent = args[:hvac_heating_system_heating_efficiency]
+      else
+        heating_efficiency_afue = args[:hvac_heating_system_heating_efficiency]
+      end
     elsif [HPXML::HVACTypeElectricResistance,
            HPXML::HVACTypeStove,
            HPXML::HVACTypeSpaceHeater,
@@ -2493,6 +2498,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
       backup_heating_capacity = args[:hvac_heat_pump_backup_capacity_capacity]
 
       if backup_heating_fuel == HPXML::FuelTypeElectricity
+        # AFUE does not apply to electricity
         backup_heating_efficiency_percent = args[:hvac_heat_pump_backup_heating_efficiency]
       else
         backup_heating_efficiency_afue = args[:hvac_heat_pump_backup_heating_efficiency]
@@ -2713,9 +2719,19 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
 
     heating_system_type = args[:hvac_heating_system_2_type]
 
-    if [HPXML::HVACTypeFurnace, HPXML::HVACTypeWallFurnace, HPXML::HVACTypeFloorFurnace].include?(heating_system_type) || heating_system_type.include?(HPXML::HVACTypeBoiler)
-      heating_efficiency_afue = args[:hvac_heating_system_2_heating_efficiency]
-    elsif [HPXML::HVACTypeElectricResistance, HPXML::HVACTypeStove, HPXML::HVACTypeSpaceHeater, HPXML::HVACTypeFireplace].include?(heating_system_type)
+    if [HPXML::HVACTypeFurnace,
+        HPXML::HVACTypeWallFurnace,
+        HPXML::HVACTypeFloorFurnace].include?(heating_system_type) || heating_system_type.include?(HPXML::HVACTypeBoiler)
+      if args[:hvac_heating_system_2_fuel_type] == HPXML::FuelTypeElectricity
+        # AFUE does not apply to electricity
+        heating_efficiency_percent = args[:hvac_heating_system_2_heating_efficiency]
+      else
+        heating_efficiency_afue = args[:hvac_heating_system_2_heating_efficiency]
+      end
+    elsif [HPXML::HVACTypeElectricResistance,
+           HPXML::HVACTypeStove,
+           HPXML::HVACTypeSpaceHeater,
+           HPXML::HVACTypeFireplace].include?(heating_system_type)
       heating_efficiency_percent = args[:hvac_heating_system_2_heating_efficiency]
     end
 

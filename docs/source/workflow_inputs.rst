@@ -2171,27 +2171,27 @@ Furnace
 
 Each central furnace is entered as a ``/HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/HeatingSystem``.
 
-  ======================================================  =======  =========  ===============  ========  ==============  ================================================
-  Element                                                 Type     Units      Constraints      Required  Default         Notes
-  ======================================================  =======  =========  ===============  ========  ==============  ================================================
-  ``SystemIdentifier``                                    id                                   Yes                       Unique identifier
-  ``AttachedToZone``                                      idref               See [#]_         See [#]_                  ID of attached zone
-  ``UnitLocation``                                        string              See [#]_         No        See [#]_        Location of air handler
-  ``DistributionSystem``                                  idref               See [#]_         Yes                       ID of attached distribution system
-  ``HeatingSystemType/Furnace``                           element                              Yes                       Type of heating system
-  ``HeatingSystemType/Furnace/PilotLight``                boolean                              No        false           Presence of standing pilot light (older systems)
-  ``HeatingSystemType/Furnace/extension/PilotLightBtuh``  double   Btu/hr     >= 0             No        500             Pilot light burn rate
-  ``HeatingSystemFuel``                                   string              See [#]_         Yes                       Fuel type
-  ``HeatingCapacity``                                     double   Btu/hr     >= 0             No        autosized [#]_  Heating output capacity
-  ``AnnualHeatingEfficiency[Units="AFUE"]/Value``         double   frac       > 0, <= 1        Yes                       Rated heating efficiency
-  ``FractionHeatLoadServed``                              double   frac       >= 0, <= 1 [#]_  See [#]_                  Fraction of heating load served
-  ``extension/FanMotorType``                              string              See [#]_         No        See [#]_        Blower fan model type
-  ``extension/FanPowerWattsPerCFM``                       double   W/cfm      >= 0 [#]_        No        See [#]_        Blower fan efficiency at maximum fan speed
-  ``extension/HeatingDesignAirflowCFM``                   double   cfm        >= 0             No        240 cfm/ton     Blower fan heating design airflow rate
-  ``extension/AirflowDefectRatio``                        double   frac       >= -0.9, <= 9    No        0.0             Deviation between design/installed airflow rates [#]_
-  ``extension/HeatingAutosizingFactor``                   double   frac       > 0              No        1.0             Heating autosizing capacity multiplier
-  ``extension/HeatingAutosizingLimit``                    double   Btu/hr     > 0              No        <none>          Heating autosizing capacity limit
-  ======================================================  =======  =========  ===============  ========  ==============  ================================================
+  ==================================================================  =======  =========  ===============  ========  ==============  ================================================
+  Element                                                             Type     Units      Constraints      Required  Default         Notes
+  ==================================================================  =======  =========  ===============  ========  ==============  ================================================
+  ``SystemIdentifier``                                                id                                   Yes                       Unique identifier
+  ``AttachedToZone``                                                  idref               See [#]_         See [#]_                  ID of attached zone
+  ``UnitLocation``                                                    string              See [#]_         No        See [#]_        Location of air handler
+  ``DistributionSystem``                                              idref               See [#]_         Yes                       ID of attached distribution system
+  ``HeatingSystemType/Furnace``                                       element                              Yes                       Type of heating system
+  ``HeatingSystemType/Furnace/PilotLight``                            boolean                              No        false           Presence of standing pilot light (older systems)
+  ``HeatingSystemType/Furnace/extension/PilotLightBtuh``              double   Btu/hr     >= 0             No        500             Pilot light burn rate
+  ``HeatingSystemFuel``                                               string              See [#]_         Yes                       Fuel type
+  ``HeatingCapacity``                                                 double   Btu/hr     >= 0             No        autosized [#]_  Heating output capacity
+  ``AnnualHeatingEfficiency[Units="AFUE" or Units="Percent"]/Value``  double   frac       > 0, <= 1        Yes                       Rated heating efficiency
+  ``FractionHeatLoadServed``                                          double   frac       >= 0, <= 1 [#]_  See [#]_                  Fraction of heating load served
+  ``extension/FanMotorType``                                          string              See [#]_         No        See [#]_        Blower fan model type
+  ``extension/FanPowerWattsPerCFM``                                   double   W/cfm      >= 0 [#]_        No        See [#]_        Blower fan efficiency at maximum fan speed
+  ``extension/HeatingDesignAirflowCFM``                               double   cfm        >= 0             No        240 cfm/ton     Blower fan heating design airflow rate
+  ``extension/AirflowDefectRatio``                                    double   frac       >= -0.9, <= 9    No        0.0             Deviation between design/installed airflow rates [#]_
+  ``extension/HeatingAutosizingFactor``                               double   frac       > 0              No        1.0             Heating autosizing capacity multiplier
+  ``extension/HeatingAutosizingLimit``                                double   Btu/hr     > 0              No        <none>          Heating autosizing capacity limit
+  ==================================================================  =======  =========  ===============  ========  ==============  ================================================
 
   .. [#] If AttachedToZone provided, it must reference a conditioned ``Zone``.
   .. [#] AttachedToZone only required if zone-level and space-level HVAC design load calculations are desired (see :ref:`zones_spaces`).
@@ -2223,22 +2223,22 @@ Wall Furnace
 
 Each wall furnace is entered as a ``/HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/HeatingSystem``.
 
-  ==========================================================  =======  ======  ===============  ========  ==============  ================
-  Element                                                     Type     Units   Constraints      Required  Default         Notes
-  ==========================================================  =======  ======  ===============  ========  ==============  ================
-  ``SystemIdentifier``                                        id                                Yes                       Unique identifier
-  ``AttachedToZone``                                          idref            See [#]_         See [#]_                  ID of attached zone
-  ``HeatingSystemType/WallFurnace``                           element                           Yes                       Type of heating system
-  ``HeatingSystemType/WallFurnace/PilotLight``                boolean                           No        false           Presence of standing pilot light (older systems)
-  ``HeatingSystemType/WallFurnace/extension/PilotLightBtuh``  double   Btu/hr  >= 0             No        500             Pilot light burn rate
-  ``HeatingSystemFuel``                                       string           See [#]_         Yes                       Fuel type
-  ``HeatingCapacity``                                         double   Btu/hr  >= 0             No        autosized [#]_  Heating output capacity
-  ``AnnualHeatingEfficiency[Units="AFUE"]/Value``             double   frac    > 0, <= 1        Yes                       Rated heating efficiency
-  ``FractionHeatLoadServed``                                  double   frac    >= 0, <= 1 [#]_  See [#]_                  Fraction of heating load served
-  ``extension/FanPowerWatts``                                 double   W       >= 0             No        0               Fan power
-  ``extension/HeatingAutosizingFactor``                       double   frac    > 0              No        1.0             Heating autosizing capacity multiplier
-  ``extension/HeatingAutosizingLimit``                        double   Btu/hr  > 0              No        <none>          Heating autosizing capacity limit
-  ==========================================================  =======  ======  ===============  ========  ==============  ================
+  ==================================================================  =======  ======  ===============  ========  ==============  ================
+  Element                                                             Type     Units   Constraints      Required  Default         Notes
+  ==================================================================  =======  ======  ===============  ========  ==============  ================
+  ``SystemIdentifier``                                                id                                Yes                       Unique identifier
+  ``AttachedToZone``                                                  idref            See [#]_         See [#]_                  ID of attached zone
+  ``HeatingSystemType/WallFurnace``                                   element                           Yes                       Type of heating system
+  ``HeatingSystemType/WallFurnace/PilotLight``                        boolean                           No        false           Presence of standing pilot light (older systems)
+  ``HeatingSystemType/WallFurnace/extension/PilotLightBtuh``          double   Btu/hr  >= 0             No        500             Pilot light burn rate
+  ``HeatingSystemFuel``                                               string           See [#]_         Yes                       Fuel type
+  ``HeatingCapacity``                                                 double   Btu/hr  >= 0             No        autosized [#]_  Heating output capacity
+  ``AnnualHeatingEfficiency[Units="AFUE" or Units="Percent"]/Value``  double   frac    > 0, <= 1        Yes                       Rated heating efficiency
+  ``FractionHeatLoadServed``                                          double   frac    >= 0, <= 1 [#]_  See [#]_                  Fraction of heating load served
+  ``extension/FanPowerWatts``                                         double   W       >= 0             No        0               Fan power
+  ``extension/HeatingAutosizingFactor``                               double   frac    > 0              No        1.0             Heating autosizing capacity multiplier
+  ``extension/HeatingAutosizingLimit``                                double   Btu/hr  > 0              No        <none>          Heating autosizing capacity limit
+  ==================================================================  =======  ======  ===============  ========  ==============  ================
 
   .. [#] If AttachedToZone provided, it must reference a conditioned ``Zone``.
   .. [#] AttachedToZone only required if zone-level and space-level HVAC design load calculations are desired (see :ref:`zones_spaces`).
@@ -2255,22 +2255,22 @@ Floor Furnace
 
 Each floor furnace is entered as a ``/HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/HeatingSystem``.
 
-  ===========================================================  =======  ======  ===============  ========  ==============  ================
-  Element                                                      Type     Units   Constraints      Required  Default         Notes
-  ===========================================================  =======  ======  ===============  ========  ==============  ================
-  ``SystemIdentifier``                                         id                                Yes                       Unique identifier
-  ``AttachedToZone``                                           idref            See [#]_         See [#]_                  ID of attached zone
-  ``HeatingSystemType/FloorFurnace``                           element                           Yes                       Type of heating system
-  ``HeatingSystemType/FloorFurnace/PilotLight``                boolean                           No        false           Presence of standing pilot light (older systems)
-  ``HeatingSystemType/FloorFurnace/extension/PilotLightBtuh``  double   Btu/hr  >= 0             No        500             Pilot light burn rate
-  ``HeatingSystemFuel``                                        string           See [#]_         Yes                       Fuel type
-  ``HeatingCapacity``                                          double   Btu/hr  >= 0             No        autosized [#]_  Heating output capacity
-  ``AnnualHeatingEfficiency[Units="AFUE"]/Value``              double   frac    > 0, <= 1        Yes                       Rated heating efficiency
-  ``FractionHeatLoadServed``                                   double   frac    >= 0, <= 1 [#]_  See [#]_                  Fraction of heating load served
-  ``extension/FanPowerWatts``                                  double   W       >= 0             No        0               Fan power
-  ``extension/HeatingAutosizingFactor``                        double   frac    > 0              No        1.0             Heating autosizing capacity multiplier
-  ``extension/HeatingAutosizingLimit``                         double   Btu/hr  > 0              No        <none>          Heating autosizing capacity limit
-  ===========================================================  =======  ======  ===============  ========  ==============  ================
+  ==================================================================  =======  ======  ===============  ========  ==============  ================
+  Element                                                             Type     Units   Constraints      Required  Default         Notes
+  ==================================================================  =======  ======  ===============  ========  ==============  ================
+  ``SystemIdentifier``                                                id                                Yes                       Unique identifier
+  ``AttachedToZone``                                                  idref            See [#]_         See [#]_                  ID of attached zone
+  ``HeatingSystemType/FloorFurnace``                                  element                           Yes                       Type of heating system
+  ``HeatingSystemType/FloorFurnace/PilotLight``                       boolean                           No        false           Presence of standing pilot light (older systems)
+  ``HeatingSystemType/FloorFurnace/extension/PilotLightBtuh``         double   Btu/hr  >= 0             No        500             Pilot light burn rate
+  ``HeatingSystemFuel``                                               string           See [#]_         Yes                       Fuel type
+  ``HeatingCapacity``                                                 double   Btu/hr  >= 0             No        autosized [#]_  Heating output capacity
+  ``AnnualHeatingEfficiency[Units="AFUE" or Units="Percent"]/Value``  double   frac    > 0, <= 1        Yes                       Rated heating efficiency
+  ``FractionHeatLoadServed``                                          double   frac    >= 0, <= 1 [#]_  See [#]_                  Fraction of heating load served
+  ``extension/FanPowerWatts``                                         double   W       >= 0             No        0               Fan power
+  ``extension/HeatingAutosizingFactor``                               double   frac    > 0              No        1.0             Heating autosizing capacity multiplier
+  ``extension/HeatingAutosizingLimit``                                double   Btu/hr  > 0              No        <none>          Heating autosizing capacity limit
+  ==================================================================  =======  ======  ===============  ========  ==============  ================
 
   .. [#] If AttachedToZone provided, it must reference a conditioned ``Zone``.
   .. [#] AttachedToZone only required if zone-level and space-level HVAC design load calculations are desired (see :ref:`zones_spaces`).
@@ -2287,24 +2287,24 @@ Boiler (In-Unit)
 
 Each in-unit boiler is entered as a ``/HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/HeatingSystem``.
 
-  =====================================================  =======  =========  ===============  ========  ==============  =========================================
-  Element                                                Type     Units      Constraints      Required  Default         Notes
-  =====================================================  =======  =========  ===============  ========  ==============  =========================================
-  ``SystemIdentifier``                                   id                                   Yes                       Unique identifier
-  ``AttachedToZone``                                     idref               See [#]_         See [#]_                  ID of attached zone
-  ``UnitLocation``                                       string              See [#]_         No        See [#]_        Location of boiler
-  ``DistributionSystem``                                 idref               See [#]_         Yes                       ID of attached distribution system
-  ``HeatingSystemType/Boiler``                           element                              Yes                       Type of heating system
-  ``HeatingSystemType/Boiler/PilotLight``                boolean                              No        false           Presence of standing pilot light (older systems)
-  ``HeatingSystemType/Boiler/extension/PilotLightBtuh``  double   Btu/hr     >= 0             No        500             Pilot light burn rate
-  ``HeatingSystemFuel``                                  string              See [#]_         Yes                       Fuel type
-  ``HeatingCapacity``                                    double   Btu/hr     >= 0             No        autosized [#]_  Heating output capacity
-  ``AnnualHeatingEfficiency[Units="AFUE"]/Value``        double   frac       > 0, <= 1        Yes                       Rated heating efficiency
-  ``FractionHeatLoadServed``                             double   frac       >= 0, <= 1 [#]_  See [#]_                  Fraction of heating load served
-  ``ElectricAuxiliaryEnergy``                            double   kWh/yr     >= 0             No        See [#]_        Electric auxiliary energy
-  ``extension/HeatingAutosizingFactor``                  double   frac       > 0              No        1.0             Heating autosizing capacity multiplier
-  ``extension/HeatingAutosizingLimit``                   double   Btu/hr     > 0              No        <none>          Heating autosizing capacity limit
-  =====================================================  =======  =========  ===============  ========  ==============  =========================================
+  ==================================================================  =======  =========  ===============  ========  ==============  =========================================
+  Element                                                             Type     Units      Constraints      Required  Default         Notes
+  ==================================================================  =======  =========  ===============  ========  ==============  =========================================
+  ``SystemIdentifier``                                                id                                   Yes                       Unique identifier
+  ``AttachedToZone``                                                  idref               See [#]_         See [#]_                  ID of attached zone
+  ``UnitLocation``                                                    string              See [#]_         No        See [#]_        Location of boiler
+  ``DistributionSystem``                                              idref               See [#]_         Yes                       ID of attached distribution system
+  ``HeatingSystemType/Boiler``                                        element                              Yes                       Type of heating system
+  ``HeatingSystemType/Boiler/PilotLight``                             boolean                              No        false           Presence of standing pilot light (older systems)
+  ``HeatingSystemType/Boiler/extension/PilotLightBtuh``               double   Btu/hr     >= 0             No        500             Pilot light burn rate
+  ``HeatingSystemFuel``                                               string              See [#]_         Yes                       Fuel type
+  ``HeatingCapacity``                                                 double   Btu/hr     >= 0             No        autosized [#]_  Heating output capacity
+  ``AnnualHeatingEfficiency[Units="AFUE" or Units="Percent"]/Value``  double   frac       > 0, <= 1        Yes                       Rated heating efficiency
+  ``FractionHeatLoadServed``                                          double   frac       >= 0, <= 1 [#]_  See [#]_                  Fraction of heating load served
+  ``ElectricAuxiliaryEnergy``                                         double   kWh/yr     >= 0             No        See [#]_        Electric auxiliary energy
+  ``extension/HeatingAutosizingFactor``                               double   frac       > 0              No        1.0             Heating autosizing capacity multiplier
+  ``extension/HeatingAutosizingLimit``                                double   Btu/hr     > 0              No        <none>          Heating autosizing capacity limit
+  ==================================================================  =======  =========  ===============  ========  ==============  =========================================
 
   .. [#] If AttachedToZone provided, it must reference a conditioned ``Zone``.
   .. [#] AttachedToZone only required if zone-level and space-level HVAC design load calculations are desired (see :ref:`zones_spaces`).
@@ -2335,26 +2335,26 @@ Boiler (Shared)
 
 Each shared boiler (serving multiple dwelling units) is entered as a ``/HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/HeatingSystem``.
 
-  ============================================================  =======  ===========  ===============  ========  ==================  =========================================
-  Element                                                       Type     Units        Constraints      Required  Default             Notes
-  ============================================================  =======  ===========  ===============  ========  ==================  =========================================
-  ``SystemIdentifier``                                          id                                     Yes                           Unique identifier
-  ``AttachedToZone``                                            idref                 See [#]_         See [#]_                      ID of attached zone
-  ``UnitLocation``                                              string                See [#]_         No        other heated space  Location of boiler
-  ``DistributionSystem``                                        idref                 See [#]_         Yes                           ID of attached distribution system
-  ``IsSharedSystem``                                            boolean               true             Yes                           Whether it serves multiple dwelling units
-  ``NumberofUnitsServed``                                       integer               > 1              Yes                           Number of dwelling units served
-  ``HeatingSystemType/Boiler``                                  element                                Yes                           Type of heating system
-  ``HeatingSystemType/Boiler/PilotLight``                       boolean                                No        false               Presence of standing pilot light (older systems)
-  ``HeatingSystemType/Boiler/extension/PilotLightBtuh``         double   Btu/hr       >= 0             No        500                 Pilot light burn rate
-  ``HeatingSystemFuel``                                         string                See [#]_         Yes                           Fuel type
-  ``AnnualHeatingEfficiency[Units="AFUE"]/Value``               double   frac         > 0, <= 1        Yes                           Rated heating efficiency
-  ``FractionHeatLoadServed``                                    double   frac         >= 0, <= 1 [#]_  See [#]_                      Fraction of heating load served
-  ``ElectricAuxiliaryEnergy`` or ``extension/SharedLoopWatts``  double   kWh/yr or W  >= 0             No        See [#]_            Electric auxiliary energy or shared loop power
-  ``ElectricAuxiliaryEnergy`` or ``extension/FanCoilWatts``     double   kWh/yr or W  >= 0             No [#]_                       Electric auxiliary energy or fan coil power
-  ``extension/HeatingAutosizingFactor``                         double   frac         > 0              No        1.0                 Heating autosizing capacity multiplier
-  ``extension/HeatingAutosizingLimit``                          double   Btu/hr       > 0              No        <none>              Heating autosizing capacity limit
-  ============================================================  =======  ===========  ===============  ========  ==================  =========================================
+  ==================================================================  =======  ===========  ===============  ========  ==================  =========================================
+  Element                                                             Type     Units        Constraints      Required  Default             Notes
+  ==================================================================  =======  ===========  ===============  ========  ==================  =========================================
+  ``SystemIdentifier``                                                id                                     Yes                           Unique identifier
+  ``AttachedToZone``                                                  idref                 See [#]_         See [#]_                      ID of attached zone
+  ``UnitLocation``                                                    string                See [#]_         No        other heated space  Location of boiler
+  ``DistributionSystem``                                              idref                 See [#]_         Yes                           ID of attached distribution system
+  ``IsSharedSystem``                                                  boolean               true             Yes                           Whether it serves multiple dwelling units
+  ``NumberofUnitsServed``                                             integer               > 1              Yes                           Number of dwelling units served
+  ``HeatingSystemType/Boiler``                                        element                                Yes                           Type of heating system
+  ``HeatingSystemType/Boiler/PilotLight``                             boolean                                No        false               Presence of standing pilot light (older systems)
+  ``HeatingSystemType/Boiler/extension/PilotLightBtuh``               double   Btu/hr       >= 0             No        500                 Pilot light burn rate
+  ``HeatingSystemFuel``                                               string                See [#]_         Yes                           Fuel type
+  ``AnnualHeatingEfficiency[Units="AFUE" or Units="Percent"]/Value``  double   frac         > 0, <= 1        Yes                           Rated heating efficiency
+  ``FractionHeatLoadServed``                                          double   frac         >= 0, <= 1 [#]_  See [#]_                      Fraction of heating load served
+  ``ElectricAuxiliaryEnergy`` or ``extension/SharedLoopWatts``        double   kWh/yr or W  >= 0             No        See [#]_            Electric auxiliary energy or shared loop power
+  ``ElectricAuxiliaryEnergy`` or ``extension/FanCoilWatts``           double   kWh/yr or W  >= 0             No [#]_                       Electric auxiliary energy or fan coil power
+  ``extension/HeatingAutosizingFactor``                               double   frac         > 0              No        1.0                 Heating autosizing capacity multiplier
+  ``extension/HeatingAutosizingLimit``                                double   Btu/hr       > 0              No        <none>              Heating autosizing capacity limit
+  ==================================================================  =======  ===========  ===============  ========  ==================  =========================================
 
   .. [#] If AttachedToZone provided, it must reference a conditioned ``Zone``.
   .. [#] AttachedToZone only required if zone-level and space-level HVAC design load calculations are desired (see :ref:`zones_spaces`).
