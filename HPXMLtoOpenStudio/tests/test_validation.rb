@@ -75,7 +75,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'dehumidifier-fraction-served' => ['Expected sum(FractionDehumidificationLoadServed) to be less than or equal to 1 [context: /HPXML/Building/BuildingDetails, id: "MyBuilding"]'],
                             'dhw-frac-load-served' => ['Expected sum(FractionDHWLoadServed) to be 1 [context: /HPXML/Building/BuildingDetails, id: "MyBuilding"]'],
                             'dhw-invalid-ef-tank' => ['Expected EnergyFactor to be less than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="storage water heater"], id: "WaterHeatingSystem1"]'],
-                            'dhw-invalid-uef-tank-heat-pump' => ['Expected UniformEnergyFactor to be greater than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="heat pump water heater"], id: "WaterHeatingSystem1"]'],
+                            'dhw-invalid-uef-tank-heat-pump' => ['Expected UniformEnergyFactor to be greater than or equal to 1.45 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="heat pump water heater"], id: "WaterHeatingSystem1"]'],
                             'dishwasher-location' => ['A location is specified as "garage" but no surfaces were found adjacent to this space type.'],
                             'duct-leakage-cfm25' => ["The value '-2.0' is less than the minimum value allowed",
                                                      "The value '-3.0' is less than the minimum value allowed"],
@@ -326,7 +326,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.water_heating_systems[0].recovery_efficiency = nil
       when 'dhw-invalid-uef-tank-heat-pump'
         hpxml, hpxml_bldg = _create_hpxml('base-dhw-tank-heat-pump.xml')
-        hpxml_bldg.water_heating_systems[0].uniform_energy_factor = 1.0
+        hpxml_bldg.water_heating_systems[0].uniform_energy_factor = 1.4
       when 'dishwasher-location'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.dishwashers[0].location = HPXML::LocationGarage
@@ -1026,20 +1026,13 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                         'Backup heating capacity should typically be greater than or equal to 1000 Btu/hr.',
                                                         'Backup heating capacity should typically be greater than or equal to 1000 Btu/hr.'],
                               'hvac-efficiencies-low' => ['Percent efficiency should typically be greater than or equal to 0.95.',
-                                                          'AFUE should typically be greater than or equal to 0.5.',
-                                                          'AFUE should typically be greater than or equal to 0.5.',
-                                                          'AFUE should typically be greater than or equal to 0.5.',
+                                                          'Percent efficiency should typically be greater than or equal to 0.5.',
                                                           'AFUE should typically be greater than or equal to 0.5.',
                                                           'AFUE should typically be greater than or equal to 0.5.',
                                                           'Percent efficiency should typically be greater than or equal to 0.5.',
-                                                          'SEER should typically be greater than or equal to 8.',
+                                                          'AFUE should typically be greater than or equal to 0.5.',
+                                                          'Percent efficiency should typically be greater than or equal to 0.5.',
                                                           'EER should typically be greater than or equal to 6.',
-                                                          'EER should typically be greater than or equal to 6.',
-                                                          'SEER should typically be greater than or equal to 8.',
-                                                          'HSPF should typically be greater than or equal to 6.',
-                                                          'SEER should typically be greater than or equal to 8.',
-                                                          'EER should typically be greater than or equal to 6.',
-                                                          'HSPF should typically be greater than or equal to 6.',
                                                           'EER should typically be greater than or equal to 6.',
                                                           'COP should typically be greater than or equal to 2.'],
                               'hvac-research-features-onoff-thermostat-temperature-capacitance-multiplier-one' => ['TemperatureCapacitanceMultiplier should typically be greater than 1 if OnOffThermostatDeadbandTemperature is specified'],
@@ -1146,32 +1139,30 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-multiple.xml')
         hpxml_bldg.hvac_systems.each do |hvac_system|
           if hvac_system.is_a? HPXML::HeatingSystem
-            case hvac_system.heating_system_type
-            when HPXML::HVACTypeElectricResistance,
-                 HPXML::HVACTypeStove
+            if not hvac_system.heating_efficiency_percent.nil?
               hvac_system.heating_efficiency_percent = 0.1
-            when HPXML::HVACTypeFurnace,
-                   HPXML::HVACTypeWallFurnace,
-                   HPXML::HVACTypeBoiler
+            end
+            if not hvac_system.heating_efficiency_afue.nil?
               hvac_system.heating_efficiency_afue = 0.1
             end
           elsif hvac_system.is_a? HPXML::CoolingSystem
-            case hvac_system.cooling_system_type
-            when HPXML::HVACTypeCentralAirConditioner
+            if not hvac_system.cooling_efficiency_seer.nil?
               hvac_system.cooling_efficiency_seer = 0.1
-              hvac_system.cooling_efficiency_eer = 0.1
-            when HPXML::HVACTypeRoomAirConditioner
+            end
+            if not hvac_system.cooling_efficiency_eer.nil?
               hvac_system.cooling_efficiency_eer = 0.1
             end
           elsif hvac_system.is_a? HPXML::HeatPump
-            case hvac_system.heat_pump_type
-            when HPXML::HVACTypeHeatPumpAirToAir,
-                HPXML::HVACTypeHeatPumpMiniSplit
+            if not hvac_system.cooling_efficiency_seer.nil?
               hvac_system.cooling_efficiency_seer = 0.1
+            end
+            if not hvac_system.cooling_efficiency_eer.nil?
               hvac_system.cooling_efficiency_eer = 0.1
+            end
+            if not hvac_system.heating_efficiency_hspf.nil?
               hvac_system.heating_efficiency_hspf = 0.1
-            when HPXML::HVACTypeHeatPumpGroundToAir
-              hvac_system.cooling_efficiency_eer = 0.1
+            end
+            if not hvac_system.heating_efficiency_cop.nil?
               hvac_system.heating_efficiency_cop = 0.1
             end
           end

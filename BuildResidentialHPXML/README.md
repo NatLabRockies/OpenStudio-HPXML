@@ -76,7 +76,7 @@ Path to the EPW file. Either this or the Zip Code input above must be provided.
 
 **Location: Site Type**
 
-The terrain/shielding of the home, for the infiltration model. Defaults to 'Suburban, Normal' for single-family detached and manufactured home and 'Suburban, Well-Shielded' for single-family attached and apartment units.
+The terrain/shielding of the home, for the infiltration model.
 
 - **Name:** ``location_site_type``
 - **Type:** ``Choice``
@@ -209,7 +209,7 @@ The number of bedrooms in the unit.
 
 **Geometry: Unit Number of Bathrooms**
 
-The number of bathrooms in the unit. Defaults to NumberofBedrooms/2 + 0.5.
+The number of bathrooms in the unit.
 
 - **Name:** ``geometry_unit_num_bathrooms``
 - **Type:** ``Choice``
