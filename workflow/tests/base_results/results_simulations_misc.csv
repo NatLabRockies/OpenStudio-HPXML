@@ -227,7 +227,9 @@ base-hvac-air-to-air-heat-pump-1-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942
 base-hvac-air-to-air-heat-pump-2-speed-detailed-performance.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8891.6,4080.6,8891.6,8891.6,4080.6,8891.6,30833.0,26443.0,0.0
 base-hvac-air-to-air-heat-pump-2-speed-research-features.xml,308.467,0.0,0.0,1286.4,890.5,12241.8,4208.1,20440.0,8270.6,20440.0,20440.0,8270.6,20440.0,60954.0,24132.0,0.0
 base-hvac-air-to-air-heat-pump-2-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8930.1,3873.2,8930.1,8930.1,3873.2,8930.1,30804.0,26676.0,0.0
-base-hvac-air-to-air-heat-pump-var-speed-autosize-maxload.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,6215.6,3402.3,6215.6,6215.6,3402.3,6215.6,28804.0,24739.0,0.0
+base-hvac-air-to-air-heat-pump-var-speed-autosize-acca.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7290.9,3800.3,7290.9,7290.9,3800.3,7290.9,30098.0,25636.0,0.0
+base-hvac-air-to-air-heat-pump-var-speed-autosize-hers.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7268.5,3795.8,7268.5,7268.5,3795.8,7268.5,30077.0,25620.0,0.0
+base-hvac-air-to-air-heat-pump-var-speed-autosize-maxload-supplemental-backup.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,6215.6,3402.3,6215.6,6215.6,3402.3,6215.6,28804.0,24739.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-backup-boiler-hvac-seasons.xml,3.0,16.0,0.0,1286.4,890.5,11468.6,3942.3,3190.4,3889.1,3889.1,3190.4,3889.1,3889.1,26697.0,24014.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-backup-boiler-switchover-temperature.xml,120.0,16.0,0.0,1286.4,890.5,11468.6,3942.3,4196.4,3944.0,4196.4,4196.4,3944.0,4196.4,33885.0,24014.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-backup-boiler.xml,3.0,16.0,0.0,1286.4,890.5,11468.6,3942.3,3190.4,3813.1,3813.1,3190.4,3813.1,3813.1,26697.0,24014.0,0.0
