@@ -442,6 +442,15 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
       next if message.include? 'SHR adjusted to achieve valid outlet air properties and the simulation continues.'
     end
 
+    # Different cooling/heating capacities after converting to E+ rated conditions
+    if hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental
+      next if message.include? 'heating capacity is disproportionate (> 20% different) to total cooling capacity'
+
+      if hpxml_path.include? '-var-speed'
+        next if (message.include? 'Speed_1') && (message.include? 'Curve Name output is not equal to 1.0')
+      end
+    end
+
     flunk "Unexpected eplusout.err message found for #{File.basename(hpxml_path)}: #{message}"
   end
 

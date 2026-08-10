@@ -2822,7 +2822,10 @@ module HVACSizing
         hvac_sizings.Cool_Capacity_Sens = hvac_sizings.Cool_Capacity * clg_ap.cool_rated_shr_gross
         hvac_sizings.Cool_Airflow = calc_airflow_rate(:clg, hvac_cooling, hvac_sizings.Cool_Capacity, hpxml_bldg)
       elsif [HPXML::GroundToAirHeatPumpModelTypeExperimental].include? hpxml_header.ground_to_air_heat_pump_model_type
-        total_cool_cap_adj_factor = MathTools.biquadratic(UnitConversions.convert(mj.cool_indoor_wetbulb, 'F', 'C'), UnitConversions.convert(entering_temp, 'F', 'C'), clg_ap.cool_cap_ft_spec[hvac_cooling_speed])
+        # Need to adjust the capacity to GLHP rated conditions
+        total_cool_cap_adj_factor_design = MathTools.biquadratic(UnitConversions.convert(mj.cool_indoor_wetbulb, 'F', 'C'), UnitConversions.convert(entering_temp, 'F', 'C'), clg_ap.cool_cap_ft_spec[hvac_cooling_speed])
+        total_cool_cap_adj_factor_glhp_rated = HVAC.get_experimental_ghp_rated_condition_conversion(:clg, clg_ap.cool_cap_ft_spec[hvac_cooling_speed])
+        total_cool_cap_adj_factor = total_cool_cap_adj_factor_design / total_cool_cap_adj_factor_glhp_rated
         calculate_cooling_capacities(mj, clg_ap, hvac_sizings, hpxml_bldg.header.manualj_humidity_setpoint, total_cool_cap_adj_factor, undersize_limit,
                                      oversize_limit, HVAC::GroundSourceCoolRatedIDB, HVAC::GroundSourceCoolRatedIWB, hvac_cooling, hpxml_bldg)
       end
@@ -3898,7 +3901,9 @@ module HVACSizing
 
       heat_cap_adj_factor = MathTools.quadlinear(db_temp / ref_temp, w_temp / ref_temp, 1.0, 1.0, htg_ap.heat_cap_curve_spec[hvac_heating_speed])
     elsif (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental)
-      heat_cap_adj_factor = MathTools.biquadratic(UnitConversions.convert(db_temp, 'F', 'C'), UnitConversions.convert(w_temp, 'F', 'C'), htg_ap.heat_cap_ft_spec[hvac_heating_speed])
+      heat_cap_adj_factor_design = MathTools.biquadratic(UnitConversions.convert(db_temp, 'F', 'C'), UnitConversions.convert(w_temp, 'F', 'C'), htg_ap.heat_cap_ft_spec[hvac_heating_speed])
+      heat_cap_adj_factor_glhp_rated = HVAC.get_experimental_ghp_rated_condition_conversion(:htg, htg_ap.heat_cap_ft_spec[hvac_heating_speed])
+      heat_cap_adj_factor = heat_cap_adj_factor_design / heat_cap_adj_factor_glhp_rated
     end
 
     return heat_cap_adj_factor

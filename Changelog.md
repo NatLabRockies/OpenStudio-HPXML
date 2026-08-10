@@ -57,6 +57,7 @@ __Bugfixes__
 - Fixes PV grid connection fee applying in utility bill calculation even if the home has no PV.
 - Fixes possible "Failed to process String" EnergyPlus error when requesting component loads.
 - Fixes ducts in manufactured home belly from being incorrectly modeled as if they were outside.
+- Fixes ground-source heat pump experimental model using wrong rated condition inputs.
 
 ## OpenStudio-HPXML v1.11.1
 
