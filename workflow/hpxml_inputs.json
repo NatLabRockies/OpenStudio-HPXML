@@ -1463,7 +1463,17 @@
     "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-1-speed.xml",
     "hvac_heat_pump": "Central HP, SEER2 21.0, HSPF2 9.2"
   },
-  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-autosize-maxload.xml": {
+  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-autosize-acca.xml": {
+    "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed.xml",
+    "hvac_heat_pump_capacity": "Autosize (ACCA)",
+    "hvac_heat_pump_backup_capacity": "Autosize"
+  },
+  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-autosize-hers.xml": {
+    "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed.xml",
+    "hvac_heat_pump_capacity": "Autosize",
+    "hvac_heat_pump_backup_capacity": "Autosize"
+  },
+  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-autosize-maxload-supplemental-backup.xml": {
     "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed.xml",
     "hvac_heat_pump_capacity": "Autosize (MaxLoad)",
     "hvac_heat_pump_backup_capacity": "Autosize (Supplemental)"
