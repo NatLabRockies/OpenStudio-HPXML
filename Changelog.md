@@ -9,6 +9,7 @@ __Features__
 __Bugfixes__
 - **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
 - **Breaking change**: HPWH `EnergyFactor`/`UniformEnergyFactor` must now be >= 1.45 (previously > 1).
+- Fixes possibility of MaxLoad heat pump sizing methodology producing autosized capacities that were too large.
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
 - Runs EnergyPlus without an intermediate shell when using run_simulation.rb or meta_measure.rb.
 - Removes duplicated ceiling/floor internal mass surfaces between conditioned stories.
