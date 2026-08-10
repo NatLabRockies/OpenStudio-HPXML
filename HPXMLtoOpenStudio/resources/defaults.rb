@@ -2165,7 +2165,9 @@ module Defaults
         heating_system.fan_motor_type = (heating_system.attached_cooling_system.compressor_type == HPXML::HVACCompressorTypeSingleStage) ? HPXML::HVACFanMotorTypePSC : HPXML::HVACFanMotorTypeBPM
       else
         # Standalone furnace, use HEScore assumption
-        heating_system.fan_motor_type = (heating_system.heating_efficiency_afue > 0.9) ? HPXML::HVACFanMotorTypeBPM : HPXML::HVACFanMotorTypePSC
+        heating_efficiency = heating_system.heating_efficiency_afue
+        heating_efficiency = heating_system.heating_efficiency_percent if heating_efficiency.nil?
+        heating_system.fan_motor_type = (heating_efficiency > 0.9) ? HPXML::HVACFanMotorTypeBPM : HPXML::HVACFanMotorTypePSC
       end
       heating_system.fan_motor_type_isdefaulted = true
     end
@@ -5083,11 +5085,10 @@ module Defaults
       case heating_system.heating_system_type
       when HPXML::HVACTypeFurnace, HPXML::HVACTypeBoiler, HPXML::HVACTypeWallFurnace,
           HPXML::HVACTypeFloorFurnace, HPXML::HVACTypeStove, HPXML::HVACTypeSpaceHeater
-        if not heating_system.heating_efficiency_afue.nil?
-          next if heating_system.heating_efficiency_afue >= 0.89
-        elsif not heating_system.heating_efficiency_percent.nil?
-          next if heating_system.heating_efficiency_percent >= 0.89
-        end
+        heating_efficiency = heating_system.heating_efficiency_afue
+        heating_efficiency = heating_system.heating_efficiency_percent if heating_efficiency.nil?
+        next if heating_efficiency >= 0.89
+
         return true
       when HPXML::HVACTypeFireplace
         return true
@@ -6972,7 +6973,9 @@ module Defaults
         branch_circuit = get_or_add_branch_circuit(electric_panel, heating_system, unit_num)
 
         if heating_system.heating_system_fuel == HPXML::FuelTypeElectricity
-          watts += UnitConversions.convert(HVAC.get_heating_input_capacity(heating_system.heating_capacity, heating_system.heating_efficiency_afue, heating_system.heating_efficiency_percent), 'btu/hr', 'w')
+          heating_efficiency = heating_system.heating_efficiency_afue
+          heating_efficiency = heating_system.heating_efficiency_percent if heating_efficiency.nil?
+          watts += UnitConversions.convert(heating_system.heating_capacity / heating_efficiency, 'btu/hr', 'w')
         end
 
         watts += HVAC.get_blower_fan_power_watts(heating_system.fan_watts_per_cfm, heating_system.additional_properties.heating_actual_airflow_cfm)
@@ -7000,7 +7003,9 @@ module Defaults
           if heat_pump.overlapping_compressor_and_backup_operation # sum; backup > compressor
 
             if heat_pump.backup_heating_fuel == HPXML::FuelTypeElectricity
-              watts_ahu += UnitConversions.convert(HVAC.get_heating_input_capacity(heat_pump.backup_heating_capacity, heat_pump.backup_heating_efficiency_afue, heat_pump.backup_heating_efficiency_percent), 'btu/hr', 'w')
+              heating_efficiency = heat_pump.backup_heating_efficiency_afue
+              heating_efficiency = heat_pump.backup_heating_efficiency_percent if heating_efficiency.nil?
+              watts_ahu += UnitConversions.convert(heat_pump.backup_heating_capacity / heating_efficiency, 'btu/hr', 'w')
             end
 
           else # max; switchover (only be used for a heat pump with fossil fuel backup)

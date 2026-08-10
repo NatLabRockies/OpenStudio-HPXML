@@ -413,10 +413,12 @@ module HVAC
         htg_supp_coil = create_heat_pump_supplemental_heating_coil(model, obj_name, heating_system, hpxml_header, runner, hpxml_bldg)
       else
         # Heating Coil
+        heating_efficiency = heating_system.heating_efficiency_afue
+        heating_efficiency = heating_system.heating_efficiency_percent if heating_efficiency.nil?
         htg_coil = Model.add_coil_heating(
           model,
           name: "#{obj_name} htg coil",
-          efficiency: heating_system.heating_efficiency_afue,
+          efficiency: heating_efficiency,
           capacity: UnitConversions.convert(heating_system.heating_capacity, 'Btu/hr', 'W'),
           fuel_type: heating_system.heating_system_fuel,
           off_cycle_gas_load: UnitConversions.convert(heating_system.pilot_light_btuh.to_f, 'Btu/hr', 'W')
@@ -1113,22 +1115,6 @@ module HVAC
     return 0.0
   end
 
-  # Returns the heating input capacity, calculated as the heating rated (output) capacity divided by the rated efficiency.
-  #
-  # @param heating_capacity [Double] Heating output capacity (Btu/hr)
-  # @param heating_efficiency_afue [Double] Rated efficiency (AFUE)
-  # @param heating_efficiency_percent [Double] Rated efficiency (Percent)
-  # @return [Double] The heating input capacity (Btu/hr)
-  def self.get_heating_input_capacity(heating_capacity, heating_efficiency_afue, heating_efficiency_percent)
-    if not heating_efficiency_afue.nil?
-      return heating_capacity / heating_efficiency_afue
-    elsif not heating_efficiency_percent.nil?
-      return heating_capacity / heating_efficiency_percent
-    else
-      return
-    end
-  end
-
   # Adds the HPXML boiler system to the OpenStudio model.
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
@@ -1178,6 +1164,8 @@ module HVAC
     pump.addToNode(plant_loop.supplyInletNode)
 
     # Boiler
+    heating_efficiency = heating_system.heating_efficiency_afue
+    heating_efficiency = heating_system.heating_efficiency_percent if heating_efficiency.nil?
     boiler = OpenStudio::Model::BoilerHotWater.new(model)
     boiler.setName(obj_name)
     boiler.setFuelType(EPlus.fuel_type(heating_system.heating_system_fuel))
@@ -1189,7 +1177,7 @@ module HVAC
       boiler_DesignHWRT = UnitConversions.convert(design_temp - 20.0, 'F', 'C')
       # Efficiency curves are normalized using 80F return water temperature, at 0.254PLR
       condBlr_TE_Coeff = [1.058343061, 0.052650153, 0.0087272, 0.001742217, 0.00000333715, 0.000513723]
-      boilerEff_Norm = heating_system.heating_efficiency_afue / (condBlr_TE_Coeff[0] - condBlr_TE_Coeff[1] * plr_Rated - condBlr_TE_Coeff[2] * plr_Rated**2 - condBlr_TE_Coeff[3] * boiler_RatedHWRT + condBlr_TE_Coeff[4] * boiler_RatedHWRT**2 + condBlr_TE_Coeff[5] * boiler_RatedHWRT * plr_Rated)
+      boilerEff_Norm = heating_efficiency / (condBlr_TE_Coeff[0] - condBlr_TE_Coeff[1] * plr_Rated - condBlr_TE_Coeff[2] * plr_Rated**2 - condBlr_TE_Coeff[3] * boiler_RatedHWRT + condBlr_TE_Coeff[4] * boiler_RatedHWRT**2 + condBlr_TE_Coeff[5] * boiler_RatedHWRT * plr_Rated)
       boilerEff_Design = boilerEff_Norm * (condBlr_TE_Coeff[0] - condBlr_TE_Coeff[1] * plr_Design - condBlr_TE_Coeff[2] * plr_Design**2 - condBlr_TE_Coeff[3] * boiler_DesignHWRT + condBlr_TE_Coeff[4] * boiler_DesignHWRT**2 + condBlr_TE_Coeff[5] * boiler_DesignHWRT * plr_Design)
       boiler.setNominalThermalEfficiency(boilerEff_Design)
       boiler.setEfficiencyCurveTemperatureEvaluationVariable('EnteringBoiler')
@@ -1200,7 +1188,7 @@ module HVAC
         min_x: 0.2, max_x: 1.0, min_y: 30.0, max_y: 85.0
       )
     else
-      boiler.setNominalThermalEfficiency(heating_system.heating_efficiency_afue)
+      boiler.setNominalThermalEfficiency(heating_efficiency)
       boiler.setEfficiencyCurveTemperatureEvaluationVariable('LeavingBoiler')
       boiler_eff_curve = Model.add_curve_bicubic(
         model,
