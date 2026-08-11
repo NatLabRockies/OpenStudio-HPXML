@@ -14,6 +14,7 @@ __Bugfixes__
 - Runs EnergyPlus without an intermediate shell when using run_simulation.rb or meta_measure.rb.
 - Removes duplicated ceiling/floor internal mass surfaces between conditioned stories.
 - Fixes error if `NumberofBedrooms=0` and `NumberofBathrooms` is omitted.
+- Fixes specific heat for drywall (0.2 -> 0.26 Btu/lb-F).
 
 ## OpenStudio-HPXML v1.12.0
 

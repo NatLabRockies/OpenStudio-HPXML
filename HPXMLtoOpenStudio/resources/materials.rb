@@ -414,7 +414,7 @@ class BaseMaterial
   #
   # @return [BaseMaterial] The base material object
   def self.Gypsum
-    return new(rho: 50.0, cp: 0.2, k_in: 1.1112)
+    return new(rho: 50.0, cp: 0.26, k_in: 1.1112)
   end
 
   # Creates a base material with properties for wood.
