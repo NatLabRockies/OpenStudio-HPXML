@@ -2466,6 +2466,12 @@
       <sch:assert role='ERROR' test='count(h:LabelAnnualGasCost) = 1'>Expected LabelAnnualGasCost</sch:assert>
       <sch:assert role='ERROR' test='count(h:LabelUsage) = 1'>Expected LabelUsage</sch:assert>
       <sch:assert role='ERROR' test='count(h:Capacity) = 1'>Expected Capacity</sch:assert>
+      <!-- Warnings -->
+      <sch:report role='WARN' test='number(h:LabelElectricRate) &gt;= 0.5'>LabelElectricRate should typically be less than 0.5.</sch:report>
+      <sch:report role='ERROR' test='number(h:LabelGasRate) &lt;= 0.5'>LabelGasRate should typically be greater than 0.5.</sch:report>
+      <sch:report role='ERROR' test='number(h:LabelGasRate) &gt;= 5'>LabelGasRate should typically be less than 5.</sch:report>
+      <sch:report role='ERROR' test='number(h:LabelAnnualGasCost) &lt;= 5'>LabelAnnualGasCost should typically be greater than 5.</sch:report>
+      <sch:report role='ERROR' test='number(h:LabelUsage) &gt;= 20'>LabelUsage should typically be less than 20.</sch:report>
     </sch:rule>
   </sch:pattern>
 
@@ -2523,6 +2529,12 @@
       <sch:assert role='ERROR' test='count(h:LabelAnnualGasCost) = 1'>Expected LabelAnnualGasCost</sch:assert>
       <sch:assert role='ERROR' test='count(h:LabelUsage) = 1'>Expected LabelUsage</sch:assert>
       <sch:assert role='ERROR' test='count(h:PlaceSettingCapacity) = 1'>Expected PlaceSettingCapacity</sch:assert>
+      <!-- Warnings -->
+      <sch:report role='WARN' test='number(h:LabelElectricRate) &gt;= 0.5'>LabelElectricRate should typically be less than 0.5.</sch:report>
+      <sch:report role='ERROR' test='number(h:LabelGasRate) &lt;= 0.5'>LabelGasRate should typically be greater than 0.5.</sch:report>
+      <sch:report role='ERROR' test='number(h:LabelGasRate) &gt;= 5'>LabelGasRate should typically be less than 5.</sch:report>
+      <sch:report role='ERROR' test='number(h:LabelAnnualGasCost) &lt;= 5'>LabelAnnualGasCost should typically be greater than 5.</sch:report>
+      <sch:report role='ERROR' test='number(h:LabelUsage) &gt;= 20'>LabelUsage should typically be less than 20.</sch:report>
     </sch:rule>
   </sch:pattern>
 

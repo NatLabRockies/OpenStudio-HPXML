@@ -984,7 +984,15 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
   # Test warnings are correctly triggered during the XSD schema or Schematron validation
   def test_schema_schematron_warning_messages
     # Test case => Warning message(s)
-    all_expected_warnings = { 'battery-pv-output-power-low' => ['Max power output should typically be greater than or equal to 500 W.',
+    all_expected_warnings = { 'appliance-energyguide-label-inputs' => ['LabelElectricRate should typically be less than 0.5. [context: /HPXML/Building/BuildingDetails/Appliances/ClothesWasher[IntegratedModifiedEnergyFactor | ModifiedEnergyFactor], id: "ClothesWasher1"]',
+                                                                       'LabelGasRate should typically be greater than 0.5. [context: /HPXML/Building/BuildingDetails/Appliances/ClothesWasher[IntegratedModifiedEnergyFactor | ModifiedEnergyFactor], id: "ClothesWasher1"]',
+                                                                       'LabelAnnualGasCost should typically be greater than 5. [context: /HPXML/Building/BuildingDetails/Appliances/ClothesWasher[IntegratedModifiedEnergyFactor | ModifiedEnergyFactor], id: "ClothesWasher1"]',
+                                                                       'LabelUsage should typically be less than 20. [context: /HPXML/Building/BuildingDetails/Appliances/ClothesWasher[IntegratedModifiedEnergyFactor | ModifiedEnergyFactor], id: "ClothesWasher1"]',
+                                                                       'LabelElectricRate should typically be less than 0.5. [context: /HPXML/Building/BuildingDetails/Appliances/Dishwasher[RatedAnnualkWh | EnergyFactor], id: "Dishwasher1"]',
+                                                                       'LabelGasRate should typically be greater than 0.5. [context: /HPXML/Building/BuildingDetails/Appliances/Dishwasher[RatedAnnualkWh | EnergyFactor], id: "Dishwasher1"]',
+                                                                       'LabelAnnualGasCost should typically be greater than 5. [context: /HPXML/Building/BuildingDetails/Appliances/Dishwasher[RatedAnnualkWh | EnergyFactor], id: "Dishwasher1"]',
+                                                                       'LabelUsage should typically be less than 20. [context: /HPXML/Building/BuildingDetails/Appliances/Dishwasher[RatedAnnualkWh | EnergyFactor], id: "Dishwasher1"]'],
+                              'battery-pv-output-power-low' => ['Max power output should typically be greater than or equal to 500 W.',
                                                                 'Max power output should typically be greater than or equal to 500 W.',
                                                                 'Rated power output should typically be greater than or equal to 1000 W.'],
                               'dhw-capacities-low' => ['Heating capacity should typically be greater than or equal to 1000 Btu/hr.',
@@ -1071,6 +1079,16 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
       puts "[#{i + 1}/#{all_expected_warnings.size}] Testing #{warning_case}..."
       # Create HPXML object
       case warning_case
+      when 'appliance-energyguide-label-inputs'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.clothes_washers[0].label_electric_rate = 1.1
+        hpxml_bldg.clothes_washers[0].label_gas_rate = 0.1
+        hpxml_bldg.clothes_washers[0].label_annual_gas_cost = 1.1
+        hpxml_bldg.clothes_washers[0].label_usage *= 52
+        hpxml_bldg.dishwashers[0].label_electric_rate = 1.1
+        hpxml_bldg.dishwashers[0].label_gas_rate = 0.1
+        hpxml_bldg.dishwashers[0].label_annual_gas_cost = 1.1
+        hpxml_bldg.dishwashers[0].label_usage *= 52
       when 'battery-pv-output-power-low'
         hpxml, hpxml_bldg = _create_hpxml('base-pv-battery.xml')
         hpxml_bldg.batteries[0].rated_power_output = 0.1
