@@ -26,7 +26,7 @@ module InternalGains
     people_sch = nil
     people_col_name = SchedulesFile::Columns[:Occupants].name
     if not schedules_file.nil?
-      activity_per_person = schedules_file.calc_design_level_from_daily_kwh(col_name: SchedulesFile::Columns[:GeneralWaterUse].name, daily_kwh: UnitConversions.convert(occ_tot_btu_per_day, 'Btu', 'kWh'))
+      activity_per_person = schedules_file.calc_design_level_from_daily_kwh(col_name: SchedulesFile::Columns[:Occupants].name, daily_kwh: UnitConversions.convert(occ_tot_btu_per_day, 'Btu', 'kWh'))
       people_sch = schedules_file.create_schedule_file(model, col_name: people_col_name)
     end
     if people_sch.nil?
