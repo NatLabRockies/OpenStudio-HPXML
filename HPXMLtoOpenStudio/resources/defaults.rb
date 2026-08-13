@@ -7464,17 +7464,15 @@ module Defaults
 
   # Gets the default values associated with occupant internal gains.
   #
-  # @return [Array<Double, Double, Double, Double>] Heat gain (Btu/person/hr), Hours per day, sensible/latent fractions
+  # @return [Array<Double, Double, Double>] Heat gain (Btu/person/day), sensible/latent fractions
   def self.get_occupancy_values()
     # ANSI/RESNET/ICC 301 - Table 4.2.2(3). Internal Gains for Reference Homes
-    hrs_per_day = 16.5 # hrs/day
     sens_gains = 3716.0 # Btu/person/day
     lat_gains = 2884.0 # Btu/person/day
-    tot_gains = sens_gains + lat_gains
-    heat_gain = tot_gains / hrs_per_day # Btu/person/hr
+    tot_gains = sens_gains + lat_gains # Btu/person/day
     sens_frac = sens_gains / tot_gains
     lat_frac = lat_gains / tot_gains
-    return heat_gain, hrs_per_day, sens_frac, lat_frac
+    return tot_gains, sens_frac, lat_frac
   end
 
   # Gets the default residual miscellaneous electric (plug) load energy use
