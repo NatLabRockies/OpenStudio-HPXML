@@ -5,6 +5,8 @@ __Features__
 - **Breaking change**: For heat pump water heaters, ``HeatingCapacity`` is now *input* rather than *output* capacity, similar to other water heater types.
 - For furnaces/boilers, allows heating efficiency with units of "Percent" as an alternative to "AFUE"; the two units are modeled identically.
 - Updates garage ventilation rate to be SLA=1/150 (same as a vented crawlspace).
+- Reverts E+ radiant exchange algorithm from CarrollMRT to ScriptF.
+- Adds min/max value warnings for clothes washer and dishwasher label inputs (e.g., `LabelElectricRate` and `LabelGasRate`).
 
 __Bugfixes__
 - **Breaking change**: Prevent possible error if HPWH in confined space with very small containment volume; minimum allowed volume now 32 ft3.
@@ -14,6 +16,8 @@ __Bugfixes__
 - Runs EnergyPlus without an intermediate shell when using run_simulation.rb or meta_measure.rb.
 - Removes duplicated ceiling/floor internal mass surfaces between conditioned stories.
 - Fixes error if `NumberofBedrooms=0` and `NumberofBathrooms` is omitted.
+- Fixes heat gain from occupants; heat gains from appliances, lighting, etc. are unaffected.
+- Fixes specific heat for drywall (0.2 -> 0.26 Btu/lb-F).
 
 ## OpenStudio-HPXML v1.12.0
 
