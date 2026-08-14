@@ -4286,7 +4286,7 @@ module Defaults
         dishwasher.location_isdefaulted = true
       end
       if dishwasher.place_setting_capacity.nil?
-        default_values = get_dishwasher_values(eri_version)
+        default_values = get_dishwasher_values()
         dishwasher.rated_annual_kwh = default_values[:rated_annual_kwh]
         dishwasher.rated_annual_kwh_isdefaulted = true
         dishwasher.label_electric_rate = default_values[:label_electric_rate]
@@ -5505,24 +5505,14 @@ module Defaults
 
   # Gets the default properties for dishwashers.
   #
-  # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @return [Hash] Map of property type => value
-  def self.get_dishwasher_values(eri_version)
-    if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2019A')
-      return { rated_annual_kwh: 467.0, # kWh/yr
-               label_electric_rate: 0.12, # $/kWh
-               label_gas_rate: 1.09, # $/therm
-               label_annual_gas_cost: 33.12, # $
-               label_usage: 4.0, # cyc/week
-               place_setting_capacity: 12.0 }
-    else
-      return { rated_annual_kwh: 467.0, # kWh/yr
-               label_electric_rate: 999, # unused
-               label_gas_rate: 999, # unused
-               label_annual_gas_cost: 999, # unused
-               label_usage: 999, # unused
-               place_setting_capacity: 12.0 }
-    end
+  def self.get_dishwasher_values()
+    return { rated_annual_kwh: 467.0, # kWh/yr
+             label_electric_rate: 0.12, # $/kWh
+             label_gas_rate: 1.09, # $/therm
+             label_annual_gas_cost: 33.12, # $
+             label_usage: 4.0, # cyc/week
+             place_setting_capacity: 12.0 }
   end
 
   # Gets the default properties for refrigerators.
@@ -5586,7 +5576,7 @@ module Defaults
                label_gas_rate: 0.58, # $/therm
                label_annual_gas_cost: 23.0, # $
                capacity: 2.874, # ft^3
-               label_usage: 999 } # unused
+               label_usage: 6.0 } # unused
     end
   end
 
