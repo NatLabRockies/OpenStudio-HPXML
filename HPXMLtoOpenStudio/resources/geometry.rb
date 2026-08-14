@@ -865,6 +865,10 @@ module Geometry
 
       space.setThermalZone(thermal_zone)
       spaces[location] = space
+
+      if HPXML::conditioned_locations_this_unit.include? location
+        space.setPartofTotalFloorArea(false)
+      end
     end
   end
 
