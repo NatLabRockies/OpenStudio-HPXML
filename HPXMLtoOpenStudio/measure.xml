@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>6b2ecdb1-215d-4910-9823-af341f89e3be</version_id>
-  <version_modified>2026-08-11T16:21:19Z</version_modified>
+  <version_id>273de69d-db0c-445f-a570-b8f054a3ffb6</version_id>
+  <version_modified>2026-08-14T15:19:11Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -367,7 +367,7 @@
       <filename>defaults.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>C66B76B7</checksum>
+      <checksum>607F177C</checksum>
     </file>
     <file>
       <filename>electric_panel.rb</filename>
@@ -421,7 +421,7 @@
       <filename>hpxml_schematron/EPvalidator.sch</filename>
       <filetype>sch</filetype>
       <usage_type>resource</usage_type>
-      <checksum>72C517F2</checksum>
+      <checksum>0CCC10E1</checksum>
     </file>
     <file>
       <filename>hpxml_schematron/iso-schematron.xsd</filename>
@@ -445,7 +445,7 @@
       <filename>internal_gains.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>CD7FA760</checksum>
+      <checksum>9B555731</checksum>
     </file>
     <file>
       <filename>lighting.rb</filename>
@@ -736,24 +736,6 @@
       <checksum>93120E27</checksum>
     </file>
     <file>
-      <filename>in.xml</filename>
-      <filetype>xml</filetype>
-      <usage_type>test</usage_type>
-      <checksum>CFF7417B</checksum>
-    </file>
-    <file>
-      <filename>results_annual.csv</filename>
-      <filetype>csv</filetype>
-      <usage_type>test</usage_type>
-      <checksum>635264A2</checksum>
-    </file>
-    <file>
-      <filename>results_design_load_details.csv</filename>
-      <filetype>csv</filetype>
-      <usage_type>test</usage_type>
-      <checksum>BCD7E1F3</checksum>
-    </file>
-    <file>
       <filename>test_airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
@@ -769,7 +751,7 @@
       <filename>test_defaults.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>2717DEDC</checksum>
+      <checksum>BF943ACC</checksum>
     </file>
     <file>
       <filename>test_electric_panel.rb</filename>
@@ -793,7 +775,7 @@
       <filename>test_hotwater_appliance.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>6DBBC0A9</checksum>
+      <checksum>B80710C3</checksum>
     </file>
     <file>
       <filename>test_hvac.rb</filename>
@@ -811,7 +793,7 @@
       <filename>test_lighting.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>318C6BE3</checksum>
+      <checksum>D19ABE7E</checksum>
     </file>
     <file>
       <filename>test_location.rb</filename>
@@ -823,7 +805,7 @@
       <filename>test_miscloads.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>9072D61E</checksum>
+      <checksum>111D2CD1</checksum>
     </file>
     <file>
       <filename>test_pv.rb</filename>
@@ -847,7 +829,7 @@
       <filename>test_validation.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>9202FC56</checksum>
+      <checksum>FBBA37C8</checksum>
     </file>
     <file>
       <filename>test_vehicle.rb</filename>
@@ -866,12 +848,6 @@
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
       <checksum>24801FBE</checksum>
-    </file>
-    <file>
-      <filename>tmp.xml</filename>
-      <filetype>xml</filetype>
-      <usage_type>test</usage_type>
-      <checksum>73F4B0AE</checksum>
     </file>
     <file>
       <filename>util.rb</filename>
