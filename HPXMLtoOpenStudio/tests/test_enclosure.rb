@@ -1061,6 +1061,19 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
       end
     end
 
+    # Check that foundation walls with a repeated below-grade depth are included
+    # in the effective below-grade depth calculation.
+    _hpxml, hpxml_bldg = _create_hpxml('base-foundation-walkout-basement.xml')
+    foundation_wall = hpxml_bldg.foundation_walls[0]
+    foundation_wall.area /= 2.0
+    duplicate_foundation_wall = foundation_wall.dup
+    duplicate_foundation_wall.id += '_duplicate'
+    duplicate_foundation_wall.insulation_id += '_duplicate'
+    hpxml_bldg.foundation_walls.insert(1, duplicate_foundation_wall)
+    hpxml_bldg.collapse_enclosure_surfaces([:foundation_walls])
+    assert_equal(1, hpxml_bldg.foundation_walls.size)
+    assert_equal(4.5, hpxml_bldg.foundation_walls[0].depth_below_grade)
+
     # Check that Slab/DepthBelowGrade is ignored for below-grade spaces when
     # collapsing surfaces.
     args_hash = {}

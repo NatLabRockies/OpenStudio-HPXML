@@ -18,6 +18,7 @@ __Bugfixes__
 - Fixes error if `NumberofBedrooms=0` and `NumberofBathrooms` is omitted.
 - Fixes heat gain from occupants; heat gains from appliances, lighting, etc. are unaffected.
 - Fixes specific heat for drywall (0.2 -> 0.26 Btu/lb-F).
+- Fixes order-dependent effective below-grade depth when collapsing similar foundation walls.
 
 ## OpenStudio-HPXML v1.12.0
 
