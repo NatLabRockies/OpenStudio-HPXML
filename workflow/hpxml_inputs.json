@@ -39,6 +39,7 @@
     "hvac_ducts": "0 CFM25 per 100ft2, Uninsulated",
     "dhw_water_heater": "None",
     "lighting": "None",
+    "location_soil_type": "0.8 Btu/hr-ft-F",
     "appliance_clothes_washer": "None",
     "appliance_clothes_dryer": "None",
     "appliance_dishwasher": "None",
