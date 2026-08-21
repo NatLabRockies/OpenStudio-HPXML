@@ -2191,11 +2191,11 @@ class HPXML < Object
             end
             next unless match
 
-            if (surf_type == :foundation_walls) && (surf.depth_below_grade != surf2.depth_below_grade)
+            if surf_type == :foundation_walls
               if like_foundation_walls[surf].nil?
-                like_foundation_walls[surf] = [{ bgdepth: surf.depth_below_grade, length: surf.area / surf.height }]
+                like_foundation_walls[surf] = [{ bgdepth: surf.depth_below_grade, area: surf.area, height: surf.height }]
               end
-              like_foundation_walls[surf] << { bgdepth: surf2.depth_below_grade, length: surf2.area / surf2.height }
+              like_foundation_walls[surf] << { bgdepth: surf2.depth_below_grade, area: surf2.area, height: surf2.height }
             end
 
             # Update values
@@ -2233,8 +2233,11 @@ class HPXML < Object
       end
 
       like_foundation_walls.each do |foundation_wall, properties|
+        next unless properties.map { |p| p[:bgdepth] }.uniq.size > 1
+
         # Calculate weighted-average (by length) below-grade depth
-        foundation_wall.depth_below_grade = properties.map { |p| p[:bgdepth] * p[:length] }.sum(0.0) / properties.map { |p| p[:length] }.sum
+        lengths = properties.map { |p| p[:area] / p[:height] }
+        foundation_wall.depth_below_grade = properties.zip(lengths).map { |p, length| p[:bgdepth] * length }.sum(0.0) / lengths.sum
       end
     end
   end

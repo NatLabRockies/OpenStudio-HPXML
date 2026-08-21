@@ -922,7 +922,7 @@ module Defaults
       hpxml_bldg.building_construction.conditioned_building_volume_isdefaulted = true
     end
     if hpxml_bldg.building_construction.number_of_bathrooms.nil?
-      hpxml_bldg.building_construction.number_of_bathrooms = Float(get_num_bathrooms(nbeds)).to_i
+      hpxml_bldg.building_construction.number_of_bathrooms = get_num_bathrooms(nbeds)
       hpxml_bldg.building_construction.number_of_bathrooms_isdefaulted = true
     end
     if hpxml_bldg.building_construction.number_of_units.nil?
@@ -2165,7 +2165,9 @@ module Defaults
         heating_system.fan_motor_type = (heating_system.attached_cooling_system.compressor_type == HPXML::HVACCompressorTypeSingleStage) ? HPXML::HVACFanMotorTypePSC : HPXML::HVACFanMotorTypeBPM
       else
         # Standalone furnace, use HEScore assumption
-        heating_system.fan_motor_type = (heating_system.heating_efficiency_afue > 0.9) ? HPXML::HVACFanMotorTypeBPM : HPXML::HVACFanMotorTypePSC
+        heating_efficiency = heating_system.heating_efficiency_afue
+        heating_efficiency = heating_system.heating_efficiency_percent if heating_efficiency.nil?
+        heating_system.fan_motor_type = (heating_efficiency > 0.9) ? HPXML::HVACFanMotorTypeBPM : HPXML::HVACFanMotorTypePSC
       end
       heating_system.fan_motor_type_isdefaulted = true
     end
@@ -2820,7 +2822,7 @@ module Defaults
       schedules_file_includes_cooling_setpoint_temp = (schedules_file.nil? ? false : schedules_file.includes_col_name(SchedulesFile::Columns[:CoolingSetpoint].name))
       if hvac_control.cooling_setpoint_temp.nil? && hvac_control.weekday_cooling_setpoints.nil? && !schedules_file_includes_cooling_setpoint_temp
         # No cooling setpoints; set a default cooling setpoint for, e.g., natural ventilation
-        clg_weekday_setpoints, clg_weekend_setpoints = Defaults.get_cooling_setpoint(HPXML::HVACControlTypeManual, eri_version)
+        clg_weekday_setpoints, clg_weekend_setpoints = get_cooling_setpoint(HPXML::HVACControlTypeManual, eri_version)
         if clg_weekday_setpoints.split(', ').uniq.size == 1 && clg_weekend_setpoints.split(', ').uniq.size == 1 && clg_weekday_setpoints.split(', ').uniq == clg_weekend_setpoints.split(', ').uniq
           hvac_control.cooling_setpoint_temp = clg_weekend_setpoints.split(', ').uniq[0].to_f
         else
@@ -4317,7 +4319,7 @@ module Defaults
         dishwasher.location_isdefaulted = true
       end
       if dishwasher.place_setting_capacity.nil?
-        default_values = get_dishwasher_values(eri_version)
+        default_values = get_dishwasher_values()
         dishwasher.rated_annual_kwh = default_values[:rated_annual_kwh]
         dishwasher.rated_annual_kwh_isdefaulted = true
         dishwasher.label_electric_rate = default_values[:label_electric_rate]
@@ -4636,7 +4638,7 @@ module Defaults
       ceiling_fan.weekend_fractions_isdefaulted = true
     end
     if ceiling_fan.monthly_multipliers.nil? && !schedules_file_includes_ceiling_fan
-      ceiling_fan.monthly_multipliers = Defaults.get_ceiling_fan_months(weather).join(', ')
+      ceiling_fan.monthly_multipliers = get_ceiling_fan_months(weather).join(', ')
       ceiling_fan.monthly_multipliers_isdefaulted = true
     end
   end
@@ -5116,11 +5118,10 @@ module Defaults
       case heating_system.heating_system_type
       when HPXML::HVACTypeFurnace, HPXML::HVACTypeBoiler, HPXML::HVACTypeWallFurnace,
           HPXML::HVACTypeFloorFurnace, HPXML::HVACTypeStove, HPXML::HVACTypeSpaceHeater
-        if not heating_system.heating_efficiency_afue.nil?
-          next if heating_system.heating_efficiency_afue >= 0.89
-        elsif not heating_system.heating_efficiency_percent.nil?
-          next if heating_system.heating_efficiency_percent >= 0.89
-        end
+        heating_efficiency = heating_system.heating_efficiency_afue
+        heating_efficiency = heating_system.heating_efficiency_percent if heating_efficiency.nil?
+        next if heating_efficiency >= 0.89
+
         return true
       when HPXML::HVACTypeFireplace
         return true
@@ -5516,10 +5517,15 @@ module Defaults
   # Gets the default number of bathrooms in the dwelling unit.
   #
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
-  # @return [Double] Number of bathrooms
+  # @return [Integer] Number of bathrooms
   def self.get_num_bathrooms(nbeds)
     nbaths = nbeds / 2.0 + 0.5 # From BA HSP
-    return nbaths
+
+    # Ensure at least 1 bathroom (which the HPXML schema requires).
+    # Even a studio apartment w/ zero bedrooms would have a bathroom.
+    nbaths = [nbaths, 1].max
+
+    return nbaths.to_i
   end
 
   # Gets the default properties for cooking ranges/ovens.
@@ -5532,24 +5538,14 @@ module Defaults
 
   # Gets the default properties for dishwashers.
   #
-  # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @return [Hash] Map of property type => value
-  def self.get_dishwasher_values(eri_version)
-    if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2019A')
-      return { rated_annual_kwh: 467.0, # kWh/yr
-               label_electric_rate: 0.12, # $/kWh
-               label_gas_rate: 1.09, # $/therm
-               label_annual_gas_cost: 33.12, # $
-               label_usage: 4.0, # cyc/week
-               place_setting_capacity: 12.0 }
-    else
-      return { rated_annual_kwh: 467.0, # kWh/yr
-               label_electric_rate: 999, # unused
-               label_gas_rate: 999, # unused
-               label_annual_gas_cost: 999, # unused
-               label_usage: 999, # unused
-               place_setting_capacity: 12.0 }
-    end
+  def self.get_dishwasher_values()
+    return { rated_annual_kwh: 467.0, # kWh/yr
+             label_electric_rate: 0.12, # $/kWh
+             label_gas_rate: 1.09, # $/therm
+             label_annual_gas_cost: 33.12, # $
+             label_usage: 4.0, # cyc/week
+             place_setting_capacity: 12.0 }
   end
 
   # Gets the default properties for refrigerators.
@@ -5613,7 +5609,7 @@ module Defaults
                label_gas_rate: 0.58, # $/therm
                label_annual_gas_cost: 23.0, # $
                capacity: 2.874, # ft^3
-               label_usage: 999 } # unused
+               label_usage: 6.0 } # unused
     end
   end
 
@@ -6177,10 +6173,6 @@ module Defaults
   # @param nbaths [Integer] Number of bathrooms in the dwelling unit
   # @return [Double] Water heater heating capacity (Btu/hr)
   def self.get_water_heater_heating_capacity(fuel, nbeds, num_water_heaters, nbaths = nil)
-    if nbaths.nil?
-      nbaths = Defaults.get_num_bathrooms(nbeds)
-    end
-
     # Adjust the heating capacity if there are multiple water heaters in the home
     nbaths /= num_water_heaters.to_f
 
@@ -6227,10 +6219,6 @@ module Defaults
   def self.get_water_heater_tank_volume(fuel, is_hpwh, nbeds, nbaths, n_occ)
     # FUTURE: Take into account usage multipliers
     # FUTURE: Incorporate number of occupants for conventional elec/gas storage WHs.
-
-    if nbaths.nil?
-      nbaths = Defaults.get_num_bathrooms(nbeds)
-    end
 
     if is_hpwh && !n_occ.nil? # Heat pump water heater
       # Source: Jeff Maguire recommendation for ResStock when num occupants is known
@@ -7023,7 +7011,9 @@ module Defaults
         branch_circuit = get_or_add_branch_circuit(electric_panel, heating_system, unit_num)
 
         if heating_system.heating_system_fuel == HPXML::FuelTypeElectricity
-          watts += UnitConversions.convert(HVAC.get_heating_input_capacity(heating_system.heating_capacity, heating_system.heating_efficiency_afue, heating_system.heating_efficiency_percent), 'btu/hr', 'w')
+          heating_efficiency = heating_system.heating_efficiency_afue
+          heating_efficiency = heating_system.heating_efficiency_percent if heating_efficiency.nil?
+          watts += UnitConversions.convert(heating_system.heating_capacity / heating_efficiency, 'btu/hr', 'w')
         end
 
         watts += HVAC.get_blower_fan_power_watts(heating_system.fan_watts_per_cfm, heating_system.additional_properties.heating_actual_airflow_cfm)
@@ -7051,7 +7041,9 @@ module Defaults
           if heat_pump.overlapping_compressor_and_backup_operation # sum; backup > compressor
 
             if heat_pump.backup_heating_fuel == HPXML::FuelTypeElectricity
-              watts_ahu += UnitConversions.convert(HVAC.get_heating_input_capacity(heat_pump.backup_heating_capacity, heat_pump.backup_heating_efficiency_afue, heat_pump.backup_heating_efficiency_percent), 'btu/hr', 'w')
+              heating_efficiency = heat_pump.backup_heating_efficiency_afue
+              heating_efficiency = heat_pump.backup_heating_efficiency_percent if heating_efficiency.nil?
+              watts_ahu += UnitConversions.convert(heat_pump.backup_heating_capacity / heating_efficiency, 'btu/hr', 'w')
             end
 
           else # max; switchover (only be used for a heat pump with fossil fuel backup)
@@ -7510,17 +7502,15 @@ module Defaults
 
   # Gets the default values associated with occupant internal gains.
   #
-  # @return [Array<Double, Double, Double, Double>] Heat gain (Btu/person/hr), Hours per day, sensible/latent fractions
+  # @return [Array<Double, Double, Double>] Heat gain (Btu/person/day), sensible/latent fractions
   def self.get_occupancy_values()
     # ANSI/RESNET/ICC 301 - Table 4.2.2(3). Internal Gains for Reference Homes
-    hrs_per_day = 16.5 # hrs/day
     sens_gains = 3716.0 # Btu/person/day
     lat_gains = 2884.0 # Btu/person/day
-    tot_gains = sens_gains + lat_gains
-    heat_gain = tot_gains / hrs_per_day # Btu/person/hr
+    tot_gains = sens_gains + lat_gains # Btu/person/day
     sens_frac = sens_gains / tot_gains
     lat_frac = lat_gains / tot_gains
-    return heat_gain, hrs_per_day, sens_frac, lat_frac
+    return tot_gains, sens_frac, lat_frac
   end
 
   # Gets the default residual miscellaneous electric (plug) load energy use
@@ -7603,7 +7593,7 @@ module Defaults
       return 0.0
     end
 
-    nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
+    nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     return 158.6 / 0.070 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0)
   end
@@ -7617,7 +7607,7 @@ module Defaults
   # @param type [String] Type of heater (HPXML::HeaterTypeXXX)
   # @return [Array<String, Double>] Energy units (HPXML::UnitsXXX), annual energy use (kWh/yr or therm/yr)
   def self.get_pool_heater_annual_energy(cfa, nbeds, n_occ, unit_type, type)
-    nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
+    nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     load_units = nil
     load_value = nil
@@ -7657,7 +7647,7 @@ module Defaults
       return 0.0
     end
 
-    nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
+    nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     return 59.5 / 0.059 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0) # kWh/yr
   end
@@ -7671,7 +7661,7 @@ module Defaults
   # @param type [String] Type of heater (HPXML::HeaterTypeXXX)
   # @return [Array<String, Double>] Energy units (HPXML::UnitsXXX), annual energy use (kWh/yr or therm/yr)
   def self.get_permanent_spa_heater_annual_energy(cfa, nbeds, n_occ, unit_type, type)
-    nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
+    nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     load_units = nil
     load_value = nil
@@ -7731,7 +7721,7 @@ module Defaults
       return 0.0
     end
 
-    nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
+    nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     return 50.8 / 0.127 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0)
   end
@@ -7749,7 +7739,7 @@ module Defaults
       return 0.0
     end
 
-    nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
+    nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     return 0.87 / 0.029 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0)
   end
@@ -7767,7 +7757,7 @@ module Defaults
       return 0.0
     end
 
-    nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
+    nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     return 0.22 / 0.012 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0)
   end
@@ -7785,7 +7775,7 @@ module Defaults
       return 0.0
     end
 
-    nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
+    nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     return 1.95 / 0.032 * (0.5 + 0.25 * nbeds_eq / 3.0 + 0.25 * cfa / 1920.0)
   end
@@ -7803,7 +7793,7 @@ module Defaults
       return 0.0, 0.0
     end
 
-    nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
+    nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
     # ANSI/RESNET/ICC 301 - Table 4.2.2(3). Internal Gains for Reference Homes
     sens_gains = (-1227.0 - 409.0 * nbeds_eq) * general_water_use_usage_multiplier # Btu/day

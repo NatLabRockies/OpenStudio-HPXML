@@ -379,7 +379,6 @@ class ReportSimulationOutputTest < Minitest::Test
     'Surface Construction Index: Foundationwall1',
     'Surface Construction Index: Floor1',
     'Surface Construction Index: Furniture Mass Conditioned Space 1',
-    'Surface Construction Index: Inferred Conditioned Ceiling',
     'Surface Construction Index: Inferred Conditioned Floor',
     'Surface Construction Index: Partition Wall Mass',
     'Surface Construction Index: Rimjoist1:0',

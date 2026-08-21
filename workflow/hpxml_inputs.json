@@ -39,6 +39,7 @@
     "hvac_ducts": "0 CFM25 per 100ft2, Uninsulated",
     "dhw_water_heater": "None",
     "lighting": "None",
+    "location_soil_type": "0.8 Btu/hr-ft-F",
     "appliance_clothes_washer": "None",
     "appliance_clothes_dryer": "None",
     "appliance_dishwasher": "None",
@@ -1101,6 +1102,11 @@
     "enclosure_floor_over_garage": "Wood Frame, R-38",
     "enclosure_carpet": "80% Carpet"
   },
+  "sample_files/base-enclosure-beds-0.xml": {
+    "parent_hpxml": "sample_files/base.xml",
+    "geometry_unit_num_bedrooms": "0",
+    "geometry_unit_num_bathrooms": "Default"
+  },
   "sample_files/base-enclosure-beds-1.xml": {
     "parent_hpxml": "sample_files/base.xml",
     "geometry_unit_num_bedrooms": "1",
@@ -1467,7 +1473,17 @@
     "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-1-speed.xml",
     "hvac_heat_pump": "Central HP, SEER2 21.0, HSPF2 9.2"
   },
-  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-autosize-maxload.xml": {
+  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-autosize-acca.xml": {
+    "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed.xml",
+    "hvac_heat_pump_capacity": "Autosize (ACCA)",
+    "hvac_heat_pump_backup_capacity": "Autosize"
+  },
+  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-autosize-hers.xml": {
+    "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed.xml",
+    "hvac_heat_pump_capacity": "Autosize",
+    "hvac_heat_pump_backup_capacity": "Autosize"
+  },
+  "sample_files/base-hvac-air-to-air-heat-pump-var-speed-autosize-maxload-supplemental-backup.xml": {
     "parent_hpxml": "sample_files/base-hvac-air-to-air-heat-pump-var-speed.xml",
     "hvac_heat_pump_capacity": "Autosize (MaxLoad)",
     "hvac_heat_pump_backup_capacity": "Autosize (Supplemental)"

@@ -530,6 +530,12 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     _default_hpxml, default_hpxml_bldg = _test_measure()
     _test_default_building_construction_values(default_hpxml_bldg, 21600, 8.0, 2, 1, -7)
 
+    # Test defaults w/ zero bedrooms
+    hpxml_bldg.building_construction.number_of_bedrooms = 0
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    _default_hpxml, default_hpxml_bldg = _test_measure()
+    _test_default_building_construction_values(default_hpxml_bldg, 21600, 8.0, 1, 1, -7)
+
     # Test defaults w/ belly-and-wing foundation
     hpxml, hpxml_bldg = _create_hpxml('base-foundation-belly-wing-skirt.xml')
     hpxml_bldg.building_construction.conditioned_building_volume = nil
@@ -1705,7 +1711,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
                                    distribution_system_idref: hpxml_bldg.hvac_distributions[0].id,
                                    heating_system_type: HPXML::HVACTypeFurnace,
                                    heating_system_fuel: HPXML::FuelTypeElectricity,
-                                   heating_efficiency_afue: 1,
+                                   heating_efficiency_percent: 1,
                                    fraction_heat_load_served: 1.0,
                                    fan_watts_per_cfm: 0.55,
                                    fan_motor_type: HPXML::HVACFanMotorTypeBPM)
@@ -4380,7 +4386,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.clothes_washers[0].monthly_multipliers = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_clothes_washer_values(default_hpxml_bldg.clothes_washers[0], false, HPXML::LocationConditionedSpace, 0.331, 704.0, 0.08, 0.58, 23.0, 2.874, 999, 1.0, default_cw_sched['WeekdayScheduleFractions'], default_cw_sched['WeekendScheduleFractions'], default_cw_sched['MonthlyScheduleMultipliers'])
+    _test_default_clothes_washer_values(default_hpxml_bldg.clothes_washers[0], false, HPXML::LocationConditionedSpace, 0.331, 704.0, 0.08, 0.58, 23.0, 2.874, 6.0, 1.0, default_cw_sched['WeekdayScheduleFractions'], default_cw_sched['WeekendScheduleFractions'], default_cw_sched['MonthlyScheduleMultipliers'])
   end
 
   def test_clothes_dryers
@@ -4500,12 +4506,6 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     _default_hpxml, default_hpxml_bldg = _test_measure()
     default_dw_sched = @default_schedules_csv_data[SchedulesFile::Columns[:Dishwasher].name]
     _test_default_dishwasher_values(default_hpxml_bldg.dishwashers[0], false, HPXML::LocationConditionedSpace, 467.0, 0.12, 1.09, 33.12, 4.0, 12, 1.0, default_dw_sched['WeekdayScheduleFractions'], default_dw_sched['WeekendScheduleFractions'], default_dw_sched['MonthlyScheduleMultipliers'])
-
-    # Test defaults before 301-2019 Addendum A
-    hpxml.header.eri_calculation_versions = ['2019']
-    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
-    _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_dishwasher_values(default_hpxml_bldg.dishwashers[0], false, HPXML::LocationConditionedSpace, 467.0, 999, 999, 999, 999, 12, 1.0, default_dw_sched['WeekdayScheduleFractions'], default_dw_sched['WeekendScheduleFractions'], default_dw_sched['MonthlyScheduleMultipliers'])
   end
 
   def test_refrigerators

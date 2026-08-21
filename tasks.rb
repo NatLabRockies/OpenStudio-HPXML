@@ -248,6 +248,7 @@ def apply_hpxml_modification_ashrae_140(hpxml)
     hpxml_bldg.doors << hpxml_bldg.doors[0].dup
     hpxml_bldg.doors[1].azimuth = 0
     hpxml_bldg.doors[1].id = 'Door2'
+    hpxml_bldg.doors[0].attached_to_wall_idref = hpxml_bldg.walls[0].id
   end
   hpxml_bldg.windows.each do |window|
     next if window.overhangs_depth.nil?
@@ -1946,7 +1947,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                      heating_system_type: HPXML::HVACTypeFurnace,
                                      heating_system_fuel: HPXML::FuelTypeElectricity,
                                      heating_capacity: 6400,
-                                     heating_efficiency_afue: 1,
+                                     heating_efficiency_percent: 1,
                                      fraction_heat_load_served: 0.1)
       hpxml_bldg.heating_systems.add(id: "HeatingSystem#{hpxml_bldg.heating_systems.size + 1}",
                                      distribution_system_idref: hpxml_bldg.hvac_distributions[1].id,
@@ -1960,7 +1961,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                      heating_system_type: HPXML::HVACTypeBoiler,
                                      heating_system_fuel: HPXML::FuelTypeElectricity,
                                      heating_capacity: 6400,
-                                     heating_efficiency_afue: 1,
+                                     heating_efficiency_percent: 1,
                                      fraction_heat_load_served: 0.1)
       hpxml_bldg.heating_systems.add(id: "HeatingSystem#{hpxml_bldg.heating_systems.size + 1}",
                                      distribution_system_idref: hpxml_bldg.hvac_distributions[3].id,
@@ -3591,42 +3592,23 @@ def download_g_functions
 end
 
 def download_simple_utility_rates
-  require 'net/http'
-  require 'uri'
+  require_relative 'HPXMLtoOpenStudio/resources/util'
+  require 'tempfile'
   require 'json'
   require 'csv'
-  require 'openssl'
 
-  # Load .env file if it exists
-  env_path = File.join(File.dirname(__FILE__), '.env')
-  if File.exist?(env_path)
-    File.foreach(env_path) do |line|
-      line.strip!
-      next if line.empty? || line.start_with?('#')
+  seds_path = File.join(File.dirname(__FILE__), 'SEDS.txt')
 
-      key, value = line.split('=', 2)
-      ENV[key.strip] = value.strip if key && value
+  if !File.exist? seds_path
+    tmpfile = Tempfile.new('rates')
+    UrlResolver.fetch('https://www.eia.gov/opendata/bulk/SEDS.zip', tmpfile)
+    zf = OpenStudio::UnzipFile.new(tmpfile.path.to_s)
+    zf.extractAllFiles('.')
+
+    if !File.exist? seds_path
+      fail "#{File.basename(seds_path)} not successfully retrieved."
     end
   end
-
-  # EIA API v2 SEDS endpoint. Register for a free key at:
-  # https://www.eia.gov/opendata/register.php
-  api_key = ENV['EIA_API_KEY']
-  if api_key.nil? || api_key.empty?
-    puts 'ERROR: EIA_API_KEY is not set.'
-    puts 'Options:'
-    puts '  1. Create a .env file in the project root with: EIA_API_KEY=<your_key_here>'
-    puts '  2. Set the environment variable: export EIA_API_KEY=<your_key_here>'
-    puts 'Register for a free key at https://www.eia.gov/opendata/register.php'
-    exit!
-  end
-
-  simple_rates_dir = File.join(File.dirname(__FILE__), 'ReportUtilityBills', 'resources', 'simple_rates')
-  FileUtils.mkdir_p(simple_rates_dir) unless File.exist?(simple_rates_dir)
-  filepath = File.join(simple_rates_dir, 'eia_fuel_rates_by_state.csv')
-
-  base_url = 'https://api.eia.gov/v2/seds/data/'
-  page_length = 5000
 
   # Residential fuel price series (MSN codes)
   msn_codes = {
@@ -3639,76 +3621,26 @@ def download_simple_utility_rates
 
   latest_rates = Hash.new { |h, k| h[k] = {} }
 
-  msn_codes.each do |msn, fuel|
-    puts "  Fetching SEDS series: #{msn} (#{fuel})..."
+  File.readlines(seds_path).each do |seds_line|
+    json = JSON.parse(seds_line)
+    msn_codes.each do |msn, fuel|
+      next if json['series_id'].nil?
+      next unless json['series_id'].start_with? "SEDS.#{msn}"
 
-    offset = 0
-    loop do
-      query_parts = [
-        "api_key=#{URI.encode_www_form_component(api_key)}",
-        'frequency=annual',
-        'data[0]=value',
-        "facets[seriesId][0]=#{URI.encode_www_form_component(msn)}",
-        'sort[0][column]=period',
-        'sort[0][direction]=asc',
-        "offset=#{offset}",
-        "length=#{page_length}"
-      ]
-      url = "#{base_url}?#{query_parts.join('&')}"
+      state = json['geography'].gsub('USA-', '').gsub('USA', 'US')
+      json['data'].each do |data|
+        next if data[1].to_f <= 0
 
-      parsed = nil
-      begin
-        uri = URI(url)
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-
-        request = Net::HTTP::Get.new(uri)
-        request['Accept'] = 'application/json'
-
-        response = http.request(request)
-
-        if response.is_a?(Net::HTTPSuccess)
-          parsed = JSON.parse(response.body)
-        else
-          puts "API Error: #{response.code}"
-        end
-      rescue JSON::ParserError => e
-        puts "JSON Parsing Error: #{e.message}"
-      rescue StandardError => e
-        puts "Network Error: #{e.message}"
+        latest_rates[state][fuel] = [data[0], Float(data[1])]
+        break # Found a non-zero value
       end
-
-      if parsed.nil? || parsed['response'].nil? || parsed['response']['data'].nil?
-        puts "Error: Unexpected API response for #{msn}: #{parsed.inspect}"
-        exit!
-      end
-
-      data  = parsed['response']['data']
-      total = parsed['response']['total'].to_i
-
-      data.each do |row|
-        state  = row['stateId']
-        period = row['period'].to_i
-        value  = row['value']
-
-        next if value.nil? || value.to_f == 0.0
-
-        existing = latest_rates[state][fuel]
-
-        next unless existing.nil? || period > existing[:period]
-
-        latest_rates[state][fuel] = {
-          period: period,
-          value: value.to_f
-        }
-      end
-
-      offset += data.size
-      break if offset >= total || data.empty?
     end
   end
 
+  FileUtils.rm(seds_path)
+
+  simple_rates_dir = File.join(File.dirname(__FILE__), 'ReportUtilityBills', 'resources', 'simple_rates')
+  filepath = File.join(simple_rates_dir, 'eia_fuel_rates_by_state.csv')
   puts "Writing to #{filepath}..."
 
   CSV.open(filepath, 'w') do |csv|
@@ -3720,10 +3652,10 @@ def download_simple_utility_rates
         next if entry.nil?
 
         csv << [
-          entry[:period],
+          entry[0],
           state,
           fuel,
-          entry[:value].round(4)
+          entry[1].round(4)
         ]
       end
     end
