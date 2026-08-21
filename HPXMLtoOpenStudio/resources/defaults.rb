@@ -6282,7 +6282,6 @@ module Defaults
   # @param water_heating_system [HPXML::WaterHeatingSystem] The HPXML water heating system of interest
   # @return [Double] COP of the heat pump (W/W)
   def self.get_water_heater_heat_pump_cop(water_heating_system)
-    # Based on simulations of the UEF test procedure at varying COPs
     if not water_heating_system.energy_factor.nil?
       # Based on RESNET-EF-Calculator-2017.xlsx
       uef = (0.6052 + water_heating_system.energy_factor) / 1.2101
@@ -6292,10 +6291,14 @@ module Defaults
       usage_bin = water_heating_system.usage_bin
     end
 
+    if usage_bin == HPXML::WaterHeaterUsageBinVerySmall
+      fail 'It is unlikely that a heat pump water heater falls into the very small bin of the First Hour Rating (FHR) test. Double check input.'
+    end
+
+    # Based on simulations of the UEF test procedure at varying COPs
+    # FIXME: Add link to zip file with simulations
     if water_heating_system.hpwh_voltage == HPXML::HPWHVoltage240
       case usage_bin
-      when HPXML::WaterHeaterUsageBinVerySmall
-        fail 'It is unlikely that a heat pump water heater falls into the very small bin of the First Hour Rating (FHR) test. Double check input.'
       when HPXML::WaterHeaterUsageBinLow
         cop = 0.9995 * uef + 0.0789
       when HPXML::WaterHeaterUsageBinMedium
@@ -6303,10 +6306,24 @@ module Defaults
       when HPXML::WaterHeaterUsageBinHigh
         cop = 0.9073 * uef + 0.0796
       end
-    elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated # FIXME: function of uef (need to run simulations to fit)
-      cop = 2.71
+    elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated
+      case usage_bin
+      when HPXML::WaterHeaterUsageBinLow
+        cop = 1.0003 * uef + 0.1102
+      when HPXML::WaterHeaterUsageBinMedium
+        cop = 0.9217 * uef + 0.1121
+      when HPXML::WaterHeaterUsageBinHigh
+        cop = 0.8764 * uef + 0.1151
+      end
     else # 120V shared
-      cop = 3.44
+      case usage_bin
+      when HPXML::WaterHeaterUsageBinLow
+        cop = 1.1386 * uef - 0.0470
+      when HPXML::WaterHeaterUsageBinMedium
+        cop = 0.9950 * uef + 0.0841
+      when HPXML::WaterHeaterUsageBinHigh
+        cop = 0.9489 * uef + 0.0846
+      end
     end
 
     return cop

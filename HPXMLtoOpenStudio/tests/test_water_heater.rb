@@ -961,15 +961,19 @@ class HPXMLtoOpenStudioWaterHeaterTest < Minitest::Test
       fuel = EPlus.fuel_type(water_heating_system.fuel_type)
       backup_cap = UnitConversions.convert(water_heating_system.backup_heating_capacity, 'Btu/hr', 'W') # W
       if hpxml_name == 'base-dhw-tank-heat-pump-ef.xml'
+        # EF, 240V
         u = 0.92
         cop = 2.89
       elsif hpxml_name == 'base-dhw-tank-heat-pump-120v.xml'
+        # UEF, 120V shared circuit
         u = 1.296
-        cop = 3.44
+        cop = 3.57
       elsif hpxml_name == 'base-dhw-tank-heat-pump-120v-dedicated-circuit.xml'
+        # UEF, 120V dedicated circuit
         u = 0.972
-        cop = 2.71
+        cop = 3.34
       else
+        # UEF, 240V
         u = 0.926
         cop = 3.29
       end
