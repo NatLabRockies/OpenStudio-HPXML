@@ -3353,15 +3353,29 @@ module Defaults
         end
 
       elsif water_heating_system.water_heater_type == HPXML::WaterHeaterTypeHeatPump
+
+        if water_heating_system.hpwh_voltage.nil?
+          water_heating_system.hpwh_voltage = HPXML::HPWHVoltage240
+          water_heating_system.hpwh_voltage_isdefaulted = true
+        end
+
         water_heating_system.additional_properties.cop = get_water_heater_heat_pump_cop(water_heating_system)
 
         if water_heating_system.heating_capacity.nil?
-          water_heating_system.heating_capacity = UnitConversions.convert(0.5, 'kW', 'Btu/hr').round
+          if water_heating_system.hpwh_voltage == HPXML::HPWHVoltage240
+            water_heating_system.heating_capacity = UnitConversions.convert(0.5, 'kW', 'Btu/hr').round
+          else
+            water_heating_system.heating_capacity = UnitConversions.convert(0.423, 'kW', 'Btu/hr').round
+          end
           water_heating_system.heating_capacity_isdefaulted = true
         end
 
         if water_heating_system.backup_heating_capacity.nil?
-          water_heating_system.backup_heating_capacity = UnitConversions.convert(4.5, 'kW', 'Btu/hr').round
+          if water_heating_system.hpwh_voltage == HPXML::HPWHVoltage240
+            water_heating_system.backup_heating_capacity = UnitConversions.convert(4.5, 'kW', 'Btu/hr').round
+          else
+            water_heating_system.backup_heating_capacity = 0.0 # No backup elements
+          end
           water_heating_system.backup_heating_capacity_isdefaulted = true
         end
 
@@ -3382,6 +3396,25 @@ module Defaults
         end
 
       end
+
+      if water_heating_system.has_mixing_valve.nil?
+        if not water_heating_system.mixing_valve_setpoint.nil?
+          water_heating_system.has_mixing_valve = true
+        elsif water_heating_system.temperature.to_f > 140
+          # Assuming 140F because most water heaters have that as the maximum setpoint, so anything above that
+          # would be a special case where the scalding risk goes up dramatically.
+          water_heating_system.has_mixing_valve = true
+        else
+          water_heating_system.has_mixing_valve = false
+        end
+        water_heating_system.has_mixing_valve_isdefaulted = true
+      end
+
+      if water_heating_system.has_mixing_valve && water_heating_system.mixing_valve_setpoint.nil?
+        water_heating_system.mixing_valve_setpoint = [125.0, water_heating_system.temperature.to_f].min
+        water_heating_system.mixing_valve_setpoint_isdefaulted = true
+      end
+
       next unless water_heating_system.location.nil?
 
       iecc_zone = hpxml_bldg.climate_and_risk_zones.climate_zone_ieccs.empty? ? nil : hpxml_bldg.climate_and_risk_zones.climate_zone_ieccs[0].zone
@@ -6249,7 +6282,6 @@ module Defaults
   # @param water_heating_system [HPXML::WaterHeatingSystem] The HPXML water heating system of interest
   # @return [Double] COP of the heat pump (W/W)
   def self.get_water_heater_heat_pump_cop(water_heating_system)
-    # Based on simulations of the UEF test procedure at varying COPs
     if not water_heating_system.energy_factor.nil?
       # Based on RESNET-EF-Calculator-2017.xlsx
       uef = (0.6052 + water_heating_system.energy_factor) / 1.2101
@@ -6259,15 +6291,39 @@ module Defaults
       usage_bin = water_heating_system.usage_bin
     end
 
-    case usage_bin
-    when HPXML::WaterHeaterUsageBinVerySmall
+    if usage_bin == HPXML::WaterHeaterUsageBinVerySmall
       fail 'It is unlikely that a heat pump water heater falls into the very small bin of the First Hour Rating (FHR) test. Double check input.'
-    when HPXML::WaterHeaterUsageBinLow
-      cop = 0.9995 * uef + 0.0789
-    when HPXML::WaterHeaterUsageBinMedium
-      cop = 0.9166 * uef + 0.0796
-    when HPXML::WaterHeaterUsageBinHigh
-      cop = 0.9073 * uef + 0.0796
+    end
+
+    # Based on simulations of the UEF test procedure at varying COPs
+    # FIXME: Add link to zip file with simulations
+    if water_heating_system.hpwh_voltage == HPXML::HPWHVoltage240
+      case usage_bin
+      when HPXML::WaterHeaterUsageBinLow
+        cop = 0.9995 * uef + 0.0789
+      when HPXML::WaterHeaterUsageBinMedium
+        cop = 0.9166 * uef + 0.0796
+      when HPXML::WaterHeaterUsageBinHigh
+        cop = 0.9073 * uef + 0.0796
+      end
+    elsif water_heating_system.hpwh_voltage == HPXML::HPWHVoltage120Dedicated
+      case usage_bin
+      when HPXML::WaterHeaterUsageBinLow
+        cop = 1.0003 * uef + 0.1102
+      when HPXML::WaterHeaterUsageBinMedium
+        cop = 0.9217 * uef + 0.1121
+      when HPXML::WaterHeaterUsageBinHigh
+        cop = 0.8764 * uef + 0.1151
+      end
+    else # 120V shared
+      case usage_bin
+      when HPXML::WaterHeaterUsageBinLow
+        cop = 1.0938 * uef + 0.08349
+      when HPXML::WaterHeaterUsageBinMedium
+        cop = 0.9950 * uef + 0.0841
+      when HPXML::WaterHeaterUsageBinHigh
+        cop = 0.9489 * uef + 0.0846
+      end
     end
 
     return cop
@@ -6810,8 +6866,17 @@ module Defaults
         end
       elsif component.is_a?(HPXML::PVSystem)
         voltages << HPXML::ElectricPanelVoltage240
-      elsif component.is_a?(HPXML::WaterHeatingSystem) ||
-            component.is_a?(HPXML::ClothesDryer) ||
+      elsif component.is_a?(HPXML::WaterHeatingSystem)
+        if component.fuel_type == HPXML::FuelTypeElectricity
+          if component.hpwh_voltage.nil? # Not HPWH
+            voltages << HPXML::ElectricPanelVoltage240
+          elsif component.hpwh_voltage == HPXML::HPWHVoltage240
+            voltages << HPXML::ElectricPanelVoltage240
+          else # 120V HPWH
+            voltages << HPXML::ElectricPanelVoltage120
+          end
+        end
+      elsif component.is_a?(HPXML::ClothesDryer) ||
             component.is_a?(HPXML::CookingRange)
         if component.fuel_type == HPXML::FuelTypeElectricity
           voltages << HPXML::ElectricPanelVoltage240

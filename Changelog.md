@@ -3,6 +3,9 @@
 __Features__
 - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
 - **Breaking change**: For heat pump water heaters, ``HeatingCapacity`` is now *input* rather than *output* capacity, similar to other water heater types.
+- Water heater updates:
+  - Allows modeling 120V HPWHs (including dedicated vs shared circuits) using `WaterHeatingSystem/HPWHVoltage`.
+  - Allows modeling water heaters with a mixing valve using `HasMixingValve` and `MixingValveSetpoint`.
 - For furnaces/boilers, allows heating efficiency with units of "Percent" as an alternative to "AFUE"; the two units are modeled identically.
 - Updates garage ventilation rate to be SLA=1/150 (same as a vented crawlspace).
 - Reverts E+ radiant exchange algorithm from CarrollMRT to ScriptF.
