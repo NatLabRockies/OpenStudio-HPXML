@@ -6318,7 +6318,7 @@ module Defaults
     else # 120V shared
       case usage_bin
       when HPXML::WaterHeaterUsageBinLow
-        cop = 1.1386 * uef - 0.0470
+        cop = 1.0938 * uef + 0.08349
       when HPXML::WaterHeaterUsageBinMedium
         cop = 0.9950 * uef + 0.0841
       when HPXML::WaterHeaterUsageBinHigh
