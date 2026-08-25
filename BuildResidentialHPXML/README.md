@@ -76,7 +76,7 @@ Path to the EPW file. Either this or the Zip Code input above must be provided.
 
 **Location: Site Type**
 
-The terrain/shielding of the home, for the infiltration model. Defaults to 'Suburban, Normal' for single-family detached and manufactured home and 'Suburban, Well-Shielded' for single-family attached and apartment units.
+The terrain/shielding of the home, for the infiltration model.
 
 - **Name:** ``location_site_type``
 - **Type:** ``Choice``
@@ -209,7 +209,7 @@ The number of bedrooms in the unit.
 
 **Geometry: Unit Number of Bathrooms**
 
-The number of bathrooms in the unit. Defaults to NumberofBedrooms/2 + 0.5.
+The number of bathrooms in the unit.
 
 - **Name:** ``geometry_unit_num_bathrooms``
 - **Type:** ``Choice``
@@ -276,7 +276,7 @@ The foundation type of the building. Garages are assumed to be over slab-on-grad
 
 - **Required:** ``true``
 
-- **Choices:** <br/>  - `Slab-on-Grade`<br/>  - `Crawlspace, Vented`<br/>  - `Crawlspace, Unvented`<br/>  - `Crawlspace, Conditioned`<br/>  - `Basement, Unconditioned`<br/>  - `Basement, Unconditioned, Half Above-Grade`<br/>  - `Basement, Conditioned`<br/>  - `Basement, Conditioned, Half Above-Grade`<br/>  - `Ambient`<br/>  - `Above Apartment`<br/>  - `Belly and Wing, With Skirt`<br/>  - `Belly and Wing, No Skirt`<br/>  - `Detailed Example: Crawlspace, Vented, Above-Grade`<br/>  - `ASHRAE 140 Tests: Basement, Conditioned`<br/>  - `ASHRAE 140 Tests: Basement, Unconditioned`
+- **Choices:** <br/>  - `Slab-on-Grade`<br/>  - `Crawlspace, Vented`<br/>  - `Crawlspace, Unvented`<br/>  - `Basement, Unconditioned`<br/>  - `Basement, Unconditioned, Half Above-Grade`<br/>  - `Basement, Conditioned`<br/>  - `Basement, Conditioned, Half Above-Grade`<br/>  - `Ambient`<br/>  - `Above Apartment`<br/>  - `Belly and Wing, With Skirt`<br/>  - `Belly and Wing, No Skirt`<br/>  - `Detailed Example: Crawlspace, Vented, Above-Grade`<br/>  - `ASHRAE 140 Tests: Basement, Conditioned`<br/>  - `ASHRAE 140 Tests: Basement, Unconditioned`
 
 
 - **Default:** `Crawlspace, Vented`
