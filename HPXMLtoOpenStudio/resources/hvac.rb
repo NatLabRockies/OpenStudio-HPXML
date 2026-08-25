@@ -5592,24 +5592,6 @@ module HVAC
     return UnitConversions.convert(net_rated_capacity, 'Btu/hr', 'ton') * UnitConversions.convert(rated_cfm_per_ton, 'cfm', output_units)
   end
 
-  # TODO
-  #
-  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
-  # @param heating_system [TODO] TODO
-  # @param cooling_system [TODO] TODO
-  # @return [TODO] TODO
-  def self.is_attached_heating_and_cooling_systems(hpxml_bldg, heating_system, cooling_system)
-    # Now only allows furnace+AC
-    if not ((hpxml_bldg.heating_systems.include? heating_system) && (hpxml_bldg.cooling_systems.include? cooling_system))
-      return false
-    end
-    if not (heating_system.heating_system_type == HPXML::HVACTypeFurnace && cooling_system.cooling_system_type == HPXML::HVACTypeCentralAirConditioner)
-      return false
-    end
-
-    return true
-  end
-
   # Returns a list of HPXML HVAC (heating/cooling) systems, incorporating whether multiple systems are
   # connected to the same distribution system (e.g., a furnace + central air conditioner w/ the same ducts).
   #
