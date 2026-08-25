@@ -1,7 +1,7 @@
 ## OpenStudio-HPXML v1.13.0
 
 __Features__
-- Updates to HPXML v5.0-rc2.
+- Updates to HPXML v5.0.
   - **Breaking change**: `Roof/RoofType="cool roof"` replaced by `Roof/CoolRoof="true"`.
   - `Roof/RoofColor` now has an additional option of "white".
 - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
