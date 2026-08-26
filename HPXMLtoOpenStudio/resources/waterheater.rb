@@ -240,7 +240,7 @@ module Waterheater
     loc_duct_exhaust = water_heating_system.hpwh_ducting_exhaust
 
     # Amb temp & RH sensors, temp sensor shared across programs
-    amb_temp_sensor, amb_rh_sensors = apply_hpwh_loc_temp_rh_sensors(model, obj_name, loc_space, loc_schedule, spaces)
+    amb_temp_sensor, amb_rh_sensors = apply_hpwh_loc_temp_rh_sensors(model, obj_name, loc_space, loc_schedule)
     hpwh_zone_heat_gain_program = apply_hpwh_zone_heat_gain_program(model, obj_name, loc_space, loc_duct_exhaust, hpwh_tamb, hpwh_rhamb, tank, coil, fan, amb_temp_sensor, amb_rh_sensors, unit_multiplier)
 
     # EMS for the HPWH control logic
@@ -249,7 +249,7 @@ module Waterheater
     # ProgramCallingManagers
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{obj_name} ProgramManager",
+      name: "#{hpwh_ctrl_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [hpwh_ctrl_program, hpwh_zone_heat_gain_program]
     )
@@ -559,12 +559,7 @@ module Waterheater
         end
       end
 
-      mains_temp_sensor = Model.add_ems_sensor(
-        model,
-        name: 'Mains Temperature',
-        output_var_or_meter_name: 'Site Mains Water Temperature',
-        key_name: 'Environment'
-      )
+      mains_temp_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteMainsWaterTemp }
 
       # Program
       combi_ctrl_program = Model.add_ems_program(
@@ -606,7 +601,7 @@ module Waterheater
       # ProgramCallingManagers
       Model.add_ems_program_calling_manager(
         model,
-        name: "#{combi_sys_id} ProgramManager",
+        name: "#{combi_ctrl_program.name} manager",
         calling_point: 'BeginZoneTimestepAfterInitHeatBalance',
         ems_programs: [combi_ctrl_program]
       )
@@ -893,7 +888,7 @@ module Waterheater
     # Program
     swh_program = Model.add_ems_program(
       model,
-      name: "#{obj_name} Controller"
+      name: "#{obj_name} controls"
     )
     swh_program.addLine("If #{coll_sensor.name} > #{tank_source_sensor.name}")
     swh_program.addLine("Set #{swh_pump_actuator.name} = 100 * #{unit_multiplier}")
@@ -904,7 +899,7 @@ module Waterheater
     # ProgramCallingManager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{obj_name} Control",
+      name: "#{swh_program.name} manager",
       calling_point: 'InsideHVACSystemIterationLoop',
       ems_programs: [swh_program]
     )
@@ -978,7 +973,8 @@ module Waterheater
     )
 
     # Assumptions and values
-    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W') * unit_multiplier # kW
+    cop = water_heating_system.additional_properties.cop
+    cap = UnitConversions.convert(water_heating_system.heating_capacity, 'Btu/hr', 'W') * cop * unit_multiplier # W, output capacity
     shr = 0.88 # unitless
 
     # Calculate an altitude adjusted rated evaporator wetbulb temperature
@@ -992,20 +988,33 @@ module Waterheater
     w_adj = Psychrometrics.w_fT_Twb_P(dp_rated, dp_rated, p_atm)
     twb_adj = Psychrometrics.Twb_fT_w_P(runner, rated_edb_F, w_adj, p_atm)
 
-    cop = water_heating_system.additional_properties.cop
-
     # Adjust COP based on RESNET HERS Addendum 77
-    if not water_heating_system.hpwh_containment_volume.nil?
+    cv = water_heating_system.hpwh_containment_volume
+    if not cv.nil?
+      # Very small containment volume and low COP can result in E+ error (Rated total cooling capacity is zero or less)
+      # Prevent that by setting a minimum CV value that avoids the error
+      # Equation determined empirically by running different combinations of CV & UEF using base-dhw-tank-heat-pump-confined-space.xml
+      #   UEF  | COP  | Min CV
+      #   ---  | ---  | ------
+      #   2.00 | 2.09 | 105
+      #   2.25 | 2.37 | 85
+      #   2.50 | 2.64 | 70
+      #   2.75 | 2.91 | 60
+      #   3.00 | 3.19 | 55
+      #   3.25 | 3.46 | 45
+      min_cv = 347.57 * cop**-1.631
+      cv = [cv, min_cv].max
+
       if not water_heating_system.hpwh_confined_space_without_mitigation
-        if water_heating_system.hpwh_containment_volume < 1000.0
+        if cv < 1000.0
           runner.registerWarning("HPWH COP adjustment based on HPWHContainmentVolume will not be applied to #{water_heating_system.id} because HPWHInConfinedSpaceWithoutMitigation is not 'true'.")
         end
       else
         # FUTURE: apply for 120V HPWH and other system types that the correction may not be accurate for
-        if water_heating_system.hpwh_containment_volume < 450.0 && (water_heating_system.backup_heating_capacity == 0.0)
+        if cv < 450.0 && (water_heating_system.backup_heating_capacity == 0.0)
           runner.registerWarning("Heat pump water heater: #{water_heating_system.id} has no backup electric resistance element, COP adjustment for confined space may not be accurate when the containment space volume is below 450 cubic feet.")
         end
-        rv = [water_heating_system.hpwh_containment_volume / 1500.0, 1.0].min
+        rv = [cv / 1500.0, 1.0].min
         cop = (cop - 0.92) * (1 - (1.009 * Math.exp(-5.492 * rv))) + 0.92
       end
     end
@@ -1027,15 +1036,6 @@ module Waterheater
     coil.additionalProperties.setFeature('HPXML_ID', water_heating_system.id) # Used by reporting measure
 
     return coil
-  end
-
-  # Returns the heating input capacity, calculated as the heating rated (output) capacity divided by the rated efficiency.
-  #
-  # @param heating_capacity [Double]
-  # @param heating_efficiency_cop [Double] Rated efficiency [COP]
-  # @return [Double] The heating input capacity [Btu/hr]
-  def self.get_heating_input_capacity(heating_capacity, heating_efficiency_cop)
-    return heating_capacity / UnitConversions.convert(heating_efficiency_cop, 'btu/hr', 'w')
   end
 
   # Adds a WaterHeaterStratified object for the HPWH to the OpenStudio model.
@@ -1125,10 +1125,11 @@ module Waterheater
   # @param obj_name [String] Name for the OpenStudio object
   # @param loc_space [OpenStudio::Model::Space] The space where the water heater is located
   # @param loc_schedule [OpenStudio::Model::ScheduleConstant] The temperature schedule, if not located in a space
-  # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
   # @return [Array<OpenStudio::Model::EnergyManagementSystemSensor, Array<OpenStudio::Model::EnergyManagementSystemSensor>>] HPWH ambient temperature sensor, One or more HPWH ambient RH sensors
-  def self.apply_hpwh_loc_temp_rh_sensors(model, obj_name, loc_space, loc_schedule, spaces)
-    conditioned_zone = spaces[HPXML::LocationConditionedSpace].thermalZone.get
+  def self.apply_hpwh_loc_temp_rh_sensors(model, obj_name, loc_space, loc_schedule)
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    rh_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirRH }
+    rh_in_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorIndoorAirRH }
 
     rh_sensors = []
     if not loc_schedule.nil?
@@ -1138,34 +1139,13 @@ module Waterheater
         output_var_or_meter_name: 'Schedule Value',
         key_name: loc_schedule.name
       )
-
       if loc_schedule.name.get == HPXML::LocationOtherNonFreezingSpace
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb rh",
-          output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
-          key_name: 'Environment'
-        )
+        rh_sensors << rh_out_sensor
       elsif loc_schedule.name.get == HPXML::LocationOtherHousingUnit
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb rh",
-          output_var_or_meter_name: 'Zone Air Relative Humidity',
-          key_name: conditioned_zone.name
-        )
+        rh_sensors << rh_in_sensor
       else
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb1 rh",
-          output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
-          key_name: 'Environment'
-        )
-        rh_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{obj_name} amb2 rh",
-          output_var_or_meter_name: 'Zone Air Relative Humidity',
-          key_name: conditioned_zone.name
-        )
+        rh_sensors << rh_out_sensor
+        rh_sensors << rh_in_sensor
       end
     elsif not loc_space.nil?
       amb_temp_sensor = Model.add_ems_sensor(
@@ -1174,7 +1154,6 @@ module Waterheater
         output_var_or_meter_name: 'Zone Mean Air Temperature',
         key_name: loc_space.thermalZone.get.name
       )
-
       rh_sensors << Model.add_ems_sensor(
         model,
         name: "#{obj_name} amb rh",
@@ -1182,19 +1161,8 @@ module Waterheater
         key_name: loc_space.thermalZone.get.name
       )
     else # Located outside
-      amb_temp_sensor = Model.add_ems_sensor(
-        model,
-        name: "#{obj_name} amb temp",
-        output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
-        key_name: 'Environment'
-      )
-
-      rh_sensors << Model.add_ems_sensor(
-        model,
-        name: "#{obj_name} amb rh",
-        output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
-        key_name: 'Environment'
-      )
+      amb_temp_sensor = t_out_sensor
+      rh_sensors << rh_out_sensor
     end
     return amb_temp_sensor, rh_sensors
   end
@@ -1233,14 +1201,11 @@ module Waterheater
       hpwh_sens = Model.add_other_equipment(
         model,
         name: "#{obj_name} sens",
-        end_use: nil,
         space: loc_space,
-        design_level: 0,
         frac_radiant: 0,
         frac_latent: 0,
         frac_lost: 0,
-        schedule: model.alwaysOnDiscreteSchedule,
-        fuel_type: nil
+        schedule: model.alwaysOnDiscreteSchedule
       )
       sens_act_actuator = Model.add_ems_actuator(
         name: "#{hpwh_sens.name} act",
@@ -1251,14 +1216,11 @@ module Waterheater
       hpwh_lat = Model.add_other_equipment(
         model,
         name: "#{obj_name} lat",
-        end_use: nil,
         space: loc_space,
-        design_level: 0,
         frac_radiant: 0,
         frac_latent: 1,
         frac_lost: 0,
-        schedule: model.alwaysOnDiscreteSchedule,
-        fuel_type: nil
+        schedule: model.alwaysOnDiscreteSchedule
       )
       lat_act_actuator = Model.add_ems_actuator(
         name: "#{hpwh_lat.name} act",
@@ -1333,11 +1295,11 @@ module Waterheater
   # @param hpwh_bottom_element_sp [OpenStudio::Model::ScheduleConstant] HPWH bottom element setpoint schedule
   # @param min_temp [Double] Minimum temperature for compressor operation (F)
   # @param max_temp [Double] Maximum temperature for compressor operation (F)
-  # @param sensted_setpoint_schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] Setpoint temperature schedule (sensed)
+  # @param sensed_setpoint_schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] Setpoint temperature schedule (sensed)
   # @param control_setpoint_schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] Setpoint temperature schedule (controlled)
   # @param schedules_file [SchedulesFile] SchedulesFile wrapper class instance of detailed schedule files
   # @return [OpenStudio::Model::EnergyManagementSystemProgram] The HPWH control program
-  def self.apply_hpwh_control_program(runner, model, obj_name, water_heating_system, amb_temp_sensor, hpwh_top_element_sp, hpwh_bottom_element_sp, min_temp, max_temp, sensted_setpoint_schedule, control_setpoint_schedule, schedules_file)
+  def self.apply_hpwh_control_program(runner, model, obj_name, water_heating_system, amb_temp_sensor, hpwh_top_element_sp, hpwh_bottom_element_sp, min_temp, max_temp, sensed_setpoint_schedule, control_setpoint_schedule, schedules_file)
     # Lower element is enabled if the ambient air temperature prevents the HP from running
     leschedoverride_actuator = Model.add_ems_actuator(
       name: "#{obj_name} LESchedOverride",
@@ -1369,7 +1331,7 @@ module Waterheater
       model,
       name: "#{obj_name} T_set",
       output_var_or_meter_name: 'Schedule Value',
-      key_name: sensted_setpoint_schedule.name
+      key_name: sensed_setpoint_schedule.name
     )
 
     op_mode_schedule = nil
@@ -1724,7 +1686,6 @@ module Waterheater
       name: "#{Constants::ObjectTypeWaterHeaterAdjustment}#{cnt + 1}",
       end_use: "#{Constants::ObjectTypeWaterHeaterAdjustment}#{cnt + 1}",
       space: model.getSpaces[0],
-      design_level: 0.01,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: 1,
@@ -1756,7 +1717,7 @@ module Waterheater
     # EMS Program Calling Manager
     Model.add_ems_program_calling_manager(
       model,
-      name: "#{ec_adj_program.name} calling manager",
+      name: "#{ec_adj_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [ec_adj_program]
     )

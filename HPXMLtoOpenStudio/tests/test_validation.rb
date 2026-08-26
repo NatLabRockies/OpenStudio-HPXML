@@ -75,7 +75,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'dehumidifier-fraction-served' => ['Expected sum(FractionDehumidificationLoadServed) to be less than or equal to 1 [context: /HPXML/Building/BuildingDetails, id: "MyBuilding"]'],
                             'dhw-frac-load-served' => ['Expected sum(FractionDHWLoadServed) to be 1 [context: /HPXML/Building/BuildingDetails, id: "MyBuilding"]'],
                             'dhw-invalid-ef-tank' => ['Expected EnergyFactor to be less than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="storage water heater"], id: "WaterHeatingSystem1"]'],
-                            'dhw-invalid-uef-tank-heat-pump' => ['Expected UniformEnergyFactor to be greater than 1 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="heat pump water heater"], id: "WaterHeatingSystem1"]'],
+                            'dhw-invalid-uef-tank-heat-pump' => ['Expected UniformEnergyFactor to be greater than or equal to 1.45 [context: /HPXML/Building/BuildingDetails/Systems/WaterHeating/WaterHeatingSystem[WaterHeaterType="heat pump water heater"], id: "WaterHeatingSystem1"]'],
                             'dishwasher-location' => ['A location is specified as "garage" but no surfaces were found adjacent to this space type.'],
                             'duct-leakage-cfm25' => ["The value '-2.0' is less than the minimum value allowed",
                                                      "The value '-3.0' is less than the minimum value allowed"],
@@ -83,8 +83,8 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                      "The value '-3.0' is less than the minimum value allowed"],
                             'duct-leakage-percent' => ['Expected Value to be less than 1 [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/DuctLeakageMeasurement/DuctLeakage[Units="Percent"], id: "HVACDistribution1"]'],
                             'duct-location' => ['A location is specified as "garage" but no surfaces were found adjacent to this space type.'],
-                            'duct-location-unconditioned-space' => ["Expected DuctLocation to be 'conditioned space' or 'basement - conditioned' or 'basement - unconditioned' or 'crawlspace - vented' or 'crawlspace - unvented' or 'crawlspace - conditioned' or 'attic - vented' or 'attic - unvented' or 'garage' or 'exterior wall' or 'under slab' or 'roof deck' or 'outside' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space' or 'manufactured home belly' [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/Ducts, id: \"Ducts1\"]",
-                                                                    "Expected DuctLocation to be 'conditioned space' or 'basement - conditioned' or 'basement - unconditioned' or 'crawlspace - vented' or 'crawlspace - unvented' or 'crawlspace - conditioned' or 'attic - vented' or 'attic - unvented' or 'garage' or 'exterior wall' or 'under slab' or 'roof deck' or 'outside' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space' or 'manufactured home belly' [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/Ducts, id: \"Ducts2\"]"],
+                            'duct-location-unconditioned-space' => ["Expected DuctLocation to be 'conditioned space' or 'basement - conditioned' or 'basement - unconditioned' or 'crawlspace - vented' or 'crawlspace - unvented' or 'attic - vented' or 'attic - unvented' or 'garage' or 'exterior wall' or 'under slab' or 'roof deck' or 'outside' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space' or 'manufactured home belly' [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/Ducts, id: \"Ducts1\"]",
+                                                                    "Expected DuctLocation to be 'conditioned space' or 'basement - conditioned' or 'basement - unconditioned' or 'crawlspace - vented' or 'crawlspace - unvented' or 'attic - vented' or 'attic - unvented' or 'garage' or 'exterior wall' or 'under slab' or 'roof deck' or 'outside' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space' or 'manufactured home belly' [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution/Ducts, id: \"Ducts2\"]"],
                             'emissions-electricity-schedule' => ['Expected NumberofHeaderRows to be greater than or equal to 0',
                                                                  'Expected ColumnNumber to be greater than or equal to 1'],
                             'enclosure-attic-missing-roof' => ['There must be at least one roof adjacent to "attic - unvented". [context: /HPXML/Building/BuildingDetails/Enclosure[*/*[InteriorAdjacentTo="attic - unvented" or ExteriorAdjacentTo="attic - unvented"]], id: "MyBuilding"]'],
@@ -148,6 +148,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'hvac-location-heat-pump' => ['A location is specified as "basement - unconditioned" but no surfaces were found adjacent to this space type.'],
                             'hvac-msac-not-var-speed' => ["Expected CompressorType to be 'variable speed'"],
                             'hvac-mshp-not-var-speed' => ["Expected CompressorType to be 'variable speed'"],
+                            'hvac-research-features-latdeg-blower-off-delay-value' => ['Expected LatentDegradationModel/HVACBlowerOffDelay to be greater than or equal to 0'],
                             'hvac-research-features-timestep-ten-mins' => ['Expected Timestep to be 1 if OnOffThermostatDeadbandTemperature is specified',
                                                                            'Expected Timestep to be 1 if HeatPumpBackupCapacityIncrement is specified'],
                             'hvac-research-features-timestep-missing' => ['Expected Timestep to be 1 if OnOffThermostatDeadbandTemperature is specified',
@@ -241,11 +242,12 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'invalid-window-height' => ['Expected DistanceToBottomOfWindow to be greater than DistanceToTopOfWindow [context: /HPXML/Building/BuildingDetails/Enclosure/Windows/Window/Overhangs[number(Depth) > 0], id: "Window2"]'],
                             'leakiness-description-missing-year-built' => ['Expected BuildingSummary/BuildingConstruction/YearBuilt'],
                             'lighting-fractions' => ['Expected sum(LightingGroup/FractionofUnitsInLocation) for Location="interior" to be less than or equal to 1 [context: /HPXML/Building/BuildingDetails/Lighting, id: "MyBuilding"]'],
+                            'low-hpwh-containment-volume' => ['Expected HPWHContainmentVolume to be greater than or equal to 32.'],
                             'manufactured-home-reference-duct' => ['There are references to "manufactured home belly" or "manufactured home underbelly" but ResidentialFacilityType is not "manufactured home".',
                                                                    'A location is specified as "manufactured home belly" but no surfaces were found adjacent to the "manufactured home underbelly" space type.'],
                             'manufactured-home-reference-water-heater' => ['There are references to "manufactured home belly" or "manufactured home underbelly" but ResidentialFacilityType is not "manufactured home".',
                                                                            'A location is specified as "manufactured home belly" but no surfaces were found adjacent to the "manufactured home underbelly" space type.',
-                                                                           "Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'crawlspace - conditioned' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'"],
+                                                                           "Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'"],
                             'manufactured-home-reference-floor' => ['There are references to "manufactured home belly" or "manufactured home underbelly" but ResidentialFacilityType is not "manufactured home".',
                                                                     'There must be at least one ceiling adjacent to "crawlspace - vented".'],
                             'missing-attached-to-space-wall' => ['Expected AttachedToSpace'],
@@ -277,7 +279,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'negative-autosizing-factors' => ['Expected CoolingAutosizingFactor to be greater than 0',
                                                               'Expected HeatingAutosizingFactor to be greater than 0',
                                                               'Expected BackupHeatingAutosizingFactor to be greater than 0'],
-                            'negative-hpwh-containment-volume' => ['Expected HPWHContainmentVolume to be greater than 0.'],
                             'panel-zero-total-breaker-spaces' => ["Element 'RatedTotalSpaces': [facet 'minExclusive'] The value '0' must be greater than '0'."],
                             'panel-without-required-system' => ['Expected AttachedToComponent'],
                             'panel-with-unrequired-system' => ['Expected no AttachedToComponent'],
@@ -292,7 +293,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'vehicle-ev-multiple-BEV' => ['Expected at most one Vehicle/VehicleType/BatteryElectricVehicle [context: /HPXML/Building/BuildingDetails/Systems/Vehicles, id: "MyBuilding"]'],
                             'vehicle-ev-invalid-fuel-economy-units' => ["Expected ../../FuelEconomyCombined/Units to be 'kWh/mile' or 'mile/kWh' or 'mpge' [context: /HPXML/Building/BuildingDetails/Systems/Vehicles/Vehicle/VehicleType/BatteryElectricVehicle, id: \"Vehicle1\"]"],
                             'water-heater-location' => ['A location is specified as "crawlspace - vented" but no surfaces were found adjacent to this space type.'],
-                            'water-heater-location-other' => ["Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'crawlspace - conditioned' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'"],
+                            'water-heater-location-other' => ["Expected Location to be 'conditioned space' or 'basement - unconditioned' or 'basement - conditioned' or 'attic - unvented' or 'attic - vented' or 'garage' or 'crawlspace - unvented' or 'crawlspace - vented' or 'other exterior' or 'other housing unit' or 'other heated space' or 'other multifamily buffer space' or 'other non-freezing space'"],
                             'water-heater-recovery-efficiency' => ['Expected RecoveryEfficiency to be greater than EnergyFactor'],
                             'wrong-infiltration-method-blower-door' => ['Expected Enclosure/AirInfiltration/AirInfiltrationMeasurement[BuildingAirLeakage/AirLeakage | EffectiveLeakageArea | SpecificLeakageArea]'],
                             'wrong-infiltration-method-default-table' => ['Expected Enclosure/AirInfiltration/AirInfiltrationMeasurement[LeakinessDescription]'] }
@@ -325,7 +326,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.water_heating_systems[0].recovery_efficiency = nil
       when 'dhw-invalid-uef-tank-heat-pump'
         hpxml, hpxml_bldg = _create_hpxml('base-dhw-tank-heat-pump.xml')
-        hpxml_bldg.water_heating_systems[0].uniform_energy_factor = 1.0
+        hpxml_bldg.water_heating_systems[0].uniform_energy_factor = 1.4
       when 'dishwasher-location'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.dishwashers[0].location = HPXML::LocationGarage
@@ -550,6 +551,9 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.cooling_systems[0].primary_system = true
         hpxml_bldg.heat_pumps[-1].primary_heating_system = false
         hpxml_bldg.heat_pumps[-1].primary_cooling_system = false
+      when 'hvac-research-features-latdeg-blower-off-delay-value'
+        hpxml, _hpxml_bldg = _create_hpxml('base.xml')
+        hpxml.header.latent_degradation_model_blower_off_delay = -1
       when 'hvac-research-features-timestep-ten-mins'
         hpxml, _hpxml_bldg = _create_hpxml('base-hvac-air-to-air-heat-pump-1-speed-research-features.xml')
         hpxml.header.timestep = 10
@@ -800,6 +804,9 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         int_cfl = hpxml_bldg.lighting_groups.find { |lg| lg.location == HPXML::LocationInterior && lg.lighting_type == HPXML::LightingTypeCFL }
         int_cfl.fraction_of_units_in_location = 0.8
+      when 'low-hpwh-containment-volume'
+        hpxml, hpxml_bldg = _create_hpxml('base-dhw-tank-heat-pump-confined-space.xml')
+        hpxml_bldg.water_heating_systems[0].hpwh_containment_volume = 30
       when 'manufactured-home-reference-duct'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.hvac_distributions[0].ducts[1].duct_location = HPXML::LocationManufacturedHomeBelly
@@ -884,9 +891,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.heat_pumps[0].heating_autosizing_factor = -0.5
         hpxml_bldg.heat_pumps[0].cooling_autosizing_factor = -1.2
         hpxml_bldg.heat_pumps[0].backup_heating_autosizing_factor = -0.1
-      when 'negative-hpwh-containment-volume'
-        hpxml, hpxml_bldg = _create_hpxml('base-dhw-tank-heat-pump-confined-space.xml')
-        hpxml_bldg.water_heating_systems[0].hpwh_containment_volume = -10.0
       when 'panel-zero-total-breaker-spaces'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.electric_panels.add(id: 'ElectricPanel1',
@@ -980,16 +984,26 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
   # Test warnings are correctly triggered during the XSD schema or Schematron validation
   def test_schema_schematron_warning_messages
     # Test case => Warning message(s)
-    all_expected_warnings = { 'battery-pv-output-power-low' => ['Max power output should typically be greater than or equal to 500 W.',
+    all_expected_warnings = { 'appliance-energyguide-label-inputs' => ['LabelElectricRate should typically be less than 0.5. [context: /HPXML/Building/BuildingDetails/Appliances/ClothesWasher[IntegratedModifiedEnergyFactor | ModifiedEnergyFactor], id: "ClothesWasher1"]',
+                                                                       'LabelGasRate should typically be greater than 0.5. [context: /HPXML/Building/BuildingDetails/Appliances/ClothesWasher[IntegratedModifiedEnergyFactor | ModifiedEnergyFactor], id: "ClothesWasher1"]',
+                                                                       'LabelAnnualGasCost should typically be greater than 5. [context: /HPXML/Building/BuildingDetails/Appliances/ClothesWasher[IntegratedModifiedEnergyFactor | ModifiedEnergyFactor], id: "ClothesWasher1"]',
+                                                                       'LabelUsage should typically be less than 20. [context: /HPXML/Building/BuildingDetails/Appliances/ClothesWasher[IntegratedModifiedEnergyFactor | ModifiedEnergyFactor], id: "ClothesWasher1"]',
+                                                                       'LabelElectricRate should typically be less than 0.5. [context: /HPXML/Building/BuildingDetails/Appliances/Dishwasher[RatedAnnualkWh | EnergyFactor], id: "Dishwasher1"]',
+                                                                       'LabelGasRate should typically be greater than 0.5. [context: /HPXML/Building/BuildingDetails/Appliances/Dishwasher[RatedAnnualkWh | EnergyFactor], id: "Dishwasher1"]',
+                                                                       'LabelAnnualGasCost should typically be greater than 5. [context: /HPXML/Building/BuildingDetails/Appliances/Dishwasher[RatedAnnualkWh | EnergyFactor], id: "Dishwasher1"]',
+                                                                       'LabelUsage should typically be less than 20. [context: /HPXML/Building/BuildingDetails/Appliances/Dishwasher[RatedAnnualkWh | EnergyFactor], id: "Dishwasher1"]'],
+                              'appliance-energyguide-label-inputs2' => ['LabelGasRate should typically be less than 5. [context: /HPXML/Building/BuildingDetails/Appliances/ClothesWasher[IntegratedModifiedEnergyFactor | ModifiedEnergyFactor], id: "ClothesWasher1"]',
+                                                                        'LabelGasRate should typically be less than 5. [context: /HPXML/Building/BuildingDetails/Appliances/Dishwasher[RatedAnnualkWh | EnergyFactor], id: "Dishwasher1"]'],
+                              'battery-pv-output-power-low' => ['Max power output should typically be greater than or equal to 500 W.',
                                                                 'Max power output should typically be greater than or equal to 500 W.',
                                                                 'Rated power output should typically be greater than or equal to 1000 W.'],
                               'dhw-capacities-low' => ['Heating capacity should typically be greater than or equal to 1000 Btu/hr.',
                                                        'Heating capacity should typically be greater than or equal to 1000 Btu/hr.',
                                                        'No space cooling specified, the model will not include space cooling energy use.'],
-                              'dhw-efficiencies-low' => ['EnergyFactor should typically be greater than or equal to 0.45.',
-                                                         'EnergyFactor should typically be greater than or equal to 0.45.',
-                                                         'EnergyFactor should typically be greater than or equal to 0.45.',
-                                                         'EnergyFactor should typically be greater than or equal to 0.45.',
+                              'dhw-efficiencies-low' => ['EnergyFactor should typically be greater than or equal to 0.4.',
+                                                         'EnergyFactor should typically be greater than or equal to 0.4.',
+                                                         'EnergyFactor should typically be greater than or equal to 0.4.',
+                                                         'EnergyFactor should typically be greater than or equal to 0.4.',
                                                          'No space cooling specified, the model will not include space cooling energy use.'],
                               'dhw-setpoint-low' => ['Hot water setpoint should typically be greater than or equal to 110 deg-F.'],
                               'erv-atre-low' => ['Adjusted total recovery efficiency should typically be at least half of the adjusted sensible recovery efficiency.'],
@@ -1022,20 +1036,13 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                         'Backup heating capacity should typically be greater than or equal to 1000 Btu/hr.',
                                                         'Backup heating capacity should typically be greater than or equal to 1000 Btu/hr.'],
                               'hvac-efficiencies-low' => ['Percent efficiency should typically be greater than or equal to 0.95.',
-                                                          'AFUE should typically be greater than or equal to 0.5.',
-                                                          'AFUE should typically be greater than or equal to 0.5.',
-                                                          'AFUE should typically be greater than or equal to 0.5.',
+                                                          'Percent efficiency should typically be greater than or equal to 0.5.',
                                                           'AFUE should typically be greater than or equal to 0.5.',
                                                           'AFUE should typically be greater than or equal to 0.5.',
                                                           'Percent efficiency should typically be greater than or equal to 0.5.',
-                                                          'SEER should typically be greater than or equal to 8.',
+                                                          'AFUE should typically be greater than or equal to 0.5.',
+                                                          'Percent efficiency should typically be greater than or equal to 0.5.',
                                                           'EER should typically be greater than or equal to 6.',
-                                                          'EER should typically be greater than or equal to 6.',
-                                                          'SEER should typically be greater than or equal to 8.',
-                                                          'HSPF should typically be greater than or equal to 6.',
-                                                          'SEER should typically be greater than or equal to 8.',
-                                                          'EER should typically be greater than or equal to 6.',
-                                                          'HSPF should typically be greater than or equal to 6.',
                                                           'EER should typically be greater than or equal to 6.',
                                                           'COP should typically be greater than or equal to 2.'],
                               'hvac-research-features-onoff-thermostat-temperature-capacitance-multiplier-one' => ['TemperatureCapacitanceMultiplier should typically be greater than 1 if OnOffThermostatDeadbandTemperature is specified'],
@@ -1074,6 +1081,20 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
       puts "[#{i + 1}/#{all_expected_warnings.size}] Testing #{warning_case}..."
       # Create HPXML object
       case warning_case
+      when 'appliance-energyguide-label-inputs'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.clothes_washers[0].label_electric_rate = 1.1
+        hpxml_bldg.clothes_washers[0].label_gas_rate = 0.1
+        hpxml_bldg.clothes_washers[0].label_annual_gas_cost = 1.1
+        hpxml_bldg.clothes_washers[0].label_usage *= 52
+        hpxml_bldg.dishwashers[0].label_electric_rate = 1.1
+        hpxml_bldg.dishwashers[0].label_gas_rate = 0.1
+        hpxml_bldg.dishwashers[0].label_annual_gas_cost = 1.1
+        hpxml_bldg.dishwashers[0].label_usage *= 52
+      when 'appliance-energyguide-label-inputs2'
+        hpxml, hpxml_bldg = _create_hpxml('base.xml')
+        hpxml_bldg.clothes_washers[0].label_gas_rate = 10.0
+        hpxml_bldg.dishwashers[0].label_gas_rate = 10.0
       when 'battery-pv-output-power-low'
         hpxml, hpxml_bldg = _create_hpxml('base-pv-battery.xml')
         hpxml_bldg.batteries[0].rated_power_output = 0.1
@@ -1142,32 +1163,30 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-multiple.xml')
         hpxml_bldg.hvac_systems.each do |hvac_system|
           if hvac_system.is_a? HPXML::HeatingSystem
-            case hvac_system.heating_system_type
-            when HPXML::HVACTypeElectricResistance,
-                 HPXML::HVACTypeStove
+            if not hvac_system.heating_efficiency_percent.nil?
               hvac_system.heating_efficiency_percent = 0.1
-            when HPXML::HVACTypeFurnace,
-                   HPXML::HVACTypeWallFurnace,
-                   HPXML::HVACTypeBoiler
+            end
+            if not hvac_system.heating_efficiency_afue.nil?
               hvac_system.heating_efficiency_afue = 0.1
             end
           elsif hvac_system.is_a? HPXML::CoolingSystem
-            case hvac_system.cooling_system_type
-            when HPXML::HVACTypeCentralAirConditioner
+            if not hvac_system.cooling_efficiency_seer.nil?
               hvac_system.cooling_efficiency_seer = 0.1
-              hvac_system.cooling_efficiency_eer = 0.1
-            when HPXML::HVACTypeRoomAirConditioner
+            end
+            if not hvac_system.cooling_efficiency_eer.nil?
               hvac_system.cooling_efficiency_eer = 0.1
             end
           elsif hvac_system.is_a? HPXML::HeatPump
-            case hvac_system.heat_pump_type
-            when HPXML::HVACTypeHeatPumpAirToAir,
-                HPXML::HVACTypeHeatPumpMiniSplit
+            if not hvac_system.cooling_efficiency_seer.nil?
               hvac_system.cooling_efficiency_seer = 0.1
+            end
+            if not hvac_system.cooling_efficiency_eer.nil?
               hvac_system.cooling_efficiency_eer = 0.1
+            end
+            if not hvac_system.heating_efficiency_hspf.nil?
               hvac_system.heating_efficiency_hspf = 0.1
-            when HPXML::HVACTypeHeatPumpGroundToAir
-              hvac_system.cooling_efficiency_eer = 0.1
+            end
+            if not hvac_system.heating_efficiency_cop.nil?
               hvac_system.heating_efficiency_cop = 0.1
             end
           end
@@ -1285,7 +1304,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'emissions-wrong-columns' => ['Emissions File has too few columns. Cannot find column number'],
                             'emissions-wrong-filename' => ["Emissions File file path 'invalid-wrong-filename.csv' does not exist."],
                             'emissions-wrong-rows' => ['Emissions File has invalid number of rows'],
-                            'geothermal-loop-multiple-attached-hps' => ["Multiple heat pumps found attached to geothermal loop 'GeothermalLoop1'."],
                             'heat-pump-backup-system-load-fraction' => ['Heat pump backup system cannot have a fraction heat load served specified.'],
                             'heat-pump-switchover-temp-elec-backup' => ['Switchover temperature should only be used for a heat pump with fossil fuel backup; use compressor lockout temperature instead.'],
                             'heat-pump-lockout-temps-elec-backup' => ['Similar compressor/backup lockout temperatures should only be used for a heat pump with fossil fuel backup.'],
@@ -1311,7 +1329,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'inconsistent-uncond-basement-within-infiltration-volume' => ['All unconditioned basements must have the same WithinInfiltrationVolume value.'],
                             'inconsistent-unvented-attic-within-infiltration-volume' => ['All unvented attics must have the same WithinInfiltrationVolume value.'],
                             'inconsistent-unvented-crawl-within-infiltration-volume' => ['All unvented crawlspaces must have the same WithinInfiltrationVolume value.'],
-                            'inconsistent-cond-crawl-within-infiltration-volume' => ['All conditioned crawlspaces must have the same WithinInfiltrationVolume value.'],
                             'inconsistent-vented-attic-ventilation-rate' => ['All vented attics must have the same VentilationRate.'],
                             'inconsistent-vented-attic-ventilation-rate2' => ['All vented attics must have the same VentilationRate.'],
                             'inconsistent-vented-crawl-ventilation-rate' => ['All vented crawlspaces must have the same VentilationRate.'],
@@ -1509,19 +1526,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         csv_data = CSV.read(File.join(File.dirname(hpxml.hpxml_path), scenario.elec_schedule_filepath))
         File.write(@tmp_csv_path, csv_data[0..-2].map(&:to_csv).join)
         hpxml.header.emissions_scenarios[1].elec_schedule_filepath = @tmp_csv_path
-      when 'geothermal-loop-multiple-attached-hps'
-        hpxml, hpxml_bldg = _create_hpxml('base-hvac-ground-to-air-heat-pump-detailed-geothermal-loop.xml')
-        hpxml_bldg.heat_pumps[0].fraction_cool_load_served = 0.5
-        hpxml_bldg.heat_pumps[0].fraction_heat_load_served = 0.5
-        hpxml_bldg.heat_pumps << hpxml_bldg.heat_pumps[0].dup
-        hpxml_bldg.heat_pumps[1].id = "HeatPump#{hpxml_bldg.heat_pumps.size}"
-        hpxml_bldg.heat_pumps[0].primary_heating_system = false
-        hpxml_bldg.heat_pumps[0].primary_cooling_system = false
-        hpxml_bldg.hvac_distributions.add(id: "HVACDistribution#{hpxml_bldg.hvac_distributions.size + 1}",
-                                          distribution_system_type: HPXML::HVACDistributionTypeDSE,
-                                          annual_cooling_dse: 1.0,
-                                          annual_heating_dse: 1.0)
-        hpxml_bldg.heat_pumps[1].distribution_system_idref = hpxml_bldg.hvac_distributions[1].id
       when 'heat-pump-backup-system-load-fraction'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-air-to-air-heat-pump-var-speed-backup-boiler.xml')
         hpxml_bldg.heating_systems[0].fraction_heat_load_served = 0.5
@@ -1582,6 +1586,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.site.ground_conductivity = 0.1
       when 'hvac-gshp-invalid-num-bore-holes'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-ground-to-air-heat-pump-detailed-geothermal-loop.xml')
+        hpxml_bldg.geothermal_loops[0].bore_config = HPXML::GeothermalLoopBoreConfigLopsidedU
         hpxml_bldg.geothermal_loops[0].num_bore_holes = 5
       when 'hvac-gshp-invalid-num-bore-holes-autosized'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-ground-to-air-heat-pump-1-speed.xml')
@@ -1652,12 +1657,6 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.foundations << fnd.dup
         hpxml_bldg.foundations[-1].id = 'Duplicate'
         hpxml_bldg.foundations[-1].within_infiltration_volume = true
-      when 'inconsistent-cond-crawl-within-infiltration-volume'
-        hpxml, hpxml_bldg = _create_hpxml('base-foundation-conditioned-crawlspace.xml')
-        fnd = hpxml_bldg.foundations.find { |f| f.foundation_type == HPXML::FoundationTypeCrawlspaceConditioned }
-        hpxml_bldg.foundations << fnd.dup
-        hpxml_bldg.foundations[-1].id = 'Duplicate'
-        hpxml_bldg.foundations[-1].within_infiltration_volume = false
       when 'inconsistent-vented-attic-ventilation-rate'
         hpxml, hpxml_bldg = _create_hpxml('base-atticroof-vented.xml')
         attic = hpxml_bldg.attics.find { |a| a.attic_type == HPXML::AtticTypeVented }
@@ -2025,8 +2024,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                  'HPWH exhaust air ducting for a water heater located outside conditioned space is not currently supported; exhaust ducting will not be modeled.',
                                                  'HPWH supply air ducted from another location is not currently supported; supply ducting will not be modeled.'],
                               'hpwh-small-containment-volume-without-backup-element' => ['Heat pump water heater: WaterHeatingSystem1 has no backup electric resistance element, COP adjustment for confined space may not be accurate when the containment space volume is below 450 cubic feet.'],
-                              'hvac-gshp-bore-depth-autosized-high' => ['Reached a maximum of 10 boreholes; setting bore depth to the maximum (500 ft).'],
-                              'hvac-seasons' => ['It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus outside of an HVAC season.'],
+                              'hvac-gshp-bore-depth-autosized-high' => ['Reached a maximum of 15 boreholes; setting bore depth to the maximum (500 ft).'],
                               'hvac-setpoint-adjustments' => ['HVAC setpoints have been automatically adjusted to prevent periods where the heating setpoint is greater than the cooling setpoint.'],
                               'hvac-setpoint-adjustments-daily-setbacks' => ['HVAC setpoints have been automatically adjusted to prevent periods where the heating setpoint is greater than the cooling setpoint.'],
                               'hvac-setpoint-adjustments-daily-schedules' => ['HVAC setpoints have been automatically adjusted to prevent periods where the heating setpoint is greater than the cooling setpoint.'],
@@ -2039,8 +2037,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                               'multiple-inverter-efficiencies' => ['Inverters with varying efficiencies found; using a single PV size weighted-average in the model.'],
                               'panel-missing-default' => ["Voltage (240) for 'dishwasher' is not specified in default_panels.csv; PowerRating will be assigned according to Voltage=120.",
                                                           "Voltage (240) for 'dishwasher' is not specified in default_panels.csv; BreakerSpaces will be recalculated using Voltage=240."],
-                              'power-outage' => ['It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus during an unavailable period.',
-                                                 'It is not possible to eliminate all DHW energy use (e.g. water heater parasitics) in EnergyPlus during an unavailable period.'],
+                              'power-outage' => ['It is not possible to eliminate all DHW energy use (e.g. water heater parasitics) in EnergyPlus during an unavailable period.'],
                               'schedule-file-and-weekday-weekend-multipliers' => ["Both 'occupants' schedule file and weekday fractions provided; the latter will be ignored.",
                                                                                   "Both 'occupants' schedule file and weekend fractions provided; the latter will be ignored.",
                                                                                   "Both 'occupants' schedule file and monthly multipliers provided; the latter will be ignored.",
@@ -2206,9 +2203,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
         hpxml_bldg.water_heating_systems[0].hpwh_containment_volume = 250.0
       when 'hvac-gshp-bore-depth-autosized-high'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-ground-to-air-heat-pump-1-speed.xml')
-        hpxml_bldg.site.ground_conductivity = 0.07
-      when 'hvac-seasons'
-        hpxml, hpxml_bldg = _create_hpxml('base-hvac-seasons.xml')
+        hpxml_bldg.site.ground_conductivity = 0.01
       when 'hvac-setpoint-adjustments'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.hvac_controls[0].heating_setpoint_temp = 76.0
@@ -2348,7 +2343,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
 
   def _test_measure(error_or_warning, expected_errors_or_warnings, building_id: nil)
     # create an instance of the measure
-    measure = HPXMLtoOpenStudio.new
+    measure = HPXMLToOpenStudio.new
 
     runner = OpenStudio::Measure::OSRunner.new(OpenStudio::WorkflowJSON.new)
     model = OpenStudio::Model::Model.new

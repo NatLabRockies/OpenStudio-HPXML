@@ -779,7 +779,6 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
       'base-foundation-slab.xml' => 1,                                # 1 slab-on-grade foundation
       'base-foundation-basement-garage.xml' => 2,                     # 1 basement foundation + 1 garage slab
       'base-foundation-unconditioned-basement-above-grade.xml' => 1,  # 1 basement foundation
-      'base-foundation-conditioned-crawlspace.xml' => 1,              # 1 crawlspace foundation
       'base-foundation-ambient.xml' => 0,                             # 0 foundations
       'base-foundation-walkout-basement.xml' => 2,                    # 1 basement foundation with 1 effective below-grade depth + additional no-wall exposed perimeter
       'base-foundation-multiple.xml' => 2,                            # 1 basement foundation + 1 crawlspace foundation
@@ -908,7 +907,6 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
 
   def test_kiva_initial_temperatures
     initial_temps = { 'base.xml' => 68.0, # foundation adjacent to conditioned space, IECC zone 5
-                      'base-foundation-conditioned-crawlspace.xml' => 68.0, # foundation adjacent to conditioned space, IECC zone 5
                       'base-foundation-slab.xml' => 68.0, # foundation adjacent to conditioned space, IECC zone 5
                       'base-foundation-unconditioned-basement.xml' => 41.4, # foundation adjacent to unconditioned basement w/ ceiling insulation
                       'base-foundation-unvented-crawlspace.xml' => 38.6, # foundation adjacent to unvented crawlspace w/ ceiling insulation
@@ -1057,6 +1055,19 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
         end
       end
     end
+
+    # Check that foundation walls with a repeated below-grade depth are included
+    # in the effective below-grade depth calculation.
+    _hpxml, hpxml_bldg = _create_hpxml('base-foundation-walkout-basement.xml')
+    foundation_wall = hpxml_bldg.foundation_walls[0]
+    foundation_wall.area /= 2.0
+    duplicate_foundation_wall = foundation_wall.dup
+    duplicate_foundation_wall.id += '_duplicate'
+    duplicate_foundation_wall.insulation_id += '_duplicate'
+    hpxml_bldg.foundation_walls.insert(1, duplicate_foundation_wall)
+    hpxml_bldg.collapse_enclosure_surfaces([:foundation_walls])
+    assert_equal(1, hpxml_bldg.foundation_walls.size)
+    assert_equal(4.5, hpxml_bldg.foundation_walls[0].depth_below_grade)
 
     # Check that Slab/DepthBelowGrade is ignored for below-grade spaces when
     # collapsing surfaces.
@@ -1239,7 +1250,7 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
 
   def _test_measure(args_hash, skip_in_xml_validation: false)
     # create an instance of the measure
-    measure = HPXMLtoOpenStudio.new
+    measure = HPXMLToOpenStudio.new
 
     runner = OpenStudio::Measure::OSRunner.new(OpenStudio::WorkflowJSON.new)
     model = OpenStudio::Model::Model.new

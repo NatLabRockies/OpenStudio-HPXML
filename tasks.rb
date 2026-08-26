@@ -248,6 +248,7 @@ def apply_hpxml_modification_ashrae_140(hpxml)
     hpxml_bldg.doors << hpxml_bldg.doors[0].dup
     hpxml_bldg.doors[1].azimuth = 0
     hpxml_bldg.doors[1].id = 'Door2'
+    hpxml_bldg.doors[0].attached_to_wall_idref = hpxml_bldg.walls[0].id
   end
   hpxml_bldg.windows.each do |window|
     next if window.overhangs_depth.nil?
@@ -417,7 +418,8 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
   elsif ['base-schedules-simple-vacancy.xml',
          'base-schedules-detailed-occupancy-stochastic-vacancy.xml'].include? hpxml_file
     hpxml.header.unavailable_periods.add(column_name: 'Vacancy', begin_month: 12, begin_day: 1, end_month: 1, end_day: 31, natvent_availability: HPXML::ScheduleUnavailable)
-  elsif ['base-schedules-detailed-mixed-timesteps-power-outage.xml',
+  elsif ['base-hvac-air-to-air-heat-pump-1-speed-power-outage.xml',
+         'base-schedules-detailed-mixed-timesteps-power-outage.xml',
          'base-schedules-detailed-occupancy-stochastic-power-outage.xml'].include? hpxml_file
     hpxml.header.unavailable_periods.add(column_name: 'Power Outage', begin_month: 12, begin_day: 1, begin_hour: 5, end_month: 1, end_day: 31, end_hour: 14)
   elsif ['base-schedules-simple-no-space-heating.xml'].include? hpxml_file
@@ -517,6 +519,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       iecc_zone = {
         'USA_HI_Honolulu.Intl.AP.911820_TMY3.epw' => '1A',
         'USA_FL_Miami.Intl.AP.722020_TMY3.epw' => '1A',
+        'USA_TX_Houston-Bush.Intercontinental.AP.722430_TMY3.epw' => '2A',
         'USA_AZ_Phoenix-Sky.Harbor.Intl.AP.722780_TMY3.epw' => '2B',
         'USA_TX_Dallas-Fort.Worth.Intl.AP.722590_TMY3.epw' => '3A',
         'USA_MD_Baltimore-Washington.Intl.AP.724060_TMY3.epw' => '4A',
@@ -1943,7 +1946,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                      heating_system_type: HPXML::HVACTypeFurnace,
                                      heating_system_fuel: HPXML::FuelTypeElectricity,
                                      heating_capacity: 6400,
-                                     heating_efficiency_afue: 1,
+                                     heating_efficiency_percent: 1,
                                      fraction_heat_load_served: 0.1)
       hpxml_bldg.heating_systems.add(id: "HeatingSystem#{hpxml_bldg.heating_systems.size + 1}",
                                      distribution_system_idref: hpxml_bldg.hvac_distributions[1].id,
@@ -1957,7 +1960,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                      heating_system_type: HPXML::HVACTypeBoiler,
                                      heating_system_fuel: HPXML::FuelTypeElectricity,
                                      heating_capacity: 6400,
-                                     heating_efficiency_afue: 1,
+                                     heating_efficiency_percent: 1,
                                      fraction_heat_load_served: 0.1)
       hpxml_bldg.heating_systems.add(id: "HeatingSystem#{hpxml_bldg.heating_systems.size + 1}",
                                      distribution_system_idref: hpxml_bldg.hvac_distributions[3].id,
@@ -2052,7 +2055,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                                 compressor_type: HPXML::HVACCompressorTypeVariableSpeed,
                                 primary_cooling_system: true,
                                 primary_heating_system: true)
-    elsif ['base-hvac-air-to-air-heat-pump-var-speed-max-power-ratio-schedule-two-systems.xml'].include? hpxml_file
+    elsif ['base-hvac-air-to-air-heat-pump-var-speed-research-features-two-systems.xml'].include? hpxml_file
       hpxml_bldg.heat_pumps << hpxml_bldg.heat_pumps[0].dup
       hpxml_bldg.heat_pumps[-1].id += "#{hpxml_bldg.hvac_distributions.size}"
       hpxml_bldg.heat_pumps[-1].primary_cooling_system = false
@@ -2317,6 +2320,36 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.heat_pumps[0].cooling_efficiency_seer = 13.0
       hpxml_bldg.heat_pumps[0].heating_efficiency_hspf2 = nil
       hpxml_bldg.heat_pumps[0].heating_efficiency_hspf = 7.7
+    end
+    if ['base-hvac-ground-to-air-heat-pump-detailed-geothermal-loop-multiple.xml'].include? hpxml_file
+      # Split into 2 GSHPs, each with its own geothermal loop
+      hpxml_bldg.heat_pumps[0].fraction_heat_load_served /= 2
+      hpxml_bldg.heat_pumps[0].fraction_cool_load_served /= 2
+      hpxml_bldg.heat_pumps[0].heating_capacity /= 2
+      hpxml_bldg.heat_pumps[0].cooling_capacity /= 2
+      hpxml_bldg.heat_pumps << hpxml_bldg.heat_pumps[0].dup
+      hpxml_bldg.heat_pumps[-1].id = 'HeatPump2'
+      hpxml_bldg.heat_pumps[-1].primary_heating_system = false
+      hpxml_bldg.heat_pumps[-1].primary_cooling_system = false
+      hpxml_bldg.hvac_distributions[0].duct_leakage_measurements[0].duct_leakage_value /= 2
+      hpxml_bldg.hvac_distributions[0].duct_leakage_measurements[1].duct_leakage_value /= 2
+      hpxml_bldg.hvac_distributions[0].conditioned_floor_area_served /= 2
+      hpxml_bldg.hvac_distributions.add(id: "HVACDistribution#{hpxml_bldg.hvac_distributions.size + 1}",
+                                        distribution_system_type: HPXML::HVACDistributionTypeAir,
+                                        air_type: HPXML::AirTypeRegularVelocity,
+                                        conditioned_floor_area_served: hpxml_bldg.hvac_distributions[0].conditioned_floor_area_served)
+      hpxml_bldg.heat_pumps[-1].distribution_system_idref = hpxml_bldg.hvac_distributions[-1].id
+      hpxml_bldg.hvac_distributions[-1].duct_leakage_measurements << hpxml_bldg.hvac_distributions[0].duct_leakage_measurements[0].dup
+      hpxml_bldg.hvac_distributions[-1].duct_leakage_measurements << hpxml_bldg.hvac_distributions[0].duct_leakage_measurements[1].dup
+      hpxml_bldg.hvac_distributions[0].ducts.each do |duct|
+        hpxml_bldg.hvac_distributions[-1].ducts << duct.dup
+        hpxml_bldg.hvac_distributions[-1].ducts[-1].id = "Ducts#{hpxml_bldg.hvac_distributions[0].ducts.size + hpxml_bldg.hvac_distributions[1].ducts.size}"
+      end
+      hpxml_bldg.geothermal_loops[0].num_bore_holes /= 2
+      hpxml_bldg.geothermal_loops[0].bore_config = HPXML::GeothermalLoopBoreConfigRectangle
+      hpxml_bldg.geothermal_loops << hpxml_bldg.geothermal_loops[0].dup
+      hpxml_bldg.geothermal_loops[-1].id = 'GeothermalLoop2'
+      hpxml_bldg.heat_pumps[-1].geothermal_loop_idref = hpxml_bldg.geothermal_loops[-1].id
     end
 
     # ------------------ #
@@ -3462,8 +3495,7 @@ def check_hpxml(hpxml_path, hpxml)
       next unless [HPXML::LocationBasementConditioned,
                    HPXML::LocationBasementUnconditioned,
                    HPXML::LocationCrawlspaceUnvented,
-                   HPXML::LocationCrawlspaceVented,
-                   HPXML::LocationCrawlspaceConditioned].include? wall.interior_adjacent_to
+                   HPXML::LocationCrawlspaceVented].include? wall.interior_adjacent_to
 
       found_wall = false
       hpxml_bldg.foundations.each do |fnd|
@@ -3490,7 +3522,7 @@ def check_hpxml(hpxml_path, hpxml)
   end
 end
 
-def download_utility_rates
+def download_detailed_utility_rates
   require_relative 'HPXMLtoOpenStudio/resources/util'
   require_relative 'ReportUtilityBills/resources/util'
 
@@ -3551,15 +3583,90 @@ def download_g_functions
   exit!
 end
 
+def download_simple_utility_rates
+  require_relative 'HPXMLtoOpenStudio/resources/util'
+  require 'tempfile'
+  require 'json'
+  require 'csv'
+
+  seds_path = File.join(File.dirname(__FILE__), 'SEDS.txt')
+
+  if !File.exist? seds_path
+    tmpfile = Tempfile.new('rates')
+    UrlResolver.fetch('https://www.eia.gov/opendata/bulk/SEDS.zip', tmpfile)
+    zf = OpenStudio::UnzipFile.new(tmpfile.path.to_s)
+    zf.extractAllFiles('.')
+
+    if !File.exist? seds_path
+      fail "#{File.basename(seds_path)} not successfully retrieved."
+    end
+  end
+
+  # Residential fuel price series (MSN codes)
+  msn_codes = {
+    'DFRCD' => 'fuel oil', # Distillate fuel oil price in the residential sector ($/MMBtu)
+    'ESRCD' => 'electricity', # Electricity price in the residential sector ($/MMBtu)
+    'NGRCD' => 'natural gas', # Natural gas price in the residential sector ($/MMBtu)
+    'PQRCD' => 'propane', # Propane price in the residential sector ($/MMBtu)
+    'WDRCD' => 'wood', # Wood price in the residential sector ($/MMBtu)
+  }
+
+  latest_rates = Hash.new { |h, k| h[k] = {} }
+
+  File.readlines(seds_path).each do |seds_line|
+    json = JSON.parse(seds_line)
+    msn_codes.each do |msn, fuel|
+      next if json['series_id'].nil?
+      next unless json['series_id'].start_with? "SEDS.#{msn}"
+
+      state = json['geography'].gsub('USA-', '').gsub('USA', 'US')
+      json['data'].each do |data|
+        next if data[1].to_f <= 0
+
+        latest_rates[state][fuel] = [data[0], Float(data[1])]
+        break # Found a non-zero value
+      end
+    end
+  end
+
+  FileUtils.rm(seds_path)
+
+  simple_rates_dir = File.join(File.dirname(__FILE__), 'ReportUtilityBills', 'resources', 'simple_rates')
+  filepath = File.join(simple_rates_dir, 'eia_fuel_rates_by_state.csv')
+  puts "Writing to #{filepath}..."
+
+  CSV.open(filepath, 'w') do |csv|
+    csv << ['year', 'state', 'fuel', 'rate_dollar_per_mmbtu']
+
+    latest_rates.keys.sort.each do |state|
+      msn_codes.values.each do |fuel|
+        entry = latest_rates[state][fuel]
+        next if entry.nil?
+
+        csv << [
+          entry[0],
+          state,
+          fuel,
+          entry[1].round(4)
+        ]
+      end
+    end
+  end
+
+  puts "Completed. Data written to #{filepath}."
+  exit!
+end
+
 command_list = [
   :update_measures,
   :update_hpxmls,
   :unit_tests,
   :workflow_tests1,
   :workflow_tests2,
-  :create_release_zips,
-  :download_utility_rates,
-  :download_g_functions
+  :create_release_zip,
+  :download_simple_utility_rates,
+  :download_detailed_utility_rates,
+  :download_g_functions,
 ]
 
 def display_usage(command_list)
@@ -3586,7 +3693,7 @@ if ARGV[0].to_sym == :update_measures
               "\"require 'stringio' \"",
               "\"RuboCop::RakeTask.new(:rubocop) do |t| t.options = ['--autocorrect-all', '--format', 'simple'] end\"",
               '"Rake.application[:rubocop].invoke"']
-  command = "#{OpenStudio.getOpenStudioCLI} -e #{commands.join(' -e ')}"
+  command = "\"#{OpenStudio.getOpenStudioCLI}\" -e #{commands.join(' -e ')}"
   puts 'Applying rubocop auto-correct to measures...'
   system(command)
 
@@ -3594,7 +3701,7 @@ if ARGV[0].to_sym == :update_measures
   puts 'Updating measure.xmls...'
   Dir['**/measure.xml'].each do |measure_xml|
     measure_dir = File.dirname(measure_xml)
-    command = "#{OpenStudio.getOpenStudioCLI} measure -u '#{measure_dir}'"
+    command = "\"#{OpenStudio.getOpenStudioCLI}\" measure -u '#{measure_dir}'"
     system(command, [:out, :err] => File::NULL)
   end
 
@@ -3639,7 +3746,7 @@ if [:unit_tests, :workflow_tests1, :workflow_tests2].include? ARGV[0].to_sym
   # Ensure we run all tests even if there are failures
   failed_tests = []
   tests_rbs.each do |test_rb|
-    success = system("#{OpenStudio.getOpenStudioCLI} #{test_rb}")
+    success = system("\"#{OpenStudio.getOpenStudioCLI}\" #{test_rb}")
     failed_tests << test_rb unless success
   end
 
@@ -3657,18 +3764,20 @@ if [:unit_tests, :workflow_tests1, :workflow_tests2].include? ARGV[0].to_sym
   puts 'All tests passed.'
 end
 
-if ARGV[0].to_sym == :download_utility_rates
-  download_utility_rates
+if ARGV[0].to_sym == :download_detailed_utility_rates
+  download_detailed_utility_rates
 end
 
 if ARGV[0].to_sym == :download_g_functions
   download_g_functions
 end
 
-if ARGV[0].to_sym == :create_release_zips
+if ARGV[0].to_sym == :create_release_zip
   if ENV['CI']
     # CI doesn't have git, so default to everything
     git_files = Dir['**/*.*']
+    git_files -= Dir['workflow/tests/run*/**/*.*']
+    git_files -= Dir['workflow/tests/test_results/*.*']
   else
     # Only include files under git version control
     command = 'git ls-files'
@@ -3698,31 +3807,7 @@ if ARGV[0].to_sym == :create_release_zips
            'workflow/sample_files/*.xml',
            'workflow/tests/*.rb',
            'workflow/tests/**/*.xml',
-           'workflow/tests/**/*.csv',
-           'documentation/index.html',
-           'documentation/_static/**/*.*']
-
-  if not ENV['CI']
-    # Generate documentation
-    puts 'Generating documentation...'
-    command = 'sphinx-build -b singlehtml docs/source documentation'
-    begin
-      `#{command}`
-      if not File.exist? File.join(File.dirname(__FILE__), 'documentation', 'index.html')
-        puts 'Documentation was not successfully generated. Aborting...'
-        exit!
-      end
-    rescue
-      puts "Command failed: '#{command}'. Perhaps sphinx needs to be installed?"
-      exit!
-    end
-
-    # Remove large fonts dir to keep package smaller
-    fonts_dir = File.join(File.dirname(__FILE__), 'documentation', '_static', 'css', 'fonts')
-    if Dir.exist? fonts_dir
-      FileUtils.rm_r(fonts_dir)
-    end
-  end
+           'workflow/tests/**/*.csv']
 
   # Create zip files
   require 'zip'
@@ -3732,23 +3817,18 @@ if ARGV[0].to_sym == :create_release_zips
   Zip::File.open(zip_path, create: true) do |zipfile|
     files.each do |f|
       Dir[f].each do |file|
-        if file.start_with? 'documentation'
-          # always include
-        else
-          if not git_files.include? file
-            next
-          end
+        if not git_files.include? file
+          next
         end
+
         zipfile.add(File.join('OpenStudio-HPXML', file), file)
       end
     end
   end
   puts "Wrote file at #{zip_path}."
-
-  # Cleanup
-  if not ENV['CI']
-    FileUtils.rm_r(File.join(File.dirname(__FILE__), 'documentation'))
-  end
-
   puts 'Done.'
+end
+
+if ARGV[0].to_sym == :download_simple_utility_rates
+  download_simple_utility_rates
 end
