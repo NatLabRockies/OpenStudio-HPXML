@@ -18,9 +18,9 @@ module Constructions
     interior_film = Material.AirFilmIndoorRoof(UnitConversions.convert(surfaces[0].tilt, 'rad', 'deg'), hpxml_header.apply_ashrae140_assumptions)
     exterior_film = Material.AirFilmOutside(false, hpxml_header.apply_ashrae140_assumptions)
     if hpxml_header.apply_ashrae140_assumptions
-      mat_roof_sheath = Material.RoofMaterialAndSheathing(roof.roof_type, 0.5) # Combined roof material + OSB sheathing
+      mat_roof_sheath = Material.RoofMaterialAndSheathing(roof.roof_material, 0.5) # Combined roof material + OSB sheathing
     else
-      mat_roof_sheath = Material.RoofMaterialAndSheathing(roof.roof_type) # Combined roof material + OSB sheathing
+      mat_roof_sheath = Material.RoofMaterialAndSheathing(roof.roof_material) # Combined roof material + OSB sheathing
     end
     mat_int_finish = Material.InteriorFinishMaterial(roof.interior_finish_type, roof.interior_finish_thickness)
     if mat_int_finish.nil?
@@ -1919,29 +1919,29 @@ module Constructions
     map = {}
     # Values partially informed by CRRC Rated Roof Products
     # https://coolroofs.org/directory/roof
-    [HPXML::RoofTypeAsphaltShingles,
-     HPXML::RoofTypeWoodShingles,
-     HPXML::RoofTypeShingles,
-     HPXML::RoofTypeEPS].each do |roof_type|
-      map[[HPXML::ColorDark, roof_type]] = 0.92
-      map[[HPXML::ColorMediumDark, roof_type]] = 0.89
-      map[[HPXML::ColorMedium, roof_type]] = 0.85
-      map[[HPXML::ColorMediumLight, roof_type]] = 0.80
-      map[[HPXML::ColorLight, roof_type]] = 0.75
-      map[[HPXML::ColorWhite, roof_type]] = 0.70
-      map[[HPXML::ColorReflective, roof_type]] = 0.50
+    [HPXML::RoofMaterialAsphaltShingles,
+     HPXML::RoofMaterialWoodShingles,
+     HPXML::RoofMaterialShingles,
+     HPXML::RoofMaterialEPS].each do |roof_material|
+      map[[HPXML::ColorDark, roof_material]] = 0.92
+      map[[HPXML::ColorMediumDark, roof_material]] = 0.89
+      map[[HPXML::ColorMedium, roof_material]] = 0.85
+      map[[HPXML::ColorMediumLight, roof_material]] = 0.80
+      map[[HPXML::ColorLight, roof_material]] = 0.75
+      map[[HPXML::ColorWhite, roof_material]] = 0.70
+      map[[HPXML::ColorReflective, roof_material]] = 0.50
     end
-    [HPXML::RoofTypeClayTile,
-     HPXML::RoofTypeMetal,
-     HPXML::RoofTypePlasticRubber,
-     HPXML::RoofTypeConcrete].each do |roof_type|
-      map[[HPXML::ColorDark, roof_type]] = 0.90
-      map[[HPXML::ColorMediumDark, roof_type]] = 0.80
-      map[[HPXML::ColorMedium, roof_type]] = 0.70
-      map[[HPXML::ColorMediumLight, roof_type]] = 0.60
-      map[[HPXML::ColorLight, roof_type]] = 0.45
-      map[[HPXML::ColorWhite, roof_type]] = 0.35
-      map[[HPXML::ColorReflective, roof_type]] = 0.25
+    [HPXML::RoofMaterialClayTile,
+     HPXML::RoofMaterialMetal,
+     HPXML::RoofMaterialPlasticRubber,
+     HPXML::RoofMaterialConcrete].each do |roof_material|
+      map[[HPXML::ColorDark, roof_material]] = 0.90
+      map[[HPXML::ColorMediumDark, roof_material]] = 0.80
+      map[[HPXML::ColorMedium, roof_material]] = 0.70
+      map[[HPXML::ColorMediumLight, roof_material]] = 0.60
+      map[[HPXML::ColorLight, roof_material]] = 0.45
+      map[[HPXML::ColorWhite, roof_material]] = 0.35
+      map[[HPXML::ColorReflective, roof_material]] = 0.25
     end
     return map
   end
@@ -2767,7 +2767,7 @@ module Constructions
     elsif type == 'roof'
       apply_open_cavity_roof(model, surfaces, 'AdiabaticRoofConstruction',
                              0, 1, 7.25, 0.07, 7.25, 0.0, 99,
-                             Material.RoofMaterialAndSheathing(HPXML::RoofTypeAsphaltShingles),
+                             Material.RoofMaterialAndSheathing(HPXML::RoofMaterialAsphaltShingles),
                              false, Material.AirFilmOutside,
                              Material.AirFilmIndoorRoof(UnitConversions.convert(surfaces[0].tilt, 'rad', 'deg')), nil)
     end

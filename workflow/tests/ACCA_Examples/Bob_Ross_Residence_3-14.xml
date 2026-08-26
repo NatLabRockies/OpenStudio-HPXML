@@ -151,7 +151,6 @@
             <SystemIdentifier id='Roof1'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
             <Area>2771.0</Area>
-            <RoofType>asphalt or fiberglass shingles</RoofType>
             <RoofColor>light</RoofColor>
             <Pitch>7.0</Pitch>
             <RadiantBarrier>false</RadiantBarrier>
@@ -164,7 +163,6 @@
             <SystemIdentifier id='AssumedRoofGarage'/>
             <InteriorAdjacentTo>garage</InteriorAdjacentTo>
             <Area>65.0</Area>
-            <RoofType>asphalt or fiberglass shingles</RoofType>
             <RoofColor>light</RoofColor>
             <Pitch>7.0</Pitch>
             <RadiantBarrier>false</RadiantBarrier>

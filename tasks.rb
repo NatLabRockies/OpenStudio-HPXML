@@ -947,7 +947,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
                            interior_adjacent_to: HPXML::LocationAtticUnvented,
                            area: 504,
-                           roof_type: hpxml_bldg.roofs[0].roof_type,
+                           roof_material: hpxml_bldg.roofs[0].roof_material,
                            pitch: hpxml_bldg.roofs[0].pitch,
                            roof_color: hpxml_bldg.roofs[0].roof_color,
                            insulation_assembly_r_value: 2.3)
@@ -1175,7 +1175,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       (hpxml_bldg.roofs + hpxml_bldg.walls + hpxml_bldg.rim_joists).each do |surface|
         if surface.is_a? HPXML::Roof
           surface.radiant_barrier = nil
-          surface.roof_type = nil
+          surface.roof_material = nil
         end
         if surface.is_a?(HPXML::Wall) || surface.is_a?(HPXML::RimJoist)
           surface.siding = nil
@@ -1611,27 +1611,27 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.roofs.reverse_each do |roof|
         roof.delete
       end
-      roof_types = [[HPXML::RoofTypeClayTile, HPXML::ColorLight],
-                    [HPXML::RoofTypeMetal, HPXML::ColorReflective],
-                    [HPXML::RoofTypeWoodShingles, HPXML::ColorDark],
-                    [HPXML::RoofTypeShingles, HPXML::ColorMediumDark],
-                    [HPXML::RoofTypePlasticRubber, HPXML::ColorMediumLight],
-                    [HPXML::RoofTypeEPS, HPXML::ColorMedium],
-                    [HPXML::RoofTypeConcrete, HPXML::ColorWhite]]
+      roof_properties = [[HPXML::RoofMaterialClayTile, HPXML::ColorLight],
+                         [HPXML::RoofMaterialMetal, HPXML::ColorReflective],
+                         [HPXML::RoofMaterialWoodShingles, HPXML::ColorDark],
+                         [HPXML::RoofMaterialShingles, HPXML::ColorMediumDark],
+                         [HPXML::RoofMaterialPlasticRubber, HPXML::ColorMediumLight],
+                         [HPXML::RoofMaterialEPS, HPXML::ColorMedium],
+                         [HPXML::RoofMaterialConcrete, HPXML::ColorWhite]]
       int_finish_types = [[HPXML::InteriorFinishGypsumBoard, 0.5],
                           [HPXML::InteriorFinishPlaster, 0.5],
                           [HPXML::InteriorFinishWood, 0.5]]
-      roof_types.each_with_index do |roof_type, i|
+      roof_properties.each_with_index do |roof_property, i|
         hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
                              interior_adjacent_to: HPXML::LocationAtticUnvented,
-                             area: 1509.3 / roof_types.size,
-                             roof_type: roof_type[0],
-                             roof_color: roof_type[1],
+                             area: 1509.3 / roof_properties.size,
+                             roof_material: roof_property[0],
+                             roof_color: roof_property[1],
                              pitch: 6,
                              radiant_barrier: false,
                              interior_finish_type: int_finish_types[i % int_finish_types.size][0],
                              interior_finish_thickness: int_finish_types[i % int_finish_types.size][1],
-                             insulation_assembly_r_value: roof_type[0] == HPXML::RoofTypeEPS ? 7.0 : 2.3)
+                             insulation_assembly_r_value: roof_property[0] == HPXML::RoofMaterialEPS ? 7.0 : 2.3)
         hpxml_bldg.attics[0].attached_to_roof_idrefs << hpxml_bldg.roofs[-1].id
       end
     elsif ['base-enclosure-overhangs.xml'].include? hpxml_file
