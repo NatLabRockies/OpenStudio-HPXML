@@ -72,6 +72,7 @@
             <SystemIdentifier id='Roof1'/>
             <InteriorAdjacentTo>conditioned space</InteriorAdjacentTo>
             <Area>2068.6</Area>
+            <RoofMaterial>asphalt or fiberglass shingles</RoofMaterial>
             <RoofColor>dark</RoofColor>
             <Pitch>7.0</Pitch>
             <RadiantBarrier>false</RadiantBarrier>
