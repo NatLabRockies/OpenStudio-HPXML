@@ -66,6 +66,7 @@ class Material
   #
   # @param mat1 [Material] The first material to combine
   # @param mat2 [Material] The second material to combine
+  # @param new_name [String] The new name for the combined material
   # @return [Material] The combined material object
   def self.combine(mat1, mat2, new_name)
     rvalue = mat2.thick_in / mat2.k_in + mat1.thick_in / mat1.k_in
@@ -181,7 +182,7 @@ class Material
 
   # Creates a material for the combined layer of, e.g., carpet and bare floor.
   #
-  # @param floorFraction [Double] Fraction of the floor that is covered (i.e., not bare)
+  # @param floor_fraction [Double] Fraction of the floor that is covered (i.e., not bare)
   # @param rvalue [Double] Thermal resistance (hr-ft2-F/Btu)
   # @return [Material] The material object
   def self.CoveringBare(floor_fraction = 0.8, rvalue = 2.08)
@@ -333,7 +334,7 @@ class Material
 
   # Creates a material for a radiant batter (in an attic).
   #
-  # @param install_grade [Integer] Installation grade (1-3)
+  # @param grade [Integer] Installation grade (1-3)
   # @param is_attic_floor [Boolean] True if the radiant barrier is on the attic floor (as opposed to roof of the attic)
   # @return [Material] The material object
   def self.RadiantBarrier(grade, is_attic_floor = false)

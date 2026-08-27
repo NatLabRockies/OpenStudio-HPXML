@@ -191,7 +191,7 @@ module Constructions
   # Applies a slab construction to the OpenStudio surface.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param floor [HPXML::Floor] The HPXML surface that defines the construction
+  # @param slab [HPXML::Slab] The HPXML surface that defines the construction
   # @param surface [OpenStudio::Model::Surface] The surface to apply the construction to
   # @param kiva_foundation [OpenStudio::Model::FoundationKiva] OpenStudio Foundation Kiva object
   # @param exposed_length [Double] Length of foundation wall exposed to ambient conditions, specific to an associated HPXML Slab (ft)
@@ -1693,6 +1693,9 @@ module Constructions
   # @param mat_carpet [TODO] TODO
   # @param soil_k_in [TODO] TODO
   # @param foundation [OpenStudio::Model::FoundationKiva] The Kiva foundation object of interest
+  # @param ext_horiz_r [TODO] TODO
+  # @param ext_horiz_width [TODO] TODO
+  # @param ext_horiz_depth [TODO] TODO
   # @return [TODO] TODO
   def self.apply_kiva_foundation_slab(model, surface, constr_name, under_r, under_width, gap_r, perimeter_r,
                                       perimeter_depth, whole_r, concrete_thick_in, exposed_perimeter,
@@ -3472,6 +3475,7 @@ end
 class SteelStudConstructionSet
   # @param cavity_thick_in [TODO] TODO
   # @param corr_factor [TODO] TODO
+  # @param framing_factor [TODO] TODO
   # @param rigid_r [TODO] TODO
   # @param osb_thick_in [TODO] TODO
   # @param mat_int_finish [TODO] TODO
@@ -3493,6 +3497,7 @@ class DoubleStudConstructionSet
   # @param stud [TODO] TODO
   # @param framing_factor [TODO] TODO
   # @param framing_spacing [TODO] TODO
+  # @param rigid_r [TODO] TODO
   # @param osb_thick_in [TODO] TODO
   # @param mat_int_finish [TODO] TODO
   # @param mat_ext_finish [TODO] TODO
@@ -3555,6 +3560,7 @@ class ICFConstructionSet
   # @param concrete_thick_in [TODO] TODO
   # @param framing_factor [TODO] TODO
   # @param rigid_r [TODO] TODO
+  # @param osb_thick_in [TODO] TODO
   # @param mat_int_finish [TODO] TODO
   # @param mat_ext_finish [TODO] TODO
   def initialize(ins_thick_in, concrete_thick_in, framing_factor, rigid_r, osb_thick_in, mat_int_finish, mat_ext_finish)

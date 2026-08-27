@@ -5280,6 +5280,7 @@ module HVAC
   #
   # @param mode [Symbol] Heating (:htg) or cooling (:clg)
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
   # @param obj_name [String] Name for the OpenStudio object
   # @return [nil]
@@ -5304,7 +5305,10 @@ module HVAC
 
     return if (hvac_dse - 1).abs < Constants::Small
 
-    # Converts the [ft, eut] key to an ems-friendly name
+    # Converts the fuel type/end use type key to an ems-friendly name
+    #
+    # @param key [[FT::XXX, EUT::XXX]] The key to convert
+    # @return [String] The ems-friendly name for the key
     def self.key_name(key)
       return Model.ems_friendly_name(key.join('_')).downcase
     end
