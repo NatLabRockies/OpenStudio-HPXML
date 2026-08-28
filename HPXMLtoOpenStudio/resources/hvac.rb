@@ -272,7 +272,7 @@ module HVAC
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @param schedules_file [SchedulesFile] SchedulesFile wrapper class instance of detailed schedule files
@@ -507,7 +507,7 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [OpenStudio::Model::AirLoopHVAC] The newly created air loop hvac object
@@ -570,7 +570,7 @@ module HVAC
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param heat_pump [HPXML::HeatPump] The HPXML heat pump of interest
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [OpenStudio::Model::AirLoopHVAC] The newly created air loop hvac object
@@ -987,7 +987,7 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heat_pump [HPXML::HeatPump] The HPXML heat pump of interest
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [OpenStudio::Model::AirLoopHVAC] The newly created air loop hvac object
@@ -1095,7 +1095,7 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [OpenStudio::Model::ZoneHVACFourPipeFanCoil or OpenStudio::Model::ZoneHVACBaseboardConvectiveWater] The newly created zone hvac object
@@ -1297,7 +1297,7 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [nil]
@@ -1323,7 +1323,7 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [nil]
@@ -1423,7 +1423,7 @@ module HVAC
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @return [nil]
   def self.apply_ideal_air_system(model, control_zone, hvac_sequential_load_fracs, hvac_unavailable_periods)
@@ -2558,7 +2558,7 @@ module HVAC
   # @param obj_name [String] Name for the OpenStudio object
   # @param hvac_object [OpenStudio::Model::AirLoopHVACUnitarySystem or OpenStudio::Model::EvaporativeCoolerDirectResearchSpecial] The HVAC model object
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param airflow_cfm [Double] Maximum airflow rate (cfm)
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
@@ -4550,7 +4550,7 @@ module HVAC
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param control_zone [OpenStudio::Model::ThermalZone] Conditioned space thermal zone
   # @param hvac_object [OpenStudio::Model::Foo] HVAC model object that the sequential fraction schedule is assigned to
-  # @param hvac_sequential_load_fracs [Hash<Array<Double>>] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
+  # @param hvac_sequential_load_fracs [Hash] Map of htg/clg => Array of daily fractions of remaining heating/cooling load to be met by the HVAC system
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @return [nil]

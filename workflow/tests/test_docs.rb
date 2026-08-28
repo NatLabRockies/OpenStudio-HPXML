@@ -21,6 +21,8 @@ class DocumentationTest < Minitest::Test
       rb_lines = File.readlines(rb_path)
       methods = parse_methods_from_lines(rb_lines)
 
+      puts "[#{rel_path}] Checking #{methods.size} methods..."
+
       methods.each do |method|
         # Skip overloaded ruby methods that don't need to be documented
         next if ['method_missing',
@@ -36,7 +38,8 @@ class DocumentationTest < Minitest::Test
                    'run'].include? method[:name]
         end
 
-        puts "[#{rel_path}] Checking method #{method[:name]}()..."
+        # Uncomment to debug:
+        # puts "[#{rel_path}] Checking method #{method[:name]}()..."
         # puts "  args=(#{method[:args].join(', ')})"
 
         # Construct array of expected docs

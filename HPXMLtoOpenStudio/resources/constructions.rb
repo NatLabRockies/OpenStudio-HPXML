@@ -341,7 +341,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_wood_stud_wall(model, surfaces, constr_name, cavity_r, install_grade, stud_depth_in,
                                 cavity_filled, framing_factor, mat_int_finish, osb_thick_in, rigid_r,
@@ -432,7 +432,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_double_stud_wall(model, surfaces, constr_name, cavity_r, install_grade, stud_depth_in,
                                   gap_depth_in, framing_factor, framing_spacing, is_staggered,
@@ -536,7 +536,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_cmu_wall(model, surfaces, constr_name, thick_in, conductivity_in, density, framing_factor,
                           furring_r, furring_cavity_depth_in, furring_spacing, mat_int_finish, osb_thick_in,
@@ -632,7 +632,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_icf_wall(model, surfaces, constr_name, ins_r, ins_thick_in, concrete_thick_in,
                           framing_factor, mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish,
@@ -712,7 +712,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_sip_wall(model, surfaces, constr_name, ins_r, ins_thick_in, framing_factor,
                           sheath_thick_in, mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish,
@@ -800,7 +800,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_steel_stud_wall(model, surfaces, constr_name, cavity_r, install_grade, cavity_depth_in, cavity_filled,
                                  corr_factor, mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish, has_radiant_barrier,
@@ -888,7 +888,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_generic_layered_wall(model, surfaces, constr_name, layers_thick_in, layers_conductivity_in, layers_density,
                                       layers_spec_heat, mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish,
@@ -981,7 +981,7 @@ module Constructions
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_wood_rim_joist(model, surfaces, constr_name, cavity_r, install_grade, joist_thick_in, framing_factor,
                                 mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish, interior_film,
@@ -1057,7 +1057,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_open_cavity_roof(model, surfaces, constr_name, cavity_r, install_grade,
                                   cavity_ins_thick_in, framing_factor, framing_thick_in, osb_thick_in,
@@ -1149,7 +1149,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_closed_cavity_roof(model, surfaces, constr_name, cavity_r, install_grade, cavity_depth_in,
                                     cavity_filled, framing_factor, mat_int_finish,
@@ -1462,7 +1462,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_sip_floor_ceiling(model, surfaces, constr_name, is_ceiling, ins_r, ins_thick_in,
                                    framing_factor, mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish,
@@ -1553,7 +1553,7 @@ module Constructions
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_generic_layered_floor_ceiling(model, surfaces, constr_name, is_ceiling, layers_thick_in, layers_conductivity_in,
                                                layers_density, layers_spec_heat, mat_int_finish, osb_thick_in, rigid_r,
@@ -1636,31 +1636,52 @@ module Constructions
     constr.create_and_assign_constructions(surfaces, model)
   end
 
-  # TODO
+  # Applies a Kiva walled foundation and construction to the OpenStudio surfaces.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param surfaces [Array<OpenStudio::Model::Surface>] array of OpenStudio::Model::Surface objects
+  # @param surfaces [Array<OpenStudio::Model::Surface>] Foundation wall surfaces
   # @param constr_name [String] Name for the construction being created
-  # @param ext_rigid_ins_offset [TODO] TODO
-  # @param int_rigid_ins_offset [TODO] TODO
-  # @param ext_rigid_ins_height [TODO] TODO
-  # @param int_rigid_ins_height [TODO] TODO
-  # @param ext_rigid_r [TODO] TODO
-  # @param int_rigid_r [TODO] TODO
+  # @param ext_vert_offset [Double] Vertical distance from top of foundation wall to top of exterior vertical insulation (ft)
+  # @param int_vert_offset [Double] Vertical distance from top of foundation wall to top of interior vertical insulation (ft)
+  # @param ext_vert_depth [Double] Depth of the exterior vertical insulation (ft)
+  # @param int_vert_depth [Double] Depth of the interior vertical insulation (ft)
+  # @param ext_vert_r [Double] Nominal R-value of the exterior vertical insulation (hr-ft2-F/Btu)
+  # @param int_vert_r [Double] Nominal R-value of the interior vertical insulation (hr-ft2-F/Btu)
   # @param mat_int_finish [Material] Material properties for the interior finish (e.g., drywall)
-  # @param mat_wall [TODO] TODO
-  # @param height_above_grade [TODO] TODO
-  # @param soil_k_in [TODO] TODO
+  # @param mat_wall [Material] Material properties for the base foundation wall (i.e., excluding insulation materials)
+  # @param height_above_grade [Double] Vertical distance from the top of the foundation wall to grade (ft)
+  # @param soil_k_in [Double] Soil conductivity (Btu-in/h-ft2-F)
   # @return [nil]
-  def self.apply_kiva_foundation_wall(model, surfaces, constr_name, ext_rigid_ins_offset, int_rigid_ins_offset,
-                                      ext_rigid_ins_height, int_rigid_ins_height, ext_rigid_r, int_rigid_r,
+  def self.apply_kiva_foundation_wall(model, surfaces, constr_name, ext_vert_offset, int_vert_offset,
+                                      ext_vert_depth, int_vert_depth, ext_vert_r, int_vert_r,
                                       mat_int_finish, mat_wall, height_above_grade, soil_k_in)
 
     # Create Kiva foundation
-    foundation = apply_kiva_walled_foundation(model, ext_rigid_r, int_rigid_r, ext_rigid_ins_offset,
-                                              int_rigid_ins_offset, ext_rigid_ins_height,
-                                              int_rigid_ins_height, height_above_grade,
-                                              mat_wall.thick_in, mat_int_finish, soil_k_in)
+    foundation = OpenStudio::Model::FoundationKiva.new(model)
+
+    # Interior vertical insulation
+    if (int_vert_r > 0) && (int_vert_depth > 0)
+      int_vert_mat = create_insulation_material_for_kiva(model, 'interior vertical ins', int_vert_r)
+      foundation.addCustomBlock(int_vert_mat,
+                                UnitConversions.convert(int_vert_depth, 'ft', 'm'),
+                                -int_vert_mat.thickness,
+                                UnitConversions.convert(int_vert_offset, 'ft', 'm'))
+    end
+
+    # Exterior vertical insulation
+    if (ext_vert_r > 0) && (ext_vert_depth > 0)
+      ext_vert_mat = create_insulation_material_for_kiva(model, 'exterior vertical ins', ext_vert_r)
+      mat_int_finish_thick_in = mat_int_finish.nil? ? 0.0 : mat_int_finish.thick_in
+      foundation.addCustomBlock(ext_vert_mat,
+                                UnitConversions.convert(ext_vert_depth, 'ft', 'm'),
+                                UnitConversions.convert(mat_wall.thick_in + mat_int_finish_thick_in, 'in', 'm'),
+                                UnitConversions.convert(ext_vert_offset, 'ft', 'm'))
+    end
+
+    foundation.setWallHeightAboveGrade(UnitConversions.convert(height_above_grade, 'ft', 'm'))
+    foundation.setWallDepthBelowSlab(UnitConversions.convert(8.0, 'in', 'm'))
+
+    apply_kiva_settings(model, soil_k_in)
 
     # Define construction
     constr = Construction.new(constr_name, [1])
@@ -1678,46 +1699,80 @@ module Constructions
     end
   end
 
-  # TODO
+  # Applies a Kiva slab foundation and construction to the OpenStudio surface.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param surface [OpenStudio::Model::Surface] an OpenStudio::Model::Surface object
   # @param constr_name [String] Name for the construction being created
-  # @param under_r [TODO] TODO
-  # @param under_width [TODO] TODO
-  # @param gap_r [TODO] TODO
-  # @param perimeter_r [TODO] TODO
-  # @param perimeter_depth [TODO] TODO
-  # @param whole_r [TODO] TODO
-  # @param concrete_thick_in [TODO] TODO
-  # @param exposed_perimeter [TODO] TODO
-  # @param mat_carpet [TODO] TODO
-  # @param soil_k_in [TODO] TODO
+  # @param int_horiz_r [Double] Nominal R-value of the interior horizontal insulation (hr-ft2-F/Btu)
+  # @param int_horiz_width [Double] Width of the interior horizontal insulation (ft)
+  # @param int_vert_r [Double] Nominal R-value of the interior vertical insulation (hr-ft2-F/Btu)
+  # @param ext_vert_r [Double] Nominal R-value of the exterior vertical insulation (hr-ft2-F/Btu)
+  # @param ext_vert_depth [Double] Depth of the exterior vertical insulation (ft)
+  # @param whole_r [Double] Nominal R-value for the horizontal insulation that covers the whole slab (hr-ft2-F/Btu)
+  # @param concrete_thick_in [Double] Thickness of the concrete slab (in)
+  # @param exposed_perimeter [Double] Slab perimeter exposed to ambient conditions (ft)
+  # @param mat_carpet [Material] Material properties for the carpet
+  # @param soil_k_in [Double] Soil conductivity (Btu-in/h-ft2-F)
   # @param foundation [OpenStudio::Model::FoundationKiva] The Kiva foundation object of interest
-  # @param ext_horiz_r [TODO] TODO
-  # @param ext_horiz_width [TODO] TODO
-  # @param ext_horiz_depth [TODO] TODO
+  # @param ext_horiz_r [Double] Nominal R-value of the exterior horizontal insulation (hr-ft2-F/Btu)
+  # @param ext_horiz_width [Double] Width of the exterior horizontal insulation (ft)
+  # @param ext_horiz_depth [Double] Vertical distance from the top of the exterior horizontal insulation to grade (ft)
   # @return [nil]
-  def self.apply_kiva_foundation_slab(model, surface, constr_name, under_r, under_width, gap_r, perimeter_r,
-                                      perimeter_depth, whole_r, concrete_thick_in, exposed_perimeter,
-                                      mat_carpet, soil_k_in, foundation, ext_horiz_r, ext_horiz_width,
-                                      ext_horiz_depth)
+  def self.apply_kiva_foundation_slab(model, surface, constr_name, int_horiz_r, int_horiz_width, int_vert_r, ext_vert_r,
+                                      ext_vert_depth, whole_r, concrete_thick_in, exposed_perimeter, mat_carpet,
+                                      soil_k_in, foundation, ext_horiz_r, ext_horiz_width, ext_horiz_depth)
 
     return if surface.nil?
 
     if foundation.nil?
       # Create Kiva foundation for slab
-      foundation = create_kiva_slab_foundation(model, under_r, under_width,
-                                               gap_r, perimeter_r, perimeter_depth,
-                                               concrete_thick_in, soil_k_in, ext_horiz_r, ext_horiz_width, ext_horiz_depth)
-    else
-      # Kiva foundation (for crawlspace/basement) exists
-      if (under_r > 0) && (under_width > 0)
-        int_horiz_mat = create_insulation_material(model, 'interior horizontal ins', under_r)
+      foundation = OpenStudio::Model::FoundationKiva.new(model)
+
+      # Interior horizontal insulation
+      if (int_horiz_r > 0) && (int_horiz_width > 0)
+        int_horiz_mat = create_insulation_material_for_kiva(model, 'interior horizontal ins', int_horiz_r)
         foundation.setInteriorHorizontalInsulationMaterial(int_horiz_mat)
         foundation.setInteriorHorizontalInsulationDepth(0)
-        foundation.setInteriorHorizontalInsulationWidth(UnitConversions.convert(under_width, 'ft', 'm'))
+        foundation.setInteriorHorizontalInsulationWidth(UnitConversions.convert(int_horiz_width, 'ft', 'm'))
       end
+
+      # Interior vertical insulation
+      if (int_vert_r > 0) && (concrete_thick_in > 0)
+        int_vert_mat = create_insulation_material_for_kiva(model, 'interior vertical ins', int_vert_r)
+        foundation.setInteriorVerticalInsulationMaterial(int_vert_mat)
+        foundation.setInteriorVerticalInsulationDepth(UnitConversions.convert(concrete_thick_in, 'in', 'm'))
+      end
+
+      # Exterior vertical insulation
+      if (ext_vert_r > 0) && (ext_vert_depth > 0)
+        ext_vert_mat = create_insulation_material_for_kiva(model, 'exterior vertical ins', ext_vert_r)
+        foundation.setExteriorVerticalInsulationMaterial(ext_vert_mat)
+        foundation.setExteriorVerticalInsulationDepth(UnitConversions.convert(ext_vert_depth, 'ft', 'm'))
+      end
+
+      # Exterior horizontal insulation
+      if (ext_horiz_r > 0) && (ext_horiz_width > 0)
+        ext_horiz_mat = create_insulation_material_for_kiva(model, 'exterior horizontal ins', ext_horiz_r)
+        foundation.setExteriorHorizontalInsulationMaterial(ext_horiz_mat)
+        foundation.setExteriorHorizontalInsulationDepth(UnitConversions.convert(ext_horiz_depth, 'ft', 'm'))
+        foundation.setExteriorHorizontalInsulationWidth(UnitConversions.convert(ext_horiz_width, 'ft', 'm'))
+      end
+
+      foundation.setWallHeightAboveGrade(UnitConversions.convert(concrete_thick_in, 'in', 'm'))
+      foundation.setWallDepthBelowSlab(UnitConversions.convert(8.0, 'in', 'm'))
+
+      apply_kiva_settings(model, soil_k_in)
+
+    else
+      # Kiva foundation (for crawlspace/basement) exists
+      if (int_horiz_r > 0) && (int_horiz_width > 0)
+        int_horiz_mat = create_insulation_material_for_kiva(model, 'interior horizontal ins', int_horiz_r)
+        foundation.setInteriorHorizontalInsulationMaterial(int_horiz_mat)
+        foundation.setInteriorHorizontalInsulationDepth(0)
+        foundation.setInteriorHorizontalInsulationWidth(UnitConversions.convert(int_horiz_width, 'ft', 'm'))
+      end
+
     end
 
     # Define materials
@@ -1758,12 +1813,12 @@ module Constructions
     surface.createSurfacePropertyExposedFoundationPerimeter('TotalExposedPerimeter', UnitConversions.convert(exposed_perimeter, 'ft', 'm'))
   end
 
-  # TODO
+  # Applies a door construction to the OpenStudio subsurfaces.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param subsurfaces [TODO] TODO
+  # @param subsurfaces [Array<OpenStudio::Model::SubSurface>] The subsurfaces to apply the construction to
   # @param constr_name [String] Name for the construction being created
-  # @param ufactor [TODO] TODO
+  # @param ufactor [Double] Door U-factor (Btu/F-ft2-hr)
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @return [nil]
@@ -1783,36 +1838,37 @@ module Constructions
     constr.create_and_assign_constructions(subsurfaces, model)
   end
 
-  # TODO
+  # Applies a window construction to the OpenStudio subsurface.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param subsurface [TODO] TODO
+  # @param subsurface [OpenStudio::Model::SubSurface] The subsurface to apply the construction to
   # @param constr_name [String] Name for the construction being created
-  # @param ufactor [TODO] TODO
-  # @param shgc [TODO] TODO
+  # @param ufactor [Double] Full-assembly NFRC U-factor (Btu/F-ft2-hr)
+  # @param shgc [Double] Full-assembly NFRC solar heat gain coefficient (frac)
   # @return [nil]
   def self.apply_window(model, subsurface, constr_name, ufactor, shgc)
     apply_window_skylight(model, 'Window', subsurface, constr_name, ufactor, shgc)
   end
 
-  # TODO
+  # Applies a skylight construction to the OpenStudio subsurface.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param subsurface [TODO] TODO
+  # @param subsurface [OpenStudio::Model::SubSurface] The subsurface to apply the construction to
   # @param constr_name [String] Name for the construction being created
-  # @param ufactor [TODO] TODO
-  # @param shgc [TODO] TODO
+  # @param ufactor [Double] Full-assembly NFRC U-factor (Btu/F-ft2-hr)
+  # @param shgc [Double] Full-assembly NFRC solar heat gain coefficient (frac)
   # @return [nil]
   def self.apply_skylight(model, subsurface, constr_name, ufactor, shgc)
     apply_window_skylight(model, 'Skylight', subsurface, constr_name, ufactor, shgc)
   end
 
-  # TODO
+  # Creates an OpenStudio internal mass object with a wood stud construction to represent
+  # partition wall area (e.g., walls between different rooms in the homes).
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param constr_name [String] Name for the construction being created
   # @param mat_int_finish [Material] Material properties for the interior finish (e.g., drywall)
-  # @param partition_wall_area [TODO] TODO
+  # @param partition_wall_area [Double] Partition wall surface area (both sides) (ft^2)
   # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
   # @return [nil]
   def self.apply_partition_walls(model, constr_name, mat_int_finish, partition_wall_area, spaces)
@@ -1820,17 +1876,23 @@ module Constructions
 
     # Add remaining partition walls within spaces (those without geometric representation)
     # as internal mass object.
-    obj_name = 'partition wall mass'
-    imdef = create_os_int_mass_and_def(model, obj_name, spaces[HPXML::LocationConditionedSpace], partition_wall_area)
+    im = Model.add_internal_mass(
+      model,
+      name: 'partition wall mass',
+      space: spaces[HPXML::LocationConditionedSpace],
+      area: partition_wall_area,
+    )
+    imdef = im.internalMassDefinition
 
     apply_wood_stud_wall(model, [imdef], constr_name, 0, 1, 3.5, false, 0.16, mat_int_finish, 0, 0, mat_int_finish,
                          false, Material.AirFilmIndoorWall, Material.AirFilmIndoorWall, 1, nil, nil)
   end
 
-  # TODO
+  # Creates an OpenStudio internal mass object to represent furniture and furnishings
+  # in the conditioned space, unconditioned basement, and garage thermal zones.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param furniture_mass [TODO] TODO
+  # @param furniture_mass [HPXML::FurnitureMass] HPXML FurnitureMass object
   # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
   # @return [nil]
   def self.apply_furniture(model, furniture_mass, spaces)
@@ -1868,46 +1930,27 @@ module Constructions
       next if furnAreaFraction.nil?
       next if furnAreaFraction <= 0
 
-      mat_obj_name_space = "furniture material #{space.name}"
-      constr_obj_name_space = "furniture construction #{space.name}"
-      mass_obj_name_space = "furniture mass #{space.name}"
-
       furnThickness = UnitConversions.convert(furnMass / (furnDensity * furnAreaFraction), 'ft', 'in')
 
       # Define materials
-      mat_fm = Material.new(name: mat_obj_name_space, thick_in: furnThickness, k_in: furnConductivity, rho: furnDensity, cp: furnSpecHeat, tAbs: 0.9, sAbs: furnSolarAbsorptance)
+      mat_fm = Material.new(name: "furniture material #{space.name}", thick_in: furnThickness, k_in: furnConductivity, rho: furnDensity, cp: furnSpecHeat, tAbs: 0.9, sAbs: furnSolarAbsorptance)
 
       # Define construction
-      constr = Construction.new(constr_obj_name_space, [1])
+      constr = Construction.new("furniture construction #{space.name}", [1])
       constr.add_layer(mat_fm)
 
       surface_area = furnAreaFraction * floor_area
-      imdef = create_os_int_mass_and_def(model, mass_obj_name_space, space, surface_area)
+      im = Model.add_internal_mass(
+        model,
+        name: "furniture mass #{space.name}",
+        space: space,
+        area: surface_area,
+      )
+      imdef = im.internalMassDefinition
 
       # Create and assign construction to surfaces
       constr.create_and_assign_constructions([imdef], model)
     end
-  end
-
-  # TODO
-  #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param object_name [TODO] TODO
-  # @param space [OpenStudio::Model::Space] an OpenStudio::Model::Space object
-  # @param area [TODO] TODO
-  # @return [TODO] TODO
-  def self.create_os_int_mass_and_def(model, object_name, space, area)
-    # EnergyPlus documentation: If both sides of the surface exchange energy with the zone
-    # then the user should input twice the area when defining the Internal Mass object.
-    imdef = OpenStudio::Model::InternalMassDefinition.new(model)
-    imdef.setName(object_name)
-    imdef.setSurfaceArea(UnitConversions.convert(area, 'ft^2', 'm^2'))
-
-    im = OpenStudio::Model::InternalMass.new(imdef)
-    im.setName(object_name)
-    im.setSpace(space)
-
-    return imdef
   end
 
   # Returns the mapping between solar absorptance and roof color/material.
@@ -2018,117 +2061,10 @@ module Constructions
     return 0
   end
 
-  # TODO
+  # Applies Kiva settings to the model.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param int_horiz_r [TODO] TODO
-  # @param int_horiz_width [TODO] TODO
-  # @param int_vert_r [TODO] TODO
-  # @param ext_vert_r [TODO] TODO
-  # @param ext_vert_depth [TODO] TODO
-  # @param concrete_thick_in [TODO] TODO
-  # @param soil_k_in [TODO] TODO
-  # @param ext_horiz_r [TODO] TODO
-  # @param ext_horiz_width [TODO] TODO
-  # @param ext_horiz_depth [TODO] TODO
-  # @return [TODO] TODO
-  def self.create_kiva_slab_foundation(model, int_horiz_r, int_horiz_width, int_vert_r,
-                                       ext_vert_r, ext_vert_depth, concrete_thick_in, soil_k_in, ext_horiz_r, ext_horiz_width, ext_horiz_depth)
-
-    # Create the Foundation:Kiva object for slab foundations
-    foundation = OpenStudio::Model::FoundationKiva.new(model)
-
-    # Interior horizontal insulation
-    if (int_horiz_r > 0) && (int_horiz_width > 0)
-      int_horiz_mat = create_insulation_material(model, 'interior horizontal ins', int_horiz_r)
-      foundation.setInteriorHorizontalInsulationMaterial(int_horiz_mat)
-      foundation.setInteriorHorizontalInsulationDepth(0)
-      foundation.setInteriorHorizontalInsulationWidth(UnitConversions.convert(int_horiz_width, 'ft', 'm'))
-    end
-
-    # Interior vertical insulation
-    if (int_vert_r > 0) && (concrete_thick_in > 0)
-      int_vert_mat = create_insulation_material(model, 'interior vertical ins', int_vert_r)
-      foundation.setInteriorVerticalInsulationMaterial(int_vert_mat)
-      foundation.setInteriorVerticalInsulationDepth(UnitConversions.convert(concrete_thick_in, 'in', 'm'))
-    end
-
-    # Exterior vertical insulation
-    if (ext_vert_r > 0) && (ext_vert_depth > 0)
-      ext_vert_mat = create_insulation_material(model, 'exterior vertical ins', ext_vert_r)
-      foundation.setExteriorVerticalInsulationMaterial(ext_vert_mat)
-      foundation.setExteriorVerticalInsulationDepth(UnitConversions.convert(ext_vert_depth, 'ft', 'm'))
-    end
-
-    # Exterior horizontal insulation
-    if (ext_horiz_r > 0) && (ext_horiz_width > 0)
-      ext_horiz_mat = create_insulation_material(model, 'exterior horizontal ins', ext_horiz_r)
-      foundation.setExteriorHorizontalInsulationMaterial(ext_horiz_mat)
-      foundation.setExteriorHorizontalInsulationDepth(UnitConversions.convert(ext_horiz_depth, 'ft', 'm'))
-      foundation.setExteriorHorizontalInsulationWidth(UnitConversions.convert(ext_horiz_width, 'ft', 'm'))
-    end
-
-    foundation.setWallHeightAboveGrade(UnitConversions.convert(concrete_thick_in, 'in', 'm'))
-    foundation.setWallDepthBelowSlab(UnitConversions.convert(8.0, 'in', 'm'))
-
-    apply_kiva_settings(model, soil_k_in)
-
-    return foundation
-  end
-
-  # TODO
-  #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param ext_vert_r [TODO] TODO
-  # @param int_vert_r [TODO] TODO
-  # @param ext_vert_offset [TODO] TODO
-  # @param int_vert_offset [TODO] TODO
-  # @param ext_vert_depth [TODO] TODO
-  # @param int_vert_depth [TODO] TODO
-  # @param wall_height_above_grade [TODO] TODO
-  # @param wall_material_thick_in [TODO] TODO
-  # @param wall_mat_int_finish [TODO] TODO
-  # @param soil_k_in [TODO] TODO
-  # @return [TODO] TODO
-  def self.apply_kiva_walled_foundation(model, ext_vert_r, int_vert_r,
-                                        ext_vert_offset, int_vert_offset, ext_vert_depth, int_vert_depth,
-                                        wall_height_above_grade, wall_material_thick_in, wall_mat_int_finish,
-                                        soil_k_in)
-
-    # Create the Foundation:Kiva object for crawl/basement foundations
-    foundation = OpenStudio::Model::FoundationKiva.new(model)
-
-    # Interior vertical insulation
-    if (int_vert_r > 0) && (int_vert_depth > 0)
-      int_vert_mat = create_insulation_material(model, 'interior vertical ins', int_vert_r)
-      foundation.addCustomBlock(int_vert_mat,
-                                UnitConversions.convert(int_vert_depth, 'ft', 'm'),
-                                -int_vert_mat.thickness,
-                                UnitConversions.convert(int_vert_offset, 'ft', 'm'))
-    end
-
-    # Exterior vertical insulation
-    if (ext_vert_r > 0) && (ext_vert_depth > 0)
-      ext_vert_mat = create_insulation_material(model, 'exterior vertical ins', ext_vert_r)
-      wall_mat_int_finish_thick_in = wall_mat_int_finish.nil? ? 0.0 : wall_mat_int_finish.thick_in
-      foundation.addCustomBlock(ext_vert_mat,
-                                UnitConversions.convert(ext_vert_depth, 'ft', 'm'),
-                                UnitConversions.convert(wall_material_thick_in + wall_mat_int_finish_thick_in, 'in', 'm'),
-                                UnitConversions.convert(ext_vert_offset, 'ft', 'm'))
-    end
-
-    foundation.setWallHeightAboveGrade(UnitConversions.convert(wall_height_above_grade, 'ft', 'm'))
-    foundation.setWallDepthBelowSlab(UnitConversions.convert(8.0, 'in', 'm'))
-
-    apply_kiva_settings(model, soil_k_in)
-
-    return foundation
-  end
-
-  # TODO
-  #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param soil_k_in [TODO] TODO
+  # @param soil_k_in [Double] Soil conductivity (Btu-in/h-ft2-F)
   # @return [nil]
   def self.apply_kiva_settings(model, soil_k_in)
     # Set the Foundation:Kiva:Settings object
@@ -2140,14 +2076,13 @@ module Constructions
     settings.setGroundSolarAbsorptivity(0.9)
     settings.setGroundThermalAbsorptivity(0.9)
     settings.setGroundSurfaceRoughness(0.03)
-    settings.setFarFieldWidth(40) # TODO: Set based on neighbor distances?
+    settings.setFarFieldWidth(40) # FUTURE: Set based on neighbor building distances?
     settings.setDeepGroundBoundaryCondition('ZeroFlux')
     settings.setDeepGroundDepth(40)
     settings.setMinimumCellDimension(0.2)
     settings.setMaximumCellGrowthCoefficient(3.0)
-    # Using 'Timestep' instead of 'Hourly' below because it makes timeseries
-    # results smoother with only a small increase in runtime (generally
-    # less than 10%).
+    # Using 'Timestep' instead of 'Hourly' below because it makes timeseries results
+    # smoother with only a small increase in runtime.
     settings.setSimulationTimestep('Timestep')
   end
 
@@ -2288,13 +2223,13 @@ module Constructions
     foundation.setInitialIndoorAirTemperature(UnitConversions.convert(initial_temp, 'F', 'C'))
   end
 
-  # TODO
+  # Creates an OpenStudio material to represent insulation for the Kiva foundation objects.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param name [TODO] TODO
-  # @param rvalue [TODO] TODO
-  # @return [TODO] TODO
-  def self.create_insulation_material(model, name, rvalue)
+  # @param name [String] Name for the material
+  # @param rvalue [Double] Nominal R-value of the insulation (hr-ft2-F/Btu)
+  # @return [OpenStudio::Model::StandardOpaqueMaterial] The OpenStudio material
+  def self.create_insulation_material_for_kiva(model, name, rvalue)
     rigid_mat = BaseMaterial.InsulationRigid
     mat = Model.add_opaque_material(
       model,
@@ -2307,11 +2242,11 @@ module Constructions
     return mat
   end
 
-  # TODO
+  # Applies a window/skylight construction to the OpenStudio subsurface.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param type [TODO] TODO
-  # @param subsurface [TODO] TODO
+  # @param type [String] "Skylight" or "Window"
+  # @param subsurface [OpenStudio::Model::SubSurface] The subsurface to apply the construction to
   # @param constr_name [String] Name for the construction being created
   # @param ufactor [Double] Full assembly window U-factor (Btu/F-ft2-hr)
   # @param shgc [Double] Full assembly glazing solar heat gain coefficient (0-1)
@@ -2336,16 +2271,17 @@ module Constructions
     constr.create_and_assign_constructions([subsurface], model)
   end
 
-  # TODO
+  # Applies a shading schedule to the window/skylight using the simple E+
+  # SurfaceProperty:IncidentSolarMultiplier object.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param window_or_skylight [TODO] TODO
-  # @param sub_surface [TODO] TODO
-  # @param shading_schedules [TODO] TODO
+  # @param window_or_skylight [HPXML::Window or HPXML::Skylight] The HPXML Window or Skylight with the shading information
+  # @param subsurface [OpenStudio::Model::SubSurface] The subsurface to apply the shading to
+  # @param shading_schedules [Hash] Map of shading factors array => OpenStudio schedule, used to prevent creating duplicative schedule objects in the model
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @return [nil]
-  def self.apply_window_skylight_shading(model, window_or_skylight, sub_surface, shading_schedules, hpxml_header, hpxml_bldg)
+  def self.apply_window_skylight_shading(model, window_or_skylight, subsurface, shading_schedules, hpxml_header, hpxml_bldg)
     # Interior shading factors
     isf_summer = window_or_skylight.interior_shading_factor_summer
     isf_winter = window_or_skylight.interior_shading_factor_winter
@@ -2432,32 +2368,33 @@ module Constructions
         shading_schedules[sf_values] = sf_sch
       end
 
-      ism = OpenStudio::Model::SurfacePropertyIncidentSolarMultiplier.new(sub_surface)
+      ism = OpenStudio::Model::SurfacePropertyIncidentSolarMultiplier.new(subsurface)
       ism.setIncidentSolarMultiplierSchedule(shading_schedules[sf_values])
     end
   end
 
-  # TODO
+  # Calculates the R-value for all layers with a single material represented by the
+  # construction set (i.e., all layers other than the cavity/stud parallel path layer).
   #
-  # @param film_r [TODO] TODO
-  # @param constr_set [TODO] TODO
-  # @return [TODO] TODO
-  def self.calc_non_cavity_r(film_r, constr_set)
-    # Calculate R-value for all non-cavity layers
-    non_cavity_r = film_r
+  # @param constr_set [XXXConstructionSet] The construction set of interest
+  # @param interior_film [Material] Material with the interior air film R-value
+  # @param exterior_film [Material] Material with the exterior air film R-value
+  # @return [Double] The construction set base R-value (hr-ft2-F/Btu)
+  def self.calc_construction_set_base_r(constr_set, interior_film, exterior_film)
+    base_r = interior_film.rvalue + exterior_film.rvalue
     if not constr_set.mat_ext_finish.nil?
-      non_cavity_r += constr_set.mat_ext_finish.rvalue
+      base_r += constr_set.mat_ext_finish.rvalue
     end
     if not constr_set.rigid_r.nil?
-      non_cavity_r += constr_set.rigid_r
+      base_r += constr_set.rigid_r
     end
     if not constr_set.osb_thick_in.nil?
-      non_cavity_r += Material.OSBSheathing(constr_set.osb_thick_in).rvalue
+      base_r += Material.OSBSheathing(constr_set.osb_thick_in).rvalue
     end
     if not constr_set.mat_int_finish.nil?
-      non_cavity_r += constr_set.mat_int_finish.rvalue
+      base_r += constr_set.mat_int_finish.rvalue
     end
-    return non_cavity_r
+    return base_r
   end
 
   # Applies a wall construction to the OpenStudio surfaces.
@@ -2475,7 +2412,7 @@ module Constructions
   # @param radiant_barrier_grade [Integer] Radiant barrier installation grade as defined by RESNET (1-3)
   # @param mat_ext_finish [Material] Material properties for the exterior finish (e.g., siding)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
-  # @param emittance [Double] Emittance of the outermost material
+  # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_wall_construction(runner, model, surfaces, wall_id, wall_type, assembly_r, mat_int_finish,
                                    has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade,
@@ -2803,13 +2740,12 @@ module Constructions
   # @param constr_sets [Array<WoodStudConstructionSet>] List of construction sets to choose from, in order of priority
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
-  # @return [Array<Boolean, WoodStudConstructionSet, Double>] TODO
+  # @return [Array<Boolean, WoodStudConstructionSet, Double>] Whether we could match the assembly R-value, the selected construction set, and the calculated cavity R-value (hr-ft2-F/Btu)
   def self.pick_wood_stud_construction_set(assembly_r, constr_sets, interior_film, exterior_film)
     constr_sets.each do |constr_set|
       fail 'Unexpected object.' unless constr_set.is_a? WoodStudConstructionSet
 
-      film_r = interior_film.rvalue + exterior_film.rvalue
-      non_cavity_r = calc_non_cavity_r(film_r, constr_set)
+      non_cavity_r = calc_construction_set_base_r(constr_set, interior_film, exterior_film)
 
       # Calculate effective cavity R-value
       # Assumes installation quality 1
@@ -2830,13 +2766,12 @@ module Constructions
   # @param constr_sets [Array<SteelStudConstructionSet>] List of construction sets to choose from, in order of priority
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
-  # @return [Array<Boolean, SteelStudConstructionSet, Double>] TODO
+  # @return [Array<Boolean, SteelStudConstructionSet, Double>] Whether we could match the assembly R-value, the selected construction set, and the calculated cavity R-value (hr-ft2-F/Btu)
   def self.pick_steel_stud_construction_set(assembly_r, constr_sets, interior_film, exterior_film)
     constr_sets.each do |constr_set|
       fail 'Unexpected object.' unless constr_set.is_a? SteelStudConstructionSet
 
-      film_r = interior_film.rvalue + exterior_film.rvalue
-      non_cavity_r = calc_non_cavity_r(film_r, constr_set)
+      non_cavity_r = calc_construction_set_base_r(constr_set, interior_film, exterior_film)
 
       # Calculate effective cavity R-value
       # Assumes installation quality 1
@@ -2856,13 +2791,12 @@ module Constructions
   # @param constr_sets [Array<DoubleStudConstructionSet>] List of construction sets to choose from, in order of priority
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
-  # @return [Array<Boolean, DoubleStudConstructionSet, Double>] TODO
+  # @return [Array<Boolean, DoubleStudConstructionSet, Double>] Whether we could match the assembly R-value, the selected construction set, and the calculated cavity R-value (hr-ft2-F/Btu)
   def self.pick_double_stud_construction_set(assembly_r, constr_sets, interior_film, exterior_film)
     constr_sets.each do |constr_set|
       fail 'Unexpected object.' unless constr_set.is_a? DoubleStudConstructionSet
 
-      film_r = interior_film.rvalue + exterior_film.rvalue
-      non_cavity_r = calc_non_cavity_r(film_r, constr_set)
+      non_cavity_r = calc_construction_set_base_r(constr_set, interior_film, exterior_film)
 
       # Calculate effective cavity R-value
       # Assumes installation quality 1, not staggered, gap depth == stud depth
@@ -2891,13 +2825,12 @@ module Constructions
   # @param constr_sets [Array<SIPConstructionSet>] List of construction sets to choose from, in order of priority
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
-  # @return [Array<Boolean, SIPConstructionSet, Double>] TODO
+  # @return [Array<Boolean, SIPConstructionSet, Double>] Whether we could match the assembly R-value, the selected construction set, and the calculated cavity R-value (hr-ft2-F/Btu)
   def self.pick_sip_construction_set(assembly_r, constr_sets, interior_film, exterior_film)
     constr_sets.each do |constr_set|
       fail 'Unexpected object.' unless constr_set.is_a? SIPConstructionSet
 
-      film_r = interior_film.rvalue + exterior_film.rvalue
-      non_cavity_r = calc_non_cavity_r(film_r, constr_set)
+      non_cavity_r = calc_construction_set_base_r(constr_set, interior_film, exterior_film)
       non_cavity_r += Material.new(thick_in: constr_set.sheath_thick_in, mat_base: BaseMaterial.Wood).rvalue
 
       # Calculate effective SIP core R-value
@@ -2931,13 +2864,12 @@ module Constructions
   # @param constr_sets [Array<CMUConstructionSet>] List of construction sets to choose from, in order of priority
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
-  # @return [Array<Boolean, CMUConstructionSet, Double>] TODO
+  # @return [Array<Boolean, CMUConstructionSet, Double>] Whether we could match the assembly R-value, the selected construction set, and the calculated cavity R-value (hr-ft2-F/Btu)
   def self.pick_cmu_construction_set(assembly_r, constr_sets, interior_film, exterior_film)
     constr_sets.each do |constr_set|
       fail 'Unexpected object.' unless constr_set.is_a? CMUConstructionSet
 
-      film_r = interior_film.rvalue + exterior_film.rvalue
-      non_cavity_r = calc_non_cavity_r(film_r, constr_set)
+      non_cavity_r = calc_construction_set_base_r(constr_set, interior_film, exterior_film)
 
       # Calculate effective other CMU R-value
       # Assumes no furring strips
@@ -2963,13 +2895,12 @@ module Constructions
   # @param constr_sets [Array<ICFConstructionSet>] List of construction sets to choose from, in order of priority
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
-  # @return [Array<Boolean, ICFConstructionSet, Double>] TODO
+  # @return [Array<Boolean, ICFConstructionSet, Double>] Whether we could match the assembly R-value, the selected construction set, and the calculated cavity R-value (hr-ft2-F/Btu)
   def self.pick_icf_construction_set(assembly_r, constr_sets, interior_film, exterior_film)
     constr_sets.each do |constr_set|
       fail 'Unexpected object.' unless constr_set.is_a? ICFConstructionSet
 
-      film_r = interior_film.rvalue + exterior_film.rvalue
-      non_cavity_r = calc_non_cavity_r(film_r, constr_set)
+      non_cavity_r = calc_construction_set_base_r(constr_set, interior_film, exterior_film)
 
       # Calculate effective ICF rigid ins R-value
       # Solved in Wolfram Alpha: https://www.wolframalpha.com/input/?i=1%2FA+%3D+B%2F(C%2BE)+%2B+(1-B)%2F(D%2BE%2B2*x)
@@ -2994,13 +2925,12 @@ module Constructions
   # @param constr_sets [Array<GenericConstructionSet>] List of construction sets to choose from, in order of priority
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
-  # @return [Array<Boolean, GenericConstructionSet, Double>] TODO
+  # @return [Array<Boolean, GenericConstructionSet, Double>] Whether we could match the assembly R-value, the selected construction set, and the calculated cavity R-value (hr-ft2-F/Btu)
   def self.pick_generic_construction_set(assembly_r, constr_sets, interior_film, exterior_film)
     constr_sets.each do |constr_set|
       fail 'Unexpected object.' unless constr_set.is_a? GenericConstructionSet
 
-      film_r = interior_film.rvalue + exterior_film.rvalue
-      non_cavity_r = calc_non_cavity_r(film_r, constr_set)
+      non_cavity_r = calc_construction_set_base_r(constr_set, interior_film, exterior_film)
 
       # Calculate effective ins layer R-value
       layer_r = assembly_r - non_cavity_r
@@ -3021,7 +2951,7 @@ module Constructions
   # @param interior_film [Material] Material with the interior air film R-value
   # @param exterior_film [Material] Material with the exterior air film R-value
   # @param assembly_r [Double] Air-to-air insulation assembly R-value (hr-ft2-F/Btu)
-  # @param match [TODO] TODO
+  # @param match [Boolean] Whether we are expecting the construction R-value to match the target assembly R-value
   # @return [nil]
   def self.check_surface_assembly_rvalue(runner, surfaces, interior_film, exterior_film, assembly_r, match)
     film_r = 0.0
@@ -3048,13 +2978,13 @@ module Constructions
     end
   end
 
-  # Returns a window U-factor and SHGC that accounts for the presence and type of storm window.
+  # Returns a window U-factor and SHGC that accounts for the effect of a storm window.
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
-  # @param storm_type [TODO] TODO
-  # @param base_ufactor [TODO] TODO
-  # @param base_shgc [TODO] TODO
-  # @return [Array<Double, Double>] Storm-adjusted U-factor and SHGC
+  # @param storm_type [HPXML::WindowGlassTypeXXX] The type of storm
+  # @param base_ufactor [Double] Full-assembly NFRC U-factor (Btu/F-ft2-hr)
+  # @param base_shgc [Double] Full-assembly NFRC solar heat gain coefficient (frac)
+  # @return [Array<Double, Double>] Storm-adjusted U-factor (Btu/F-ft2-hr) and SHGC (frac)
   def self.get_ufactor_shgc_adjusted_by_storms(runner, storm_type, base_ufactor, base_shgc)
     return base_ufactor, base_shgc if storm_type.nil?
 
@@ -3085,7 +3015,7 @@ end
 # OpenStudio Materials) from Material objects. Handles parallel path calculations.
 class Construction
   # @param name [String] Name of the construction
-  # @param path_fracs [TODO] TODO
+  # @param path_fracs [Array<Double>] Fractions of surface area corresponding to every unique parallel path in the construction
   def initialize(name, path_fracs)
     @name = name
     @path_fracs = path_fracs
@@ -3093,18 +3023,12 @@ class Construction
     @layers_materials = []
   end
 
-  # TODO
+  # Adds the specified layer material(s) to the construction.
   #
-  # @param materials [TODO] TODO
-  # @param name [TODO] TODO
-  # @return [TODO] TODO
+  # @param materials [Material or Array<Material>] One or more materials that make up the layer
+  # @param name [String or nil] Name of the layer; required if multiple materials are provided, otherwise the material name is used
+  # @return [nil]
   def add_layer(materials, name = nil)
-    # materials: Either a Material object or a list of Material objects
-    # include_in_construction: false if the layer that should not be included in the
-    #                          resulting construction but is used to calculate the
-    #                          effective R-value.
-    # name: Name of the layer; required if multiple materials are provided. Otherwise the
-    #       Material.name will be used.
     if not materials.kind_of?(Array)
       @layers_materials << [materials]
       if not name.nil?
@@ -3122,11 +3046,10 @@ class Construction
     end
   end
 
-  # TODO
+  # Calculates the overall assembly R-value for the construction.
   #
-  # @return [TODO] TODO
+  # @return [Double] Construction assembly R-value (hr-ft2-F/Btu)
   def assembly_rvalue()
-    # Calculate overall R-value for assembly
     validate
 
     u_overall = 0
@@ -3148,12 +3071,12 @@ class Construction
     return r_overall
   end
 
-  # Creates constructions as needed and assigns to surfaces.
-  # Leave name as nil if the materials (e.g., exterior finish) apply to multiple constructions.
+  # Creates the OpenStudio construction and applies it to the OpenStudio surfaces.
+  # Also handles the reverse construction as needed.
   #
   # @param surfaces [Array<OpenStudio::Model::Surface>] array of OpenStudio::Model::Surface objects
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @return [TODO] TODO
+  # @return [nil]
   def create_and_assign_constructions(surfaces, model)
     validate
 
@@ -3183,44 +3106,54 @@ class Construction
     end
   end
 
-  # TODO
+  # Sets solar absorptance and emittance for the outermost construction material.
   #
-  # @param solar_absorptance [TODO] TODO
-  # @param emittance [TODO] TODO
+  # @param solar_absorptance [Double] Material solar absorptance (frac)
+  # @param emittance [Double] Material emittance (frac)
   # @return [nil]
   def set_exterior_material_properties(solar_absorptance = 0.75, emittance = 0.9)
+    # We use index 1 because 0 is the exterior air film
     @layers_materials[1].each do |exterior_material|
       exterior_material.sAbs = solar_absorptance
       exterior_material.tAbs = emittance
     end
   end
 
-  # TODO
+  # Sets solar absorptance and emittance for the innermost construction material.
   #
-  # @param solar_absorptance [TODO] TODO
-  # @param emittance [TODO] TODO
+  # @param solar_absorptance [Double] Material solar absorptance (frac)
+  # @param emittance [Double] Material emittance (frac)
   # @return [nil]
   def set_interior_material_properties(solar_absorptance = 0.6, emittance = 0.9)
-    if @layers_materials.size > 3 # Only apply if there is a separate interior material
-      @layers_materials[-2].each do |interior_material|
-        interior_material.sAbs = solar_absorptance
-        interior_material.tAbs = emittance
-      end
+    # If there is only a single opaque material (i.e., excluding the two
+    # air film layers), EnergyPlus currently only supports a single solar
+    # absorptance/emittance, so it is not possible to assign different values
+    # to the two sides.
+    # FUTURE: Improve this when https://github.com/NatLabRockies/EnergyPlus/pull/11750
+    # is available.
+    if @layers_materials.size <= 3
+      return
+    end
+
+    # We use index -2 because -1 is the interior air film
+    @layers_materials[-2].each do |interior_material|
+      interior_material.sAbs = solar_absorptance
+      interior_material.tAbs = emittance
     end
   end
 
   private
 
-  # Returns a Material object with effective properties for the specified parallel
-  # path layer (e.g., wood stud and cavity insulation) of the construction.
+  # Returns a new Material object with effective properties for the specified parallel
+  # path layer (e.g., wood stud and cavity insulation) within the construction.
   #
-  # @param curr_layer_num [TODO] TODO
-  # @param name [TODO] TODO
-  # @return [TODO] TODO
-  def get_parallel_material(curr_layer_num, name)
+  # @param layer_idx [Integer] Index of the construction layer with the parallel paths
+  # @param name [String] Name for the combined material
+  # @return [Material] The combined material
+  def get_parallel_material(layer_idx, name)
     mat = Material.new(name: name)
 
-    curr_layer_materials = @layers_materials[curr_layer_num]
+    curr_layer_materials = @layers_materials[layer_idx]
 
     r_overall = assembly_rvalue()
 
@@ -3247,7 +3180,7 @@ class Construction
 
     # Material R-value
     # Apportion R-value to the current parallel path layer
-    mat.rvalue = layer_rvalues[curr_layer_num] + (r_overall - sum_r_all_layers) * layer_rvalues[curr_layer_num] / sum_r_parallel_layers
+    mat.rvalue = layer_rvalues[layer_idx] + (r_overall - sum_r_all_layers) * layer_rvalues[layer_idx] / sum_r_parallel_layers
 
     # Material thickness and conductivity
     mat.thick_in = curr_layer_materials[0].thick_in # All paths have equal thickness
@@ -3275,20 +3208,20 @@ class Construction
     return mat
   end
 
-  # TODO
+  # Creates the OpenStudio material objects for this construction.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @return [TODO] TODO
+  # @return [Array<OpenStudio::Model::StandardOpaqueMaterial or OpenStudio::Model::GlazingMaterial>] The list of OpenStudio materials
   def construct_materials(model)
-    # Create materials
     materials = []
-    @layers_materials.each_with_index do |layer_materials, layer_num|
+    @layers_materials.each_with_index do |layer_materials, layer_idx|
       if layer_materials.size == 1
-        next if layer_materials[0].name == Constants::AirFilm # Do not include air films in construction
+        # Do not include air films in the E+ construction
+        next if layer_materials[0].name == Constants::AirFilm
 
         mat = create_os_material(model, layer_materials[0])
       else
-        parallel_path_mat = get_parallel_material(layer_num, @layers_names[layer_num])
+        parallel_path_mat = get_parallel_material(layer_idx, @layers_names[layer_idx])
         mat = create_os_material(model, parallel_path_mat)
       end
       materials << mat
@@ -3296,9 +3229,10 @@ class Construction
     return materials
   end
 
-  # TODO
+  # Various error-checking on the Construction object inputs/properties. Throws
+  # an error if something is not right.
   #
-  # @return [TODO] TODO
+  # @return [nil]
   def validate
     # Check that sum of path fracs equal 1
     sum_path_fracs = @path_fracs.sum(0.0)
