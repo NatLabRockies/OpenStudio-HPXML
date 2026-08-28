@@ -876,7 +876,7 @@ module Constructions
   # @param surfaces [Array<OpenStudio::Model::Surface>] array of OpenStudio::Model::Surface objects
   # @param constr_name [String] Name for the construction being created
   # @param layers_thick_in [Double] Thickness of each layer from outermost to innermost (in)
-  # @param layers_conductivity_in_in [Array<Double>] Conductivity of each layer from outermost to innermost (Btu-in/h-ft2-F)
+  # @param layers_conductivity_in [Array<Double>] Conductivity of each layer from outermost to innermost (Btu-in/h-ft2-F)
   # @param layers_density [Array<Double>] Density of each layer from outermost to innermost (lb/ft3)
   # @param layers_spec_heat [Array<Double>] Specific heat of each layer from outermost to innermost (Btu/lb-F)
   # @param mat_int_finish [Material] Material properties for the interior finish (e.g., drywall)
@@ -2006,10 +2006,12 @@ module Constructions
     }
   end
 
-  # TODO
+  # Returns the fraction of the insulation area that has gaps as determined
+  # by the RESNET installation grade.
   #
   # @param install_grade [Integer] Insulation installation grade as defined by RESNET (1-3)
   # @param has_insulation [Boolean] Where insulation is present
+  # @return [Double] Insulation gap fraction
   def self.get_install_grade_gap_fraction(install_grade, has_insulation)
     if not has_insulation
       return 0 # Gap fraction only applies when there is cavity insulation
