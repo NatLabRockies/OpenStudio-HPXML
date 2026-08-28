@@ -1649,7 +1649,10 @@ module Waterheater
     # Get output vars/meters associated with the water heater object
     dhw_vars = Outputs.get_object_outputs_for_hpxml_system(model, sys_id, [EUT::HotWater])
 
-    # Converts the [ft, eut] key to an ems-friendly name
+    # Converts the fuel type/end use type key to an ems-friendly name
+    #
+    # @param key [[FT::XXX, EUT::XXX]] The key to convert
+    # @return [String] The ems-friendly name for the key
     def self.key_name(key)
       return Model.ems_friendly_name(key.join('_')).downcase
     end
