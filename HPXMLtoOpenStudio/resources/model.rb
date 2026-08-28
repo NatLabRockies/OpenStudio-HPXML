@@ -134,6 +134,29 @@ module Model
     return constr
   end
 
+  # Adds an InternalMass object to the OpenStudio model.
+  #
+  # The InternalMass object is used to describe interior surfaces, furniture,
+  # and furnishings.
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param name [String] Name for the OpenStudio object
+  # @param space [OpenStudio::Model::Space] an OpenStudio::Model::Space object
+  # @param area [Double] The entire surface area (both sides) exposed to the zone (ft^2)
+  # @return [OpenStudio::Model::InternalMass] The model object
+  def self.add_internal_mass(model, name:, space:, area:)
+    # Note: EnergyPlus documentation states that if both sides of the surface exchange
+    # energy with the zone then the user should input twice the area when defining the
+    # Internal Mass object.
+    im_def = OpenStudio::Model::InternalMassDefinition.new(model)
+    im = OpenStudio::Model::InternalMass.new(im_def)
+    im.setName(name)
+    im_def.setName(name)
+    im_def.setSurfaceArea(UnitConversions.convert(area, 'ft^2', 'm^2'))
+    im.setSpace(space)
+    return im
+  end
+
   # Adds a WaterUseEquipment object to the OpenStudio model.
   #
   # The WaterUseEquipment object is a generalized object for simulating all (hot and cold)
