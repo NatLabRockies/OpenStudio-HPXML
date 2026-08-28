@@ -4021,6 +4021,7 @@ module Defaults
   # Default values for the battery are first applied with the apply_battery method, then electric vehicle-specific fields are populated such as miles/year, hours/week, and fraction charged at home.
   #
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
+  # @param schedules_file [SchedulesFile] SchedulesFile wrapper class instance of detailed schedule files
   # @return [nil]
   def self.apply_vehicles(hpxml_bldg, schedules_file)
     default_values = get_electric_vehicle_values
@@ -4125,7 +4126,7 @@ module Defaults
 
   # Assigns default values for omitted optional inputs in the HPXML::Battery or HPXML::Vehicle objects
   #
-  # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
+  # @param battery [HPXML::Battery] The battery of interest
   # @param default_values [Hash] map of home battery or vehicle battery properties to default values
   # @return [nil]
   def self.apply_battery(battery, default_values)
@@ -5905,7 +5906,7 @@ module Defaults
   # @param fnd_type_fracs [Hash] Map of foundation type => area fraction
   # @param duct_loc_fracs [Hash] Map of duct location => area fraction
   # @param leakiness_description [String] Leakiness description to qualitatively describe the dwelling unit infiltration
-  # @param air_sealed [Boolean] True if the dwelling unit was professionally air sealed (intended to be used by Home Energy Score)
+  # @param is_sealed [Boolean] True if the dwelling unit was professionally air sealed (intended to be used by Home Energy Score)
   # @return [Double] Calculated ACH50 value
   def self.get_infiltration_ach50(cfa, ncfl_ag, year_built, avg_ceiling_height, infil_volume, iecc_cz,
                                   fnd_type_fracs, duct_loc_fracs, leakiness_description = nil, is_sealed = false)
@@ -6921,6 +6922,7 @@ module Defaults
   #
   # @param electric_panel [HPXML::ElectricPanel] Object that defines a single electric panel
   # @param component [HPXML::XXX] a component
+  # @param unit_num [Integer] Dwelling unit number
   # @param add [Boolean] whether to add a branch circuit even if one already exists
   # @return [HPXML::BranchCircuit] Object that defines a single electric panel branch circuit
   def self.get_or_add_branch_circuit(electric_panel, component, unit_num, add = false)
@@ -6952,6 +6954,7 @@ module Defaults
   # @param service_feeder [HPXML::ServiceFeeder] Object that defines a single electric panel service feeder
   # @param default_panels_csv_data [Hash] { load_name => { voltage => power_rating, ... }, ... }
   # @param electric_panel [HPXML::ElectricPanel] Object that defines a single electric panel
+  # @param unit_num [Integer] Dwelling unit number
   # @return [Double] power rating (W)
   def self.get_service_feeder_power_default_values(runner, hpxml_bldg, service_feeder, default_panels_csv_data, electric_panel, unit_num)
     type = service_feeder.type
@@ -7875,9 +7878,16 @@ module Defaults
   #
   # @param cooling_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML cooling system or heat pump of interest
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
-  # @return nil
+  # @return [nil]
   def self.set_hvac_cooling_performance(cooling_system, hpxml_header)
     # Calculates COP82min from SEER2 using bi-linear interpolation per RESNET MINERS Addendum 82
+    #
+    # @param seer2 [Double] SEER2 rated cooling efficiency
+    # @param eer2 [Double] EER2 rated cooling efficiency
+    # @param seer2_array [Array<Double>] Array of SEER2 values
+    # @param seer2_eer2_ratio_array [Array<Double>] Array of SEER2/EER2 ratios
+    # @param cop82min_array [Array<Array<Double>>] COP82min values that correspond to combinations of seer2_array and seer2_eer2_ratio_array
+    # @return [Double] Interpolated COP82min value
     def self.interpolate_seer2(seer2, eer2, seer2_array, seer2_eer2_ratio_array, cop82min_array)
       seer2_eer2_ratio = seer2 / eer2
       x1, x2 = MathTools.find_array_neighbor_values(seer2_array, seer2)
@@ -8082,9 +8092,16 @@ module Defaults
   #
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
-  # @return nil
+  # @return [nil]
   def self.set_hvac_heating_performance(heating_system, hpxml_header)
     # Calculates COP47full from HSPF2 using bi-linear interpolation per RESNET MINERS Addendum 82
+    #
+    # @param hspf2 [Double] HSPF2 rated heating efficiency
+    # @param qm17full [Double] Net capacity maintenance at 17F
+    # @param hspf2_array [Array<Double>] Array of HSPF2 values
+    # @param qm17full_array [Array<Double>] Array of net capacity maintenance at 17F values
+    # @param cop47full_array [Array<Array<Double>>] COP47full values that correspond to combinations of hspf2_array and qm17full_array
+    # @return [Double] Interpolated COP47full value
     def self.interpolate_hspf2(hspf2, qm17full, hspf2_array, qm17full_array, cop47full_array)
       x1, x2 = MathTools.find_array_neighbor_values(hspf2_array, hspf2)
       y1, y2 = MathTools.find_array_neighbor_values(qm17full_array, qm17full)

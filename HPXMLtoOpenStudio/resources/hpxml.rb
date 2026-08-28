@@ -577,6 +577,12 @@ class HPXML < Object
 
   attr_accessor(:contents)
 
+  # Initialize the HPXML object.
+  #
+  # @param hpxml_path [String] The path to an existing HPXML file, or nil to create an empty HPXML object
+  # @param schema_validator [OpenStudio::XMLValidator] OpenStudio XMLValidator object
+  # @param schematron_validator [OpenStudio::XMLValidator] OpenStudio XMLValidator object
+  # @param building_id [String or nil] HPXML Building ID; if provided, the HPXML object is created with only the one Building element
   def initialize(hpxml_path: nil, schema_validator: nil, schematron_validator: nil, building_id: nil)
     @hpxml_path = hpxml_path
     @errors = []
@@ -776,6 +782,10 @@ class HPXML < Object
   class BaseElement
     attr_accessor(:parent_object, :additional_properties)
 
+    # Initialize the BaseElement object.
+    #
+    # @param parent_object [HPXML or HPXML::Building] The parent of the BaseElement object
+    # @param hpxml_element [Oga::XML::Element or nil] The XML element with properties to parse
     def initialize(parent_object, hpxml_element = nil, **kwargs)
       @parent_object = parent_object
       @additional_properties = AdditionalProperties.new
@@ -826,6 +836,8 @@ class HPXML < Object
     end
 
     # Returns how the object is formatted when using .to_s.
+    #
+    # @return [String] String representation of object properties.
     def to_s
       return to_h.to_s
     end
@@ -846,6 +858,10 @@ class HPXML < Object
   class BaseArrayElement < Array
     attr_accessor(:parent_object, :additional_properties)
 
+    # Initialize the BaseArrayElement object.
+    #
+    # @param parent_object [HPXML or HPXML::Building] The parent of the BaseArrayElement object
+    # @param hpxml_element [Oga::XML::Element or nil] The XML element with properties to parse
     def initialize(parent_object, hpxml_element = nil)
       @parent_object = parent_object
       @additional_properties = AdditionalProperties.new
@@ -882,6 +898,8 @@ class HPXML < Object
     end
 
     # Returns how the object is formatted when using .to_s.
+    #
+    # @return [String] String representation of the object.
     def to_s
       return map { |x| x.to_s }
     end
@@ -890,11 +908,14 @@ class HPXML < Object
   # Object for high-level HPXML header information.
   # Applies to all Buildings (i.e., outside the Building elements).
   class Header < BaseElement
-    def initialize(hpxml_element, *args, **kwargs)
-      @emissions_scenarios = EmissionsScenarios.new(hpxml_element)
-      @utility_bill_scenarios = UtilityBillScenarios.new(hpxml_element)
-      @unavailable_periods = UnavailablePeriods.new(hpxml_element)
-      super(hpxml_element, *args, **kwargs)
+    # Initialize the Header object.
+    #
+    # @param parent_object [HPXML] The parent HPXML object
+    def initialize(parent_object, *args, **kwargs)
+      @emissions_scenarios = EmissionsScenarios.new(parent_object)
+      @utility_bill_scenarios = UtilityBillScenarios.new(parent_object)
+      @unavailable_periods = UnavailablePeriods.new(parent_object)
+      super(parent_object, *args, **kwargs)
     end
     CLASS_ATTRS = [:emissions_scenarios,    # [HPXML::EmissionSenarios]
                    :utility_bill_scenarios, # [HPXML::UtilityBillScenarios]
@@ -2667,6 +2688,9 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/ClimateandRiskZones.
   class ClimateandRiskZones < BaseElement
+    # Initialize ClimateandRiskZones object.
+    #
+    # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
     def initialize(hpxml_bldg, *args, **kwargs)
       @climate_zone_ieccs = ClimateZoneIECCs.new(hpxml_bldg)
       super(hpxml_bldg, *args, **kwargs)
@@ -2784,7 +2808,7 @@ class HPXML < Object
 
     # Populates the HPXML object(s) from the XML document.
     #
-    # @param climate_and_risk_zones [Oga::XML::Element] The current ClimateZoneIECC XML element
+    # @param climate_zone_iecc [Oga::XML::Element] The current ClimateZoneIECC XML element
     # @return [nil]
     def from_doc(climate_zone_iecc)
       return if climate_zone_iecc.nil?
@@ -2818,6 +2842,9 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/Zones/Zone.
   class Zone < BaseElement
+    # Initialize Zone object.
+    #
+    # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
     def initialize(hpxml_bldg, *args, **kwargs)
       @spaces = Spaces.new(hpxml_bldg)
       super(hpxml_bldg, *args, **kwargs)
@@ -6280,9 +6307,12 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/HeatingSystem.
   class HeatingSystem < BaseElement
-    def initialize(hpxml_element, *args, **kwargs)
-      @heating_detailed_performance_data = HeatingDetailedPerformanceData.new(hpxml_element)
-      super(hpxml_element, *args, **kwargs)
+    # Initialize HeatingSystem object.
+    #
+    # @param parent_object [HPXML::Building] The parent HPXML Building object
+    def initialize(parent_object, *args, **kwargs)
+      @heating_detailed_performance_data = HeatingDetailedPerformanceData.new(parent_object)
+      super(parent_object, *args, **kwargs)
     end
     CLASS_ATTRS = [:heating_detailed_performance_data] # [HPXML::HeatingDetailedPerformanceData]
     ATTRS = [:primary_system,                   # [Boolean] ../PrimarySystems/PrimaryHeatingSystem/@id
@@ -6597,9 +6627,12 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/CoolingSystem.
   class CoolingSystem < BaseElement
-    def initialize(hpxml_element, *args, **kwargs)
-      @cooling_detailed_performance_data = CoolingDetailedPerformanceData.new(hpxml_element)
-      super(hpxml_element, *args, **kwargs)
+    # Initialize CoolingSystem object.
+    #
+    # @param parent_object [HPXML::Building] The parent HPXML Building object
+    def initialize(parent_object, *args, **kwargs)
+      @cooling_detailed_performance_data = CoolingDetailedPerformanceData.new(parent_object)
+      super(parent_object, *args, **kwargs)
     end
     CLASS_ATTRS = [:cooling_detailed_performance_data] # [HPXML::CoolingDetailedPerformanceData]
     ATTRS = [:primary_system,                                      # [Boolean] ../PrimarySystems/PrimaryCoolingSystem/@idref
@@ -6918,10 +6951,13 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/Systems/HVAC/HVACPlant/HeatPump.
   class HeatPump < BaseElement
-    def initialize(hpxml_element, *args, **kwargs)
-      @cooling_detailed_performance_data = CoolingDetailedPerformanceData.new(hpxml_element)
-      @heating_detailed_performance_data = HeatingDetailedPerformanceData.new(hpxml_element)
-      super(hpxml_element, *args, **kwargs)
+    # Initialize HeatPump object.
+    #
+    # @param parent_object [HPXML::Building] The parent HPXML Building object
+    def initialize(parent_object, *args, **kwargs)
+      @cooling_detailed_performance_data = CoolingDetailedPerformanceData.new(parent_object)
+      @heating_detailed_performance_data = HeatingDetailedPerformanceData.new(parent_object)
+      super(parent_object, *args, **kwargs)
     end
     CLASS_ATTRS = [:cooling_detailed_performance_data, # [HPXML::CoolingDetailedPerformanceData]
                    :heating_detailed_performance_data] # [HPXML::HeatingDetailedPerformanceData]
@@ -7686,6 +7722,9 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution.
   class HVACDistribution < BaseElement
+    # Initialize HVACDistribution object.
+    #
+    # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
     def initialize(hpxml_bldg, *args, **kwargs)
       @duct_leakage_measurements = DuctLeakageMeasurements.new(hpxml_bldg)
       @ducts = Ducts.new(hpxml_bldg)
@@ -9427,7 +9466,7 @@ class HPXML < Object
 
     # Populates the HPXML object(s) from the XML document.
     #
-    # @param battery [Oga::XML::Element] The current Battery XML element
+    # @param charger [Oga::XML::Element] The current ElectricVehicleCharger XML element
     # @return [nil]
     def from_doc(charger)
       return if charger.nil?
@@ -9569,7 +9608,7 @@ class HPXML < Object
 
     # Populates the HPXML object(s) from the XML document.
     #
-    # @param battery [Oga::XML::Element] The current Battery XML element
+    # @param vehicle [Oga::XML::Element] The current Vehicle XML element
     # @return [nil]
     def from_doc(vehicle)
       return if vehicle.nil?
@@ -9636,10 +9675,13 @@ class HPXML < Object
 
   # Object for /HPXML/Building/BuildingDetails/Systems/ElectricPanels/ElectricPanel.
   class ElectricPanel < BaseElement
-    def initialize(hpxml_element, *args, **kwargs)
-      @branch_circuits = BranchCircuits.new(hpxml_element)
-      @service_feeders = ServiceFeeders.new(hpxml_element)
-      super(hpxml_element, *args, **kwargs)
+    # Initialize ElectricPanel object.
+    #
+    # @param parent_object [HPXML::Building] The parent HPXML Building object
+    def initialize(parent_object, *args, **kwargs)
+      @branch_circuits = BranchCircuits.new(parent_object)
+      @service_feeders = ServiceFeeders.new(parent_object)
+      super(parent_object, *args, **kwargs)
     end
     CLASS_ATTRS = [:branch_circuits,
                    :service_feeders]
@@ -9846,7 +9888,7 @@ class HPXML < Object
 
     # Adds this object to the provided Oga XML element.
     #
-    # @param building [Oga::XML::Element] The current Building XML element
+    # @param electric_panel [Oga::XML::Element] The current ElectricPanel XML element
     # @return [nil]
     def to_doc(electric_panel)
       return if nil?
@@ -9990,7 +10032,7 @@ class HPXML < Object
 
     # Adds this object to the provided Oga XML element.
     #
-    # @param building [Oga::XML::Element] The current Building XML element
+    # @param electric_panel [Oga::XML::Element] The current ElectricPanel XML element
     # @return [nil]
     def to_doc(electric_panel)
       return if nil?
@@ -12464,7 +12506,7 @@ class HPXML < Object
   # Gets the IDREF attribute for all instances of the given element.
   #
   # @param parent [Oga::XML::Element] The parent HPXML element
-  # @param element [Oga::XML::Element] The HPXML element
+  # @param element_name [String] The name of the child element(s) with the idref attribute
   # @return [Array<String>] The list of element IDREF attributes
   def self.get_idrefs(parent, element_name)
     idrefs = []
@@ -12612,7 +12654,7 @@ class HPXML < Object
 
   # Returns attached branch circuits for provided component ID.
   #
-  # @param component [HPXML::XXX] HPXML component
+  # @param id [String] HPXML component system identifier
   # @param electric_panels [Array<HPXML::ElectricPanel>] List of electric panel objects
   # @return [Array<HPXML::BranchCircuit>] List of branch circuit objects
   def self.branch_circuits(id, electric_panels)
@@ -12631,7 +12673,7 @@ class HPXML < Object
 
   # Returns attached service feeders for provided component ID.
   #
-  # @param id [String] SystemIdentifier/@id
+  # @param id [String] HPXML component system identifier
   # @param electric_panels [Array<HPXML::ElectricPanel>] List of electric panel objects
   # @return [Array<HPXML::ServiceFeeder>] List of service feeder objects
   def self.service_feeders(id, electric_panels)
