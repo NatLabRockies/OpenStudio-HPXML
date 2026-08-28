@@ -42,10 +42,10 @@ class DocumentationTest < Minitest::Test
         # Construct array of expected docs
         expected_docs = []
         method[:args].each do |arg|
-          expected_docs << "@param #{arg}"
+          expected_docs << "# @param #{arg}"
         end
         if method[:name] != 'initialize' # No return documentation needed for constructor methods
-          expected_docs << '@return'
+          expected_docs << '# @return'
         end
 
         # Construct array of actual docs
@@ -53,10 +53,10 @@ class DocumentationTest < Minitest::Test
         line_idx = method[:start_line] - 2
         while line_idx >= 0 && rb_lines[line_idx].strip.start_with?('#')
           if rb_lines[line_idx].include? '# @return'
-            actual_docs << '@return'
+            actual_docs << '# @return'
           elsif rb_lines[line_idx].include? '# @param'
             actual_param = rb_lines[line_idx].strip.split(' ')[2]
-            actual_docs << "@param #{actual_param}"
+            actual_docs << "# @param #{actual_param}"
           end
           line_idx -= 1
         end

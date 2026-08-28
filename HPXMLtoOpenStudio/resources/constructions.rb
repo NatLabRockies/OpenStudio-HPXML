@@ -935,11 +935,8 @@ module Constructions
       mat_rb = Material.RadiantBarrier(radiant_barrier_grade)
     end
 
-    # Set paths
-    path_fracs = [1]
-
     # Define construction
-    constr = Construction.new(constr_name, path_fracs)
+    constr = Construction.new(constr_name, [1])
     constr.add_layer(exterior_film)
     if not mat_ext_finish.nil?
       constr.add_layer(mat_ext_finish)
@@ -1608,11 +1605,9 @@ module Constructions
     if has_radiant_barrier
       mat_rb = Material.RadiantBarrier(radiant_barrier_grade, true)
     end
-    # Set paths
-    path_fracs = [1]
 
     # Define construction
-    constr = Construction.new(constr_name, path_fracs)
+    constr = Construction.new(constr_name, [1])
     constr.add_layer(exterior_film)
     if not mat_ext_finish.nil?
       constr.add_layer(mat_ext_finish)
@@ -1741,7 +1736,7 @@ module Constructions
     end
 
     # Define construction
-    constr = Construction.new(constr_name, [1.0])
+    constr = Construction.new(constr_name, [1])
     if not mat_rigid.nil?
       constr.add_layer(mat_rigid)
     end
@@ -1780,11 +1775,8 @@ module Constructions
     door_thickness = 1.75 # in
     fin_door_mat = Material.new(name: 'door material', thick_in: door_thickness, mat_base: BaseMaterial.Wood, k_in: 1.0 / door_r_value * door_thickness)
 
-    # Set paths
-    path_fracs = [1]
-
     # Define construction
-    constr = Construction.new(constr_name, path_fracs)
+    constr = Construction.new(constr_name, [1])
     constr.add_layer(fin_door_mat)
 
     # Create and assign construction to subsurfaces
@@ -1885,11 +1877,8 @@ module Constructions
       # Define materials
       mat_fm = Material.new(name: mat_obj_name_space, thick_in: furnThickness, k_in: furnConductivity, rho: furnDensity, cp: furnSpecHeat, tAbs: 0.9, sAbs: furnSolarAbsorptance)
 
-      # Set paths
-      path_fracs = [1]
-
       # Define construction
-      constr = Construction.new(constr_obj_name_space, path_fracs)
+      constr = Construction.new(constr_obj_name_space, [1])
       constr.add_layer(mat_fm)
 
       surface_area = furnAreaFraction * floor_area
@@ -2339,11 +2328,8 @@ module Constructions
     end
     glaz_mat = GlazingMaterial.new(name: "#{type}Material", ufactor: ufactor, shgc: shgc)
 
-    # Set paths
-    path_fracs = [1]
-
     # Define construction
-    constr = Construction.new(constr_name, path_fracs)
+    constr = Construction.new(constr_name, [1])
     constr.add_layer(glaz_mat)
 
     # Create and assign construction to subsurfaces
@@ -3099,15 +3085,10 @@ end
 # OpenStudio Materials) from Material objects. Handles parallel path calculations.
 class Construction
   # @param name [String] Name of the construction
-  # @param path_widths [TODO] TODO
-  def initialize(name, path_widths)
+  # @param path_fracs [TODO] TODO
+  def initialize(name, path_fracs)
     @name = name
-    @path_widths = path_widths
-    @path_fracs = []
-    @sum_path_fracs = @path_widths.sum(0.0)
-    path_widths.each do |path_width|
-      @path_fracs << path_width / path_widths.sum(0.0)
-    end
+    @path_fracs = path_fracs
     @layers_names = []
     @layers_materials = []
   end
@@ -3320,8 +3301,9 @@ class Construction
   # @return [TODO] TODO
   def validate
     # Check that sum of path fracs equal 1
-    if (@sum_path_fracs <= 0.999) || (@sum_path_fracs >= 1.001)
-      fail "Invalid construction: Sum of path fractions (#{@sum_path_fracs}) is not 1."
+    sum_path_fracs = @path_fracs.sum(0.0)
+    if (sum_path_fracs <= 0.999) || (sum_path_fracs >= 1.001)
+      fail "Invalid construction: Sum of path fractions (#{sum_path_fracs}) is not 1."
     end
 
     # Check that all path fractions are not negative
