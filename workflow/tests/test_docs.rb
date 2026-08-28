@@ -12,7 +12,7 @@ class DocumentationTest < Minitest::Test
     Dir.glob("#{here}/../../**/*.rb").each do |rb_path|
       rb_path = File.absolute_path(rb_path)
       rb_name = File.basename(rb_path)
-      next if rb_path.include? 'test'
+      next if rb_path.split(File::SEPARATOR).include?('tests') || rb_name == 'minitest_helper.rb'
       next if rb_name == 'tasks.rb'
       next if rb_name == 'run_simulation.rb'
 
@@ -129,8 +129,9 @@ class DocumentationTest < Minitest::Test
     # Get method name and arg string
     startpos = sig.index('(')
     if startpos.nil?
-      raw_args = ''
-      name = sig.split(' ')[-1].gsub('self.', '')
+      name, raw_args = sig.strip.sub(/\Adef\s+/, '').split(/\s+/, 2)
+      raw_args ||= ''
+      name = name.gsub('self.', '')
     else
       endpos = sig.rindex(')')
       raw_args = sig[startpos + 1..endpos - 1]

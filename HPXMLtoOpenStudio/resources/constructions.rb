@@ -875,7 +875,7 @@ module Constructions
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param surfaces [Array<OpenStudio::Model::Surface>] array of OpenStudio::Model::Surface objects
   # @param constr_name [String] Name for the construction being created
-  # @param layers_thick_in [Double] Thickness of each layer from outermost to innermost (in)
+  # @param layers_thick_in [Array<Double>] Thickness of each layer from outermost to innermost (in)
   # @param layers_conductivity_in [Array<Double>] Conductivity of each layer from outermost to innermost (Btu-in/h-ft2-F)
   # @param layers_density [Array<Double>] Density of each layer from outermost to innermost (lb/ft3)
   # @param layers_spec_heat [Array<Double>] Specific heat of each layer from outermost to innermost (Btu/lb-F)

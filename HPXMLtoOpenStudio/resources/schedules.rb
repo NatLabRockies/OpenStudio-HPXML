@@ -197,7 +197,7 @@ class HourlyByDaySchedule
   # @param sch_name [String] name that is assigned to the OpenStudio Schedule object
   # @param weekday_day_by_hour_values [Array<Array<Double>>] a 365-element array of 24-element arrays of numbers
   # @param weekend_day_by_hour_values [Array<Array<Double>>] a 365-element array of 24-element arrays of numbers
-  # @param schedule_type_limits_name [String] data type for the values contained in the schedule
+  # @param schedule_type_limits_name [String or nil] data type for the values contained in the schedule
   # @param normalize_values [Boolean] whether to divide schedule values by the max value
   # @param unavailable_periods [HPXML::UnavailablePeriods] Object that defines periods for, e.g., power outages or vacancies
   def initialize(model, sch_name, weekday_day_by_hour_values, weekend_day_by_hour_values,
