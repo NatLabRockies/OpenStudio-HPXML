@@ -723,13 +723,13 @@ module Constructions
 
     # Define materials
     spline_thick_in = 0.5
-    ins_thick_in -= (2.0 * spline_thick_in) # in
+    middle_thick_in = ins_thick_in - (2.0 * spline_thick_in) # in
     mat_int_sheath = Material.OSBSheathing(sheath_thick_in) # Assumed to be OSB, but could be gyp, crete, etc.
     mat_framing_inner_outer = Material.new(thick_in: spline_thick_in, mat_base: BaseMaterial.Wood)
-    mat_framing_middle = Material.new(thick_in: ins_thick_in, mat_base: BaseMaterial.Wood)
+    mat_framing_middle = Material.new(thick_in: middle_thick_in, mat_base: BaseMaterial.Wood)
     mat_spline = Material.new(thick_in: spline_thick_in, mat_base: BaseMaterial.Wood)
     mat_ins_inner_outer = Material.new(thick_in: spline_thick_in, mat_base: BaseMaterial.InsulationRigid, k_in: ins_thick_in / ins_r)
-    mat_ins_middle = Material.new(thick_in: ins_thick_in, mat_base: BaseMaterial.InsulationRigid, k_in: ins_thick_in / ins_r)
+    mat_ins_middle = Material.new(thick_in: middle_thick_in, mat_base: BaseMaterial.InsulationRigid, k_in: ins_thick_in / ins_r)
     mat_osb = nil
     if osb_thick_in > 0
       mat_osb = Material.OSBSheathing(osb_thick_in)
@@ -1389,7 +1389,7 @@ module Constructions
 
       # Set paths
       ins_gap_frac = get_install_grade_gap_fraction(install_grade, cavity_r > 0)
-      path_fracs = [ins_factor * (1 - ins_gap_frac), ins_factor * ins_gap_frac]
+      path_fracs = [1 - ins_gap_frac, ins_gap_frac]
 
       # Define construction
       constr = Construction.new(constr_name, path_fracs)
@@ -1482,12 +1482,12 @@ module Constructions
 
     # Define materials
     spline_thick_in = 0.5
-    ins_thick_in -= (2.0 * spline_thick_in) # in
+    middle_thick_in = ins_thick_in - (2.0 * spline_thick_in) # in
     mat_framing_inner_outer = Material.new(thick_in: spline_thick_in, mat_base: BaseMaterial.Wood)
-    mat_framing_middle = Material.new(thick_in: ins_thick_in, mat_base: BaseMaterial.Wood)
+    mat_framing_middle = Material.new(thick_in: middle_thick_in, mat_base: BaseMaterial.Wood)
     mat_spline = Material.new(thick_in: spline_thick_in, mat_base: BaseMaterial.Wood)
     mat_ins_inner_outer = Material.new(thick_in: spline_thick_in, mat_base: BaseMaterial.InsulationRigid, k_in: ins_thick_in / ins_r)
-    mat_ins_middle = Material.new(thick_in: ins_thick_in, mat_base: BaseMaterial.InsulationRigid, k_in: ins_thick_in / ins_r)
+    mat_ins_middle = Material.new(thick_in: middle_thick_in, mat_base: BaseMaterial.InsulationRigid, k_in: ins_thick_in / ins_r)
     mat_osb = nil
     if osb_thick_in > 0
       mat_osb = Material.OSBSheathing(osb_thick_in)
