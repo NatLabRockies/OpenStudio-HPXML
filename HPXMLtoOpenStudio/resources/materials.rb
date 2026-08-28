@@ -334,18 +334,11 @@ class Material
 
   # Creates a material for a radiant batter (in an attic).
   #
-  # @param grade [Integer] Installation grade (1-3)
+  # @param install_grade [Integer] Installation grade as defined by RESNET (1-3)
   # @param is_attic_floor [Boolean] True if the radiant barrier is on the attic floor (as opposed to roof of the attic)
   # @return [Material] The material object
-  def self.RadiantBarrier(grade, is_attic_floor = false)
-    # FUTURE: Merge w/ Constructions.get_gap_factor
-    if grade == 1
-      gap_frac = 0.0
-    elsif grade == 2
-      gap_frac = 0.02
-    elsif grade == 3
-      gap_frac = 0.05
-    end
+  def self.RadiantBarrier(install_grade, is_attic_floor = false)
+    gap_frac = Constructions.get_install_grade_gap_fraction(install_grade, true)
     if is_attic_floor
       # Assume reduced effectiveness due to accumulation of dust per https://web.ornl.gov/sci/buildings/tools/radiant/rb2/
       rb_emittance = 0.5

@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>dd375a8f-6eba-44bb-bc84-d4885b4e2d46</version_id>
-  <version_modified>2026-08-27T17:58:36Z</version_modified>
+  <version_id>8f37af5e-58e1-4577-a067-00cecc73693f</version_id>
+  <version_modified>2026-08-28T01:03:32Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -241,7 +241,7 @@
       <filename>constructions.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>4CE66534</checksum>
+      <checksum>805B8BFF</checksum>
     </file>
     <file>
       <filename>data/Xing_okstate_0664D_13659_Table_A-3.csv</filename>
@@ -463,7 +463,7 @@
       <filename>materials.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>E56FF79A</checksum>
+      <checksum>29211289</checksum>
     </file>
     <file>
       <filename>math.rb</filename>
