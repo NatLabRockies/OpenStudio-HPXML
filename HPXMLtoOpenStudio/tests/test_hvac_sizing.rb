@@ -1805,7 +1805,7 @@ class HPXMLtoOpenStudioHVACSizingTest < Minitest::Test
     hpxml_bldg.heating_systems[0].heating_capacity = nil
     hpxml_bldg.cooling_systems[0].cooling_capacity = nil
 
-    # ClayTile, Concrete, Cool
+    # ClayTile, Concrete
     hpxml_bldg.roofs[0].roof_material = HPXML::RoofMaterialClayTile
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _model_mult, _base_hpxml, test_hpxml_bldg_1 = _test_measure(args_hash)

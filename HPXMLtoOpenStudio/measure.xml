@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>9c5af650-a31f-4a5c-b8c1-fbe26fea4bd5</version_id>
-  <version_modified>2026-08-28T20:59:16Z</version_modified>
+  <version_id>c0eaec04-1697-44cd-87d6-5337786427f1</version_id>
+  <version_modified>2026-08-31T20:16:44Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -241,7 +241,7 @@
       <filename>constructions.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>D235F0B9</checksum>
+      <checksum>F9208341</checksum>
     </file>
     <file>
       <filename>data/Xing_okstate_0664D_13659_Table_A-3.csv</filename>
@@ -751,7 +751,7 @@
       <filename>test_defaults.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>FCC345CE</checksum>
+      <checksum>B74D4C1A</checksum>
     </file>
     <file>
       <filename>test_electric_panel.rb</filename>
@@ -787,7 +787,7 @@
       <filename>test_hvac_sizing.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>147E5977</checksum>
+      <checksum>6833CC4A</checksum>
     </file>
     <file>
       <filename>test_lighting.rb</filename>
