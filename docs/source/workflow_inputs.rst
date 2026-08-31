@@ -1280,21 +1280,21 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
   .. [#] RoofColor choices are "dark", "medium dark", "medium", "medium light", "light", "white", or "reflective".
   .. [#] If SolarAbsorptance not provided, defaults based on RoofType and RoofColor:
 
-           \- **asphalt or fiberglass shingles**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
+         \- **asphalt or fiberglass shingles**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
-           \- **wood shingles or shakes**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
+         \- **wood shingles or shakes**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
-           \- **shingles**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
+         \- **shingles**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
-           \- **slate or tile shingles**: dark=0.85, medium dark=0.80, medium=0.75, medium light=0.65, light=0.40, white=0.30, reflective=0.25
+         \- **slate or tile shingles**: dark=0.85, medium dark=0.80, medium=0.75, medium light=0.65, light=0.40, white=0.30, reflective=0.25
 
-           \- **metal surfacing**: dark=0.90, medium dark=0.80, medium=0.70, medium light=0.60, light=0.50, white=0.35, reflective=0.25
+         \- **metal surfacing**: dark=0.90, medium dark=0.80, medium=0.70, medium light=0.60, light=0.50, white=0.35, reflective=0.25
 
-           \- **plastic/rubber/synthetic sheeting**: dark=0.90, medium dark=0.78, medium=0.65, medium light=0.53, light=0.40, white=0.30, reflective=0.25
+         \- **plastic/rubber/synthetic sheeting**: dark=0.90, medium dark=0.78, medium=0.65, medium light=0.53, light=0.40, white=0.30, reflective=0.25
 
-           \- **expanded polystyrene sheathing**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
+         \- **expanded polystyrene sheathing**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
-           \- **concrete**: dark=0.85, medium dark=0.80, medium=0.75, medium light=0.65, light=0.40, white=0.30, reflective=0.25
+         \- **concrete**: dark=0.85, medium dark=0.80, medium=0.75, medium light=0.65, light=0.40, white=0.30, reflective=0.25
 
   .. [#] InteriorFinish/Type choices are "gypsum board", "gypsum composite board", "plaster", "wood", "other", or "not present".
   .. [#] InteriorFinish/Type defaults to "gypsum board" if InteriorAdjacentTo is conditioned space, otherwise "not present".
