@@ -7839,7 +7839,6 @@ class HPXML < Object
              :hydronic_type,                 # [String] DistributionSystemType/HydronicDistribution/HydronicDistributionType (HPXML::HydronicTypeXXX)
              :hydronic_supply_temp,          # [Double] DistributionSystemType/HydronicDistribution/SupplyTemperature (F)
              :hydronic_return_temp,          # [Double] DistributionSystemType/HydronicDistribution/ReturnTemperature (F)
-             :hydronic_trvs,                 # [Boolean] DistributionSystemType/HydronicDistribution/PumpandZoneValve/ThermostaticRadiatorValves
              :hydronic_variable_speed_pump,  # [Boolean] DistributionSystemType/HydronicDistribution/PumpandZoneValve/VariableSpeedPump
              :manualj_hot_water_piping_btuh, # [Double] DistributionSystemType/HydronicDistribution/extension/ManualJInputs/HotWaterPipingBtuh (Btu/hr)
              :annual_heating_dse,            # [Double] DistributionSystemType/Other/AnnualHeatingDistributionSystemEfficiency (frac)
@@ -7952,9 +7951,8 @@ class HPXML < Object
         XMLHelper.add_element(hydronic_distribution, 'HydronicDistributionType', @hydronic_type, :string) unless @hydronic_type.nil?
         XMLHelper.add_element(hydronic_distribution, 'SupplyTemperature', @hydronic_supply_temp, :float, @hydronic_supply_temp_isdefaulted) unless @hydronic_supply_temp.nil?
         XMLHelper.add_element(hydronic_distribution, 'ReturnTemperature', @hydronic_return_temp, :float, @hydronic_return_temp_isdefaulted) unless @hydronic_return_temp.nil?
-        if (not @hydronic_trvs.nil?) || (not @hydronic_variable_speed_pump.nil?)
+        if not @hydronic_variable_speed_pump.nil?
           pump_and_zone_valve = XMLHelper.add_element(hydronic_distribution, 'PumpandZoneValve')
-          XMLHelper.add_element(pump_and_zone_valve, 'ThermostaticRadiatorValves', @hydronic_trvs, :boolean, @hydronic_trvs_isdefaulted) unless @hydronic_trvs.nil?
           XMLHelper.add_element(pump_and_zone_valve, 'VariableSpeedPump', @hydronic_variable_speed_pump, :boolean, @hydronic_variable_speed_pump_isdefaulted) unless @hydronic_variable_speed_pump.nil?
         end
         if not @manualj_hot_water_piping_btuh.nil?
@@ -8000,7 +7998,6 @@ class HPXML < Object
         @hydronic_type = XMLHelper.get_value(hydronic_distribution, 'HydronicDistributionType', :string)
         @hydronic_supply_temp = XMLHelper.get_value(hydronic_distribution, 'SupplyTemperature', :float)
         @hydronic_return_temp = XMLHelper.get_value(hydronic_distribution, 'ReturnTemperature', :float)
-        @hydronic_trvs = XMLHelper.get_value(hydronic_distribution, 'PumpandZoneValve/ThermostaticRadiatorValves', :boolean)
         @hydronic_variable_speed_pump = XMLHelper.get_value(hydronic_distribution, 'PumpandZoneValve/VariableSpeedPump', :boolean)
         @manualj_hot_water_piping_btuh = XMLHelper.get_value(hydronic_distribution, 'extension/ManualJInputs/HotWaterPipingBtuh', :float)
       end

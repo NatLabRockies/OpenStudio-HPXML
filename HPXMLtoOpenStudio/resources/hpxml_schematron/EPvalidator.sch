@@ -1886,6 +1886,10 @@
     <sch:title>[HVACDistributionType=Hydronic]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACDistribution/h:DistributionSystemType/h:HydronicDistribution'>
       <sch:assert role='ERROR' test='h:HydronicDistributionType[text()="radiator" or text()="baseboard" or text()="radiant floor" or text()="radiant ceiling" or text()="water loop"]'>Expected HydronicDistributionType to be 'radiator' or 'baseboard' or 'radiant floor' or 'radiant ceiling' or 'water loop'</sch:assert>
+      <sch:assert role='ERROR' test='number(h:SupplyTemperature) &gt;= 90 or not(h:SupplyTemperature)'>Expected SupplyTemperature to be greater than or equal to 90</sch:assert>
+      <sch:assert role='ERROR' test='number(h:SupplyTemperature) &lt;= 200 or not(h:SupplyTemperature)'>Expected SupplyTemperature to be less than or equal to 200</sch:assert>
+      <sch:assert role='ERROR' test='number(h:ReturnTemperature) &gt;= 40 or not(h:ReturnTemperature)'>Expected ReturnTemperature to be greater than or equal to 40</sch:assert>
+      <sch:assert role='ERROR' test='number(h:ReturnTemperature) &lt; number(h:SupplyTemperature) or not(h:ReturnTemperature) or not(h:SupplyTemperature)'>Expected ReturnTemperature to be less than SupplyTemperature</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:ManualJInputs/h:HotWaterPipingBtuh) &lt;= 1'>Expected at most one extension/ManualJInputs/HotWaterPipingBtuh</sch:assert>
       <sch:assert role='ERROR' test='number(h:extension/h:ManualJInputs/h:HotWaterPipingBtuh) &gt;= 0 or not(h:extension/h:ManualJInputs/h:HotWaterPipingBtuh)'>Expected extension/ManualJInputs/HotWaterPipingBtuh to be greater than or equal to 0</sch:assert>
     </sch:rule>
