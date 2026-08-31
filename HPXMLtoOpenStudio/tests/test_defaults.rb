@@ -953,7 +953,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.roofs[0].roof_color = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_roof_values(default_hpxml_bldg.roofs[0], HPXML::RoofTypeAsphaltShingles, 0.70, HPXML::ColorWhite, true, 0.90, true, 1, HPXML::InteriorFinishPlaster, 0.5, 45)
+    _test_default_roof_values(default_hpxml_bldg.roofs[0], HPXML::RoofTypeAsphaltShingles, 0.75, HPXML::ColorWhite, true, 0.90, true, 1, HPXML::InteriorFinishPlaster, 0.5, 45)
 
     # Test defaults w/ SolarAbsorptance
     hpxml_bldg.roofs[0].solar_absorptance = 0.99
@@ -1047,7 +1047,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.walls[0].azimuth = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_wall_values(default_hpxml_bldg.walls[0], HPXML::SidingTypeWood, 0.5, HPXML::ColorLight, 0.90, HPXML::InteriorFinishWood, 0.5, 180)
+    _test_default_wall_values(default_hpxml_bldg.walls[0], HPXML::SidingTypeWood, 0.55, HPXML::ColorLight, 0.90, HPXML::InteriorFinishWood, 0.5, 180)
 
     # Test defaults w/ SolarAbsorptance
     hpxml_bldg.walls[0].solar_absorptance = 0.99
@@ -1072,7 +1072,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     hpxml_bldg.walls[1].interior_finish_thickness = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_wall_values(default_hpxml_bldg.walls[1], HPXML::SidingTypeWood, 0.5, HPXML::ColorLight, 0.90, HPXML::InteriorFinishNotPresent, nil, nil)
+    _test_default_wall_values(default_hpxml_bldg.walls[1], HPXML::SidingTypeWood, 0.55, HPXML::ColorLight, 0.90, HPXML::InteriorFinishNotPresent, nil, nil)
   end
 
   def test_foundation_walls

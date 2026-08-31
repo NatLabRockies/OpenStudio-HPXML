@@ -1278,38 +1278,23 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
          Azimuth/Orientation is irrelevant for *flat* roofs.
   .. [#] RoofType choices are "asphalt or fiberglass shingles", "wood shingles or shakes", "shingles", "slate or tile shingles", "metal surfacing", "plastic/rubber/synthetic sheeting", "expanded polystyrene sheathing", or "concrete".
   .. [#] RoofColor choices are "dark", "medium dark", "medium", "medium light", "light", "white", or "reflective".
-  .. [#] If SolarAbsorptance not provided, defaults based on RoofType and RoofColor.
-         For **asphalt or fiberglass shingles**, **wood shingles or shakes**, **shingles**, and **expanded polystyrene sheathing**:
+  .. [#] If SolarAbsorptance not provided, defaults based on RoofType and RoofColor:
 
-         \- **dark**: 0.92
+           \- **asphalt or fiberglass shingles**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
-         \- **medium dark**: 0.89
+           \- **wood shingles or shakes**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
-         \- **medium**: 0.85
+           \- **shingles**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
-         \- **medium light**: 0.80
+           \- **slate or tile shingles**: dark=0.85, medium dark=0.80, medium=0.75, medium light=0.65, light=0.40, white=0.30, reflective=0.25
 
-         \- **light**: 0.75
+           \- **metal surfacing**: dark=0.90, medium dark=0.80, medium=0.70, medium light=0.60, light=0.50, white=0.35, reflective=0.25
 
-         \- **white**: 0.70
+           \- **plastic/rubber/synthetic sheeting**: dark=0.90, medium dark=0.78, medium=0.65, medium light=0.53, light=0.40, white=0.30, reflective=0.25
 
-         \- **reflective**: 0.50
+           \- **expanded polystyrene sheathing**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
-         For **slate or tile shingles**, **metal surfacing**, **plastic/rubber/synthetic sheeting**, and **concrete**:
-
-         \- **dark**: 0.90
-
-         \- **medium dark**: 0.80
-
-         \- **medium**: 0.70
-
-         \- **medium light**: 0.60
-
-         \- **light**: 0.45
-
-         \- **white**: 0.35
-
-         \- **reflective**: 0.25
+           \- **concrete**: dark=0.85, medium dark=0.80, medium=0.75, medium light=0.65, light=0.40, white=0.30, reflective=0.25
 
   .. [#] InteriorFinish/Type choices are "gypsum board", "gypsum composite board", "plaster", "wood", "other", or "not present".
   .. [#] InteriorFinish/Type defaults to "gypsum board" if InteriorAdjacentTo is conditioned space, otherwise "not present".
@@ -1395,22 +1380,7 @@ Each wall surface is entered as a ``/HPXML/Building/BuildingDetails/Enclosure/Wa
          Azimuth/Orientation is irrelevant for *interior* walls (e.g., between conditioned space and garage).
   .. [#] Siding choices are "wood siding", "vinyl siding", "stucco", "fiber cement siding", "brick veneer", "stone veneer", "aluminum siding", "masonite siding", "composite shingle siding", "asbestos siding", "synthetic stucco", or "not present".
   .. [#] Color choices are "dark", "medium dark", "medium", "medium light", "light", "white, or "reflective".
-  .. [#] If SolarAbsorptance not provided, defaults based on Color:
-
-         \- **dark**: 0.95
-
-         \- **medium dark**: 0.85
-
-         \- **medium**: 0.70
-
-         \- **medium light**: 0.60
-
-         \- **light**: 0.50
-
-         \- **white**: 0.35
-
-         \- **reflective**: 0.25
-
+  .. [#] If SolarAbsorptance not provided, defaults based on Color: dark=0.90, medium dark=0.80, medium=0.70, medium light=0.63, light=0.55, white=0.35, reflective=0.25.
   .. [#] InteriorFinish/Type choices are "gypsum board", "gypsum composite board", "plaster", "wood", "other", or "not present".
   .. [#] InteriorFinish/Type defaults to "gypsum board" if InteriorAdjacentTo is conditioned space or basement - conditioned, otherwise "not present".
   .. [#] RadiantBarrier intended for attic gable walls. Model assumes an emittance of 0.05.
