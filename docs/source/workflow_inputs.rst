@@ -1379,7 +1379,7 @@ Each wall surface is entered as a ``/HPXML/Building/BuildingDetails/Enclosure/Wa
   .. [#] If neither Azimuth nor Orientation provided, and it's an *exterior* wall, modeled as four surfaces of equal area facing every direction.
          Azimuth/Orientation is irrelevant for *interior* walls (e.g., between conditioned space and garage).
   .. [#] Siding choices are "wood siding", "vinyl siding", "stucco", "fiber cement siding", "brick veneer", "stone veneer", "aluminum siding", "masonite siding", "composite shingle siding", "asbestos siding", "synthetic stucco", or "not present".
-  .. [#] Color choices are "dark", "medium dark", "medium", "medium light", "light", "white, or "reflective".
+  .. [#] Color choices are "dark", "medium dark", "medium", "medium light", "light", "white", or "reflective".
   .. [#] If SolarAbsorptance not provided, defaults based on Color: dark=0.90, medium dark=0.80, medium=0.70, medium light=0.63, light=0.55, white=0.35, reflective=0.25.
   .. [#] InteriorFinish/Type choices are "gypsum board", "gypsum composite board", "plaster", "wood", "other", or "not present".
   .. [#] InteriorFinish/Type defaults to "gypsum board" if InteriorAdjacentTo is conditioned space or basement - conditioned, otherwise "not present".
