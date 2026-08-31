@@ -87,6 +87,7 @@ class HPXML < Object
   ColorMediumDark = 'medium dark'
   ColorMediumLight = 'medium light'
   ColorReflective = 'reflective'
+  ColorWhite = 'white'
   DehumidifierTypePortable = 'portable'
   DehumidifierTypeWholeHome = 'whole-home'
   DryingMethodConventional = 'conventional'
@@ -376,7 +377,6 @@ class HPXML < Object
   ResidentialTypeSFD = 'single-family detached'
   RoofTypeAsphaltShingles = 'asphalt or fiberglass shingles'
   RoofTypeConcrete = 'concrete'
-  RoofTypeCool = 'cool roof'
   RoofTypeClayTile = 'slate or tile shingles'
   RoofTypeEPS = 'expanded polystyrene sheathing'
   RoofTypeMetal = 'metal surfacing'
@@ -3901,6 +3901,7 @@ class HPXML < Object
              :orientation,                    # [String] Orientation (HPXML::OrientationXXX)
              :azimuth,                        # [Integer] Azimuth (deg)
              :roof_type,                      # [String] RoofType (HPXML::RoofTypeXXX)
+             :cool_roof,                      # [Boolean] CoolRoof
              :roof_color,                     # [String] RoofColor (HPXML::ColorXXX)
              :solar_absorptance,              # [Double] SolarAbsorptance
              :emittance,                      # [Double] Emittance
@@ -4042,6 +4043,7 @@ class HPXML < Object
       XMLHelper.add_element(roof, 'Orientation', @orientation, :string, @orientation_isdefaulted) unless @orientation.nil?
       XMLHelper.add_element(roof, 'Azimuth', @azimuth, :integer, @azimuth_isdefaulted) unless @azimuth.nil?
       XMLHelper.add_element(roof, 'RoofType', @roof_type, :string, @roof_type_isdefaulted) unless @roof_type.nil?
+      XMLHelper.add_element(roof, 'CoolRoof', @cool_roof, :boolean, @cool_roof_isdefaulted) unless @cool_roof.nil?
       XMLHelper.add_element(roof, 'RoofColor', @roof_color, :string, @roof_color_isdefaulted) unless @roof_color.nil?
       XMLHelper.add_element(roof, 'SolarAbsorptance', @solar_absorptance, :float, @solar_absorptance_isdefaulted) unless @solar_absorptance.nil?
       XMLHelper.add_element(roof, 'Emittance', @emittance, :float, @emittance_isdefaulted) unless @emittance.nil?
@@ -4093,6 +4095,7 @@ class HPXML < Object
       @orientation = XMLHelper.get_value(roof, 'Orientation', :string)
       @azimuth = XMLHelper.get_value(roof, 'Azimuth', :integer)
       @roof_type = XMLHelper.get_value(roof, 'RoofType', :string)
+      @cool_roof = XMLHelper.get_value(roof, 'CoolRoof', :boolean)
       @roof_color = XMLHelper.get_value(roof, 'RoofColor', :string)
       @solar_absorptance = XMLHelper.get_value(roof, 'SolarAbsorptance', :float)
       @emittance = XMLHelper.get_value(roof, 'Emittance', :float)

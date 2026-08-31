@@ -454,16 +454,16 @@ module HVACSizing
                   cool_temp += 130.0 * roof.net_area
                 when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 120.0 * roof.net_area
-                when HPXML::ColorReflective
+                when HPXML::ColorWhite, HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool
+              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 110.0 * roof.net_area
                 when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 105.0 * roof.net_area
-                when HPXML::ColorReflective
+                when HPXML::ColorWhite, HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
               else
@@ -486,16 +486,16 @@ module HVACSizing
                   cool_temp += 120.0 * roof.net_area
                 when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 110.0 * roof.net_area
-                when HPXML::ColorReflective
+                when HPXML::ColorWhite, HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool
+              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 105.0 * roof.net_area
                 when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 100.0 * roof.net_area
-                when HPXML::ColorReflective
+                when HPXML::ColorWhite, HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
               else
@@ -1185,16 +1185,16 @@ module HVACSizing
       # Base CLTD color adjustment based on notes in MJ8 Figure A12-16
       case roof.roof_color
       when HPXML::ColorDark, HPXML::ColorMediumDark
-        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool].include? roof.roof_type
+        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeConcrete].include? roof.roof_type
           cltd *= 0.83
         end
       when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
-        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool].include? roof.roof_type
+        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete].include? roof.roof_type
           cltd *= 0.65
         else
           cltd *= 0.83
         end
-      when HPXML::ColorReflective
+      when HPXML::ColorWhite, HPXML::ColorReflective
         if [HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeShingles].include? roof.roof_type
           cltd *= 0.83
         else

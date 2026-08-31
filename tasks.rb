@@ -1531,7 +1531,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       siding_types = [[HPXML::SidingTypeAluminum, HPXML::ColorReflective],
                       [HPXML::SidingTypeAsbestos, HPXML::ColorLight],
                       [HPXML::SidingTypeBrick, HPXML::ColorMediumDark],
-                      [HPXML::SidingTypeCompositeShingle, HPXML::ColorReflective],
+                      [HPXML::SidingTypeCompositeShingle, HPXML::ColorWhite],
                       [HPXML::SidingTypeFiberCement, HPXML::ColorMedium],
                       [HPXML::SidingTypeMasonite, HPXML::ColorDark],
                       [HPXML::SidingTypeStucco, HPXML::ColorLight],
@@ -1617,8 +1617,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                     [HPXML::RoofTypeShingles, HPXML::ColorMediumDark],
                     [HPXML::RoofTypePlasticRubber, HPXML::ColorMediumLight],
                     [HPXML::RoofTypeEPS, HPXML::ColorMedium],
-                    [HPXML::RoofTypeConcrete, HPXML::ColorLight],
-                    [HPXML::RoofTypeCool, HPXML::ColorReflective]]
+                    [HPXML::RoofTypeConcrete, HPXML::ColorWhite]]
       int_finish_types = [[HPXML::InteriorFinishGypsumBoard, 0.5],
                           [HPXML::InteriorFinishPlaster, 0.5],
                           [HPXML::InteriorFinishWood, 0.5]]
