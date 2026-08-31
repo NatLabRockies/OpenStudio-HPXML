@@ -4,8 +4,8 @@
   <error>Failed to infer measure name from '/mnt/c/git/openstudio-hpxml/ReportUtilityBills/measure.rb'</error>
   <name>report_utility_bills</name>
   <uid>ca88a425-e59a-4bc4-af51-c7e7d1e960fe</uid>
-  <version_id>be88dd61-1430-4731-9822-f4025d08aac0</version_id>
-  <version_modified>2026-08-10T15:34:43Z</version_modified>
+  <version_id>83076ddd-cb9f-47e6-966a-1a2e97c89c3b</version_id>
+  <version_modified>2026-08-31T22:45:18Z</version_modified>
   <xml_checksum>15BF4E57</xml_checksum>
   <class_name>ReportUtilityBills</class_name>
   <display_name>Utility Bills Report</display_name>
@@ -181,7 +181,7 @@
       <filename>measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>script</usage_type>
-      <checksum>06397C29</checksum>
+      <checksum>74435B0B</checksum>
     </file>
     <file>
       <filename>detailed_rates/README.md</filename>
