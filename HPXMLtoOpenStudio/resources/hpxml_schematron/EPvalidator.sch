@@ -32,7 +32,6 @@
       <sch:assert role='ERROR' test='60 mod number(h:Timestep) = 0 or not(h:Timestep)'>Expected Timestep to be 60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, or 1</sch:assert>
       <sch:assert role='ERROR' test='count(h:CalendarYear) &lt;= 1'>Expected at most one CalendarYear</sch:assert>
       <sch:assert role='ERROR' test='number(h:CalendarYear) &gt;= 1600 or not(h:CalendarYear)'>Expected CalendarYear to be greater than or equal to 1600</sch:assert>
-      <sch:assert role='ERROR' test='number(h:CalendarYear) &lt;= 9999 or not(h:CalendarYear)'>Expected CalendarYear to be less than or equal to 9999</sch:assert>
       <sch:assert role='ERROR' test='count(h:AdvancedResearchFeatures) &lt;= 1'>Expected at most one AdvancedResearchFeatures</sch:assert>
       <!-- Moved/deprecated DaylightSaving input; see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1165 -->
       <sch:assert role='ERROR' test='count(h:DaylightSaving/h:Enabled) = 0'>DaylightSaving/Enabled has been replaced by /HPXML/Building/Site/TimeZone/DSTObserved</sch:assert>
@@ -258,7 +257,7 @@
       <sch:assert role='ERROR' test='count(h:ClimateandRiskZones/h:ClimateZoneIECC) &lt;= 1'>Expected at most one ClimateandRiskZones/ClimateZoneIECC</sch:assert>
       <sch:assert role='ERROR' test='count(h:Enclosure/h:AirInfiltration/h:extension/h:HasFlueOrChimneyInConditionedSpace) &lt;= 1'>Expected at most one Enclosure/AirInfiltration/extension/HasFlueOrChimneyInConditionedSpace</sch:assert>
       <sch:assert role='ERROR' test='h:Enclosure/h:AirInfiltration/h:extension/h:HasFlueOrChimneyInConditionedSpace[text()="true" or text()="false"] or not(h:Enclosure/h:AirInfiltration/h:extension/h:HasFlueOrChimneyInConditionedSpace)'>Expected Enclosure/AirInfiltration/extension/HasFlueOrChimneyInConditionedSpace to be 'true' or 'false'</sch:assert>
-      <sch:assert role='ERROR' test='count(h:Enclosure/h:AirInfiltration/h:AirInfiltrationMeasurement[h:BuildingAirLeakage/h:AirLeakage | h:EffectiveLeakageArea | h:SpecificLeakageArea | h:LeakinessDescription]) = 1'>Expected one Enclosure/AirInfiltration/AirInfiltrationMeasurement[BuildingAirLeakage/AirLeakage | EffectiveLeakageArea | SpecificLeakageArea | LeakinessDescription]</sch:assert>
+      <sch:assert role='ERROR' test='count(h:Enclosure/h:AirInfiltration/h:AirInfiltrationMeasurement[h:BuildingAirLeakage/h:AirLeakage | h:EffectiveLeakageArea | h:SpecificLeakageArea | h:LeakinessDescription]) = 1'>Expected one Enclosure/AirInfiltration/AirInfiltrationMeasurement[BuildingAirLeakage | EffectiveLeakageArea | SpecificLeakageArea | LeakinessDescription]</sch:assert>
       <sch:assert role='ERROR' test='count(h:Enclosure/h:Walls/h:Wall) + count(h:Enclosure/h:FoundationWalls/h:FoundationWall) &gt;= 1'>Expected Enclosure/Walls/Wall or Enclosure/FoundationWalls/FoundationWall</sch:assert>
       <sch:assert role='ERROR' test='count(h:Enclosure/h:extension/h:PartitionWallMass) &lt;= 1'>Expected at most one Enclosure/extension/PartitionWallMass</sch:assert>
       <sch:assert role='ERROR' test='count(h:Enclosure/h:extension/h:FurnitureMass) &lt;= 1'>Expected at most one Enclosure/extension/FurnitureMass</sch:assert>
@@ -379,7 +378,7 @@
   <sch:pattern>
     <sch:title>[ManualJInfiltrationMethod=BlowerDoor]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails[h:BuildingSummary/h:extension/h:HVACSizingControl/h:ManualJInputs/h:InfiltrationMethod="blower door"]'>
-      <sch:assert role='ERROR' test='count(h:Enclosure/h:AirInfiltration/h:AirInfiltrationMeasurement[h:BuildingAirLeakage/h:AirLeakage | h:EffectiveLeakageArea | h:SpecificLeakageArea]) = 1'>Expected Enclosure/AirInfiltration/AirInfiltrationMeasurement[BuildingAirLeakage/AirLeakage | EffectiveLeakageArea | SpecificLeakageArea] if ManualJInputs/InfiltrationMethod="blower door"</sch:assert>
+      <sch:assert role='ERROR' test='count(h:Enclosure/h:AirInfiltration/h:AirInfiltrationMeasurement[h:BuildingAirLeakage | h:EffectiveLeakageArea | h:SpecificLeakageArea]) = 1'>Expected Enclosure/AirInfiltration/AirInfiltrationMeasurement[BuildingAirLeakage/AirLeakage | EffectiveLeakageArea | SpecificLeakageArea] if ManualJInputs/InfiltrationMethod="blower door"</sch:assert>
     </sch:rule>
   </sch:pattern>
 
@@ -545,7 +544,7 @@
 
   <sch:pattern>
     <sch:title>[AirInfiltrationMeasurement=SFAorMultifamily]</sch:title>
-    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails[h:BuildingSummary/h:BuildingConstruction/h:ResidentialFacilityType[text()="single-family attached" or text()="apartment unit"]]/h:Enclosure/h:AirInfiltration/h:AirInfiltrationMeasurement[h:BuildingAirLeakage/h:AirLeakage | h:EffectiveLeakageArea | h:SpecificLeakageArea]'>
+    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails[h:BuildingSummary/h:BuildingConstruction/h:ResidentialFacilityType[text()="single-family attached" or text()="apartment unit"]]/h:Enclosure/h:AirInfiltration/h:AirInfiltrationMeasurement[h:BuildingAirLeakage | h:EffectiveLeakageArea | h:SpecificLeakageArea]'>
       <sch:assert role='ERROR' test='h:TypeOfInfiltrationLeakage[text()="unit total" or text()="unit exterior only"]'>Expected TypeOfInfiltrationLeakage to be 'unit total' or 'unit exterior only' if ResidentialFacilityType is "single-family attached" or "apartment unit"</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:Aext) &lt;= 1'>Expected at most one extension/Aext</sch:assert>
       <sch:assert role='ERROR' test='number(h:extension/h:Aext) &gt; 0 or not(h:extension/h:Aext)'>Expected extension/Aext to be greater than 0</sch:assert>
@@ -570,7 +569,6 @@
     <sch:title>[VentedAttic=VentilationRate]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/h:Attics/h:Attic[h:Vented="true"]/h:VentilationRate'>
       <sch:assert role='ERROR' test='h:UnitofMeasure[text()="SLA" or text()="ACHnatural"]'>Expected UnitofMeasure to be 'SLA' or 'ACHnatural'</sch:assert>
-      <sch:assert role='ERROR' test='count(h:Value) = 1'>Expected Value</sch:assert> <!-- Can remove this when https://github.com/hpxmlwg/hpxml/pull/467 is available -->
     </sch:rule>
   </sch:pattern>
 
@@ -578,7 +576,6 @@
     <sch:title>[VentedCrawl=VentilationRate]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/h:Foundations/h:Foundation[h:FoundationType/h:Crawlspace[h:Vented="true"]]/h:VentilationRate'>
       <sch:assert role='ERROR' test='h:UnitofMeasure[text()="SLA"]'>Expected UnitofMeasure to be 'SLA'</sch:assert>
-      <sch:assert role='ERROR' test='count(h:Value) = 1'>Expected Value</sch:assert> <!-- Can remove this when https://github.com/hpxmlwg/hpxml/pull/467 is available -->
     </sch:rule>
   </sch:pattern>
 
@@ -594,7 +591,7 @@
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Enclosure/h:Roofs/h:Roof'>
       <sch:assert role='ERROR' test='h:InteriorAdjacentTo[text()="attic - vented" or text()="attic - unvented" or text()="conditioned space" or text()="garage"]'>Expected InteriorAdjacentTo to be 'attic - vented' or 'attic - unvented' or 'conditioned space' or 'garage'</sch:assert>
       <sch:assert role='ERROR' test='count(h:Area) = 1'>Expected Area</sch:assert>
-      <sch:assert role='ERROR' test='h:RoofType[text()="asphalt or fiberglass shingles" or text()="wood shingles or shakes" or text()="shingles" or text()="slate or tile shingles" or text()="metal surfacing" or text()="plastic/rubber/synthetic sheeting" or text()="expanded polystyrene sheathing" or text()="concrete" or text()="cool roof"] or not(h:RoofType)'>Expected RoofType to be 'asphalt or fiberglass shingles' or 'wood shingles or shakes' or 'shingles' or 'slate or tile shingles' or 'metal surfacing' or 'plastic/rubber/synthetic sheeting' or 'expanded polystyrene sheathing' or 'concrete' or 'cool roof'</sch:assert>
+      <sch:assert role='ERROR' test='h:RoofType[text()="asphalt or fiberglass shingles" or text()="wood shingles or shakes" or text()="shingles" or text()="slate or tile shingles" or text()="metal surfacing" or text()="plastic/rubber/synthetic sheeting" or text()="expanded polystyrene sheathing" or text()="concrete"] or not(h:RoofType)'>Expected RoofType to be 'asphalt or fiberglass shingles' or 'wood shingles or shakes' or 'shingles' or 'slate or tile shingles' or 'metal surfacing' or 'plastic/rubber/synthetic sheeting' or 'expanded polystyrene sheathing' or 'concrete'</sch:assert>
       <sch:assert role='ERROR' test='h:InteriorFinish/h:Type[text()="gypsum board" or text()="gypsum composite board" or text()="plaster" or text()="wood" or text()="not present"] or not(h:InteriorFinish/h:Type)'>Expected InteriorFinish/Type to be 'gypsum board' or 'gypsum composite board' or 'plaster' or 'wood' or 'not present'</sch:assert>
       <sch:assert role='ERROR' test='count(h:Pitch) = 1'>Expected Pitch</sch:assert>
       <sch:assert role='ERROR' test='count(h:Insulation/h:AssemblyEffectiveRValue) = 1'>Expected Insulation/AssemblyEffectiveRValue</sch:assert>
@@ -1861,16 +1858,8 @@
   </sch:pattern>
 
   <sch:pattern>
-    <sch:title>[DuctLeakage=CFM]</sch:title>
-    <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACDistribution/h:DistributionSystemType/h:AirDistribution/h:DuctLeakageMeasurement/h:DuctLeakage[h:Units="CFM25" or h:Units="CFM50"]'>
-      <sch:assert role='ERROR' test='count(h:Value) = 1'>Expected Value</sch:assert> <!-- Can remove this when https://github.com/hpxmlwg/hpxml/pull/467 is available -->
-    </sch:rule>
-  </sch:pattern>
-
-  <sch:pattern>
     <sch:title>[DuctLeakage=Percent]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:HVAC/h:HVACDistribution/h:DistributionSystemType/h:AirDistribution/h:DuctLeakageMeasurement/h:DuctLeakage[h:Units="Percent"]'>
-      <sch:assert role='ERROR' test='count(h:Value) = 1'>Expected Value</sch:assert> <!-- Can remove this when https://github.com/hpxmlwg/hpxml/pull/467 is available -->
       <sch:assert role='ERROR' test='number(h:Value) &lt; 1 or not(h:Value)'>Expected Value to be less than 1</sch:assert>
     </sch:rule>
   </sch:pattern>
@@ -2310,7 +2299,9 @@
       <sch:assert role='ERROR' test='h:Location[text()="ground" or text()="roof"] or not(h:Location)'>Expected Location to be 'ground' or 'roof'</sch:assert>
       <sch:assert role='ERROR' test='count(h:ArrayAzimuth) + count(h:ArrayOrientation) &gt;= 1'>Expected ArrayAzimuth or ArrayOrientation</sch:assert>
       <sch:assert role='ERROR' test='count(h:ArrayTilt) = 1'>Expected ArrayTilt</sch:assert>
-      <sch:assert role='ERROR' test='count(h:MaxPowerOutput) = 1'>Expected MaxPowerOutput</sch:assert>
+      <sch:assert role='ERROR' test='count(h:MaxPowerOutput) + count(h:CollectorArea) + count(h:NumberOfPanels) &gt;= 1'>Expected MaxPowerOutput or CollectorArea or NumberOfPanels</sch:assert>
+      <sch:assert role='ERROR' test='number(h:YearModulesManufactured) &gt;= 1970 or not(h:YearModulesManufactured)'>Expected YearModulesManufactured to be greater than or equal to 1970</sch:assert>
+      <sch:assert role='ERROR' test='number(h:YearInstalled) &gt;= 1970 or not(h:YearInstalled)'>Expected YearInstalled to be greater than or equal to 1970</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:MaxPowerOutput) &lt;= 500 and number(h:MaxPowerOutput) &gt; 0'>Max power output should typically be greater than or equal to 500 W.</sch:report>
     </sch:rule>
@@ -2415,7 +2406,7 @@
       <sch:assert role='ERROR' test='count(h:extension/h:WeekdayScheduleFractions) &lt;= 1'>Expected at most one extension/WeekdayScheduleFractions</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:WeekendScheduleFractions) &lt;= 1'>Expected at most one extension/WeekendScheduleFractions</sch:assert>
       <sch:assert role='ERROR' test='count(h:extension/h:MonthlyScheduleMultipliers) &lt;= 1'>Expected at most one extension/MonthlyScheduleMultipliers</sch:assert>
-      <sch:assert role='ERROR' test='../../h:FuelEconomyCombined[h:Units="kWh/mile" or h:Units="mile/kWh" or h:Units="mpge"] or not(../../h:FuelEconomyCombined/h:Units)'>Expected ../../FuelEconomyCombined/Units to be 'kWh/mile' or 'mile/kWh' or 'mpge'</sch:assert>
+      <sch:assert role='ERROR' test='../../h:FuelEconomyCombined[h:Units="kWh/mile" or h:Units="mile/kWh" or h:Units="mpge"] or not(../../h:FuelEconomyCombined)'>Expected ../../FuelEconomyCombined/Units to be 'kWh/mile' or 'mile/kWh' or 'mpge'</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='count(../../../../../h:MiscLoads/h:PlugLoad[h:PlugLoadType[text()="electric vehicle charging"]]) &gt;= 1'>Electric vehicle charging was specified as both a PlugLoad and a Vehicle, the latter will be ignored.</sch:report>
       <sch:report role='WARN' test='count(h:ConnectedCharger) = 0'>Electric vehicle specified with no charger provided; home EV charging will not be modeled.</sch:report>

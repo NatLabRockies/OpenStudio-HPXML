@@ -1,9 +1,16 @@
 ## OpenStudio-HPXML v1.13.0
 
 __Features__
+- Updates to HPXML v5.0.
+  - **Breaking change**: `Roof/RoofType="cool roof"` replaced by `Roof/CoolRoof="true"`.
+  - `Roof/RoofColor` now has an additional option of "white".
 - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
 - **Breaking change**: For heat pump water heaters, ``HeatingCapacity`` is now *input* rather than *output* capacity, similar to other water heater types.
-- For furnaces/boilers, allows heating efficiency with units of "Percent" as an alternative to "AFUE"; the two units are modeled identically.
+- PV systems:
+  - Allows `CollectorArea` or `NumberOfPanels` instead of `MaxPowerOutput`.
+  - Allows `YearInstalled` instead of `YearModulesManufactured` for age-based degradation.
+- To accommodate electric furnaces/boilers, allows heating efficiency with units of "Percent" as an alternative to "AFUE"; the two units are modeled identically.
+- Updates to some roof/wall solar absorptance defaults.
 - Updates garage ventilation rate to be SLA=1/150 (same as a vented crawlspace).
 - Reverts E+ radiant exchange algorithm from CarrollMRT to ScriptF.
 - Adds min/max value warnings for clothes washer and dishwasher label inputs (e.g., `LabelElectricRate` and `LabelGasRate`).

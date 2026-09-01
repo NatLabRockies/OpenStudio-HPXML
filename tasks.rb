@@ -1531,7 +1531,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       siding_types = [[HPXML::SidingTypeAluminum, HPXML::ColorReflective],
                       [HPXML::SidingTypeAsbestos, HPXML::ColorLight],
                       [HPXML::SidingTypeBrick, HPXML::ColorMediumDark],
-                      [HPXML::SidingTypeCompositeShingle, HPXML::ColorReflective],
+                      [HPXML::SidingTypeCompositeShingle, HPXML::ColorWhite],
                       [HPXML::SidingTypeFiberCement, HPXML::ColorMedium],
                       [HPXML::SidingTypeMasonite, HPXML::ColorDark],
                       [HPXML::SidingTypeStucco, HPXML::ColorLight],
@@ -1617,8 +1617,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                     [HPXML::RoofTypeShingles, HPXML::ColorMediumDark],
                     [HPXML::RoofTypePlasticRubber, HPXML::ColorMediumLight],
                     [HPXML::RoofTypeEPS, HPXML::ColorMedium],
-                    [HPXML::RoofTypeConcrete, HPXML::ColorLight],
-                    [HPXML::RoofTypeCool, HPXML::ColorReflective]]
+                    [HPXML::RoofTypeConcrete, HPXML::ColorWhite]]
       int_finish_types = [[HPXML::InteriorFinishGypsumBoard, 0.5],
                           [HPXML::InteriorFinishPlaster, 0.5],
                           [HPXML::InteriorFinishWood, 0.5]]
@@ -2784,6 +2783,20 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     if ['base-misc-defaults.xml'].include? hpxml_file
       hpxml_bldg.pv_systems[0].year_modules_manufactured = 2015
       hpxml_bldg.hvac_distributions[0].conditioned_floor_area_served = 2700.0
+    elsif ['base-pv-collector-area.xml'].include? hpxml_file
+      hpxml_bldg.pv_systems[0].max_power_output = nil
+      hpxml_bldg.pv_systems[0].collector_area = 200
+      hpxml_bldg.pv_systems[0].year_installed = 2026
+      hpxml_bldg.pv_systems[0].system_losses_fraction = 0.15
+      hpxml_bldg.pv_systems[1].max_power_output = nil
+      hpxml_bldg.pv_systems[1].collector_area = 80
+      hpxml_bldg.pv_systems[1].year_installed = 2026
+      hpxml_bldg.pv_systems[1].system_losses_fraction = 0.17
+    elsif ['base-pv-number-of-panels.xml'].include? hpxml_file
+      hpxml_bldg.pv_systems[0].max_power_output = nil
+      hpxml_bldg.pv_systems[0].number_of_panels = 10
+      hpxml_bldg.pv_systems[1].max_power_output = nil
+      hpxml_bldg.pv_systems[1].number_of_panels = 4
     elsif ['base-pv-inverters.xml'].include? hpxml_file
       hpxml_bldg.inverters.add(id: "Inverter#{hpxml_bldg.inverters.size + 1}",
                                inverter_efficiency: 0.96)
