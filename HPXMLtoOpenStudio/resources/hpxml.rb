@@ -173,10 +173,10 @@ class HPXML < Object
   FoundationWallTypeWood = 'wood'
   FloorOrCeilingCeiling = 'ceiling'
   FloorOrCeilingFloor = 'floor'
-  FloorTypeWoodFrame = 'WoodFrame'
-  FloorTypeSIP = 'StructuralInsulatedPanel'
-  FloorTypeSteelFrame = 'SteelFrame'
-  FloorTypeConcrete = 'SolidConcrete'
+  FloorRoofTypeWoodFrame = 'WoodFrame'
+  FloorRoofTypeSIP = 'StructuralInsulatedPanel'
+  FloorRoofTypeSteelFrame = 'SteelFrame'
+  FloorRoofTypeConcrete = 'SolidConcrete'
   FuelLoadTypeFireplace = 'fireplace'
   FuelLoadTypeGrill = 'grill'
   FuelLoadTypeLighting = 'lighting'
@@ -3900,6 +3900,7 @@ class HPXML < Object
              :area,                           # [Double] Area (ft2)
              :orientation,                    # [String] Orientation (HPXML::OrientationXXX)
              :azimuth,                        # [Integer] Azimuth (deg)
+             :roof_type,                      # [String] RoofType/* (HPXML::FloorRoofTypeXXX)
              :roof_material,                  # [String] RoofMaterial (HPXML::RoofMaterialXXX)
              :cool_roof,                      # [Boolean] CoolRoof
              :roof_color,                     # [String] RoofColor (HPXML::ColorXXX)
@@ -4042,6 +4043,10 @@ class HPXML < Object
       XMLHelper.add_element(roof, 'Area', @area, :float) unless @area.nil?
       XMLHelper.add_element(roof, 'Orientation', @orientation, :string, @orientation_isdefaulted) unless @orientation.nil?
       XMLHelper.add_element(roof, 'Azimuth', @azimuth, :integer, @azimuth_isdefaulted) unless @azimuth.nil?
+      if not @roof_type.nil?
+        roof_type_el = XMLHelper.add_element(roof, 'RoofType')
+        XMLHelper.add_element(roof_type_el, @roof_type)
+      end
       XMLHelper.add_element(roof, 'RoofMaterial', @roof_material, :string, @roof_material_isdefaulted) unless @roof_material.nil?
       XMLHelper.add_element(roof, 'CoolRoof', @cool_roof, :boolean, @cool_roof_isdefaulted) unless @cool_roof.nil?
       XMLHelper.add_element(roof, 'RoofColor', @roof_color, :string, @roof_color_isdefaulted) unless @roof_color.nil?
@@ -4094,6 +4099,7 @@ class HPXML < Object
       @area = XMLHelper.get_value(roof, 'Area', :float)
       @orientation = XMLHelper.get_value(roof, 'Orientation', :string)
       @azimuth = XMLHelper.get_value(roof, 'Azimuth', :integer)
+      @roof_type = XMLHelper.get_child_name(roof, 'RoofType')
       @roof_material = XMLHelper.get_value(roof, 'RoofMaterial', :string)
       @cool_roof = XMLHelper.get_value(roof, 'CoolRoof', :boolean)
       @roof_color = XMLHelper.get_value(roof, 'RoofColor', :string)
@@ -4995,7 +5001,7 @@ class HPXML < Object
              :exterior_adjacent_to,           # [String] ExteriorAdjacentTo (HPXML::LocationXXX)
              :interior_adjacent_to,           # [String] InteriorAdjacentTo (HPXML::LocationXXX)
              :floor_or_ceiling,               # [String] FloorOrCeiling (HPXML::FloorOrCeilingXXX)
-             :floor_type,                     # [String] FloorType/* (HPXML::FloorTypeXXX)
+             :floor_type,                     # [String] FloorType/* (HPXML::FloorRoofTypeXXX)
              :framing_size,                   # [String] FloorJoists/Size
              :framing_spacing,                # [Double] FloorJoists/Spacing (in)
              :framing_factor,                 # [Double] FloorJoists/FramingFactor (frac)

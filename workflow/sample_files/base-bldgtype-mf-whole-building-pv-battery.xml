@@ -1753,6 +1753,9 @@
             <SystemIdentifier id='Roof1_5'/>
             <InteriorAdjacentTo>attic - vented</InteriorAdjacentTo>
             <Area>1341.6</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>asphalt or fiberglass shingles</RoofMaterial>
             <RoofColor>light</RoofColor>
             <Pitch>6.0</Pitch>
@@ -2169,6 +2172,9 @@
             <SystemIdentifier id='Roof1_6'/>
             <InteriorAdjacentTo>attic - vented</InteriorAdjacentTo>
             <Area>1341.6</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>asphalt or fiberglass shingles</RoofMaterial>
             <RoofColor>light</RoofColor>
             <Pitch>6.0</Pitch>

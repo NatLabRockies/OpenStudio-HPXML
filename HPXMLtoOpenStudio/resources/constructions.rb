@@ -2607,7 +2607,7 @@ module Constructions
     osb_thick_in = (is_ceiling ? 0.0 : 0.75)
 
     case floor_type
-    when HPXML::FloorTypeWoodFrame
+    when HPXML::FloorRoofTypeWoodFrame
       install_grade = 1
       constr_sets = [
         WoodStudConstructionSet.new(Material.Stud2x(6), 0.10, 50.0, osb_thick_in, mat_int_finish_or_covering, nil), # 2x6, 24" o.c. + R50
@@ -2627,7 +2627,7 @@ module Constructions
                                      constr_set.osb_thick_in, constr_set.rigid_r, constr_int_finish_or_covering,
                                      has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade)
 
-    when HPXML::FloorTypeSteelFrame
+    when HPXML::FloorRoofTypeSteelFrame
       install_grade = 1
       corr_factor = 0.45
       osb_thick_in = (is_ceiling ? 0.0 : 0.75)
@@ -2648,7 +2648,7 @@ module Constructions
                                       constr_set.rigid_r, constr_int_finish_or_covering, has_radiant_barrier, interior_film,
                                       exterior_film, radiant_barrier_grade)
 
-    when HPXML::FloorTypeSIP
+    when HPXML::FloorRoofTypeSIP
       constr_sets = [
         SIPConstructionSet.new(16.0, 0.08, 0.0, 0.0, osb_thick_in, mat_int_finish_or_covering, nil), # 16" SIP core
         SIPConstructionSet.new(12.0, 0.08, 0.0, 0.0, osb_thick_in, mat_int_finish_or_covering, nil), # 12" SIP core
@@ -2662,7 +2662,7 @@ module Constructions
                               constr_set.osb_thick_in, constr_set.rigid_r, constr_set.mat_ext_finish,
                               has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade)
 
-    when HPXML::FloorTypeConcrete
+    when HPXML::FloorRoofTypeConcrete
       constr_sets = [
         GenericConstructionSet.new(20.0, osb_thick_in, mat_int_finish_or_covering, nil), # w/R-20 rigid
         GenericConstructionSet.new(10.0, osb_thick_in, mat_int_finish_or_covering, nil), # w/R-10 rigid
