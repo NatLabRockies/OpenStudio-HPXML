@@ -3583,8 +3583,8 @@ module Defaults
         pv_system.module_type_isdefaulted = true
       end
       if pv_system.year_modules_manufactured.nil? && pv_system.year_installed.nil?
-        pv_system.year_modules_manufactured = Time.new.year
-        pv_system.year_modules_manufactured_isdefaulted = true
+        pv_system.year_installed = Time.new.year
+        pv_system.year_installed_isdefaulted = true
       end
       pv_year = pv_system.year_modules_manufactured.nil? ? pv_system.year_installed : pv_system.year_modules_manufactured
       if pv_system.system_losses_fraction.nil?

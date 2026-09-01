@@ -25,7 +25,7 @@ EnergyPlus simulation controls are entered in ``/HPXML/SoftwareInfo/extension/Si
   ``BeginDayOfMonth``                   integer            >= 1, <= 31       No        1                            Run period start date
   ``EndMonth``                          integer            >= 1, <= 12       No        12 (December)                Run period end date
   ``EndDayOfMonth``                     integer            >= 1, <= 31       No        31                           Run period end date
-  ``CalendarYear``                      integer            > 1600 [#]_       No        2007 (for TMY weather) [#]_  Calendar year (for start day of week)
+  ``CalendarYear``                      integer            >= 1600 [#]_      No        2007 (for TMY weather) [#]_  Calendar year (for start day of week)
   ``AdvancedResearchFeatures``          element                              No        <none>                       Features used for advanced research modeling
   ====================================  ========  =======  ================  ========  ===========================  =====================================
 
@@ -4662,22 +4662,22 @@ If not entered, the simulation will not include photovoltaics.
 
 Many of the inputs are adopted from the `PVWatts model <https://pvwatts.nlr.gov/>`_.
 
-  =============================================================  =================  ================  ========================  ========  ===========  ============================================
-  Element                                                        Type               Units             Constraints               Required  Default      Notes
-  =============================================================  =================  ================  ========================  ========  ===========  ============================================
-  ``SystemIdentifier``                                           id                                                             Yes                    Unique identifier
-  ``IsSharedSystem``                                             boolean                                                        No        false        Whether it serves multiple dwelling units
-  ``Location``                                                   string                               See [#]_                  No        roof         Mounting location
-  ``ModuleType``                                                 string                               See [#]_                  No        standard     Type of module
-  ``Tracking``                                                   string                               See [#]_                  No        fixed        Type of tracking
-  ``ArrayAzimuth`` or ``ArrayOrientation``                       integer or string  deg or direction  >= 0, <= 359 or See [#]_  Yes                    Direction panels face (clockwise from North)
-  ``ArrayTilt``                                                  double             deg               >= 0, <= 90               Yes                    Tilt relative to horizontal
-  ``MaxPowerOutput`` or ``CollectorArea`` or ``NumberOfPanels``  double or integer  W or ft2 or #     >= 0                      Yes                    Quantity of PV (power, area and/or number) [#]_
-  ``SystemLossesFraction``                                       double             frac              >= 0, <= 1                No        See [#]_     System losses including degradation due to age [#]_
-  ``YearModulesManufactured`` or ``YearInstalled``               integer            #                 > 1600                    No        CurrentYear  Year of manufacture/installation to apply age degradation
-  ``AttachedToInverter``                                         idref                                See [#]_                  See [#]_               ID of attached inverter
-  ``extension/NumberofBedroomsServed``                           integer                              > NumberofBedrooms        See [#]_               Number of bedrooms served
-  =============================================================  =================  ================  ========================  ========  ===========  ============================================
+  =============================================================  ===========================  ================  ========================  ========  ===========  ============================================
+  Element                                                        Type                         Units             Constraints               Required  Default      Notes
+  =============================================================  ===========================  ================  ========================  ========  ===========  ============================================
+  ``SystemIdentifier``                                           id                                                                       Yes                    Unique identifier
+  ``IsSharedSystem``                                             boolean                                                                  No        false        Whether it serves multiple dwelling units
+  ``Location``                                                   string                                         See [#]_                  No        roof         Mounting location
+  ``ModuleType``                                                 string                                         See [#]_                  No        standard     Type of module
+  ``Tracking``                                                   string                                         See [#]_                  No        fixed        Type of tracking
+  ``ArrayAzimuth`` or ``ArrayOrientation``                       integer or string            deg or direction  >= 0, <= 359 or See [#]_  Yes                    Direction panels face (clockwise from North)
+  ``ArrayTilt``                                                  double                       deg               >= 0, <= 90               Yes                    Tilt relative to horizontal
+  ``MaxPowerOutput`` or ``CollectorArea`` or ``NumberOfPanels``  double or double or integer  W or ft2 or #     >= 0 or > 0 or > 0        Yes                    Quantity of PV (power, area and/or number) [#]_
+  ``SystemLossesFraction``                                       double                       frac              >= 0, <= 1                No        See [#]_     System losses including degradation due to age [#]_
+  ``YearModulesManufactured`` or ``YearInstalled``               integer                      #                 >= 1970                   No        CurrentYear  Year for age-based degradation
+  ``AttachedToInverter``                                         idref                                          See [#]_                  See [#]_               ID of attached inverter
+  ``extension/NumberofBedroomsServed``                           integer                                        > NumberofBedrooms        See [#]_               Number of bedrooms served
+  =============================================================  ===========================  ================  ========================  ========  ===========  ============================================
 
   .. [#] Location choices are "ground" or "roof" mounted.
   .. [#] ModuleType choices are "standard", "premium", or "thin film".

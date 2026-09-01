@@ -43,33 +43,26 @@ class HPXMLtoOpenStudioPVTest < Minitest::Test
       args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, hpxml_name))
       model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-      hpxml_bldg.pv_systems.each_with_index do |pv_system, i|
+      hpxml_bldg.pv_systems.each do |pv_system|
         generator, inverter = get_generator_inverter(model, pv_system.id)
-        if hpxml_name == 'base-pv-collector-area.xml'
-          pv_power = i == 0 ? 4970 : 2259
-        elsif hpxml_name == 'base-pv-number-of-panels.xml'
-          pv_power = i == 0 ? 4518 : 1807
-        else
-          pv_power = pv_system.max_power_output
-        end
 
         # Check PV
         assert_equal(pv_system.array_tilt, generator.tiltAngle)
         assert_equal(pv_system.array_azimuth, generator.azimuthAngle)
-        assert_equal(pv_power, generator.dcSystemCapacity)
-        assert_equal(0.14, generator.systemLosses)
-        if i == 0
-          assert_equal('standard', generator.moduleType.downcase)
-        else
-          assert_equal('premium', generator.moduleType.downcase)
-        end
+        assert_equal(pv_system.max_power_output, generator.dcSystemCapacity)
+        assert_equal(pv_system.system_losses_fraction, generator.systemLosses)
+        assert_equal(pv_system.module_type, generator.moduleType.downcase)
         assert_equal('FixedRoofMounted', generator.arrayType)
 
         # Check inverter
-        if hpxml_name == 'base-pv-inverters.xml'
-          assert_in_delta(0.955, inverter.inverterEfficiency, 0.001) # weighted-average efficiency
+        if hpxml_bldg.inverters.size > 1
+          # weighted-average efficiency
+          sum_eff_x_power = hpxml_bldg.pv_systems.map { |pv| pv.inverter.inverter_efficiency * pv.max_power_output }.sum
+          sum_power = hpxml_bldg.pv_systems.map { |pv| pv.max_power_output }.sum
+          weighted_eff = sum_eff_x_power / sum_power
+          assert_in_delta(weighted_eff, inverter.inverterEfficiency, 0.001)
         else
-          assert_equal(0.96, inverter.inverterEfficiency)
+          assert_equal(hpxml_bldg.inverters[0].inverter_efficiency, inverter.inverterEfficiency)
         end
       end
     end

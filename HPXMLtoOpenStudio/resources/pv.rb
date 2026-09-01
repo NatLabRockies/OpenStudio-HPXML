@@ -107,7 +107,7 @@ module PV
   # @return [Double] The maximum power output for the array (W)
   def self.calc_max_power_output_from_num_panels(number_of_panels, pv_year)
     # Equation from Home Energy Score
-    return (number_of_panels * (13.3 * pv_year - 26494.0)).round
+    return [Float((number_of_panels * (13.3 * pv_year - 26494.0)).round), 0.0].max
   end
 
   # Calculates the system losses fraction using an assumed annual degradation.
@@ -126,6 +126,6 @@ module PV
   # @return [Integer] Number of panels (#)
   def self.calc_num_panels_from_area(collector_area)
     # Assumption from Home Energy Score
-    return (collector_area / 17.6).round
+    return [(collector_area / 17.6).round, 1].max
   end
 end

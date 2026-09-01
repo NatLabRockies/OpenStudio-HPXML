@@ -2786,8 +2786,12 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
     elsif ['base-pv-collector-area.xml'].include? hpxml_file
       hpxml_bldg.pv_systems[0].max_power_output = nil
       hpxml_bldg.pv_systems[0].collector_area = 200
+      hpxml_bldg.pv_systems[0].year_installed = 2026
+      hpxml_bldg.pv_systems[0].system_losses_fraction = 0.15
       hpxml_bldg.pv_systems[1].max_power_output = nil
       hpxml_bldg.pv_systems[1].collector_area = 80
+      hpxml_bldg.pv_systems[1].year_installed = 2026
+      hpxml_bldg.pv_systems[1].system_losses_fraction = 0.17
     elsif ['base-pv-number-of-panels.xml'].include? hpxml_file
       hpxml_bldg.pv_systems[0].max_power_output = nil
       hpxml_bldg.pv_systems[0].number_of_panels = 10

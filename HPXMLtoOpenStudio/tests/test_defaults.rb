@@ -3847,9 +3847,11 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
                              inverter_efficiency: 0.90)
     pv = hpxml_bldg.pv_systems[0]
     inv = hpxml_bldg.inverters[0]
+    current_year = Date.today.year
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_pv_system_values(default_hpxml_bldg, 4000, 0.90, 0.20, true, HPXML::LocationGround, HPXML::PVTrackingType1Axis, HPXML::PVModuleTypePremium, 123)
+    _test_default_pv_system_values(default_hpxml_bldg, 4000, 0.90, 0.20, true, HPXML::LocationGround, HPXML::PVTrackingType1Axis,
+                                   HPXML::PVModuleTypePremium, 123, current_year)
 
     # Test defaults
     pv.is_shared_system = nil
@@ -3862,35 +3864,42 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
     inv.inverter_efficiency = nil
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_pv_system_values(default_hpxml_bldg, 4000, 0.96, 0.14, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed, HPXML::PVModuleTypeStandard, 135)
+    _test_default_pv_system_values(default_hpxml_bldg, 4000, 0.96, 0.14, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed,
+                                   HPXML::PVModuleTypeStandard, 135, current_year)
 
     # Test defaults w/ collector area
     pv.max_power_output = nil
     pv.collector_area = 200
+    pv.year_installed = 2026
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_pv_system_values(default_hpxml_bldg, 4970, 0.96, 0.14, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed, HPXML::PVModuleTypeStandard, 135)
+    _test_default_pv_system_values(default_hpxml_bldg, 4970, 0.96, 0.14, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed,
+                                   HPXML::PVModuleTypeStandard, 135, current_year)
 
     # Test defaults w/ number of panels
     pv.collector_area = nil
     pv.number_of_panels = 10
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_pv_system_values(default_hpxml_bldg, 4518, 0.96, 0.14, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed, HPXML::PVModuleTypeStandard, 135)
+    _test_default_pv_system_values(default_hpxml_bldg, 4518, 0.96, 0.14, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed,
+                                   HPXML::PVModuleTypeStandard, 135, current_year)
 
     # Test defaults w/ year installed
     pv.max_power_output = 4000
-    pv.year_installed = Date.today.year - 5
+    pv.year_installed = current_year - 5
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_pv_system_values(default_hpxml_bldg, 4000, 0.96, 0.161, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed, HPXML::PVModuleTypeStandard, 135)
+    _test_default_pv_system_values(default_hpxml_bldg, 4000, 0.96, 0.161, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed,
+                                   HPXML::PVModuleTypeStandard, 135, current_year - 5)
 
     # Test defaults w/ year modules manufactured and no inverter
-    pv.year_modules_manufactured = Date.today.year - 10
+    pv.year_installed = nil
+    pv.year_modules_manufactured = current_year - 10
     inv.delete
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _default_hpxml, default_hpxml_bldg = _test_measure()
-    _test_default_pv_system_values(default_hpxml_bldg, 4000, 0.96, 0.182, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed, HPXML::PVModuleTypeStandard, 135)
+    _test_default_pv_system_values(default_hpxml_bldg, 4000, 0.96, 0.182, false, HPXML::LocationRoof, HPXML::PVTrackingTypeFixed,
+                                   HPXML::PVModuleTypeStandard, 135, current_year - 10)
   end
 
   def test_electric_panels
@@ -6472,7 +6481,7 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
   end
 
   def _test_default_pv_system_values(hpxml_bldg, max_power_output, interver_efficiency, system_loss_frac,
-                                     is_shared_system, location, tracking, module_type, azimuth)
+                                     is_shared_system, location, tracking, module_type, azimuth, pv_year)
     hpxml_bldg.pv_systems.each do |pv|
       assert_in_epsilon(max_power_output, pv.max_power_output, 0.01)
       assert_equal(is_shared_system, pv.is_shared_system)
@@ -6481,6 +6490,12 @@ class HPXMLtoOpenStudioDefaultsTest < Minitest::Test
       assert_equal(tracking, pv.tracking)
       assert_equal(module_type, pv.module_type)
       assert_equal(azimuth, pv.array_azimuth)
+      if not pv.year_modules_manufactured.nil?
+        assert_equal(pv_year, pv.year_modules_manufactured)
+      end
+      if not pv.year_installed.nil?
+        assert_equal(pv_year, pv.year_installed)
+      end
     end
     hpxml_bldg.inverters.each do |inv|
       assert_equal(interver_efficiency, inv.inverter_efficiency)

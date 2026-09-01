@@ -32,7 +32,6 @@
       <sch:assert role='ERROR' test='60 mod number(h:Timestep) = 0 or not(h:Timestep)'>Expected Timestep to be 60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, or 1</sch:assert>
       <sch:assert role='ERROR' test='count(h:CalendarYear) &lt;= 1'>Expected at most one CalendarYear</sch:assert>
       <sch:assert role='ERROR' test='number(h:CalendarYear) &gt;= 1600 or not(h:CalendarYear)'>Expected CalendarYear to be greater than or equal to 1600</sch:assert>
-      <sch:assert role='ERROR' test='number(h:CalendarYear) &lt;= 9999 or not(h:CalendarYear)'>Expected CalendarYear to be less than or equal to 9999</sch:assert>
       <sch:assert role='ERROR' test='count(h:AdvancedResearchFeatures) &lt;= 1'>Expected at most one AdvancedResearchFeatures</sch:assert>
       <!-- Moved/deprecated DaylightSaving input; see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1165 -->
       <sch:assert role='ERROR' test='count(h:DaylightSaving/h:Enabled) = 0'>DaylightSaving/Enabled has been replaced by /HPXML/Building/Site/TimeZone/DSTObserved</sch:assert>
@@ -2301,6 +2300,8 @@
       <sch:assert role='ERROR' test='count(h:ArrayAzimuth) + count(h:ArrayOrientation) &gt;= 1'>Expected ArrayAzimuth or ArrayOrientation</sch:assert>
       <sch:assert role='ERROR' test='count(h:ArrayTilt) = 1'>Expected ArrayTilt</sch:assert>
       <sch:assert role='ERROR' test='count(h:MaxPowerOutput) + count(h:CollectorArea) + count(h:NumberOfPanels) &gt;= 1'>Expected MaxPowerOutput or CollectorArea or NumberOfPanels</sch:assert>
+      <sch:assert role='ERROR' test='number(h:YearModulesManufactured) &gt;= 1970 or not(h:YearModulesManufactured)'>Expected YearModulesManufactured to be greater than or equal to 1970</sch:assert>
+      <sch:assert role='ERROR' test='number(h:YearInstalled) &gt;= 1970 or not(h:YearInstalled)'>Expected YearInstalled to be greater than or equal to 1970</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:MaxPowerOutput) &lt;= 500 and number(h:MaxPowerOutput) &gt; 0'>Max power output should typically be greater than or equal to 500 W.</sch:report>
     </sch:rule>
