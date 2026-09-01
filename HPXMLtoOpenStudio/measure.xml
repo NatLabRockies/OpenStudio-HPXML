@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>f5bee08a-7327-49f0-bf0c-e47a3181c19f</version_id>
-  <version_modified>2026-08-31T20:37:03Z</version_modified>
+  <version_id>c3998466-99d9-4f73-94d5-c77eec36d8a9</version_id>
+  <version_modified>2026-09-01T16:14:00Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -367,7 +367,7 @@
       <filename>defaults.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>A63140D3</checksum>
+      <checksum>F1D2303B</checksum>
     </file>
     <file>
       <filename>electric_panel.rb</filename>
@@ -403,7 +403,7 @@
       <filename>hpxml.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>F2169E9C</checksum>
+      <checksum>3DFCA306</checksum>
     </file>
     <file>
       <filename>hpxml_schema/HPXML.xsd</filename>
@@ -421,7 +421,7 @@
       <filename>hpxml_schematron/EPvalidator.sch</filename>
       <filetype>sch</filetype>
       <usage_type>resource</usage_type>
-      <checksum>E273A52A</checksum>
+      <checksum>5B6190C7</checksum>
     </file>
     <file>
       <filename>hpxml_schematron/iso-schematron.xsd</filename>
@@ -511,7 +511,7 @@
       <filename>pv.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>DB95EF04</checksum>
+      <checksum>4BDE2A23</checksum>
     </file>
     <file>
       <filename>schedule_files/README.md</filename>
@@ -751,7 +751,7 @@
       <filename>test_defaults.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>F1CFFFC0</checksum>
+      <checksum>98F87226</checksum>
     </file>
     <file>
       <filename>test_electric_panel.rb</filename>
@@ -811,7 +811,7 @@
       <filename>test_pv.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>9B877D3E</checksum>
+      <checksum>8269A7BB</checksum>
     </file>
     <file>
       <filename>test_schedules.rb</filename>
@@ -829,7 +829,7 @@
       <filename>test_validation.rb</filename>
       <filetype>rb</filetype>
       <usage_type>test</usage_type>
-      <checksum>FBBA37C8</checksum>
+      <checksum>1AD64E24</checksum>
     </file>
     <file>
       <filename>test_vehicle.rb</filename>
