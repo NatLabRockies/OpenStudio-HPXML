@@ -36,18 +36,27 @@ class HPXMLtoOpenStudioPVTest < Minitest::Test
 
   def test_pv
     ['base-pv.xml',
-     'base-pv-inverters.xml'].each do |hpxml_name|
+     'base-pv-inverters.xml',
+     'base-pv-collector-area.xml',
+     'base-pv-number-of-panels.xml'].each do |hpxml_name|
       args_hash = {}
       args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, hpxml_name))
       model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
       hpxml_bldg.pv_systems.each_with_index do |pv_system, i|
         generator, inverter = get_generator_inverter(model, pv_system.id)
+        if hpxml_name == 'base-pv-collector-area.xml'
+          pv_power = i == 0 ? 4970 : 2259
+        elsif hpxml_name == 'base-pv-number-of-panels.xml'
+          pv_power = i == 0 ? 4518 : 1807
+        else
+          pv_power = pv_system.max_power_output
+        end
 
         # Check PV
         assert_equal(pv_system.array_tilt, generator.tiltAngle)
         assert_equal(pv_system.array_azimuth, generator.azimuthAngle)
-        assert_equal(pv_system.max_power_output, generator.dcSystemCapacity)
+        assert_equal(pv_power, generator.dcSystemCapacity)
         assert_equal(0.14, generator.systemLosses)
         if i == 0
           assert_equal('standard', generator.moduleType.downcase)
@@ -57,10 +66,10 @@ class HPXMLtoOpenStudioPVTest < Minitest::Test
         assert_equal('FixedRoofMounted', generator.arrayType)
 
         # Check inverter
-        if hpxml_name == 'base-pv.xml'
-          assert_equal(0.96, inverter.inverterEfficiency)
-        else
+        if hpxml_name == 'base-pv-inverters.xml'
           assert_in_delta(0.955, inverter.inverterEfficiency, 0.001) # weighted-average efficiency
+        else
+          assert_equal(0.96, inverter.inverterEfficiency)
         end
       end
     end

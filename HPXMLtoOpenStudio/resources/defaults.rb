@@ -3582,9 +3582,22 @@ module Defaults
         pv_system.module_type = HPXML::PVModuleTypeStandard
         pv_system.module_type_isdefaulted = true
       end
+      if pv_system.year_modules_manufactured.nil? && pv_system.year_installed.nil?
+        pv_system.year_modules_manufactured = Time.new.year
+        pv_system.year_modules_manufactured_isdefaulted = true
+      end
+      pv_year = pv_system.year_modules_manufactured.nil? ? pv_system.year_installed : pv_system.year_modules_manufactured
       if pv_system.system_losses_fraction.nil?
-        pv_system.system_losses_fraction = get_pv_system_losses(pv_system.year_modules_manufactured)
+        pv_system.system_losses_fraction = PV.calc_losses_fraction_from_year(pv_year)
         pv_system.system_losses_fraction_isdefaulted = true
+      end
+      if pv_system.max_power_output.nil?
+        if pv_system.number_of_panels.nil?
+          pv_system.number_of_panels = PV.calc_num_panels_from_area(pv_system.collector_area)
+          pv_system.number_of_panels_isdefaulted = true
+        end
+        pv_system.max_power_output = PV.calc_max_power_output_from_num_panels(pv_system.number_of_panels, pv_year)
+        pv_system.max_power_output_isdefaulted = true
       end
       next unless pv_system.inverter_idref.nil?
 
@@ -6319,19 +6332,6 @@ module Defaults
   # @return [Double] Solar thermal storage volume (gal)
   def self.get_solar_thermal_system_storage_volume(collector_area)
     return 1.5 * collector_area # Assumption; 1.5 gal for every sqft of collector area
-  end
-
-  # Get the default system losses for a PV system.
-  #
-  # @param year_modules_manufactured [Integer] year of manufacture of the modules
-  # @return [Double] System losses (frac)
-  def self.get_pv_system_losses(year_modules_manufactured = nil)
-    default_loss_fraction = 0.14 # PVWatts default system losses
-    if not year_modules_manufactured.nil?
-      return PV.calc_losses_fraction_from_year(year_modules_manufactured, default_loss_fraction)
-    else
-      return default_loss_fraction
-    end
   end
 
   # Gets the default color for a roof.

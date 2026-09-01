@@ -2300,7 +2300,7 @@
       <sch:assert role='ERROR' test='h:Location[text()="ground" or text()="roof"] or not(h:Location)'>Expected Location to be 'ground' or 'roof'</sch:assert>
       <sch:assert role='ERROR' test='count(h:ArrayAzimuth) + count(h:ArrayOrientation) &gt;= 1'>Expected ArrayAzimuth or ArrayOrientation</sch:assert>
       <sch:assert role='ERROR' test='count(h:ArrayTilt) = 1'>Expected ArrayTilt</sch:assert>
-      <sch:assert role='ERROR' test='count(h:MaxPowerOutput) = 1'>Expected MaxPowerOutput</sch:assert>
+      <sch:assert role='ERROR' test='count(h:MaxPowerOutput) + count(h:CollectorArea) + count(h:NumberOfPanels) &gt;= 1'>Expected MaxPowerOutput or CollectorArea or NumberOfPanels</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='number(h:MaxPowerOutput) &lt;= 500 and number(h:MaxPowerOutput) &gt; 0'>Max power output should typically be greater than or equal to 500 W.</sch:report>
     </sch:rule>
