@@ -9,10 +9,12 @@ module PV
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @return [nil]
   def self.apply(runner, model, hpxml_bldg)
+    total_max_power_output = hpxml_bldg.pv_systems.map { |pv| pv.max_power_output }.sum
+    return if total_max_power_output <= 0
+
     # Get inverter efficiency
     # If multiple inverters with different efficiencies, calculate PV size weighted-average
     inverter_efficiency = 0.0
-    total_max_power_output = hpxml_bldg.pv_systems.map { |pv| pv.max_power_output }.sum
     hpxml_bldg.pv_systems.each do |pv_system|
       inverter_efficiency += (pv_system.inverter.inverter_efficiency * pv_system.max_power_output / total_max_power_output)
     end
@@ -117,7 +119,8 @@ module PV
   def self.calc_losses_fraction_from_year(pv_year)
     base_loss_fraction = 0.14 # Default from PV Watts, excludes age-based degradation
     degradation_per_year = 0.995 # 0.5%/yr
-    return 1.0 - (1.0 - base_loss_fraction) * degradation_per_year**(Time.new.year - pv_year)
+    age = [Time.new.year - pv_year, 0].max
+    return 1.0 - (1.0 - base_loss_fraction) * degradation_per_year**age
   end
 
   # Calculates the number of PV panels for a given array area.
