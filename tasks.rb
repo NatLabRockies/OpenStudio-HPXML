@@ -947,6 +947,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
                            interior_adjacent_to: HPXML::LocationAtticUnvented,
                            area: 504,
+                           roof_type: hpxml_bldg.roofs[0].roof_type,
                            roof_material: hpxml_bldg.roofs[0].roof_material,
                            pitch: hpxml_bldg.roofs[0].pitch,
                            roof_color: hpxml_bldg.roofs[0].roof_color,

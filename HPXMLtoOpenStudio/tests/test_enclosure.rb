@@ -89,7 +89,7 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
        { assembly_r: 20.0, layer_names: ['concrete tiles + osb', 'roof rigid ins', 'roof stud and cavity', 'gypsum board'] }],
     ]
 
-    hpxml, hpxml_bldg = _create_hpxml('base-enclosure-rooftypes.xml')
+    hpxml, hpxml_bldg = _create_hpxml('base-enclosure-roofmaterials.xml')
     for i in 0..hpxml_bldg.roofs.size - 1
       roofs_values[i].each_with_index do |roof_values, j|
         hpxml_bldg.roofs[i].insulation_assembly_r_value = roof_values[:assembly_r]
