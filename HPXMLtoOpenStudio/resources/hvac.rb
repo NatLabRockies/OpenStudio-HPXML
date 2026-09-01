@@ -5276,12 +5276,20 @@ module HVAC
     return program
   end
 
-  # TODO
+  # Adds any shared systems (e.g., boilers) serving multiple dwelling units to the OpenStudio
+  # model. Only applies to whole SFA/MF building models.
+  #
+  # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml [HPXML] HPXML object
+  # @param hpxml_osm_map [Hash] Map of HPXML::Building objects => OpenStudio Model objects for each dwelling unit
+  # @param shared_systems_map [Hash] Map of HPXML Building => [shared HVAC systems serving multiple dwelling units]
+  # @return [nil]
   def self.apply_shared_systems(runner, model, hpxml, hpxml_osm_map, shared_systems_map)
     hvac_unavailable_periods = { htg: Schedule.get_unavailable_periods(runner, SchedulesFile::Columns[:SpaceHeating].name, hpxml.header.unavailable_periods),
                                  clg: Schedule.get_unavailable_periods(runner, SchedulesFile::Columns[:SpaceCooling].name, hpxml.header.unavailable_periods) }
 
-    # Create map of shared systems => (Map of hpxml_bldg => conditioned zone)
+    # Create map of shared system => (Map of HPXML Building => OpenStudio thermal zone)
     shared_systems_to_zones_map = {}
     shared_systems_map.values.each do |hvac_systems|
       shared_systems = hvac_systems.select { |h| h.sameas_id.nil? }
@@ -5295,25 +5303,33 @@ module HVAC
         next unless hvac_systems2.select { |h| !h.sameas_id.nil? && shared_system_ids.include?(h.sameas_id) }
 
         unit_model = hpxml_osm_map[hpxml_bldg]
-        cond_zone_name = unit_model.getThermalZones.find { |z| z.additionalProperties.getFeatureAsString('ObjectType').to_s == HPXML::LocationConditionedSpace }.name.to_s
-        cond_zone = model.getThermalZones.find { |z| z.name.to_s == cond_zone_name }
-        shared_systems_to_zones_map[shared_systems][hpxml_bldg] = cond_zone
+        thermal_zone_name = unit_model.getThermalZones.find { |z| z.additionalProperties.getFeatureAsString('ObjectType').to_s == HPXML::LocationConditionedSpace }.name.to_s
+        thermal_zone = model.getThermalZones.find { |z| z.name.to_s == thermal_zone_name }
+        shared_systems_to_zones_map[shared_systems][hpxml_bldg] = thermal_zone
       end
     end
 
     # Apply to model
-    shared_systems_to_zones_map.each do |shared_systems, cond_zones_map|
+    shared_systems_to_zones_map.each do |shared_systems, thermal_zones_map|
       shared_boilers = shared_systems.select { |h| h.is_a?(HPXML::HeatingSystem) && h.heating_system_type == HPXML::HVACTypeBoiler }
       if not shared_boilers.empty?
-        apply_shared_boiler(model, hpxml, shared_boilers, cond_zones_map, hvac_unavailable_periods)
+        apply_shared_boiler(model, hpxml, shared_boilers, thermal_zones_map, hvac_unavailable_periods)
       else
         fail 'Unexpected shared systems.'
       end
     end
   end
 
-  # FIXME
-  def self.apply_shared_boiler(model, hpxml, hpxml_boilers, control_zones_map, hvac_unavailable_periods)
+  # Adds any shared boilers serving multiple dwelling units to the OpenStudio model.
+  # Only applies to whole SFA/MF building models.
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param hpxml [HPXML] HPXML object
+  # @param hpxml_boilers [Array<HPXML::HeatingSystem>] List of shared HPXML boilers to add to the model
+  # @param thermal_zones_map [Hash] Map of HPXML Building => OpenStudio thermal zone
+  # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
+  # @return [nil]
+  def self.apply_shared_boiler(model, hpxml, hpxml_boilers, thermal_zones_map, hvac_unavailable_periods)
     obj_name = Constants::ObjectTypeBoiler
 
     # Get distribution system
@@ -5420,8 +5436,8 @@ module HVAC
     hvac_sequential_load_fracs = { htg: [1], clg: [1] }
 
     if distribution_system.distribution_system_type == HPXML::HVACDistributionTypeHydronic
-      total_heating_design_load = control_zones_map.keys.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_total }.sum
-      control_zones_map.each do |hpxml_bldg, control_zone|
+      total_heating_design_load = thermal_zones_map.keys.map { |hpxml_bldg| hpxml_bldg.hvac_plant.hdl_total }.sum
+      thermal_zones_map.each do |hpxml_bldg, thermal_zone|
         # Apportion total boiler heating capacity to each zone based on the HPXML Building's heating design load
         zone_heating_capacity = hpxml_bldg.hvac_plant.hdl_total / total_heating_design_load * total_heating_capacity
 
@@ -5441,9 +5457,9 @@ module HVAC
         # Baseboard
         zone_hvac = OpenStudio::Model::ZoneHVACBaseboardConvectiveWater.new(model, model.alwaysOnDiscreteSchedule, htg_coil)
         zone_hvac.setName(obj_name + ' baseboard')
-        zone_hvac.addToThermalZone(control_zone)
+        zone_hvac.addToThermalZone(thermal_zone)
 
-        set_sequential_load_fractions(model, control_zone, zone_hvac, hvac_sequential_load_fracs, hvac_unavailable_periods)
+        set_sequential_load_fractions(model, thermal_zone, zone_hvac, hvac_sequential_load_fracs, hvac_unavailable_periods)
       end
     end
   end
