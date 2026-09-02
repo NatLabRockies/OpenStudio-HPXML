@@ -25,7 +25,7 @@ EnergyPlus simulation controls are entered in ``/HPXML/SoftwareInfo/extension/Si
   ``BeginDayOfMonth``                   integer            >= 1, <= 31       No        1                            Run period start date
   ``EndMonth``                          integer            >= 1, <= 12       No        12 (December)                Run period end date
   ``EndDayOfMonth``                     integer            >= 1, <= 31       No        31                           Run period end date
-  ``CalendarYear``                      integer            > 1600 [#]_       No        2007 (for TMY weather) [#]_  Calendar year (for start day of week)
+  ``CalendarYear``                      integer            >= 1600 [#]_      No        2007 (for TMY weather) [#]_  Calendar year (for start day of week)
   ``AdvancedResearchFeatures``          element                              No        <none>                       Features used for advanced research modeling
   ====================================  ========  =======  ================  ========  ===========================  =====================================
 
@@ -4662,52 +4662,46 @@ If not entered, the simulation will not include photovoltaics.
 
 Many of the inputs are adopted from the `PVWatts model <https://pvwatts.nlr.gov/>`_.
 
-  =======================================================  =================  ================  ========================  ========  =========  ============================================
-  Element                                                  Type               Units             Constraints               Required  Default    Notes
-  =======================================================  =================  ================  ========================  ========  =========  ============================================
-  ``SystemIdentifier``                                     id                                                             Yes                  Unique identifier
-  ``IsSharedSystem``                                       boolean                                                        No        false      Whether it serves multiple dwelling units
-  ``Location``                                             string                               See [#]_                  No        roof       Mounting location
-  ``ModuleType``                                           string                               See [#]_                  No        standard   Type of module
-  ``Tracking``                                             string                               See [#]_                  No        fixed      Type of tracking
-  ``ArrayAzimuth`` or ``ArrayOrientation``                 integer or string  deg or direction  >= 0, <= 359 or See [#]_  Yes                  Direction panels face (clockwise from North)
-  ``ArrayTilt``                                            double             deg               >= 0, <= 90               Yes                  Tilt relative to horizontal
-  ``MaxPowerOutput``                                       double             W                 >= 0                      Yes                  Peak power
-  ``SystemLossesFraction`` or ``YearModulesManufactured``  double or integer  frac or #         >= 0, <= 1 or > 1600      No        0.14 [#]_  System losses [#]_
-  ``AttachedToInverter``                                   idref                                See [#]_                  See [#]_             ID of attached inverter
-  ``extension/NumberofBedroomsServed``                     integer                              > NumberofBedrooms        See [#]_             Number of bedrooms served
-  =======================================================  =================  ================  ========================  ========  =========  ============================================
+  =============================================================  ===========================  ================  ========================  ========  ===========  ============================================
+  Element                                                        Type                         Units             Constraints               Required  Default      Notes
+  =============================================================  ===========================  ================  ========================  ========  ===========  ============================================
+  ``SystemIdentifier``                                           id                                                                       Yes                    Unique identifier
+  ``IsSharedSystem``                                             boolean                                                                  No        false        Whether it serves multiple dwelling units
+  ``Location``                                                   string                                         See [#]_                  No        roof         Mounting location
+  ``ModuleType``                                                 string                                         See [#]_                  No        standard     Type of module
+  ``Tracking``                                                   string                                         See [#]_                  No        fixed        Type of tracking
+  ``ArrayAzimuth`` or ``ArrayOrientation``                       integer or string            deg or direction  >= 0, <= 359 or See [#]_  Yes                    Direction panels face (clockwise from North)
+  ``ArrayTilt``                                                  double                       deg               >= 0, <= 90               Yes                    Tilt relative to horizontal
+  ``MaxPowerOutput`` or ``CollectorArea`` or ``NumberOfPanels``  double or double or integer  W or ft2 or #     >= 0 or > 0 or > 0        Yes                    Quantity of PV (power, area and/or number) [#]_
+  ``SystemLossesFraction``                                       double                       frac              >= 0, <= 1                No        See [#]_     System losses including degradation due to age [#]_
+  ``YearModulesManufactured`` or ``YearInstalled``               integer                      #                 >= 1970                   No        CurrentYear  Year for age-based degradation
+  ``AttachedToInverter``                                         idref                                          See [#]_                  See [#]_               ID of attached inverter
+  ``extension/NumberofBedroomsServed``                           integer                                        > NumberofBedrooms        See [#]_               Number of bedrooms served
+  =============================================================  ===========================  ================  ========================  ========  ===========  ============================================
 
   .. [#] Location choices are "ground" or "roof" mounted.
   .. [#] ModuleType choices are "standard", "premium", or "thin film".
   .. [#] Tracking choices are "fixed", "1-axis", "1-axis backtracked", or "2-axis".
   .. [#] ArrayOrientation choices are "northeast", "east", "southeast", "south", "southwest", "west", "northwest", or "north"
-  .. [#] SystemLossesFraction default is derived from the `PVWatts documentation <https://docs.nlr.gov/docs/fy14osti/62641.pdf>`_, which breaks down the losses as follows.
-         Note that the total loss (14%) is not the sum of the individual losses but is calculated by multiplying the reduction due to each loss.
+  .. [#] If MaxPowerOutput not provided, defaults to:
 
-         \- **Soiling**: 2%
+         MaxPowerOutput = (13.3 * PVYear - 26494) * NumberOfPanels
 
-         \- **Shading**: 3%
+         where:
 
-         \- **Snow**: 0%
+         PVYear is YearModulesManufactured or YearInstalled
 
-         \- **Mismatch**: 2%
+         NumberOfPanels defaults to CollectorArea / 17.6 (rounded) if not provided.
 
-         \- **Wiring**: 2%
+  .. [#] If SystemLossesFraction not provided, defaults to:
 
-         \- **Connections**: 0.5%
+         SystemLossesFraction = 1.0 - (1.0 - BaseSystemLossesFraction) * 0.995^(CurrentYear - PVYear)
 
-         \- **Light-induced degradation**: 1.5%
+         where:
 
-         \- **Nameplate rating**: 1%
+         PVYear is YearModulesManufactured or YearInstalled
 
-         \- **Age**: 0%
-
-         \- **Availability**: 3%
-
-         If YearModulesManufactured provided but not SystemLossesFraction, calculated as:
-
-         SystemLossesFraction = 1.0 - (1.0 - 0.14) * (1.0 - (1.0 - 0.995^(CurrentYear - YearModulesManufactured))).
+         BaseSystemLossesFraction is 14% based on the `PVWatts defaults in Table 6 <https://docs.nlr.gov/docs/fy14osti/62641.pdf>`_.
 
   .. [#] System losses due to soiling, shading, snow, mismatch, wiring, degradation, etc.
   .. [#] AttachedToInverter must reference an ``Inverter``.

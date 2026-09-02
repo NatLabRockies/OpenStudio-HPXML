@@ -9209,9 +9209,11 @@ class HPXML < Object
              :array_azimuth,             # [Integer] ArrayAzimuth (deg)
              :array_tilt,                # [Double] ArrayTilt (deg)
              :max_power_output,          # [Double] MaxPowerOutput (W)
+             :collector_area,            # [Double] CollectorArea (ft2)
              :number_of_panels,          # [Integer] NumberOfPanels
              :system_losses_fraction,    # [Double] SystemLossesFraction (frac)
              :year_modules_manufactured, # [Integer] YearModulesManufactured
+             :year_installed,            # [Integer] YearInstalled
              :inverter_idref,            # [String] AttachedToInverter/@idref
              :number_of_bedrooms_served] # [Integer] extension/NumberofBedroomsServed
     attr_accessor(*ATTRS)
@@ -9265,10 +9267,12 @@ class HPXML < Object
       XMLHelper.add_element(pv_system, 'ArrayOrientation', @array_orientation, :string, @array_orientation_isdefaulted) unless @array_orientation.nil?
       XMLHelper.add_element(pv_system, 'ArrayAzimuth', @array_azimuth, :integer, @array_azimuth_isdefaulted) unless @array_azimuth.nil?
       XMLHelper.add_element(pv_system, 'ArrayTilt', @array_tilt, :float) unless @array_tilt.nil?
-      XMLHelper.add_element(pv_system, 'MaxPowerOutput', @max_power_output, :float) unless @max_power_output.nil?
-      XMLHelper.add_element(pv_system, 'NumberOfPanels', @number_of_panels, :integer) unless @number_of_panels.nil?
+      XMLHelper.add_element(pv_system, 'MaxPowerOutput', @max_power_output, :float, @max_power_output_isdefaulted) unless @max_power_output.nil?
+      XMLHelper.add_element(pv_system, 'CollectorArea', @collector_area, :float, @collector_area_isdefaulted) unless @collector_area.nil?
+      XMLHelper.add_element(pv_system, 'NumberOfPanels', @number_of_panels, :integer, @number_of_panels_isdefaulted) unless @number_of_panels.nil?
       XMLHelper.add_element(pv_system, 'SystemLossesFraction', @system_losses_fraction, :float, @system_losses_fraction_isdefaulted) unless @system_losses_fraction.nil?
-      XMLHelper.add_element(pv_system, 'YearModulesManufactured', @year_modules_manufactured, :integer) unless @year_modules_manufactured.nil?
+      XMLHelper.add_element(pv_system, 'YearModulesManufactured', @year_modules_manufactured, :integer, @year_modules_manufactured_isdefaulted) unless @year_modules_manufactured.nil?
+      XMLHelper.add_element(pv_system, 'YearInstalled', @year_installed, :integer, @year_installed_isdefaulted) unless @year_installed.nil?
       if not @inverter_idref.nil?
         attached_to_inverter = XMLHelper.add_element(pv_system, 'AttachedToInverter')
         XMLHelper.add_attribute(attached_to_inverter, 'idref', @inverter_idref)
@@ -9292,9 +9296,11 @@ class HPXML < Object
       @array_azimuth = XMLHelper.get_value(pv_system, 'ArrayAzimuth', :integer)
       @array_tilt = XMLHelper.get_value(pv_system, 'ArrayTilt', :float)
       @max_power_output = XMLHelper.get_value(pv_system, 'MaxPowerOutput', :float)
+      @collector_area = XMLHelper.get_value(pv_system, 'CollectorArea', :float)
       @number_of_panels = XMLHelper.get_value(pv_system, 'NumberOfPanels', :integer)
       @system_losses_fraction = XMLHelper.get_value(pv_system, 'SystemLossesFraction', :float)
       @year_modules_manufactured = XMLHelper.get_value(pv_system, 'YearModulesManufactured', :integer)
+      @year_installed = XMLHelper.get_value(pv_system, 'YearInstalled', :integer)
       @inverter_idref = HPXML::get_idref(XMLHelper.get_element(pv_system, 'AttachedToInverter'))
       @number_of_bedrooms_served = XMLHelper.get_value(pv_system, 'extension/NumberofBedroomsServed', :integer)
     end
