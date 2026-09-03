@@ -1585,26 +1585,36 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       end
     end
 
+    # Calculate system use by fuel type for shared systems serving multiple dwelling units
+    shared_system_use_by_fuel = {}
+    shared_system_ids = @hpxml_bldgs.map { |b| b.hvac_systems.select { |h| h.is_shared_system }.map { |h| h.id } }.flatten
+    @system_uses.each do |key, system_use|
+      sys_id, eu_key = key
+      next unless shared_system_ids.include? sys_id
+
+      fuel_type, _end_use_type = eu_key
+      shared_system_use_by_fuel[fuel_type] = 0 if shared_system_use_by_fuel[fuel_type].nil?
+      shared_system_use_by_fuel[fuel_type] += system_use.annual_output
+    end
+
     # Check sum of custom unit meters match facility
     if @hpxml_bldgs.size > 1
-      @totals.each do |_energy_type, total_energy|
+      @totals.each do |energy_type, total_energy|
         total_meter = total_energy.annual_output
-        sum_meters = total_energy.annual_output_by_unit.values.sum
-
+        sum_meters = total_energy.annual_output_by_unit.values.sum + shared_system_use_by_fuel.values.sum(0)
         next unless (sum_meters - total_meter).abs > tol
-        # FIXME
-        # runner.registerError("Sum of Dwelling Unit Energy Use: *: #{energy_type} (#{sum_meters.round(3)}) does not equal Energy Use: #{energy_type} (#{total_meter.round(3)}).")
-        # return false
+
+        runner.registerError("Sum of Dwelling Unit Energy Use: *: #{energy_type} (#{sum_meters.round(3)}) does not equal Energy Use: #{energy_type} (#{total_meter.round(3)}).")
+        return false
       end
 
-      @fuels.each do |(_fuel_type, _total_or_net), fuel|
+      @fuels.each do |(fuel_type, total_or_net), fuel|
         total_meter = fuel.annual_output
-        sum_meters = fuel.annual_output_by_unit.values.sum
-
+        sum_meters = fuel.annual_output_by_unit.values.sum + shared_system_use_by_fuel[fuel_type].to_f
         next unless (sum_meters - total_meter).abs > tol
-        # FIXME
-        # runner.registerError("Sum of Dwelling Unit Fuel Use: *: #{fuel_type}: #{total_or_net} (#{sum_meters.round(3)}) does not equal Fuel Use: #{fuel_type}: #{total_or_net} (#{total_meter.round(3)}).")
-        # return false
+
+        runner.registerError("Sum of Dwelling Unit Fuel Use: *: #{fuel_type}: #{total_or_net} (#{sum_meters.round(3)}) does not equal Fuel Use: #{fuel_type}: #{total_or_net} (#{total_meter.round(3)}).")
+        return false
       end
     end
 
