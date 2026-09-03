@@ -291,13 +291,15 @@ If not entered, the simulation will not include unavailable periods.
   ``ColumnName``                        string                            Yes                         Column name associated with unavailable_periods.csv below
   ``BeginMonth``                        integer            >= 1, <= 12    Yes                         Begin month
   ``BeginDayOfMonth``                   integer            >= 1, <= 31    Yes                         Begin day
-  ``BeginHourOfDay``                    integer            >= 0, <= 23    No        0                 Begin hour
+  ``BeginHourOfDay``                    integer            >= 0, <= 23    No        0                 Begin hour [#]_
   ``EndMonth``                          integer            >= 1, <= 12    Yes                         End month
   ``EndDayOfMonth``                     integer            >= 1, <= 31    Yes                         End day
-  ``EndHourOfDay``                      integer            >= 1, <= 24    No        24                End hour
+  ``EndHourOfDay``                      integer            >= 1, <= 24    No        24                End hour [#]_
   ``NaturalVentilation``                string             See [#]_       No        regular schedule  Natural ventilation availability
   ====================================  ========  =======  =============  ========  ================  ===========
 
+  .. [#] The hour when the unavailable period begins (i.e., hour 0 = 12am, hour 23 = 11pm).
+  .. [#] The hour when the unavailable period ends (i.e., hour 1 = 1am, hour 24 = 12am midnight of next day).
   .. [#] NaturalVentilation choices are "regular schedule", "always available", or "always unavailable".
 
 See the table below to understand which components are affected by an unavailable period with a given ``ColumnName``.
