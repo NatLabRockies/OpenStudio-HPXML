@@ -342,8 +342,8 @@
       <sch:assert role='ERROR' test='h:HeatPumpBackupSizingMethodology[text()="emergency" or text()="supplemental"] or not(h:HeatPumpBackupSizingMethodology)'>Expected HeatPumpBackupSizingMethodology to be 'emergency' or 'supplemental'</sch:assert>
       <sch:assert role='ERROR' test='count(h:AllowIncreasedFixedCapacities) &lt;= 1'>Expected at most one AllowIncreasedFixedCapacities</sch:assert>
       <sch:assert role='ERROR' test='h:AllowIncreasedFixedCapacities[text()="true" or text()="false"] or not(h:AllowIncreasedFixedCapacities)'>Expected AllowIncreasedFixedCapacities to be 'true' or 'false'</sch:assert>
-      <sch:assert role='ERROR' test='count(h:ManualJInputs/h:HeatingDesignTemperature) &lt;= 1'>Expected at most one ManualJInputs/WinterDesignTemperature</sch:assert>
-      <sch:assert role='ERROR' test='count(h:ManualJInputs/h:CoolingDesignTemperature) &lt;= 1'>Expected at most one ManualJInputs/SummerDesignTemperature</sch:assert>
+      <sch:assert role='ERROR' test='count(h:ManualJInputs/h:HeatingDesignTemperature) &lt;= 1'>Expected at most one ManualJInputs/HeatingDesignTemperature</sch:assert>
+      <sch:assert role='ERROR' test='count(h:ManualJInputs/h:CoolingDesignTemperature) &lt;= 1'>Expected at most one ManualJInputs/CoolingDesignTemperature</sch:assert>
       <sch:assert role='ERROR' test='count(h:ManualJInputs/h:DailyTemperatureRange) &lt;= 1'>Expected at most one ManualJInputs/DailyTemperatureRange</sch:assert>
       <sch:assert role='ERROR' test='h:ManualJInputs/h:DailyTemperatureRange[text()="low" or text()="medium" or text()="high"] or not(h:ManualJInputs/h:DailyTemperatureRange)'>Expected ManualJInputs/DailyTemperatureRange to be 'low' or 'medium' or 'high'</sch:assert>
       <sch:assert role='ERROR' test='count(h:ManualJInputs/h:HumidityDifference) &lt;= 1'>Expected at most one ManualJInputs/HumidityDifference</sch:assert>
@@ -713,7 +713,7 @@
       <sch:assert role='ERROR' test='count(h:AttachedToWall) = 1'>Expected AttachedToWall</sch:assert>
       <!-- Warnings -->
       <sch:report role='WARN' test='h:ExteriorShading/h:Type[text()="external overhangs"] and count(h:Overhangs) &gt; 0'>Exterior shading type is 'external overhangs', but overhangs are explicitly defined; exterior shading type will be ignored.</sch:report>
-      <sch:report role='WARN' test='h:ExteriorShading/h:Type[text()="awnings"] and count(h:Overhangs) &gt; 0'>Exterior shading type is 'external overhangs', but overhangs are explicitly defined; exterior shading type will be ignored.</sch:report>
+      <sch:report role='WARN' test='h:ExteriorShading/h:Type[text()="awnings"] and count(h:Overhangs) &gt; 0'>Exterior shading type is 'awnings', but overhangs are explicitly defined; exterior shading type will be ignored.</sch:report>
       <sch:report role='WARN' test='h:ExteriorShading/h:Type[text()="building"] and count(../../../h:BuildingSummary/h:Site/h:extension/h:Neighbors/h:NeighborBuilding) &gt; 0'>Exterior shading type is 'building', but neighbor buildings are explicitly defined; exterior shading type will be ignored.</sch:report>
     </sch:rule>
   </sch:pattern>
@@ -2449,7 +2449,7 @@
   <sch:pattern>
     <sch:title>[GeneratorType=Shared]</sch:title>
     <sch:rule context='/h:HPXML/h:Building/h:BuildingDetails/h:Systems/h:extension/h:Generators/h:Generator[h:IsSharedSystem="true"]'>
-      <sch:assert role='ERROR' test='count(../../../../h:BuildingSummary/h:BuildingConstruction[h:ResidentialFacilityType[text()="single-family attached" or text()="apartment unit"]]) = 1'>Expected ../../../BuildingSummary/BuildingConstruction[ResidentialFacilityType="single-family attached" or "apartment unit"]</sch:assert>
+      <sch:assert role='ERROR' test='count(../../../../h:BuildingSummary/h:BuildingConstruction[h:ResidentialFacilityType[text()="single-family attached" or text()="apartment unit"]]) = 1'>Expected ../../../../BuildingSummary/BuildingConstruction[ResidentialFacilityType="single-family attached" or "apartment unit"]</sch:assert>
       <sch:assert role='ERROR' test='count(h:NumberofBedroomsServed) = 1'>Expected NumberofBedroomsServed</sch:assert>
       <sch:assert role='ERROR' test='number(h:NumberofBedroomsServed) &gt; number(../../../../h:BuildingSummary/h:BuildingConstruction/h:NumberofBedrooms) or not(h:NumberofBedroomsServed) or not(../../../../h:BuildingSummary/h:BuildingConstruction/h:NumberofBedrooms)'>Expected NumberofBedroomsServed to be greater than ../../../../BuildingSummary/BuildingConstruction/NumberofBedrooms</sch:assert>
     </sch:rule>

@@ -72,16 +72,16 @@ def create_hpxmls
     model = OpenStudio::Model::Model.new
     runner = OpenStudio::Measure::OSRunner.new(OpenStudio::WorkflowJSON.new)
 
-    num_mf_units = 1
+    num_dwelling_units = 1
     if hpxml_path.include? 'mf-whole-building-common-spaces'
-      num_mf_units = 8
+      num_dwelling_units = 8
     elsif hpxml_path.include? 'mf-whole-building'
-      num_mf_units = 6
+      num_dwelling_units = 6
     elsif hpxml_path.include? 'multiple-buildings'
-      num_mf_units = 2
+      num_dwelling_units = 2
     end
 
-    for i in 1..num_mf_units
+    for i in 1..num_dwelling_units
       build_residential_hpxml = measures['BuildResidentialHPXML'][0]
       suffix = "_#{i}" if i > 1
       if hpxml_path.include? 'mf-whole-building-common-spaces'
