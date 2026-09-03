@@ -6096,7 +6096,7 @@ module Defaults
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param iecc_zone [String] IECC climate zone
   # @return [String] Water heater location (HPXML::LocationXXX)
-  def self.get_water_heater_location(hpxml_bldg, iecc_zone = nil)
+  def self.get_water_heater_location(hpxml_bldg, iecc_zone)
     # ANSI/RESNET/ICC 301-2022C
     case iecc_zone
     when '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'
@@ -6111,8 +6111,8 @@ module Defaults
         fail "Unexpected IECC zone: #{iecc_zone}."
       end
 
-      location_hierarchy = [HPXML::LocationBasementConditioned,
-                            HPXML::LocationBasementUnconditioned,
+      location_hierarchy = [HPXML::LocationBasementUnconditioned,
+                            HPXML::LocationBasementConditioned,
                             HPXML::LocationConditionedSpace]
     end
     location_hierarchy.each do |location|
