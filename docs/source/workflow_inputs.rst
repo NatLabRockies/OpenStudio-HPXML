@@ -4135,7 +4135,7 @@ Each conventional storage water heater is entered as a ``/HPXML/Building/Buildin
 
          \- **IECC zones 1-3**: "garage", "conditioned space"
 
-         \- **IECC zones 3-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
+         \- **IECC zones 4-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
 
   .. [#] If TankVolume not provided, defaults based on Table 8 in the `2014 BAHSP <https://www.energy.gov/sites/prod/files/2014/03/f13/house_simulation_protocols_2014.pdf>`_.
   .. [#] The sum of all ``FractionDHWLoadServed`` (across all WaterHeatingSystems) must equal to 1.
@@ -4190,7 +4190,7 @@ Each instantaneous tankless water heater is entered as a ``/HPXML/Building/Build
 
          \- **IECC zones 1-3**: "garage", "conditioned space"
 
-         \- **IECC zones 3-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
+         \- **IECC zones 4-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
 
   .. [#] If PerformanceAdjustment not provided, defaults to 0.94 (UEF) or 0.92 (EF) based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
   .. [#] The sum of all ``FractionDHWLoadServed`` (across all WaterHeatingSystems) must equal to 1.
@@ -4238,7 +4238,7 @@ Each heat pump water heater is entered as a ``/HPXML/Building/BuildingDetails/Sy
 
          \- **IECC zones 1-3**: "garage", "conditioned space"
 
-         \- **IECC zones 3-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
+         \- **IECC zones 4-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
 
   .. [#] If TankVolume not provided, defaults as follows:
 
@@ -4300,7 +4300,7 @@ Each combination boiler w/ storage tank (sometimes referred to as an indirect wa
 
          \- **IECC zones 1-3**: "garage", "conditioned space"
 
-         \- **IECC zones 3-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
+         \- **IECC zones 4-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
 
   .. [#] If TankVolume not provided, defaults based on Table 8 in the `2014 BAHSP <https://www.energy.gov/sites/prod/files/2014/03/f13/house_simulation_protocols_2014.pdf>`_.
   .. [#] The sum of all ``FractionDHWLoadServed`` (across all WaterHeatingSystems) must equal to 1.
@@ -4339,7 +4339,7 @@ Each combination boiler w/ tankless coil is entered as a ``/HPXML/Building/Build
 
          \- **IECC zones 1-3**: "garage", "conditioned space"
 
-         \- **IECC zones 3-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
+         \- **IECC zones 4-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
 
   .. [#] The sum of all ``FractionDHWLoadServed`` (across all WaterHeatingSystems) must equal to 1.
   .. [#] FractionDHWLoadServed represents only the fraction of the hot water load associated with the hot water **fixtures**.
