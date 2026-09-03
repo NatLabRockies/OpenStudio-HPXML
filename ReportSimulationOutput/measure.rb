@@ -412,7 +412,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         meter_name = Model.make_unit_meter_name(fuel.meter, unit_num, hpxml_bldgs_size)
 
         # Check if unit has this fuel type
-        meter = model.getMeterCustoms.find { |m| m.name.to_s.upcase == meter_name.upcase }
+        meter = (model.getMeterCustoms + model.getMeterCustomDecrements).find { |m| m.name.to_s.upcase == meter_name.upcase }
         next if meter.nil?
 
         Model.add_output_meter(model, meter_name: meter_name, reporting_frequency: 'runperiod')
