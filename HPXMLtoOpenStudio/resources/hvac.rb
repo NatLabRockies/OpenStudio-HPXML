@@ -5378,14 +5378,17 @@ module HVAC
       )
     end
     pump.addToNode(plant_loop.supplyInletNode)
+    # Note: All pump power associated with first shared boiler
+    pump.additionalProperties.setFeature('HPXML_ID', hpxml_boilers[0].id) # Used by reporting measure
+    pump.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeFanPumpDisaggregatePrimaryHeat) # Used by reporting measure
 
     # Hot Water Boilers
     total_heating_capacity = 0
-    hpxml_boilers.each do |heating_system|
+    hpxml_boilers.each do |hpxml_boiler|
       boiler = OpenStudio::Model::BoilerHotWater.new(model)
       boiler.setName(obj_name)
-      boiler.setFuelType(EPlus.fuel_type(heating_system.heating_system_fuel))
-      boiler.setNominalThermalEfficiency(heating_system.heating_efficiency_afue)
+      boiler.setFuelType(EPlus.fuel_type(hpxml_boiler.heating_system_fuel))
+      boiler.setNominalThermalEfficiency(hpxml_boiler.heating_efficiency_afue)
       boiler.setEfficiencyCurveTemperatureEvaluationVariable('LeavingBoiler')
       boiler_eff_curve = Model.add_curve_bicubic(
         model,
@@ -5400,12 +5403,12 @@ module HVAC
       boiler.setOptimumPartLoadRatio(1.0)
       boiler.setWaterOutletUpperTemperatureLimit(99.9)
       boiler.setOnCycleParasiticElectricLoad(0)
-      boiler.setNominalCapacity(UnitConversions.convert(heating_system.heating_capacity, 'Btu/hr', 'W'))
-      boiler.setOffCycleParasiticFuelLoad(UnitConversions.convert(heating_system.pilot_light_btuh.to_f, 'Btu/hr', 'W'))
+      boiler.setNominalCapacity(UnitConversions.convert(hpxml_boiler.heating_capacity, 'Btu/hr', 'W'))
+      boiler.setOffCycleParasiticFuelLoad(UnitConversions.convert(hpxml_boiler.pilot_light_btuh.to_f, 'Btu/hr', 'W'))
       plant_loop.addSupplyBranchForComponent(boiler)
-      boiler.additionalProperties.setFeature('HPXML_ID', heating_system.id) # Used by reporting measure
+      boiler.additionalProperties.setFeature('HPXML_ID', hpxml_boiler.id) # Used by reporting measure
 
-      total_heating_capacity += heating_system.heating_capacity
+      total_heating_capacity += hpxml_boiler.heating_capacity
     end
 
     supply_setpoint = Model.add_schedule_constant(
