@@ -149,6 +149,8 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                             'hvac-invalid-fan-model-type' => ["Expected extension/FanMotorType to be 'PSC' or 'BPM'"],
                             'hvac-invalid-eer' => ['Expected EER to be less than SEER.'],
                             'hvac-invalid-eer2' => ['Expected EER2 to be less than or equal to SEER2.'],
+                            'hvac-invalid-mixed-seer-eer2' => ['Expected SEER to be paired with EER, or SEER2 with EER2.'],
+                            'hvac-invalid-mixed-seer2-eer' => ['Expected SEER to be paired with EER, or SEER2 with EER2.'],
                             'hvac-location-heating-system' => ['A location is specified as "basement - unconditioned" but no surfaces were found adjacent to this space type.'],
                             'hvac-location-cooling-system' => ['A location is specified as "basement - unconditioned" but no surfaces were found adjacent to this space type.'],
                             'hvac-location-heat-pump' => ['A location is specified as "basement - unconditioned" but no surfaces were found adjacent to this space type.'],
@@ -625,6 +627,16 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
       when 'hvac-invalid-eer2'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-air-to-air-heat-pump-1-speed.xml')
         hpxml_bldg.heat_pumps[0].cooling_efficiency_eer2 = hpxml_bldg.heat_pumps[0].cooling_efficiency_seer2 + 1
+      when 'hvac-invalid-mixed-seer-eer2'
+        hpxml, hpxml_bldg = _create_hpxml('base-hvac-air-to-air-heat-pump-1-speed.xml')
+        hpxml_bldg.heat_pumps[0].cooling_efficiency_eer = nil
+        hpxml_bldg.heat_pumps[0].cooling_efficiency_eer2 = hpxml_bldg.heat_pumps[0].cooling_efficiency_seer2 - 1
+        hpxml_bldg.heat_pumps[0].cooling_efficiency_seer = hpxml_bldg.heat_pumps[0].cooling_efficiency_seer2
+        hpxml_bldg.heat_pumps[0].cooling_efficiency_seer2 = nil
+      when 'hvac-invalid-mixed-seer2-eer'
+        hpxml, hpxml_bldg = _create_hpxml('base-hvac-central-ac-only-1-speed.xml')
+        hpxml_bldg.cooling_systems[0].cooling_efficiency_eer2 = nil
+        hpxml_bldg.cooling_systems[0].cooling_efficiency_eer = hpxml_bldg.cooling_systems[0].cooling_efficiency_seer2 - 1
       when 'hvac-location-heating-system'
         hpxml, hpxml_bldg = _create_hpxml('base-hvac-boiler-oil-only.xml')
         hpxml_bldg.heating_systems[0].location = HPXML::LocationBasementUnconditioned
