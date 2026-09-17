@@ -303,6 +303,18 @@ class BuildResidentialScheduleFileTest < Minitest::Test
     assert(info_msgs.any? { |info_msg| info_msg.include?("GeometryNumOccupants=#{Float(Integer(num_occupants))}") })
   end
 
+  def test_cooking_event_duration
+    # Regression test for implausibly long appliance events in the empirical duration distributions.
+    # Seed 85650 selects the 92-interval cooking sample, which represents 23 hours at 15 minutes per interval.
+    generator = ScheduleGenerator.allocate
+    generator.instance_variable_set(:@resources_path, File.join(@root_path, 'BuildResidentialScheduleFile', 'resources'))
+    appliance_power_dist_map = generator.send(:read_appliance_power_dist)
+
+    duration_15min, _power = generator.send(:sample_appliance_duration_power, Random.new(85650), appliance_power_dist_map, 'cooking')
+
+    assert_equal(Constants::ApplianceEventDurationMax, duration_15min * 15)
+  end
+
   def test_zero_occupants
     num_occupants = 0.0
 
