@@ -304,15 +304,30 @@ class BuildResidentialScheduleFileTest < Minitest::Test
   end
 
   def test_cooking_event_duration
-    # Regression test for implausibly long appliance events in the empirical duration distributions.
-    # Seed 85650 selects the 92-interval cooking sample, which represents 23 hours at 15 minutes per interval.
-    generator = ScheduleGenerator.allocate
-    generator.instance_variable_set(:@resources_path, File.join(@root_path, 'BuildResidentialScheduleFile', 'resources'))
-    appliance_power_dist_map = generator.send(:read_appliance_power_dist)
+    # Regression test for implausibly long cooking events at different schedule timesteps.
+    # Master seed 111745 selects a 92-interval (23-hour) sample that should be capped at 8 hours.
+    # Master seed 1 represents an ordinary event that should remain below the cap.
+    [['base-simcontrol-timestep-10-mins.xml', 10], ['base.xml', 60]].each do |hpxml_name, minutes_per_step|
+      [111745, 1].each do |random_seed|
+        @args_hash['hpxml_path'] = File.join(@sample_files_path, hpxml_name)
+        @args_hash['schedules_random_seed'] = random_seed
+        @args_hash['schedules_column_names'] = SchedulesFile::Columns[:CookingRange].name
+        @args_hash['output_csv_path'] = File.absolute_path(File.join(@tmp_output_path, 'occupancy-stochastic.csv'))
+        hpxml, _result = _test_measure()
 
-    duration_15min, _power = generator.send(:sample_appliance_duration_power, Random.new(85650), appliance_power_dist_map, 'cooking')
+        sf = SchedulesFile.new(schedules_paths: hpxml.buildings[0].header.schedules_filepaths,
+                               year: @year,
+                               output_path: @tmp_schedule_file_path)
+        cooking_schedule = sf.tmp_schedules[SchedulesFile::Columns[:CookingRange].name]
+        event_durations = cooking_schedule.chunk { |value| value > 0 }.filter_map { |on, values| values.sum * minutes_per_step if on }
 
-    assert_equal(Constants::ApplianceEventDurationMax, duration_15min * 15)
+        if random_seed == 111745
+          assert_in_delta(Constants::ApplianceEventDurationMax, event_durations.max, 0.01)
+        else
+          assert_operator(event_durations.max, :<, Constants::ApplianceEventDurationMax)
+        end
+      end
+    end
   end
 
   def test_zero_occupants
