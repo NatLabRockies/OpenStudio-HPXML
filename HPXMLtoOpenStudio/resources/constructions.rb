@@ -38,7 +38,7 @@ module Constructions
         # Closed cavity
         framing_factor = nil
         corr_factor = nil
-        if roof_type == HPXML::FloorRoofTypeWoodFrame
+        if roof.roof_type == HPXML::FloorRoofTypeWoodFrame
           wood_frame_constr_sets = [
             WoodStudConstructionSet.new(Material.Stud2x(8), 0.07, 20.0, 0.0, mat_int_finish, mat_ext_finish),         # 2x8, 24" o.c. + R20
             WoodStudConstructionSet.new(Material.Stud2x(8), 0.07, 10.0, 0.0, mat_int_finish, mat_ext_finish),         # 2x8, 24" o.c. + R10
