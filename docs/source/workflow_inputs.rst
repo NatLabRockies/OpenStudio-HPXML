@@ -1258,7 +1258,8 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
   ``InteriorAdjacentTo``                  string                               See [#]_                  Yes                                        Interior adjacent space type
   ``Area``                                double             ft2               > 0                       Yes                                        Gross area (including skylights)
   ``Azimuth`` or ``Orientation``          integer or string  deg or direction  >= 0, <= 359 or See [#]_  No         See [#]_                        Direction (clockwise from North)
-  ``RoofType``                            string                               See [#]_                  No         asphalt or fiberglass shingles  Roof type
+  ``RoofType``                            element                              See [#]_                  Yes                                        Roof Construction Type
+  ``RoofMaterial``                        string                               See [#]_                  No         asphalt or fiberglass shingles  Roof Material
   ``CoolRoof``                            boolean                                                        No                                         Only used to default roof color
   ``RoofColor`` or ``SolarAbsorptance``   string or double                     See [#]_ or >= 0, <= 1    No         medium (or white if cool roof)  Roof color or solar absorptance of outermost material [#]_
   ``Emittance``                           double                               >= 0, <= 1                No         0.90                            Emittance of outermost material
@@ -1278,7 +1279,8 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
   .. [#] Orientation choices are "northeast", "east", "southeast", "south", "southwest", "west", "northwest", or "north"
   .. [#] If neither Azimuth nor Orientation provided, and it's a *pitched* roof, modeled as four surfaces of equal area facing every direction.
          Azimuth/Orientation is irrelevant for *flat* roofs.
-  .. [#] RoofType choices are "asphalt or fiberglass shingles", "wood shingles or shakes", "shingles", "slate or tile shingles", "metal surfacing", "plastic/rubber/synthetic sheeting", "expanded polystyrene sheathing", or "concrete tiles".
+  .. [#] RoofType child element choices are ``WoodFrame``, ``StructuralInsulatedPanel``, ``SteelFrame``, or ``SolidConcrete``.
+  .. [#] RoofMaterial choices are "asphalt or fiberglass shingles", "wood shingles or shakes", "shingles", "slate or tile shingles", "metal surfacing", "plastic/rubber/synthetic sheeting", "expanded polystyrene sheathing", or "concrete tiles".
   .. [#] RoofColor choices are "dark", "medium dark", "medium", "medium light", "light", "white", or "reflective".
   .. [#] If SolarAbsorptance not provided, defaults based on RoofType and RoofColor:
 
