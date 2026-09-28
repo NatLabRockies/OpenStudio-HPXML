@@ -2510,7 +2510,7 @@ Each central air conditioner is entered as a ``/HPXML/Building/BuildingDetails/S
   .. [#] CompressorType choices are "single stage", "two stage", or "variable speed".
   .. [#] The sum of all ``FractionCoolLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, SEER2 = SEER * 0.95 if EquipmentType is "split system".
-  .. [#] In addition, SEER2 must be paired with EER2 (EER2 <= SEER2), and SEER with EER (EER < SEER).
+  .. [#] In addition, EER2 must be <= SEER2; EER must be < SEER.
   .. [#] If neither EER2 nor EER provided, EER2 defaults to (0.73 * SEER2 + 1.47) for single stage, (0.63 * SEER2 + 2.34) for two stage, and (0.31 * SEER2 + 6.45) for variable speed, based on a regression analysis of `ENERGY STAR products <https://www.energystar.gov/products>`_.
   .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, EER2 = EER * 0.95 if EquipmentType is "split system".
   .. [#] If CoolingDetailedPerformanceData is provided, see :ref:`clg_detailed_perf_data`.
@@ -2691,7 +2691,7 @@ Each mini-split air conditioner is entered as a ``/HPXML/Building/BuildingDetail
   .. [#] Cooling capacity autosized per ACCA Manual J/S based on cooling design load.
   .. [#] The sum of all ``FractionCoolLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where SEER2 = SEER * 0.95 if ducted and SEER2 = SEER if ductless.
-  .. [#] In addition, SEER2 must be paired with EER2 (EER2 <= SEER2), and SEER with EER (EER < SEER).
+  .. [#] In addition, EER2 must be <= SEER2; EER must be < SEER.
   .. [#] If neither EER2 nor EER provided, EER2 defaults to (0.73 * SEER2 + 1.47) for single stage, (0.63 * SEER2 + 2.34) for two stage, and (0.31 * SEER2 + 6.45) for variable speed, based on a regression analysis of `ENERGY STAR products <https://www.energystar.gov/products>`_.
   .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where EER2 = EER * 0.95 if ducted and EER2 = EER if ductless.
   .. [#] If CoolingDetailedPerformanceData is provided, see :ref:`clg_detailed_perf_data`.
@@ -2863,7 +2863,7 @@ Each air-to-air heat pump is entered as a ``/HPXML/Building/BuildingDetails/Syst
   .. [#] The sum of all ``FractionHeatLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] The sum of all ``FractionCoolLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, SEER2 = SEER * 0.95 if EquipmentType is "split system".
-  .. [#] In addition, SEER2 must be paired with EER2 (EER2 <= SEER2), and SEER with EER (EER < SEER).
+  .. [#] In addition, EER2 must be <= SEER2; EER must be < SEER.
   .. [#] If neither EER2 nor EER provided, EER2 defaults to (0.73 * SEER2 + 1.47) for single stage, (0.63 * SEER2 + 2.34) for two stage, and (0.31 * SEER2 + 6.45) for variable speed, based on a regression analysis of `ENERGY STAR products <https://www.energystar.gov/products>`_.
   .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, EER2 = EER * 0.95 if EquipmentType is "split system".
   .. [#] If HSPF provided, converted to HSPF2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, HSPF2 = HSPF * 0.85 if EquipmentType is "split system".
@@ -2959,7 +2959,7 @@ Each ``HeatPump`` should represent a single outdoor unit, whether connected to o
   .. [#] The sum of all ``FractionHeatLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] The sum of all ``FractionCoolLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where SEER2 = SEER * 0.95 if ducted and SEER2 = SEER if ductless.
-  .. [#] In addition, SEER2 must be paired with EER2 (EER2 <= SEER2), and SEER with EER (EER < SEER).
+  .. [#] In addition, EER2 must be <= SEER2; EER must be < SEER.
   .. [#] If neither EER2 nor EER provided, EER2 defaults to (0.73 * SEER2 + 1.47) for single stage, (0.63 * SEER2 + 2.34) for two stage, and (0.31 * SEER2 + 6.45) for variable speed, based on a regression analysis of `ENERGY STAR products <https://www.energystar.gov/products>`_.
   .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where EER2 = EER * 0.95 if ducted and EER2 = EER if ductless.
   .. [#] If HSPF provided, converted to HSPF2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where HSPF2 = HSPF * 0.85 if ducted and HSPF2 = HSPF * 0.90 if ductless.
