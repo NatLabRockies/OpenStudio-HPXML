@@ -2981,8 +2981,8 @@ module Constructions
       apply_open_cavity_frame_roof(model, surfaces, 'AdiabaticRoofConstruction', HPXML::FloorRoofTypeWoodFrame,
                                    0, 1, 7.25, 7.25, 0.0, 99,
                                    Material.RoofMaterialAndSheathing(HPXML::RoofMaterialAsphaltShingles),
-                                   false, Material.AirFilmOutside,
-                                   Material.AirFilmIndoorRoof(UnitConversions.convert(surfaces[0].tilt, 'rad', 'deg')), nil, 0.07)
+                                   false, Material.AirFilmIndoorRoof(UnitConversions.convert(surfaces[0].tilt, 'rad', 'deg')),
+                                   Material.AirFilmOutside, nil, nil, nil, 0.07)
     end
   end
 
