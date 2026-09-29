@@ -134,7 +134,8 @@ module Constructions
       apply_generic_layered_roof(model, surfaces, "#{roof.id} construction", thick_ins,
                                  conds, denss, specheats, constr_set.mat_int_finish, constr_set.osb_thick_in,
                                  constr_set.rigid_r, constr_set.mat_ext_finish, has_radiant_barrier,
-                                 interior_film, exterior_film, radiant_barrier_grade)
+                                 interior_film, exterior_film, radiant_barrier_grade,
+                                 roof.solar_absorptance, roof.emittance)
 
     else
       fail "Unexpected roof type '#{roof.roof_type}'."
