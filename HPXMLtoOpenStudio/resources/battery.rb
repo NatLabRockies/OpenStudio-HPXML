@@ -218,7 +218,6 @@ module Battery
       name: Constants::ObjectTypeBatteryLossesAdjustment,
       end_use: Constants::ObjectTypeBatteryLossesAdjustment,
       space: space,
-      design_level: 0.01,
       frac_radiant: 0,
       frac_latent: 0,
       frac_lost: frac_lost,
@@ -244,7 +243,7 @@ module Battery
 
     Model.add_ems_program_calling_manager(
       model,
-      name: 'battery losses calling manager',
+      name: "#{battery_losses_program.name} manager",
       calling_point: 'EndOfSystemTimestepBeforeHVACReporting',
       ems_programs: [battery_losses_program]
     )

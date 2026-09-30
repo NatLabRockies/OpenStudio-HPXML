@@ -135,18 +135,18 @@ class WeatherFile
   # @param base_temp_f [Double] Base drybulb temperature for the calculation (F)
   # @param is_heating [Boolean] True if heating, false if cooling
   # @return [Double] Degree days (deltaF)
-  def calc_degree_days(daily_dbs, base_temp_f, is_heating)
+  def calc_degree_days(dailydbs, base_temp_f, is_heating)
     base_temp_c = UnitConversions.convert(base_temp_f, 'F', 'C')
 
     deg_days = []
     if is_heating
-      daily_dbs.each do |x|
+      dailydbs.each do |x|
         if x < base_temp_c
           deg_days << base_temp_c - x
         end
       end
     else
-      daily_dbs.each do |x|
+      dailydbs.each do |x|
         if x > base_temp_c
           deg_days << x - base_temp_c
         end
@@ -162,19 +162,19 @@ class WeatherFile
 
   # Calculates and stores avg daily highs and lows for each month.
   #
-  # @param daily_high_dbs [Array<Double>] Daily maximum drybulb temperatures (C)
-  # @param daily_low_dbs [Array<Double>] Daily minimum drybulb temperatures (C)
+  # @param dailyhighdbs [Array<Double>] Daily maximum drybulb temperatures (C)
+  # @param dailylowdbs [Array<Double>] Daily minimum drybulb temperatures (C)
   # @return [nil]
-  def calc_avg_monthly_highs_lows(daily_high_dbs, daily_low_dbs)
+  def calc_avg_monthly_highs_lows(dailyhighdbs, dailylowdbs)
     data.MonthlyAvgDailyHighDrybulbs = []
     data.MonthlyAvgDailyLowDrybulbs = []
 
-    if daily_high_dbs.size == 365 # standard year
+    if dailyhighdbs.size == 365 # standard year
       month_num_days = Calendar.num_days_in_months(1999)
-    elsif daily_high_dbs.size == 366 # leap year
+    elsif dailyhighdbs.size == 366 # leap year
       month_num_days = Calendar.num_days_in_months(2000)
     else
-      fail "Unexpected number of days: #{daily_high_dbs.size}."
+      fail "Unexpected number of days: #{dailyhighdbs.size}."
     end
 
     first_day = 0
@@ -183,8 +183,8 @@ class WeatherFile
       if month > 1
         first_day += month_num_days[month - 2] # Number of days in previous month
       end
-      avg_high = daily_high_dbs[first_day, ndays].sum(0.0) / ndays.to_f
-      avg_low = daily_low_dbs[first_day, ndays].sum(0.0) / ndays.to_f
+      avg_high = dailyhighdbs[first_day, ndays].sum(0.0) / ndays.to_f
+      avg_low = dailylowdbs[first_day, ndays].sum(0.0) / ndays.to_f
       data.MonthlyAvgDailyHighDrybulbs << UnitConversions.convert(avg_high, 'C', 'F')
       data.MonthlyAvgDailyLowDrybulbs << UnitConversions.convert(avg_low, 'C', 'F')
     end
@@ -424,10 +424,13 @@ class WeatherFile
       row = row.split(',')
       v2 = Vector[row[3].to_f, row[4].to_f]
       new_dist = (v1 - v2).magnitude
-      if new_dist < dist
-        temperatures_amplitudes = row[5..9].map(&:to_f)
-        dist = new_dist
-      end
+      next unless new_dist < dist
+
+      row_values = row[5..9].map(&:to_f)
+      next unless not row_values.empty?
+
+      temperatures_amplitudes = row_values
+      dist = new_dist
     end
 
     data.DeepGroundAnnualTemp = UnitConversions.convert(temperatures_amplitudes[0], 'C', 'F')

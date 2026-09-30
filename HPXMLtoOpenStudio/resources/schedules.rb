@@ -5,7 +5,7 @@ class ScheduleConstant
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param sch_name [String] name that is assigned to the OpenStudio Schedule object
   # @param val [Double] the constant schedule value
-  # @param schedule_type_limits_name [String] data type for the values contained in the schedule
+  # @param schedule_type_limits_name [String or nil] data type for the values contained in the schedule
   # @param unavailable_periods [HPXML::UnavailablePeriods] Object that defines periods for, e.g., power outages or vacancies
   def initialize(model, sch_name, val = 1.0, schedule_type_limits_name = nil, unavailable_periods: [])
     @schedule = create_schedule(model, sch_name, val, schedule_type_limits_name, unavailable_periods)
@@ -60,7 +60,7 @@ class HourlyByMonthSchedule
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param sch_name [String] name that is assigned to the OpenStudio Schedule object
   # @param weekday_month_by_hour_values [Array<Array<Double>>] a 12-element array of 24-element arrays of numbers
-  # @param weekday_month_by_hour_values [Array<Array<Double>>] a 12-element array of 24-element arrays of numbers
+  # @param weekend_month_by_hour_values [Array<Array<Double>>] a 12-element array of 24-element arrays of numbers
   # @param schedule_type_limits_name [String] data type for the values contained in the schedule
   # @param normalize_values [Boolean] whether to divide schedule values by the max value
   # @param unavailable_periods [HPXML::UnavailablePeriods] Object that defines periods for, e.g., power outages or vacancies
@@ -142,14 +142,14 @@ class HourlyByMonthSchedule
 
     prev_wkdy_vals, prev_wkdy_rule = nil, nil
     prev_wknd_vals, prev_wknd_rule = nil, nil
-    for m in 1..12
-      date_s = OpenStudio::Date::fromDayOfYear(day_startm[m - 1], year)
-      date_e = OpenStudio::Date::fromDayOfYear(day_endm[m - 1], year)
+    for m in 0..11
+      date_s = OpenStudio::Date::fromDayOfYear(day_startm[m], year)
+      date_e = OpenStudio::Date::fromDayOfYear(day_endm[m], year)
 
       wkdy_vals, wknd_vals = [], []
-      for h in 1..24
-        wkdy_vals[h] = (@weekday_month_by_hour_values[m - 1][h - 1]) / @maxval
-        wknd_vals[h] = (@weekend_month_by_hour_values[m - 1][h - 1]) / @maxval
+      for h in 0..23
+        wkdy_vals[h] = (@weekday_month_by_hour_values[m][h]) / @maxval
+        wknd_vals[h] = (@weekend_month_by_hour_values[m][h]) / @maxval
       end
 
       if (wkdy_vals == prev_wkdy_vals) && (wknd_vals == prev_wknd_vals)
@@ -197,6 +197,7 @@ class HourlyByDaySchedule
   # @param sch_name [String] name that is assigned to the OpenStudio Schedule object
   # @param weekday_day_by_hour_values [Array<Array<Double>>] a 365-element array of 24-element arrays of numbers
   # @param weekend_day_by_hour_values [Array<Array<Double>>] a 365-element array of 24-element arrays of numbers
+  # @param schedule_type_limits_name [String or nil] data type for the values contained in the schedule
   # @param normalize_values [Boolean] whether to divide schedule values by the max value
   # @param unavailable_periods [HPXML::UnavailablePeriods] Object that defines periods for, e.g., power outages or vacancies
   def initialize(model, sch_name, weekday_day_by_hour_values, weekend_day_by_hour_values,
@@ -277,14 +278,14 @@ class HourlyByDaySchedule
 
     prev_wkdy_vals, prev_wkdy_rule = nil, nil
     prev_wknd_vals, prev_wknd_rule = nil, nil
-    for d in 1..num_days
-      date_s = OpenStudio::Date::fromDayOfYear(d, year)
-      date_e = OpenStudio::Date::fromDayOfYear(d, year)
+    for d in 0..num_days - 1
+      date_s = OpenStudio::Date::fromDayOfYear(d + 1, year)
+      date_e = OpenStudio::Date::fromDayOfYear(d + 1, year)
 
       wkdy_vals, wknd_vals = [], []
-      for h in 1..24
-        wkdy_vals[h] = (@weekday_day_by_hour_values[d - 1][h - 1]) / @maxval
-        wknd_vals[h] = (@weekend_day_by_hour_values[d - 1][h - 1]) / @maxval
+      for h in 0..23
+        wkdy_vals[h] = (@weekday_day_by_hour_values[d][h]) / @maxval
+        wknd_vals[h] = (@weekend_day_by_hour_values[d][h]) / @maxval
       end
 
       if (wkdy_vals == prev_wkdy_vals) && (wknd_vals == prev_wknd_vals)
@@ -482,21 +483,21 @@ class MonthWeekdayWeekendSchedule
 
     periods = []
     if begin_month <= end_month # contiguous period
-      periods << [begin_month, end_month]
+      periods << [begin_month - 1, end_month - 1]
     else # non-contiguous period
-      periods << [1, end_month]
-      periods << [begin_month, 12]
+      periods << [0, end_month - 1]
+      periods << [begin_month - 1, 11]
     end
 
     periods.each do |period|
       for m in period[0]..period[1]
-        date_s = OpenStudio::Date::fromDayOfYear(day_startm[m - 1], year)
-        date_e = OpenStudio::Date::fromDayOfYear(day_endm[m - 1], year)
+        date_s = OpenStudio::Date::fromDayOfYear(day_startm[m], year)
+        date_e = OpenStudio::Date::fromDayOfYear(day_endm[m], year)
 
         wkdy_vals, wknd_vals = [], []
-        for h in 1..24
-          wkdy_vals[h] = (@monthly_values[m - 1] * @weekday_hourly_values[h - 1]) / @maxval
-          wknd_vals[h] = (@monthly_values[m - 1] * @weekend_hourly_values[h - 1]) / @maxval
+        for h in 0..23
+          wkdy_vals[h] = (@monthly_values[m] * @weekday_hourly_values[h]) / @maxval
+          wknd_vals[h] = (@monthly_values[m] * @weekend_hourly_values[h]) / @maxval
         end
 
         if (wkdy_vals == prev_wkdy_vals) && (wknd_vals == prev_wknd_vals)
@@ -822,9 +823,7 @@ module Schedule
       end
       if applies == 1
         if not runner.nil?
-          if [SchedulesFile::Columns[:SpaceHeating].name, SchedulesFile::Columns[:SpaceCooling].name].include?(schedule_name)
-            runner.registerWarning('It is not possible to eliminate all HVAC energy use (e.g. crankcase/defrost energy) in EnergyPlus during an unavailable period.')
-          elsif schedule_name == SchedulesFile::Columns[:WaterHeater].name
+          if schedule_name == SchedulesFile::Columns[:WaterHeater].name
             runner.registerWarning('It is not possible to eliminate all DHW energy use (e.g. water heater parasitics) in EnergyPlus during an unavailable period.')
           end
         end
@@ -1038,6 +1037,7 @@ class SchedulesFile
   # @param year [Integer] the calendar year
   # @param unavailable_periods [HPXML::UnavailablePeriods] Object that defines periods for, e.g., power outages or vacancies
   # @param output_path [String] the file path for which to export a single detailed schedule CSV file and also reference from OpenStudio ScheduleFile objects
+  # @param offset_db [Double] On-off thermostat deadband (F)
   def initialize(runner: nil,
                  schedules_paths:,
                  year:,
@@ -1464,7 +1464,7 @@ class SchedulesFile
 
   # Convert detailed setpoint schedule values from F to C.
   #
-  # @param offset_db [Double] On-off thermostat deadband
+  # @param offset_db [Double] On-off thermostat deadband (F)
   # @return [nil]
   def convert_setpoints(offset_db)
     setpoint_col_names = Columns.values.select { |c| c.type == :setpoint }.map { |c| c.name }
