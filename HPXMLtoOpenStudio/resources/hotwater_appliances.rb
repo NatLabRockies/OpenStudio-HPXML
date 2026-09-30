@@ -634,7 +634,7 @@ module HotWaterAndAppliances
       lcy = dishwasher.label_usage * 52.0
       kwh_per_cyc = ((dishwasher.label_annual_gas_cost * 0.5497 / dishwasher.label_gas_rate - rated_annual_kwh * dishwasher.label_electric_rate * 0.02504 / dishwasher.label_electric_rate) / (dishwasher.label_electric_rate * 0.5497 / dishwasher.label_gas_rate - 0.02504)) / lcy
       if n_occ.nil? # Asset calculation
-        if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('latest') # FIXME: Change from 'latest' when incorporated in 301 standard
+        if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2025')
           # RESNET HERS Addendum 81 Eq. 4.2-36a
           if unit_type == HPXML::ResidentialTypeApartment
             scy = 135.7 + 13.5 * nbeds
@@ -690,7 +690,7 @@ module HotWaterAndAppliances
 
   # Calculates dishwasher rated energy factor (EF) from annual use (kWh).
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2014
   #
   # @param annual_kwh [Double] Rated annual kWh
   # @return [Double] Energy factor
@@ -700,7 +700,7 @@ module HotWaterAndAppliances
 
   # Calculates dishwasher annual use (kWh) from rated energy factor (EF).
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2014
   #
   # @param ef [Double] Energy factor
   # @return [Double] Rated annual use (kWh)
@@ -738,7 +738,7 @@ module HotWaterAndAppliances
       end
       rmc = (0.97 * (clothes_washer.capacity / integrated_modified_energy_factor) - clothes_washer.rated_annual_kwh / 312.0) / ((2.0104 * clothes_washer.capacity + 1.4242) * 0.455) + 0.04
       if n_occ.nil? # Asset calculation
-        if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('latest') # FIXME: Change from 'latest' when incorporated in 301 standard
+        if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2025')
           # RESNET HERS Addendum 81 Eq. 4.2-34
           if unit_type == HPXML::ResidentialTypeApartment
             scy = 213.9 + 27.5 * nbeds
@@ -854,7 +854,7 @@ module HotWaterAndAppliances
       elec_h20 = 0.0178 # (gal/cyc) per (kWh/y)
       lcy = clothes_washer.label_usage * 52.0 # label cycles per year
       if n_occ.nil? # Asset calculation
-        if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('latest') # FIXME: Change from 'latest' when incorporated in 301 standard
+        if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2025')
           # RESNET HERS Addendum 81 Eq. 4.2-34
           if unit_type == HPXML::ResidentialTypeApartment
             scy = 213.9 + 27.5 * nbeds
@@ -1041,7 +1041,7 @@ module HotWaterAndAppliances
 
   # Returns Drain Water Heat Recovery (DWHR) aggregate factor and temperature.
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.11.1
   #
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @return [Array<Double, Double>] Aggregate factor and inlet temperature (F)
@@ -1058,8 +1058,6 @@ module HotWaterAndAppliances
     else
       nbeds_eq = Defaults.get_equivalent_nbeds(nbeds, n_occ, unit_type)
     end
-
-    # ANSI/RESNET/ICC 301-2022 Eq. 4.2-42
 
     eff_adj = 1.0 + 0.082 * frac_low_flow_fixtures
 
@@ -1220,7 +1218,7 @@ module HotWaterAndAppliances
 
     if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2014A')
       if n_occ.nil? # Asset calculation
-        if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('latest') # FIXME: Change from 'latest' when incorporated in 301 standard
+        if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2025')
           # RESNET HERS Addendum 90f Eq. 4.2-29 (refFgpd)
           if unit_type == HPXML::ResidentialTypeApartment
             ref_f_gpd = 21.75 + 8.46 * nbeds
@@ -1244,7 +1242,7 @@ module HotWaterAndAppliances
 
   # Calculates the equivalent daily mixed (not hot) water use associated with the distribution system.
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2025 Equation 4-49
   #
   # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
@@ -1264,9 +1262,6 @@ module HotWaterAndAppliances
       return 0.0
     end
 
-    # ANSI/RESNET/ICC 301-2022 Section 4.2.2.7.1.4
-
-    # Table 4.2.2.7.2.11(2) Hot Water Distribution System Insulation Factors
     sys_factor = nil
     case hot_water_distribution.system_type
     when HPXML::DHWDistTypeRecirc
@@ -1284,7 +1279,7 @@ module HotWaterAndAppliances
     end
 
     if n_occ.nil? # Asset calculation
-      if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('latest') # FIXME: Change from 'latest' when incorporated in 301 standard
+      if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2025')
         # RESNET HERS Addendum 81 Eq. 4.2-29 (refWgpd)
         if unit_type == HPXML::ResidentialTypeApartment
           ref_w_gpd = 11.27 * (nbeds**0.323)
@@ -1308,10 +1303,9 @@ module HotWaterAndAppliances
       p_ratio = hot_water_distribution.standard_piping_length / ref_pipe_l
     end
 
-    o_w_gpd = ref_w_gpd * o_frac * (1.0 - o_cd_eff) # Eq. 4.2-12
-    s_w_gpd = (ref_w_gpd - ref_w_gpd * o_frac) * p_ratio * sys_factor # Eq. 4.2-13
+    o_w_gpd = ref_w_gpd * o_frac * (1.0 - o_cd_eff)
+    s_w_gpd = (ref_w_gpd - ref_w_gpd * o_frac) * p_ratio * sys_factor
 
-    # Table 4.2.2.5.2.11(3) Distribution system water use effectiveness
     case hot_water_distribution.system_type
     when HPXML::DHWDistTypeRecirc
       wd_eff = 0.1
@@ -1321,7 +1315,7 @@ module HotWaterAndAppliances
 
     f_eff = get_fixtures_effectiveness(hpxml_bldg)
 
-    mw_gpd = f_eff * (o_w_gpd + s_w_gpd * wd_eff) # Eq. 4.2-11
+    mw_gpd = f_eff * (o_w_gpd + s_w_gpd * wd_eff)
 
     return mw_gpd * fixtures_usage_multiplier
   end

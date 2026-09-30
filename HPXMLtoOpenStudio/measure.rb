@@ -407,7 +407,7 @@ class HPXMLToOpenStudio < OpenStudio::Measure::ModelMeasure
     hpxml_bldg.collapse_enclosure_surfaces() # Speeds up simulation
     hpxml_bldg.delete_adiabatic_subsurfaces() # EnergyPlus doesn't allow this
 
-    # Hidden feature: Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
+    # Hidden feature: Version of the ANSI/RESNET/ICC 301 Standard to use for OpenStudio-ERI
     if hpxml_header.eri_calculation_versions.size > 1
       fail 'Only a single ERI version is supported.'
     end

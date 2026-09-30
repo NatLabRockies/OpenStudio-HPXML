@@ -5590,7 +5590,7 @@ module HVAC
 
   # Calculates rated SEER (older metric) from rated SEER2 (newer metric).
   #
-  # Source: ANSI/RESNET/ICC 301 Table 4.4.4.1(1) SEER2/HSPF2 Conversion Factors
+  # Source: ANSI/RESNET/ICC 301-2025 Table 404.1.4.1
   # Note that this is a regression based on products on the market, not a conversion.
   #
   # @param hvac_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
@@ -5618,7 +5618,7 @@ module HVAC
 
   # Calculates rated SEER2 (newer metric) from rated SEER (older metric).
   #
-  # Source: ANSI/RESNET/ICC 301 Table 4.4.4.1(1) SEER2/HSPF2 Conversion Factors
+  # Source: ANSI/RESNET/ICC 301-2025 Table 404.1.4.1
   # Note that this is a regression based on products on the market, not a conversion.
   #
   # @param hvac_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
@@ -5646,7 +5646,7 @@ module HVAC
 
   # Calculates rated EER (older metric) from rated EER2 (newer metric).
   #
-  # Source: ANSI/RESNET/ICC 301 Table 4.4.4.1(1) SEER2/HSPF2 Conversion Factors
+  # Source: ANSI/RESNET/ICC 301-2025 Table 404.1.4.1
   # Note that this is a regression based on products on the market, not a conversion.
   #
   # @param hvac_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
@@ -5674,7 +5674,7 @@ module HVAC
 
   # Calculates rated EER2 (newer metric) from rated EER (older metric).
   #
-  # Source: ANSI/RESNET/ICC 301 Table 4.4.4.1(1) SEER2/HSPF2 Conversion Factors
+  # Source: ANSI/RESNET/ICC 301-2025 Table 404.1.4.1
   # Note that this is a regression based on products on the market, not a conversion.
   #
   # @param hvac_system [HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
@@ -5702,7 +5702,7 @@ module HVAC
 
   # Calculates rated HSPF (older metric) from rated HSPF2 (newer metric).
   #
-  # Source: ANSI/RESNET/ICC 301 Table 4.4.4.1(1) SEER2/HSPF2 Conversion Factors
+  # Source: ANSI/RESNET/ICC 301-2025 Table 404.1.4.1
   # This is based on a regression of products, not a translation.
   #
   # @param heat_pump [HPXML::HeatPump] The HPXML Heat Pump of interest
@@ -5725,7 +5725,7 @@ module HVAC
 
   # Calculates rated HSPF2 (newer metric) from rated HSPF (older metric).
   #
-  # Source: ANSI/RESNET/ICC 301 Table 4.4.4.1(1) SEER2/HSPF2 Conversion Factors
+  # Source: ANSI/RESNET/ICC 301-2025 Table 404.1.4.1
   # This is based on a regression of products, not a translation.
   #
   # @param heat_pump [HPXML::HeatPump] The HPXML Heat Pump of interest

@@ -1943,8 +1943,6 @@ class HPXML < Object
     # Below-grade thermal boundary wall is any portion of a thermal boundary
     # wall in contact with soil.
     #
-    # Source: ANSI/RESNET/ICC 301
-    #
     # @return [Array<Double, Double>] Above-grade and below-grade thermal boundary wall areas (ft2)
     def thermal_boundary_wall_areas
       ag_wall_area = 0.0
@@ -1991,8 +1989,6 @@ class HPXML < Object
     end
 
     # Calculates common wall area. Used to calculate the window area in the ERI Reference Home.
-    #
-    # Source: ANSI/RESNET/ICC 301
     #
     # Common wall is the total wall area of walls adjacent to other unit's
     # conditioned space, not including foundation walls.
