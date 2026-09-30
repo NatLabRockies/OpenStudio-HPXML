@@ -450,7 +450,7 @@ module Waterheater
       equipment_target_temp_sensors = {}
       tank_volume, deadband, tank_source_temp = 0.0, 0.0, 0.0
       tank_temp_sensor, tank_spt_sensor, tank_loss_energy_sensor = nil, nil, nil
-      pump_actuator = nil, nil
+      pump_actuator = nil
       water_heater = nil
 
       # Create sensors and actuators
