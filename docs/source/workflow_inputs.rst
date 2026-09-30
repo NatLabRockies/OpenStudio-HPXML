@@ -155,7 +155,7 @@ If EmissionsType is "CO2e", "NOx" or "SO2" and a given fuel's emissions factor i
   wood pellets  --              --             --
   ============  ==============  =============  =============
 
-Default values in lb/MBtu (million Btu) are from `ANSI/RESNET/ICC 301-2022 Addendum B <https://www.resnet.us/wp-content/uploads/FS_301-2022AdndmB_v.2-1.pdf>`_ and include both combustion and pre-combustion (e.g., methane leakage for natural gas) emissions.
+Default values in lb/MBtu (million Btu) are from `ANSI/RESNET/ICC 301-2025 Table 701.2.2.2.1.2 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-7-certification-and-labeling#RESNET3012025V1.0_Ch07_Sec701.2.2.2.1.2>`_ and include both combustion and pre-combustion (e.g., methane leakage for natural gas) emissions.
 
 If no default value is available, a warning will be issued.
 
@@ -486,7 +486,7 @@ Site information is entered in ``/HPXML/Building/BuildingDetails/BuildingSummary
 
          \- **unknown/other, dry**: 0.3680
 
-         \- **unknown/other, mixed**: 1.0000 (based on `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_)
+         \- **unknown/other, mixed**: 1.0000 (based on `ANSI/RESNET/ICC 301-2025 Table C101.1(1) <https://codes.iccsafe.org/content/RESNET3012025V1.0/appendix-c-normative-modeling-assumptions#RESNET3012025V1.0_AppxC_SecC101.1_TblC101.1_1>`_)
 
          \- **unknown/other, wet**: 1.6320
 
@@ -603,7 +603,7 @@ Building occupancy is entered in ``/HPXML/Building/BuildingDetails/BuildingSumma
 
   .. [#] If WeekdayScheduleFractions or WeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
   .. [#] If MonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
-  .. [#] Sensible and latent internal gains from general water use (floor mopping, shower evaporation, water films on showers, tubs & sinks surfaces, plant watering, etc.), as defined by `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] Sensible and latent internal gains from general water use (floor mopping, shower evaporation, water films on showers, tubs & sinks surfaces, plant watering, etc.), as defined by `ANSI/RESNET/ICC 301-2025 Table 402.2.8.1.7 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.1.7_Tbl402.2.8.1.7>`_.
          If NumberofResidents provided, this will be adjusted using the above equations from RECS.
   .. [#] If GeneralWaterUseWeekdayScheduleFractions or GeneralWaterUseWeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
   .. [#] If GeneralWaterUseMonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
@@ -1025,7 +1025,7 @@ Building air leakage is entered in ``/HPXML/Building/BuildingDetails/Enclosure/A
   .. [#] If InfiltrationHeight not provided, it is estimated from other inputs (e.g., ConditionedFloorArea, NumberofConditionedFloorsAboveGrade, attics/foundations with WithinInfiltrationVolume=true, etc.).
   .. [#] InfiltrationHeight is defined as the vertical distance between the lowest and highest above-grade points within the pressure boundary, per ASHRAE 62.2.
          It is used along with the ``UnitHeightAboveGrade`` in :ref:`bldg_constr` to calculate the wind speed for the infiltration model.
-  .. [#] If Aext not provided and TypeOfInfiltrationLeakage is "unit total", defaults for single-family attached and apartment units to the ratio of exterior (adjacent to outside) envelope surface area to total (adjacent to outside, other dwelling units, or other MF spaces) envelope surface area, as defined by `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_ and `ASHRAE 62.2-2019 <https://www.techstreet.com/ashrae/standards/ashrae-62-2-2019?product_id=2087691>`_.
+  .. [#] If Aext not provided and TypeOfInfiltrationLeakage is "unit total", defaults for single-family attached and apartment units to the ratio of exterior (adjacent to outside) envelope surface area to total (adjacent to outside, other dwelling units, or other MF spaces) envelope surface area, as defined by `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note h <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          Note that all attached surfaces, even adiabatic surfaces, must be defined in the HPXML file.
          If single-family detached or TypeOfInfiltrationLeakage is "unit exterior only", Aext is 1.
 
@@ -1168,7 +1168,7 @@ If the dwelling unit has an unvented attic, additional information is entered in
   ============================  =======  =====  ===========  ========  =======  ===============================================
 
   .. [#] If there are multiple unvented attics, they must all have the same value.
-  .. [#] See `ANSI/RESNET/ICC 380-2022 <https://codes.iccsafe.org/content/RESNET3802022P1>`_ for more information.
+  .. [#] See Infiltration Volume in `ANSI/RESNET/ICC 380-2025 Definitions <https://codes.iccsafe.org/content/RESNET3802025P1/chapter-3-definitions#RESNET3802025P1_Ch03_Sec301.1>`_ for more information.
 
 If the dwelling unit has a vented attic, additional information is entered in ``/HPXML/Building/BuildingDetails/Enclosure/Attics/Attic[AtticType/Attic[Vented="true"]]/VentilationRate``.
 
@@ -1181,7 +1181,7 @@ If the dwelling unit has a vented attic, additional information is entered in ``
 
   .. [#] UnitofMeasure choices are "SLA" (specific leakage area) or "ACHnatural" (natural air changes per hour).
   .. [#] If there are multiple vented attics, they must all have the same value.
-  .. [#] Value default based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] Value default based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1) <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1>`_ for the Reference Home attic.
 
 HPXML Foundations
 *****************
@@ -1195,7 +1195,7 @@ If the dwelling unit has a conditioned basement, additional information is enter
   ============================  =======  =====  ===========  ========  =======  ===============================================
 
   .. [#] If there are multiple conditioned basements, they must all have the same value.
-  .. [#] See `ANSI/RESNET/ICC 380-2022 <https://codes.iccsafe.org/content/RESNET3802022P1>`_ for more information.
+  .. [#] See Infiltration Volume in `ANSI/RESNET/ICC 380-2025 Definitions <https://codes.iccsafe.org/content/RESNET3802025P1/chapter-3-definitions#RESNET3802025P1_Ch03_Sec301.1>`_ for more information.
 
 If the dwelling unit has an unconditioned basement, additional information is entered in ``/HPXML/Building/BuildingDetails/Enclosure/Foundations/Foundation/FoundationType/Basement[Conditioned='false']``.
 
@@ -1206,7 +1206,7 @@ If the dwelling unit has an unconditioned basement, additional information is en
   ============================  =======  =====  ===========  ========  =======  ===============================================
 
   .. [#] If there are multiple unconditioned basements, they must all have the same value.
-  .. [#] See `ANSI/RESNET/ICC 380-2022 <https://codes.iccsafe.org/content/RESNET3802022P1>`_ for more information.
+  .. [#] See Infiltration Volume in `ANSI/RESNET/ICC 380-2025 Definitions <https://codes.iccsafe.org/content/RESNET3802025P1/chapter-3-definitions#RESNET3802025P1_Ch03_Sec301.1>`_ for more information.
 
 If the dwelling unit has an unvented crawlspace, additional information is entered in ``/HPXML/Building/BuildingDetails/Enclosure/Foundations/Foundation/FoundationType/Crawlspace[Vented='false']``.
 
@@ -1217,7 +1217,7 @@ If the dwelling unit has an unvented crawlspace, additional information is enter
   ============================  =======  =====  ===========  ========  =======  ===============================================
 
   .. [#] If there are multiple unvented crawlspaces, they must all have the same value.
-  .. [#] See `ANSI/RESNET/ICC 380-2022 <https://codes.iccsafe.org/content/RESNET3802022P1>`_ for more information.
+  .. [#] See Infiltration Volume in `ANSI/RESNET/ICC 380-2025 Definitions <https://codes.iccsafe.org/content/RESNET3802025P1/chapter-3-definitions#RESNET3802025P1_Ch03_Sec301.1>`_ for more information.
 
 If the dwelling unit has a vented crawlspace, additional information is entered in ``/HPXML/Building/BuildingDetails/Enclosure/Foundations/Foundation[FoundationType/Crawlspace[Vented="true"]]/VentilationRate``.
 
@@ -1230,7 +1230,7 @@ If the dwelling unit has a vented crawlspace, additional information is entered 
 
   .. [#] UnitofMeasure only choice is "SLA" (specific leakage area).
   .. [#] If there are multiple vented crawlspaces, they must all have the same value.
-  .. [#] Value default based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] Value default based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1) <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1>`_ for the Reference Home crawlspace.
 
 If the dwelling has a manufactured home belly-and-wing foundation, additional information is entered in ``/HPXML/Building/BuildingDetails/Enclosure/Foundations/Foundation/FoundationType/BellyAndWing``.
 
@@ -1304,7 +1304,7 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
          For example, 6.0 means a 6/12 roof, which has a 26.57-degree roof slope.
   .. [#] RadiantBarrier intended for attic roofs. Model assumes an emittance of 0.05.
   .. [#] AssemblyEffectiveRValue includes all material layers and interior/exterior air films.
-         It should also include the effects of insulation gaps (installation grading) and/or compressed insulation in cavities per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         It should also include the effects of insulation gaps (installation grading) and/or compressed insulation in cavities per `ANSI/RESNET/ICC 301-2025 Appendix A <https://codes.iccsafe.org/content/RESNET3012025V1.0/appendix-a-normative-inspection-procedures-for-insulation-grading-and-assessment>`_.
 
 HPXML Rim Joists
 ****************
@@ -1340,7 +1340,7 @@ Each rim joist surface (i.e., the perimeter of floor joists typically found betw
   .. [#] Color choices are "dark", "medium dark", "medium", "medium light", "light", "white", or "reflective".
   .. [#] If SolarAbsorptance not provided, defaults the same as :ref:`hpxml_walls`.
   .. [#] AssemblyEffectiveRValue includes all material layers and interior/exterior air films.
-         It should also include the effects of insulation gaps (installation grading) and/or compressed insulation in cavities per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         It should also include the effects of insulation gaps (installation grading) and/or compressed insulation in cavities per `ANSI/RESNET/ICC 301-2025 Appendix A <https://codes.iccsafe.org/content/RESNET3012025V1.0/appendix-a-normative-inspection-procedures-for-insulation-grading-and-assessment>`_.
 
 .. _hpxml_walls:
 
@@ -1387,7 +1387,7 @@ Each wall surface is entered as a ``/HPXML/Building/BuildingDetails/Enclosure/Wa
   .. [#] InteriorFinish/Type defaults to "gypsum board" if InteriorAdjacentTo is conditioned space or basement - conditioned, otherwise "not present".
   .. [#] RadiantBarrier intended for attic gable walls. Model assumes an emittance of 0.05.
   .. [#] AssemblyEffectiveRValue includes all material layers and interior/exterior air films.
-         It should also include the effects of insulation gaps (installation grading) and/or compressed insulation in cavities per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         It should also include the effects of insulation gaps (installation grading) and/or compressed insulation in cavities per `ANSI/RESNET/ICC 301-2025 Appendix A <https://codes.iccsafe.org/content/RESNET3012025V1.0/appendix-a-normative-inspection-procedures-for-insulation-grading-and-assessment>`_.
 
 HPXML Foundation Walls
 **********************
@@ -1437,7 +1437,7 @@ Any wall surface in contact with the ground is considered a foundation wall.
   .. [#] Layer[InstallationType="continuous - exterior"] only required if AssemblyEffectiveRValue is not provided.
   .. [#] AssemblyEffectiveRValue only required if Layer elements are not provided.
   .. [#] AssemblyEffectiveRValue includes all material layers and the interior air film; it should **not** include the exterior air film (for any above-grade exposure) or any soil thermal resistance.
-         It should also include the effects of insulation gaps (installation grading) and/or compressed insulation in cavities per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         It should also include the effects of insulation gaps (installation grading) and/or compressed insulation in cavities per `ANSI/RESNET/ICC 301-2025 Appendix A <https://codes.iccsafe.org/content/RESNET3012025V1.0/appendix-a-normative-inspection-procedures-for-insulation-grading-and-assessment>`_.
 
 If insulation layers are provided, additional information is entered in each ``FoundationWall/Insulation/Layer``.
 
@@ -1487,7 +1487,7 @@ Each floor/ceiling surface that is not in contact with the ground (Slab) nor adj
   .. [#] InteriorFinish/Type defaults to "gypsum board" if InteriorAdjacentTo is conditioned space and the surface is a ceiling, otherwise "not present".
   .. [#] RadiantBarrier intended for attic floors. Model assumes an emittance of 0.5 (reduced effectiveness due to accumulation of dust) per `an ORNL article on radiant barriers <https://web.ornl.gov/sci/buildings/tools/radiant/rb2/>`_.
   .. [#] AssemblyEffectiveRValue includes all material layers and interior/exterior air films.
-         It should also include the effects of insulation gaps (installation grading), compressed insulation in cavities, and/or reduced attic floor insulation thickness at the eaves per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         It should also include the effects of insulation gaps (installation grading), compressed insulation in cavities, and/or reduced attic floor insulation thickness at the eaves per `ANSI/RESNET/ICC 301-2025 Appendix A <https://codes.iccsafe.org/content/RESNET3012025V1.0/appendix-a-normative-inspection-procedures-for-insulation-grading-and-assessment>`_ and `ANSI/RESNET/ICC 301-2025 Section 402.2.2 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.2>`_.
          For a manufactured home belly where the area of the belly wrap is different and usually greater than the floor area, the AssemblyEffectiveRValue should be adjusted to account for the surface area of the belly wrap and insulation.
 
 HPXML Slabs
@@ -2191,7 +2191,7 @@ Each central furnace is entered as a ``/HPXML/Building/BuildingDetails/Systems/H
   .. [#] If there is a cooling system attached to the DistributionSystem, the heating and cooling systems cannot have different values for FanPowerWattsPerCFM.
   .. [#] If FanPowerWattsPerCFM not provided, defaults to using attached central air conditioner W/cfm if available, else 0 W/cfm if gravity distribution system, else 0.5 W/cfm if FanMotorType is "PSC", else 0.375 W/cfm if FanMotorType is "BPM".
   .. [#] AirflowDefectRatio is defined as (InstalledAirflow - DesignAirflow) / DesignAirflow; a value of zero means no airflow defect.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
 
 .. _hvac_heating_wall_furnace:
 
@@ -2299,7 +2299,7 @@ Each in-unit boiler is entered as a ``/HPXML/Building/BuildingDetails/Systems/HV
   .. [#] The sum of all ``FractionHeatLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] FractionHeatLoadServed is required unless the heating system is a heat pump backup system (i.e., referenced by a ``HeatPump[BackupType="separate"]/BackupSystem``; see :ref:`hvac_heatpump`), in which case FractionHeatLoadServed is not allowed.
          Heat pump backup will only operate during colder temperatures when the heat pump runs out of heating capacity or is disabled due to a switchover/lockout temperature.
-  .. [#] If ElectricAuxiliaryEnergy not provided, defaults as follows per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
+  .. [#] If ElectricAuxiliaryEnergy not provided, defaults as follows per `ANSI/RESNET/ICC 301-2025 Table 402.2.7 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.7_Tbl402.2.7>`_:
 
          \- **Oil boiler**: 330 kWh/yr
 
@@ -2343,7 +2343,7 @@ Each shared boiler (serving multiple dwelling units) is entered as a ``/HPXML/Bu
   .. [#] The sum of all ``FractionHeatLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] FractionHeatLoadServed is required unless the heating system is a heat pump backup system (i.e., referenced by a ``HeatPump[BackupType="separate"]/BackupSystem``; see :ref:`hvac_heatpump`), in which case FractionHeatLoadServed is not allowed.
          Heat pump backup will only operate during colder temperatures when the heat pump runs out of heating capacity or is disabled due to a switchover/lockout temperature.
-  .. [#] If ElectricAuxiliaryEnergy nor SharedLoopWatts provided, defaults as follows per `ANSI/RESNET/ICC 301-2019 <https://codes.iccsafe.org/content/RESNET3012019P1>`_:
+  .. [#] If ElectricAuxiliaryEnergy nor SharedLoopWatts provided, defaults as follows per `ANSI/RESNET/ICC 301-2019 Table 4.5.2(5) <https://codes.iccsafe.org/content/RESNET3012019P1/4-energy-rating-calculation-procedures-#RESNET3012019P1_Ch04_Sec4.5.2_Tbl4.5.2_5>`_:
 
          \- **Shared boiler w/ baseboard**: 220 kWh/yr
 
@@ -2509,10 +2509,10 @@ Each central air conditioner is entered as a ``/HPXML/Building/BuildingDetails/S
   .. [#] Cooling capacity autosized per ACCA Manual J/S based on cooling design load.
   .. [#] CompressorType choices are "single stage", "two stage", or "variable speed".
   .. [#] The sum of all ``FractionCoolLoadServed`` (across all HVAC systems) must be less than or equal to 1.
-  .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, SEER2 = SEER * 0.95 if EquipmentType is "split system".
+  .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_. For example, SEER2 = SEER * 0.95 if EquipmentType is "split system".
   .. [#] In addition, EER2 must be <= SEER2; EER must be < SEER.
   .. [#] If neither EER2 nor EER provided, EER2 defaults to (0.73 * SEER2 + 1.47) for single stage, (0.63 * SEER2 + 2.34) for two stage, and (0.31 * SEER2 + 6.45) for variable speed, based on a regression analysis of `ENERGY STAR products <https://www.energystar.gov/products>`_.
-  .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, EER2 = EER * 0.95 if EquipmentType is "split system".
+  .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_. For example, EER2 = EER * 0.95 if EquipmentType is "split system".
   .. [#] If CoolingDetailedPerformanceData is provided, see :ref:`clg_detailed_perf_data`.
   .. [#] FanMotorType choices are "PSC" (Permanent Split Capacitor) and "BPM" (Brushless Permanent Magnet).
          If there is a heating system attached to the DistributionSystem, the heating and cooling systems cannot have different values for FanMotorType.
@@ -2520,10 +2520,10 @@ Each central air conditioner is entered as a ``/HPXML/Building/BuildingDetails/S
   .. [#] If there is a heating system attached to the DistributionSystem, the heating and cooling systems cannot have different values for FanPowerWattsPerCFM.
   .. [#] If FanPowerWattsPerCFM not provided, defaults to using attached furnace W/cfm if available, else 0.5 W/cfm if FanMotorType is "PSC", else 0.375 W/cfm if FanMotorType is "BPM".
   .. [#] AirflowDefectRatio is defined as (InstalledAirflow - DesignAirflow) / DesignAirflow; a value of zero means no airflow defect.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
   .. [#] ChargeDefectRatio is defined as (InstalledCharge - DesignCharge) / DesignCharge; a value of zero means no refrigerant charge defect.
          A non-zero charge defect should typically only be applied for systems that are charged on site, not for systems that have pre-charged line sets.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
   .. [#] If CrankcaseHeaterPowerWatts not provided, defaults to 10 W per ton of rated cooling capacity per `RESNET HERS Addendum 82 <https://www.resnet.us/wp-content/uploads/Addendum-82-HPAC-Modeling.pdf>`_.
   .. [#] EquipmentType choices are "split system", "packaged system", "small duct high velocity system", or "space constrained system".
 
@@ -2690,10 +2690,10 @@ Each mini-split air conditioner is entered as a ``/HPXML/Building/BuildingDetail
   .. [#] If DistributionSystem provided, HVACDistribution type must be :ref:`hvac_distribution_air` (type: "regular velocity") or :ref:`hvac_distribution_dse`.
   .. [#] Cooling capacity autosized per ACCA Manual J/S based on cooling design load.
   .. [#] The sum of all ``FractionCoolLoadServed`` (across all HVAC systems) must be less than or equal to 1.
-  .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where SEER2 = SEER * 0.95 if ducted and SEER2 = SEER if ductless.
+  .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_, where SEER2 = SEER * 0.95 if ducted and SEER2 = SEER if ductless.
   .. [#] In addition, EER2 must be <= SEER2; EER must be < SEER.
   .. [#] If neither EER2 nor EER provided, EER2 defaults to (0.73 * SEER2 + 1.47) for single stage, (0.63 * SEER2 + 2.34) for two stage, and (0.31 * SEER2 + 6.45) for variable speed, based on a regression analysis of `ENERGY STAR products <https://www.energystar.gov/products>`_.
-  .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where EER2 = EER * 0.95 if ducted and EER2 = EER if ductless.
+  .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_, where EER2 = EER * 0.95 if ducted and EER2 = EER if ductless.
   .. [#] If CoolingDetailedPerformanceData is provided, see :ref:`clg_detailed_perf_data`.
   .. [#] FanMotorType choices are "PSC" (Permanent Split Capacitor) and "BPM" (Brushless Permanent Magnet).
          If there is a heating system attached to the DistributionSystem, the heating and cooling systems cannot have different values for FanMotorType.
@@ -2701,10 +2701,10 @@ Each mini-split air conditioner is entered as a ``/HPXML/Building/BuildingDetail
   .. [#] FanPowerWattsPerCFM defaults to 0.07 W/cfm for ductless systems and 0.18 W/cfm for ducted systems.
   .. [#] AirflowDefectRatio is defined as (InstalledAirflow - DesignAirflow) / DesignAirflow; a value of zero means no airflow defect.
          A non-zero airflow defect can only be applied for systems attached to a distribution system.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
   .. [#] ChargeDefectRatio is defined as (InstalledCharge - DesignCharge) / DesignCharge; a value of zero means no refrigerant charge defect.
          A non-zero charge defect should typically only be applied for systems that are charged on site, not for systems that have pre-charged line sets.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
   .. [#] If CrankcaseHeaterPowerWatts not provided, defaults to 10 W per ton of rated cooling capacity per `RESNET HERS Addendum 82 <https://www.resnet.us/wp-content/uploads/Addendum-82-HPAC-Modeling.pdf>`_.
 
 .. _hvac_cooling_shared_chiller:
@@ -2742,7 +2742,7 @@ Each shared chiller (serving multiple dwelling units) is entered as a ``/HPXML/B
 
 .. note::
 
-  Chillers are modeled as central air conditioners with a SEER equivalent using the equation from `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  Chillers are modeled as central air conditioners with a SEER equivalent based on `ANSI/RESNET/ICC 301-2025 Section 404.1.4.2 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.2>`_.
 
 .. _hvac_cooling_shared_tower:
 
@@ -2775,7 +2775,7 @@ Each shared cooling tower (serving multiple dwelling units) is entered as a ``/H
 
 .. note::
 
-  Cooling towers w/ water loop heat pumps are modeled as central air conditioners with a SEER equivalent using the equation from `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  Cooling towers w/ water loop heat pumps are modeled as central air conditioners with a SEER equivalent based on `ANSI/RESNET/ICC 301-2025 Section 404.1.4.3 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.3>`_.
 
 .. _hvac_heatpump:
 
@@ -2862,11 +2862,11 @@ Each air-to-air heat pump is entered as a ``/HPXML/Building/BuildingDetails/Syst
          Additional backup inputs are described in :ref:`hvac_hp_backup`.
   .. [#] The sum of all ``FractionHeatLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] The sum of all ``FractionCoolLoadServed`` (across all HVAC systems) must be less than or equal to 1.
-  .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, SEER2 = SEER * 0.95 if EquipmentType is "split system".
+  .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_. For example, SEER2 = SEER * 0.95 if EquipmentType is "split system".
   .. [#] In addition, EER2 must be <= SEER2; EER must be < SEER.
   .. [#] If neither EER2 nor EER provided, EER2 defaults to (0.73 * SEER2 + 1.47) for single stage, (0.63 * SEER2 + 2.34) for two stage, and (0.31 * SEER2 + 6.45) for variable speed, based on a regression analysis of `ENERGY STAR products <https://www.energystar.gov/products>`_.
-  .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, EER2 = EER * 0.95 if EquipmentType is "split system".
-  .. [#] If HSPF provided, converted to HSPF2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_. For example, HSPF2 = HSPF * 0.85 if EquipmentType is "split system".
+  .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_. For example, EER2 = EER * 0.95 if EquipmentType is "split system".
+  .. [#] If HSPF provided, converted to HSPF2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_. For example, HSPF2 = HSPF * 0.85 if EquipmentType is "split system".
   .. [#] If CoolingDetailedPerformanceData is provided, see :ref:`clg_detailed_perf_data`.
   .. [#] If HeatingDetailedPerformanceData is provided, see :ref:`htg_detailed_perf_data`.
   .. [#] FanMotorType choices are "PSC" (Permanent Split Capacitor) and "BPM" (Brushless Permanent Magnet).
@@ -2875,10 +2875,10 @@ Each air-to-air heat pump is entered as a ``/HPXML/Building/BuildingDetails/Syst
   .. [#] If HeatingDesignAirflowCFM not provided, defaults to cfm/ton based on CoolingDesignAirflowCFM if provided, else 360 cfm/ton.
   .. [#] If CoolingDesignAirflowCFM not provided, defaults to cfm/ton based on HeatingDesignAirflowCFM if provided, else 360 cfm/ton.
   .. [#] AirflowDefectRatio is defined as (InstalledAirflow - DesignAirflow) / DesignAirflow; a value of zero means no airflow defect.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
   .. [#] ChargeDefectRatio is defined as (InstalledCharge - DesignCharge) / DesignCharge; a value of zero means no refrigerant charge defect.
          A non-zero charge defect should typically only be applied for systems that are charged on site, not for systems that have pre-charged line sets.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
   .. [#] If CrankcaseHeaterPowerWatts not provided, defaults to 10 W per ton of rated cooling capacity per `RESNET HERS Addendum 82 <https://www.resnet.us/wp-content/uploads/Addendum-82-HPAC-Modeling.pdf>`_.
   .. [#] PanHeaterControlType choices are "continuous", "heat pump mode", or "defrost mode".
   .. [#] If PanHeaterControlType is "continuous", the pan heater will operate anytime the outdoor temperature is below 32F and above the minimum compressor operating temperature.
@@ -2958,11 +2958,11 @@ Each ``HeatPump`` should represent a single outdoor unit, whether connected to o
          Additional backup inputs are described in :ref:`hvac_hp_backup`.
   .. [#] The sum of all ``FractionHeatLoadServed`` (across all HVAC systems) must be less than or equal to 1.
   .. [#] The sum of all ``FractionCoolLoadServed`` (across all HVAC systems) must be less than or equal to 1.
-  .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where SEER2 = SEER * 0.95 if ducted and SEER2 = SEER if ductless.
+  .. [#] If SEER provided, converted to SEER2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_, where SEER2 = SEER * 0.95 if ducted and SEER2 = SEER if ductless.
   .. [#] In addition, EER2 must be <= SEER2; EER must be < SEER.
   .. [#] If neither EER2 nor EER provided, EER2 defaults to (0.73 * SEER2 + 1.47) for single stage, (0.63 * SEER2 + 2.34) for two stage, and (0.31 * SEER2 + 6.45) for variable speed, based on a regression analysis of `ENERGY STAR products <https://www.energystar.gov/products>`_.
-  .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where EER2 = EER * 0.95 if ducted and EER2 = EER if ductless.
-  .. [#] If HSPF provided, converted to HSPF2 using `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_, where HSPF2 = HSPF * 0.85 if ducted and HSPF2 = HSPF * 0.90 if ductless.
+  .. [#] If EER provided, converted to EER2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_, where EER2 = EER * 0.95 if ducted and EER2 = EER if ductless.
+  .. [#] If HSPF provided, converted to HSPF2 using `ANSI/RESNET/ICC 301-2025 Table 404.1.4.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec404.1.4.1_Tbl404.1.4.1>`_, where HSPF2 = HSPF * 0.85 if ducted and HSPF2 = HSPF * 0.90 if ductless.
   .. [#] If CoolingDetailedPerformanceData is provided, see :ref:`clg_detailed_perf_data`.
   .. [#] If HeatingDetailedPerformanceData is provided, see :ref:`htg_detailed_perf_data`.
   .. [#] FanMotorType choices are "PSC" (Permanent Split Capacitor) and "BPM" (Brushless Permanent Magnet).
@@ -2971,10 +2971,10 @@ Each ``HeatPump`` should represent a single outdoor unit, whether connected to o
   .. [#] If CoolingDesignAirflowCFM not provided, defaults to cfm/ton based on HeatingDesignAirflowCFM if provided, else 360 cfm/ton.
   .. [#] AirflowDefectRatio is defined as (InstalledAirflow - DesignAirflow) / DesignAirflow; a value of zero means no airflow defect.
          A non-zero airflow defect can only be applied for systems attached to a distribution system.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
   .. [#] ChargeDefectRatio is defined as (InstalledCharge - DesignCharge) / DesignCharge; a value of zero means no refrigerant charge defect.
          A non-zero charge defect should typically only be applied for systems that are charged on site, not for systems that have pre-charged line sets.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
   .. [#] If CrankcaseHeaterPowerWatts not provided, defaults to 10 W per ton of rated cooling capacity per `RESNET HERS Addendum 82 <https://www.resnet.us/wp-content/uploads/Addendum-82-HPAC-Modeling.pdf>`_.
   .. [#] PanHeaterControlType choices are "continuous", "heat pump mode", or "defrost mode".
   .. [#] If PanHeaterControlType is "continuous", the pan heater will operate anytime the outdoor temperature is below 32F and above the minimum compressor operating temperature.
@@ -3163,10 +3163,10 @@ Each ground-to-air heat pump is entered as a ``/HPXML/Building/BuildingDetails/S
   .. [#] If HeatingDesignAirflowCFM not provided, defaults to cfm/ton based on CoolingDesignAirflowCFM if provided, else 360 cfm/ton.
   .. [#] If CoolingDesignAirflowCFM not provided, defaults to cfm/ton based on HeatingDesignAirflowCFM if provided, else 360 cfm/ton.
   .. [#] AirflowDefectRatio is defined as (InstalledAirflow - DesignAirflow) / DesignAirflow; a value of zero means no airflow defect.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
   .. [#] ChargeDefectRatio is defined as (InstalledCharge - DesignCharge) / DesignCharge; a value of zero means no refrigerant charge defect.
          A non-zero charge defect should typically only be applied for systems that are charged on site, not for systems that have pre-charged line sets.
-         See `ANSI/RESNET/ACCA 310-2020 <https://codes.iccsafe.org/content/ICC3102020P1>`_ for more information.
+         See `ANSI/RESNET/ACCA 310-2025 <https://codes.iccsafe.org/content/ICC3102025P1>`_ for more information.
 
 .. _hvac_hp_water_loop:
 
@@ -3616,7 +3616,7 @@ Additional information is entered in each ``Ducts``.
          DuctInsulationRValue represents the nominal insulation R-value and should not include interior/exterior air films (i.e., use 0 for an uninsulated duct).
          For ducts buried in insulation (i.e., DuctBuriedInsulationLevel is any value but "not buried"), DuctInsulationRValue should only represent any surrounding insulation duct wrap and not the entire attic insulation R-value.
          DuctEffectiveRValue is used in the actual duct heat transfer calculation, and should include all effects (i.e., interior/exterior air films, adjustments for presence of round ducts, and adjustments when buried in loose-fill attic insulation).
-         When DuctEffectiveRValue is not provided, it is calculated from DuctInsulationRValue, DuctFractionRectangular, and DuctBuriedInsulationLevel based on ANSI/RESNET/ICC 301-2025 (not yet published) assuming round supply ducts are 6-in on average and round return ducts are 14-in on average.
+         When DuctEffectiveRValue is not provided, it is calculated from DuctInsulationRValue, DuctFractionRectangular, and DuctBuriedInsulationLevel based on `ANSI/RESNET/ICC 301-2025 Section 402.2.5 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.5>`_ assuming round supply ducts are 6-in on average and round return ducts are 14-in on average.
   .. [#] DuctBuriedInsulationLevel choices are "not buried", "partially buried", "fully buried", or "deeply buried".
   .. [#] Whether the ducts are buried in, e.g., attic loose-fill insulation.
          Partially buried ducts have insulation that does not cover the top of the ducts.
@@ -3740,25 +3740,11 @@ Each exhaust only fan is entered as a ``/HPXML/Building/BuildingDetails/Systems/
   =============================================================================================  ========  =======  ============  ========  =========  =========================================
 
   .. [#] Additional inputs for shared systems are described in :ref:`vent_fan_shared`.
-  .. [#] If flow rate not provided, defaults to the required mechanical ventilation rate per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
-
-         Qfan = required mechanical ventilation rate (cfm) = ((Qtot^2 – 4*Qinf_eff^2 + 2*Qinf_eff*Qtot + Qinf_eff^2)^0.5 + Qtot - Qinf_eff) / 2
-
-         where
-
-         Qtot = total required ventilation rate (cfm) = 0.03 * ConditionedFloorArea + 7.5*(NumberofBedrooms + 1)
-
-         Qinf_eff = Qinf * Aext
-
-         Qinf = infiltration rate (cfm)
-
-         Aext = 1 if single-family detached or TypeOfInfiltrationLeakage is "unit exterior only", otherwise ratio of SFA/MF exterior envelope surface area to total envelope surface area as described in :ref:`air_infiltration`
-
+  .. [#] If flow rate not provided, defaults based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note dd <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          OpenStudio-HPXML does not currently support defaulting flow rates for multiple mechanical ventilation fans.
-
   .. [#] HoursInOperation is optional unless the VentilationFan refers to the supplemental fan of a :ref:`vent_fan_cfis` system, in which case it is not allowed because the runtime is automatically calculated for each hour to maintain the hourly target ventilation rate.
   .. [#] All other UsedFor... elements (i.e., ``UsedForLocalVentilation``, ``UsedForSeasonalCoolingLoadReduction``, ``UsedForGarageVentilation``) must be omitted or false.
-  .. [#] If FanPower not provided, defaults to 0.35 W/cfm based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] If FanPower not provided, defaults to 0.35 W/cfm based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1a) <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a>`_.
 
 .. _vent_fan_supply_only:
 
@@ -3780,25 +3766,11 @@ Each supply only fan is entered as a ``/HPXML/Building/BuildingDetails/Systems/M
   =============================================================================================  ========  =======  ===========  ========  =========  =========================================
 
   .. [#] Additional inputs for shared systems are described in :ref:`vent_fan_shared`.
-  .. [#] If flow rate not provided, defaults to the required mechanical ventilation rate per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
-
-         Qfan = required mechanical ventilation rate (cfm) = ((Qtot^2 – 4*Qinf_eff^2 + 2*Qinf_eff*Qtot + Qinf_eff^2)^0.5 + Qtot - Qinf_eff) / 2
-
-         where
-
-         Qtot = total required ventilation rate (cfm) = 0.03 * ConditionedFloorArea + 7.5*(NumberofBedrooms + 1)
-
-         Qinf_eff = Qinf * Aext
-
-         Qinf = infiltration rate (cfm)
-
-         Aext = 1 if single-family detached or TypeOfInfiltrationLeakage is "unit exterior only", otherwise ratio of SFA/MF exterior envelope surface area to total envelope surface area as described in :ref:`air_infiltration`
-
+  .. [#] If flow rate not provided, defaults based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note dd <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          OpenStudio-HPXML does not currently support defaulting flow rates for multiple mechanical ventilation fans.
-
   .. [#] HoursInOperation is optional unless the VentilationFan refers to the supplemental fan of a :ref:`vent_fan_cfis` system, in which case it is not allowed because the runtime is automatically calculated for each hour to maintain the hourly target ventilation rate.
   .. [#] All other UsedFor... elements (i.e., ``UsedForLocalVentilation``, ``UsedForSeasonalCoolingLoadReduction``, ``UsedForGarageVentilation``) must be omitted or false.
-  .. [#] If FanPower not provided, defaults to 0.35 W/cfm based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] If FanPower not provided, defaults to 0.35 W/cfm based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1a) <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a>`_.
 
 .. _vent_fan_balanced:
 
@@ -3820,24 +3792,10 @@ Each balanced (supply and exhaust) fan is entered as a ``/HPXML/Building/Buildin
   =============================================================================================  ========  =======  ===========  ========  =========  =========================================
 
   .. [#] Additional inputs for shared systems are described in :ref:`vent_fan_shared`.
-  .. [#] If flow rate not provided, defaults to the required mechanical ventilation rate per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
-
-         Qfan = required mechanical ventilation rate (cfm) = Qtot - Qinf_eff
-
-         where
-
-         Qtot = total required ventilation rate (cfm) = 0.03 * ConditionedFloorArea + 7.5*(NumberofBedrooms + 1)
-
-         Qinf_eff = Qinf * Aext
-
-         Qinf = infiltration rate (cfm)
-
-         Aext = 1 if single-family detached or TypeOfInfiltrationLeakage is "unit exterior only", otherwise ratio of SFA/MF exterior envelope surface area to total envelope surface area as described in :ref:`air_infiltration`
-
+  .. [#] If flow rate not provided, defaults based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note dd <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          OpenStudio-HPXML does not currently support defaulting flow rates for multiple mechanical ventilation fans.
-
   .. [#] All other UsedFor... elements (i.e., ``UsedForLocalVentilation``, ``UsedForSeasonalCoolingLoadReduction``, ``UsedForGarageVentilation``) must be omitted or false.
-  .. [#] If FanPower not provided, defaults to 0.7 W/cfm based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] If FanPower not provided, defaults to 0.7 W/cfm based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1a) <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a>`_.
 
 .. _vent_fan_hrv:
 
@@ -3860,26 +3818,12 @@ Each heat recovery ventilator (HRV) is entered as a ``/HPXML/Building/BuildingDe
   =============================================================================================  ========  =======  ========================  ========  =========  =========================================
 
   .. [#] Additional inputs for shared systems are described in :ref:`vent_fan_shared`.
-  .. [#] If flow rate not provided, defaults to the required mechanical ventilation rate per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
-
-         Qfan = required mechanical ventilation rate (cfm) = Qtot - Qinf_eff
-
-         where
-
-         Qtot = total required ventilation rate (cfm) = 0.03 * ConditionedFloorArea + 7.5*(NumberofBedrooms + 1)
-
-         Qinf_eff = Qinf * Aext
-
-         Qinf = infiltration rate (cfm)
-
-         Aext = 1 if single-family detached or TypeOfInfiltrationLeakage is "unit exterior only", otherwise ratio of SFA/MF exterior envelope surface area to total envelope surface area as described in :ref:`air_infiltration`
-
+  .. [#] If flow rate not provided, defaults based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note dd <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          OpenStudio-HPXML does not currently support defaulting flow rates for multiple mechanical ventilation fans.
-
   .. [#] All other UsedFor... elements (i.e., ``UsedForLocalVentilation``, ``UsedForSeasonalCoolingLoadReduction``, ``UsedForGarageVentilation``) must be omitted or false.
   .. [#] AdjustedSensibleRecoveryEfficiency (ASRE) is similar to SensibleRecoveryEfficiency (SRE), in that it reflects heating season performance, but excludes fan electric consumption.
          Since OpenStudio-HPXML separately models fan electric consumption, ASRE is a preferable input to SRE because it can be directly used in the energy model.
-  .. [#] If FanPower not provided, defaults to 1.0 W/cfm based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] If FanPower not provided, defaults to 1.0 W/cfm based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1a) <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a>`_.
 
 .. _vent_fan_erv:
 
@@ -3903,28 +3847,14 @@ Each energy recovery ventilator (ERV) is entered as a ``/HPXML/Building/Building
   =============================================================================================  ========  =======  ==========================  ========  =========  =========================================
 
   .. [#] Additional inputs for shared systems are described in :ref:`vent_fan_shared`.
-  .. [#] If flow rate not provided, defaults to the required mechanical ventilation rate per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
-
-         Qfan  = required mechanical ventilation rate (cfm) = Qtot - Qinf_eff
-
-         where
-
-         Qtot = total required ventilation rate (cfm) = 0.03 * ConditionedFloorArea + 7.5*(NumberofBedrooms + 1)
-
-         Qinf_eff = Qinf * Aext
-
-         Qinf = infiltration rate (cfm)
-
-         Aext = 1 if single-family detached or TypeOfInfiltrationLeakage is "unit exterior only", otherwise ratio of SFA/MF exterior envelope surface area to total envelope surface area as described in :ref:`air_infiltration`
-
+  .. [#] If flow rate not provided, defaults based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note dd <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          OpenStudio-HPXML does not currently support defaulting flow rates for multiple mechanical ventilation fans.
-
   .. [#] All other UsedFor... elements (i.e., ``UsedForLocalVentilation``, ``UsedForSeasonalCoolingLoadReduction``, ``UsedForGarageVentilation``) must be omitted or false.
   .. [#] AdjustedTotalRecoveryEfficiency (ATRE) is similar to TotalRecoveryEfficiency (TRE), in that it reflects cooling season performance, but excludes fan electric consumption.
          Since OpenStudio-HPXML separately models fan electric consumption, ATRE is a preferable input to TRE because it can be directly used in the energy model.
   .. [#] AdjustedSensibleRecoveryEfficiency (ASRE) is similar to SensibleRecoveryEfficiency (SRE), in that it reflects heating season performance, but excludes fan electric consumption.
          Since OpenStudio-HPXML separately models fan electric consumption, ASRE is a preferable input to SRE because it can be directly used in the energy model.
-  .. [#] If FanPower not provided, defaults to 1.0 W/cfm based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] If FanPower not provided, defaults to 1.0 W/cfm based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1a) <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a>`_.
 
 .. _vent_fan_cfis:
 
@@ -3962,22 +3892,8 @@ A CFIS system is a supply ventilation system with an outdoor air inlet duct on t
   .. [#] SupplementalFanRunsWithAirHandlerFan only applies when AdditionalRuntimeOperatingMode="supplemental fan".
   .. [#] If SupplementalFanRunsWithAirHandlerFan is true, in addition to its normal operation, the supplemental fan will also run simultaneously with the air handler fan when outdoor air is being brought in.
          This is typically used with a supplemental exhaust fan to provide balanced (supply + exhaust) airflow, though any additional runtime where the supplemental fan runs by itself will still be imbalanced.
-  .. [#] If flow rate not provided, defaults to the required mechanical ventilation rate per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
-
-         Qfan = required mechanical ventilation rate (cfm) = ((Qtot^2 – 4*Qinf_eff^2 + 2*Qinf_eff*Qtot + Qinf_eff^2)^0.5 + Qtot - Qinf_eff) / 2
-
-         where
-
-         Qtot = total required ventilation rate (cfm) = 0.03 * ConditionedFloorArea + 7.5*(NumberofBedrooms + 1)
-
-         Qinf_eff = Qinf * Aext
-
-         Qinf = infiltration rate (cfm)
-
-         Aext = 1 if single-family detached or TypeOfInfiltrationLeakage is "unit exterior only", otherwise ratio of SFA/MF exterior envelope surface area to total envelope surface area as described in :ref:`air_infiltration`
-
+  .. [#] If flow rate not provided, defaults based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note dd <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          OpenStudio-HPXML does not currently support defaulting flow rates for multiple mechanical ventilation fans.
-
   .. [#] The flow rate should equal the amount of outdoor air provided to the distribution system, not the total airflow through the distribution system.
   .. [#] HoursInOperation is combined with the flow rate to form the hourly target ventilation rate (e.g., inputs of 90 cfm and 8 hrs/day produce an hourly target ventilation rate of 30 cfm).
          In addition, if AdditionalRuntimeOperatingMode="air handler fan", it defines the minutes per hour that the air handler must provide ventilation (e.g., 8 hrs/day is treated as 20 mins/hr).
@@ -4159,7 +4075,7 @@ Each conventional storage water heater is entered as a ``/HPXML/Building/Buildin
   .. [#] Additional desuperheater inputs are described in :ref:`water_heater_desuperheater`.
   .. [#] TankModelType choices are "mixed" or "stratified". Only currently allowed if FuelType is "electricity".
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.
-         Tank losses will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the water heating system per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         Tank losses will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the water heating system per `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note s <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          Each dwelling unit w/zero bedrooms should be counted as 1 bedroom -- e.g., a value of 3 should be entered for a shared system serving 3 studio (zero bedroom) apartments.
 
 .. _water_heater_tankless:
@@ -4196,7 +4112,7 @@ Each instantaneous tankless water heater is entered as a ``/HPXML/Building/Build
 
          \- **IECC zones 4-8, unknown**: "basement - unconditioned", "basement - conditioned", "conditioned space"
 
-  .. [#] If PerformanceAdjustment not provided, defaults to 0.94 (UEF) or 0.92 (EF) based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] If PerformanceAdjustment not provided, defaults to 0.94 (UEF) or 0.92 (EF) based on `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note s <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
   .. [#] The sum of all ``FractionDHWLoadServed`` (across all WaterHeatingSystems) must equal to 1.
   .. [#] FractionDHWLoadServed represents only the fraction of the hot water load associated with the hot water **fixtures**.
          Additional hot water load from clothes washers/dishwashers will be automatically assigned to the appropriate water heater(s).
@@ -4278,7 +4194,7 @@ Each heat pump water heater (HPWH) is entered as a ``/HPXML/Building/BuildingDet
   .. [#] If MixingValveSetpoint not provided and HasMixingValve=true, defaults to the lesser of 125 deg-F and HotWaterTemperature.
   .. [#] Additional desuperheater inputs are described in :ref:`water_heater_desuperheater`.
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.
-         Tank losses will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the water heating system per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         Tank losses will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the water heating system per `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note s <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          Each dwelling unit w/zero bedrooms should be counted as 1 bedroom -- e.g., a value of 3 should be entered for a shared system serving 3 studio (zero bedroom) apartments.
   .. [#] Mitigation approaches include sufficient enclosed volume or connection to conditioned space with, e.g, ducting, grills, door undercuts, or louvers.
          If true, a COP adjustment based on ``extension/HPWHContainmentVolume`` will be applied per `RESNET HERS Addendum 77 <https://www.resnet.us/about/standards/hers/draft-pds-03-hers-addendum-77-integrated-heat-pump-water-heaters-ihpwh/>`_.
@@ -4331,7 +4247,7 @@ Each combination boiler w/ storage tank (sometimes referred to as an indirect wa
   .. [#] If MixingValveSetpoint not provided and HasMixingValve=true, defaults to the lesser of 125 deg-F and HotWaterTemperature.
   .. [#] RelatedHVACSystem must reference a ``HeatingSystem`` (Boiler).
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.
-         Tank losses will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the water heating system per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         Tank losses will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the water heating system per `ANSI/RESNET/ICC 301-2025 Table 402.2(1) note s <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2_Tbl402.2_1a_b1>`_.
          Each dwelling unit w/zero bedrooms should be counted as 1 bedroom -- e.g., a value of 3 should be entered for a shared system serving 3 studio (zero bedroom) apartments.
 
 .. _water_heater_combi_tankless_coil:
@@ -4402,7 +4318,7 @@ If any water heating systems are provided, a single hot water distribution syste
 - :ref:`hot_water_dist_recirc`
 - :ref:`hot_water_dist_recirc_shared`
 
-Hot water distribution systems are modeled according to the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+Hot water distribution systems are modeled according to the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.11 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.11>`_.
 If NumberofResidents is provided, then hot water distribution use from Equation 14 of `Estimating Daily Domestic Hot-Water Use in North American Homes <http://www.fsec.ucf.edu/en/publications/pdf/fsec-pf-464-15.pdf>`_ is substituted into the ANSI/RESNET/ICC 301 equations.
 
 .. note::
@@ -4427,18 +4343,7 @@ A standard hot water distribution system is entered as a ``/HPXML/Building/Build
   ``DrainWaterHeatRecovery``            element                             No        <none>    Presence of drain water heat recovery device [#]_
   ====================================  =======  ============  ===========  ========  ========  =====================
 
-  .. [#] If PipingLength not provided, calculated using the following equation from `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
-
-         PipeL = 2.0 * (CFA / NCfl)^0.5 + 10.0 * NCfl + 5.0 * Bsmnt
-
-         where
-
-         CFA = conditioned floor area [ft2],
-
-         NCfl = number of conditioned floor levels in the residence including conditioned basements,
-
-         Bsmnt = presence (1.0) or absence (0.0) of an unconditioned basement in the residence. If a building has both a conditioned and unconditioned basement on the same level, Bsmnt = 0 to avoid double counting.
-
+  .. [#] If PipingLength not provided, defaults based on RefPipeL from `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.11 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.11>`_.
   .. [#] PipingLength is the length of hot water piping from the hot water heater to the farthest hot water fixture, measured longitudinally from plans, assuming the hot water piping does not run diagonally, plus 10 feet of piping for each floor level, plus 5 feet of piping for unconditioned basements (if any).
   .. [#] Additional drain water heat recovery inputs are described in :ref:`water_heater_dwhr`.
 
@@ -4477,21 +4382,10 @@ An in-unit recirculation hot water distribution system is entered as a ``/HPXML/
 
          \- **no control**: The pump runs continuously.
 
-  .. [#] If RecirculationPipingLoopLength not provided, calculated using the following equation from `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
-
-         RecircPipeL = 2.0 * (2.0 * (CFA / NCfl)^0.5 + 10.0 * NCfl + 5.0 * Bsmnt) - 20.0
-
-         where
-
-         CFA = conditioned floor area [ft2],
-
-         NCfl = number of conditioned floor levels in the residence including conditioned basements,
-
-         Bsmnt = presence (1.0) or absence (0.0) of an unconditioned basement in the residence. If a building has both a conditioned and unconditioned basement on the same level, Bsmnt = 0 to avoid double counting.
-
+  .. [#] If RecirculationPipingLoopLength not provided, defaults based on refLoopL from `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.11 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.11>`_.
   .. [#] RecirculationPipingLoopLength is the recirculation loop length including both supply and return sides, measured longitudinally from plans, assuming the hot water piping does not run diagonally, plus 20 feet of piping for each floor level greater than one plus 10 feet of piping for unconditioned basements.
   .. [#] BranchPipingLength is the length of the branch hot water piping from the recirculation loop to the farthest hot water fixture from the recirculation loop, measured longitudinally from plans, assuming the branch hot water piping does not run diagonally.
-  .. [#] PumpPower default based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] PumpPower default based on `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.11.2 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.11.2>`_.
   .. [#] Additional drain water heat recovery inputs are described in :ref:`water_heater_dwhr`.
   .. [#] If RecirculationPumpWeekdayScheduleFractions or RecirculationPumpWeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
   .. [#] If RecirculationPumpMonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
@@ -4519,23 +4413,12 @@ A shared recirculation hot water distribution system (serving multiple dwelling 
   ``extension/RecirculationPumpMonthlyScheduleMultipliers``  array                                       No        See [#]_  12 comma-separated recirculation pump monthly multipliers
   =========================================================  =======  ============  ===================  ========  ========  =====================
 
-  .. [#] If PipingLength not provided, calculated using the following equation from `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
-
-         PipeL = 2.0 * (CFA / NCfl)^0.5 + 10.0 * NCfl + 5.0 * Bsmnt
-
-         where
-
-         CFA = conditioned floor area [ft2],
-
-         NCfl = number of conditioned floor levels in the residence including conditioned basements,
-
-         Bsmnt = presence (1.0) or absence (0.0) of an unconditioned basement in the residence. If a building has both a conditioned and unconditioned basement on the same level, Bsmnt = 0 to avoid double counting.
-
+  .. [#] If PipingLength not provided, defaults based on RefPipeL from `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.11 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.11>`_.
   .. [#] PipingLength is the length of hot water piping from the shared recirculation loop to the farthest hot water fixture, measured longitudinally from plans, assuming the hot water piping does not run diagonally, plus 10 feet of piping for each floor level, plus 5 feet of piping for unconditioned basements (if any).
   .. [#] Additional drain water heat recovery inputs are described in :ref:`water_heater_dwhr`.
-  .. [#] Recirculation pump energy will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the recirculation system per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] Recirculation pump energy will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the recirculation system per `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.11.2 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.11.2>`_.
          Each dwelling unit w/zero bedrooms should be counted as 1 bedroom -- e.g., a value of 3 should be entered for a shared system serving 3 studio (zero bedroom) apartments.
-  .. [#] PumpPower default based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] PumpPower default based on `ANSI/RESNET/ICC 301-2025 Equation 4-55 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.11.2_Tbl402.2.8.2.11.2_2_b1>`_.
   .. [#] ControlType choices are "manual demand control", "presence sensor demand control", "temperature", "timer", or "no control".
 
          \- **manual demand control**: The pump only runs when a user presses a button indicating they are about to use hot water.
@@ -4576,7 +4459,7 @@ If a drain water heat recovery (DWHR) device is specified, additional informatio
          Use "all" if there is one shower and it's connected to the DWHR or there are two or more showers connected to the DWHR.
   .. [#] EqualFlow should be true if the DWHR supplies pre-heated water to both the fixture cold water piping *and* the hot water heater potable supply piping.
 
-Drain water heat recovery is modeled according to the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+Drain water heat recovery is modeled according to `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.11.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.11.1>`_.
 
 HPXML Water Fixtures
 ********************
@@ -4612,7 +4495,7 @@ Additional information can be entered in ``/HPXML/Building/BuildingDetails/Syste
   .. [#] If WaterFixturesWeekdayScheduleFractions or WaterFixturesWeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
   .. [#] If WaterFixturesMonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
 
-Water fixture hot water use is calculated per the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_, including `RESNET HERS Addendum 81 <https://www.resnet.us/wp-content/uploads/Addendum81_mcd1.1.27.pdf>`_ and `RESNET HERS Addendum 90f <https://www.resnet.us/wp-content/uploads/Addendum-90f-Service-Hot-Water.pdf>`_.
+Water fixture hot water use is calculated per `ANSI/RESNET/ICC 301-2025 Section 402.2.8.1.4 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.1.4>`_, including `RESNET HERS Addendum 81 <https://www.resnet.us/wp-content/uploads/Addendum81_mcd1.1.27.pdf>`_ and `RESNET HERS Addendum 90f <https://www.resnet.us/wp-content/uploads/Addendum-90f-Service-Hot-Water.pdf>`_.
 If NumberofResidents is provided, then water fixture use from Equation 14 of `Estimating Daily Domestic Hot-Water Use in North American Homes <http://www.fsec.ucf.edu/en/publications/pdf/fsec-pf-464-15.pdf>`_ is substituted into the ANSI/RESNET/ICC 301 equations.
 
 HPXML Solar Thermal
@@ -4736,7 +4619,7 @@ Many of the inputs are adopted from the `PVWatts model <https://pvwatts.nlr.gov/
   .. [#] AttachedToInverter must reference an ``Inverter``.
   .. [#] AttachedToInverter only required if there are multiple ``Inverter`` elements.
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.
-         PV generation will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the PV system per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         PV generation will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the PV system per `ANSI/RESNET/ICC 301-2025 Section 402.2.9 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.9>`_.
 
 HPXML Inverters
 ~~~~~~~~~~~~~~~
@@ -4966,7 +4849,7 @@ If not entered, the simulation will not include batteries.
   .. [#] If UsableCapacity not provided, defaults to 0.9 * NominalCapacity.
   .. [#] If RatedPowerOutput not provided, defaults to 0.5 * NominalCapacity * 1000.
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.
-         Battery charging/discharging will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the battery per `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_.
+         Battery charging/discharging will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the battery per `ANSI/RESNET/ICC 301-2025 Section 402.2.10.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.10.1>`_.
 
  .. note::
 
@@ -5067,7 +4950,7 @@ If not entered, the simulation will not include generators.
   .. [#] FuelType choices are "natural gas", "fuel oil", "fuel oil 1", "fuel oil 2", "fuel oil 4", "fuel oil 5/6", "diesel", "propane", "kerosene", "coal", "coke", "bituminous coal", "anthracite coal", "wood", or "wood pellets".
   .. [#] AnnualOutputkWh must also be < AnnualConsumptionkBtu*3.412 (i.e., the generator must consume more energy than it produces).
   .. [#] NumberofBedroomsServed only required if IsSharedSystem is true.
-         Annual consumption and annual production will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the generator per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+         Annual consumption and annual production will be apportioned to the dwelling unit using its number of bedrooms divided by the total number of bedrooms served by the generator per `ANSI/RESNET/ICC 301-2025 Section 402.2.9 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.9>`_.
 
 .. note::
 
@@ -5101,7 +4984,7 @@ If not entered, the simulation will not include a clothes washer.
   .. [#] For example, a clothes washer in a shared laundry room of a MF building.
   .. [#] Location choices are "conditioned space", "basement - conditioned", "basement - unconditioned", "garage", "other housing unit", "other heated space", "other multifamily buffer space", or "other non-freezing space".
          See :ref:`hpxml_locations` for descriptions.
-  .. [#] If neither IntegratedModifiedEnergyFactor nor ModifiedEnergyFactor provided, the following default values representing a standard clothes washer from 2006 will be used:
+  .. [#] If neither IntegratedModifiedEnergyFactor nor ModifiedEnergyFactor provided, the following default values representing a standard clothes washer from 2006 will be used, based on `ANSI/RESNET/ICC 301-2025 Table 402.2.8.2.10 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.10_Tbl402.2.8.2.10>`_:
          IntegratedModifiedEnergyFactor = 1.0,
          RatedAnnualkWh = 400,
          LabelElectricRate = 0.12,
@@ -5130,7 +5013,7 @@ If IntegratedModifiedEnergyFactor or ModifiedEnergyFactor is provided, a complet
   ``Capacity``                      double   ft3      > 0          Yes                    Clothes washer volume
   ================================  =======  =======  ===========  ============  =======  ====================================
 
-Clothes washer energy use and hot water use is calculated per the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_, including `RESNET HERS Addendum 81 <https://www.resnet.us/wp-content/uploads/Addendum81_mcd1.1.27.pdf>`_ and `RESNET HERS Addendum 90f <https://www.resnet.us/wp-content/uploads/Addendum-90f-Service-Hot-Water.pdf>`_.
+Clothes washer energy use and hot water use is calculated per `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.10 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.10>`_, including `RESNET HERS Addendum 81 <https://www.resnet.us/wp-content/uploads/Addendum81_mcd1.1.27.pdf>`_ and `RESNET HERS Addendum 90f <https://www.resnet.us/wp-content/uploads/Addendum-90f-Service-Hot-Water.pdf>`_.
 If NumberofResidents is provided, then the number of cycles from Equation 1 of `Estimating Daily Domestic Hot-Water Use in North American Homes <http://www.fsec.ucf.edu/en/publications/pdf/fsec-pf-464-15.pdf>`_ is substituted into the ANSI/RESNET/ICC 301 equations.
 
 HPXML Clothes Dryer
@@ -5171,7 +5054,7 @@ If not entered, the simulation will not include a clothes dryer.
   .. [#] If WeekdayScheduleFractions or WeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
   .. [#] If MonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
 
-Clothes dryer energy use is calculated per the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_, including `RESNET HERS Addendum 81 <https://www.resnet.us/wp-content/uploads/Addendum81_mcd1.1.27.pdf>`_ and `RESNET HERS Addendum 90f <https://www.resnet.us/wp-content/uploads/Addendum-90f-Service-Hot-Water.pdf>`_.
+Clothes dryer energy use is calculated per `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.8 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.8>`_, including `RESNET HERS Addendum 81 <https://www.resnet.us/wp-content/uploads/Addendum81_mcd1.1.27.pdf>`_ and `RESNET HERS Addendum 90f <https://www.resnet.us/wp-content/uploads/Addendum-90f-Service-Hot-Water.pdf>`_.
 
 HPXML Dishwasher
 ****************
@@ -5196,7 +5079,7 @@ If not entered, the simulation will not include a dishwasher.
   .. [#] For example, a dishwasher in a shared mechanical room of a MF building.
   .. [#] Location choices are "conditioned space", "basement - conditioned", "basement - unconditioned", "garage", "other housing unit", "other heated space", "other multifamily buffer space", or "other non-freezing space".
          See :ref:`hpxml_locations` for descriptions.
-  .. [#] If neither RatedAnnualkWh nor EnergyFactor provided, the following default values representing a standard dishwasher from 2006 will be used:
+  .. [#] If neither RatedAnnualkWh nor EnergyFactor provided, the following default values representing a standard dishwasher from 2006 will be used, based on `ANSI/RESNET/ICC 301-2025 Table 402.2.8.2.9 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.9_Tbl402.2.8.2.9>`_:
          RatedAnnualkWh = 467,
          LabelElectricRate = 0.12,
          LabelGasRate = 1.09,
@@ -5222,7 +5105,7 @@ If the RatedAnnualkWh or EnergyFactor is provided, a complete set of EnergyGuide
   ``LabelUsage``            double   cyc/wk   > 0          Yes                EnergyGuide label number of cycles
   ========================  =======  =======  ===========  ========  =======  ==================================
 
-Dishwasher energy use and hot water use is calculated per the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_, including `RESNET HERS Addendum 81 <https://www.resnet.us/wp-content/uploads/Addendum81_mcd1.1.27.pdf>`_ and `RESNET HERS Addendum 90f <https://www.resnet.us/wp-content/uploads/Addendum-90f-Service-Hot-Water.pdf>`_.
+Dishwasher energy use and hot water use is calculated per `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.9 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.9>`_, including `RESNET HERS Addendum 81 <https://www.resnet.us/wp-content/uploads/Addendum81_mcd1.1.27.pdf>`_ and `RESNET HERS Addendum 90f <https://www.resnet.us/wp-content/uploads/Addendum-90f-Service-Hot-Water.pdf>`_.
 If NumberofResidents is provided, then the number of cycles from Equation 3 of `Estimating Daily Domestic Hot-Water Use in North American Homes <http://www.fsec.ucf.edu/en/publications/pdf/fsec-pf-464-15.pdf>`_ is substituted into the ANSI/RESNET/ICC 301 equations.
 
 HPXML Refrigerators
@@ -5250,7 +5133,7 @@ If not entered, the simulation will not include a refrigerator.
          See :ref:`hpxml_locations` for descriptions.
   .. [#] If Location not provided and is the *primary* refrigerator, defaults to "conditioned space".
          If Location not provided and is a *secondary* refrigerator, defaults to the first present space type: "garage", "basement - unconditioned", "basement - conditioned", or "conditioned space".
-  .. [#] If RatedAnnualkWh not provided, it will be defaulted to represent a standard refrigerator from 2006 using the following equation based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_:
+  .. [#] If RatedAnnualkWh not provided, it will be defaulted to represent a standard refrigerator from 2006 based on `ANSI/RESNET/ICC 301-2025 Table 402.2.8.1.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.1.1_Tbl402.2.8.1.1>`_:
          RatedAnnualkWh = 637.0 + 18.0 * NumberofBedrooms.
   .. [#] If multiple refrigerators are specified, there must be exactly one refrigerator described with PrimaryIndicator=true.
   .. [#] Either schedule fraction inputs (WeekdayScheduleFractions/WeekendScheduleFractions/MonthlyScheduleMultipliers) or schedule coefficient inputs (ConstantScheduleCoefficients/TemperatureScheduleCoefficients) may be used, but not both.
@@ -5261,11 +5144,7 @@ If not entered, the simulation will not include a refrigerator.
 
 .. note::
 
-  Refrigerator energy use is affected by its ambient temperature when ConstantScheduleCoefficients and TemperatureScheduleCoefficients are used, in which case hourly energy for refrigerators is determined following Equation 4.2-X2 of `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_:
-
-  ((RatedAnnualkWh / 8760) * (ConstantScheduleCoefficients[hr] + TemperatureScheduleCoefficients[hr] * T_space)
-
-  where T_space is the ambient temperature (F) where the refrigerator is located and hr is the hour of the day.
+  Refrigerator energy use is affected by its ambient temperature when ConstantScheduleCoefficients and TemperatureScheduleCoefficients are used, in which case hourly energy for refrigerators is determined per `ANSI/RESNET/ICC 301-2025 Equation 4-34 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.10_Tbl402.2.8.2.10>`_.
 
 HPXML Freezers
 **************
@@ -5297,11 +5176,7 @@ If not entered, the simulation will not include a standalone freezer.
 
 .. note::
 
-  Freezer energy use is affected by its ambient temperature when ConstantScheduleCoefficients and TemperatureScheduleCoefficients are used, in which case hourly energy for freezers is determined following Equation 4.2-X2 of `ANSI/RESNET/ICC 301-2022 Addendum C <https://www.resnet.us/wp-content/uploads/ANSIRESNETICC_301-2022AdnC-2024.pdf>`_:
-
-  ((RatedAnnualkWh / 8760) * (ConstantScheduleCoefficients[hr] + TemperatureScheduleCoefficients[hr] * T_space)
-
-  where T_space is the ambient temperature (F) where the freezer is located and hr is the hour of the day.
+  Freezer energy use is affected by its ambient temperature when ConstantScheduleCoefficients and TemperatureScheduleCoefficients are used, in which case hourly energy for freezers is determined per `ANSI/RESNET/ICC 301-2025 Equation 4-34 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.10_Tbl402.2.8.2.10>`_.
 
 .. _hpxml_dehumidifier:
 
@@ -5368,7 +5243,7 @@ If a cooking range is specified, a single oven is also entered as a ``/HPXML/Bui
   ``IsConvection``      boolean                       No        false    Convection oven?
   ====================  =======  ======  ===========  ========  =======  ================
 
-Cooking range/oven energy use is calculated per the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+Cooking range/oven energy use is calculated per `ANSI/RESNET/ICC 301-2025 Section 402.2.8.2.7 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.7>`_.
 If NumberofResidents provided, this will be adjusted using the equations from RECS in :ref:`building_occupancy`.
 
 HPXML Lighting & Ceiling Fans
@@ -5435,7 +5310,7 @@ If specifying lighting type fractions, three ``/HPXML/Building/BuildingDetails/L
   .. [#] The sum of FractionofUnitsInLocation for a given Location (e.g., interior) must be less than or equal to 1.
          If the fractions sum to less than 1, the remainder is assumed to be incandescent lighting.
 
-  Interior, exterior, and garage lighting energy use is calculated per the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  Interior, exterior, and garage lighting energy use is calculated per `ANSI/RESNET/ICC 301-2025 Sections 402.2.8.2.2-4 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.2.2>`_.
   If NumberofResidents is provided and zero (i.e., the dwelling unit is unoccupied), no lighting energy use will be modeled.
 
 .. _lighting_annual_energy:
@@ -5493,13 +5368,13 @@ If not entered, the simulation will not include a ceiling fan.
   ``extension/MonthlyScheduleMultipliers``                                       array                             No        See [#]_  12 comma-separated monthly multipliers
   =============================================================================  =======  ==========  ===========  ========  ========  ==============================
 
-  .. [#] If Efficiency and LabelEnergyUse not provided, LabelEnergyUse defaults to 42.6 W based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] If Efficiency and LabelEnergyUse not provided, LabelEnergyUse defaults to 42.6 W based on `ANSI/RESNET/ICC 301-2025 Section 402.3.8.2.12 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.3.8.2.12>`_.
          If both are provided, LabelEnergyUse will be used in the model.
-  .. [#] If Count not provided, defaults to NumberofBedrooms + 1 based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+  .. [#] If Count not provided, defaults to NumberofBedrooms + 1 based on `ANSI/RESNET/ICC 301-2025 Section 402.3.8.2.12 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.3.8.2.12>`_.
   .. [#] If WeekdayScheduleFractions or WeekendScheduleFractions not provided (and :ref:`schedules_detailed` not used), then :ref:`schedules_default` are used.
-  .. [#] If MonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), defaults based on monthly average outdoor temperatures per `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_
+  .. [#] If MonthlyScheduleMultipliers not provided (and :ref:`schedules_detailed` not used), defaults based on monthly average outdoor temperatures per `ANSI/RESNET/ICC 301-2025 Section 402.3.8.2.12 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.3.8.2.12>`_.
 
-Ceiling fan energy use is calculated per the Energy Rating Rated Home in `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_.
+Ceiling fan energy use is calculated per `ANSI/RESNET/ICC 301-2025 Section 402.3.8.2.12 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.3.8.2.12>`_.
 
 .. note::
 
@@ -5701,9 +5576,9 @@ If not entered, the simulation will not include that type of plug load.
   .. [#] PlugLoadType choices are "other", "TV other", "well pump", or "electric vehicle charging".
   .. [#] If Value not provided, defaults as follows when NumberofResidents is not provided:
 
-         \- **other**: 0.91 * ConditionedFloorArea (based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_)
+         \- **other**: 0.91 * ConditionedFloorArea (based on `ANSI/RESNET/ICC 301-2025 Table 402.2.8.1.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.1.1_Tbl402.2.8.1.1>`_)
 
-         \- **TV other**: 413.0 + 69.0 * NumberofBedrooms (based on `ANSI/RESNET/ICC 301-2022 <https://codes.iccsafe.org/content/RESNET3012022P1>`_)
+         \- **TV other**: 413.0 + 69.0 * NumberofBedrooms (based on `ANSI/RESNET/ICC 301-2025 Table 402.2.8.1.1 <https://codes.iccsafe.org/content/RESNET3012025V1.0/chapter-4-energy-rating-calculation-procedures#RESNET3012025V1.0_Ch04_Sec402.2.8.1.1_Tbl402.2.8.1.1>`_)
 
          \- **well pump**: 50.8 / 0.127 * (0.5 + 0.25 * NumberofBedrooms / 3 + 0.25 * ConditionedFloorArea / 1920) (based on the `2010 BAHSP <https://www1.eere.energy.gov/buildings/publications/pdfs/building_america/house_simulation.pdf>`_)
 

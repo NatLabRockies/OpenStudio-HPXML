@@ -670,7 +670,7 @@ module Defaults
           hpxml_bldg.site.ground_conductivity = 0.3680 # Btu/hr-ft-F
           hpxml_bldg.site.ground_diffusivity = 0.0120 # ft^2/hr
         when HPXML::SiteSoilMoistureTypeMixed
-          hpxml_bldg.site.ground_conductivity = 1.0000 # Btu/hr-ft-F, ANSI/RESNET/ICC 301-2022 Addendum C
+          hpxml_bldg.site.ground_conductivity = 1.0000 # Btu/hr-ft-F, ANSI/RESNET/ICC 301-2025 Table C101.1(1)
           hpxml_bldg.site.ground_diffusivity = 0.0208 # ft^2/hr
         when HPXML::SiteSoilMoistureTypeWet
           hpxml_bldg.site.ground_conductivity = 1.6320 # Btu/hr-ft-F
@@ -2495,6 +2495,7 @@ module Defaults
       if cooling_system.cooling_system_type == HPXML::HVACTypeChiller
 
         # Chiller w/ baseboard or fan coil or water loop heat pump
+        # ANSI/RESNET/ICC 301-2025 Section 404.1.4.2
         cap = cooling_system.cooling_capacity
         chiller_input = UnitConversions.convert(cooling_system.cooling_efficiency_kw_per_ton * UnitConversions.convert(cap, 'Btu/hr', 'ton'), 'kW', 'W')
         if distribution_type == HPXML::HVACDistributionTypeHydronic
@@ -2509,12 +2510,12 @@ module Defaults
             aux_dweq = cooling_system.fan_coil_watts
           end
         end
-        # ANSI/RESNET/ICC 301-2022 Equation 4.4-2
         seer_eq = (cap - 3.41 * aux - 3.41 * aux_dweq * n_dweq) / (chiller_input + aux + aux_dweq * n_dweq)
 
       elsif cooling_system.cooling_system_type == HPXML::HVACTypeCoolingTower
 
         # Cooling tower w/ water loop heat pump
+        # ANSI/RESNET/ICC 301-2025 Section 404.1.4.3
         if distribution_type == HPXML::HVACDistributionTypeHydronic
           if distribution_system.hydronic_type == HPXML::HydronicTypeWaterLoop
             wlhp = hpxml_bldg.heat_pumps.find { |hp| hp.heat_pump_type == HPXML::HVACTypeHeatPumpWaterLoopToAir }
@@ -2522,7 +2523,6 @@ module Defaults
             wlhp_input = wlhp_cap / wlhp.cooling_efficiency_eer
           end
         end
-        # ANSI/RESNET/ICC 301-2022 Equation 4.4-3
         seer_eq = (wlhp_cap - 3.41 * aux / n_dweq) / (wlhp_input + aux / n_dweq)
 
       else
@@ -2616,7 +2616,7 @@ module Defaults
       if heating_system.heating_system_type == HPXML::HVACTypeBoiler && hydronic_type.to_s == HPXML::HydronicTypeWaterLoop
 
         # Shared boiler w/ water loop heat pump
-        # Per ANSI/RESNET/ICC 301-2022 Section 4.4.7.2, model as:
+        # Per ANSI/RESNET/ICC 301-2025 Section 404.1.7.2.1, model as:
         # A) heat pump with constant efficiency and duct losses, fraction heat load served = 1/COP
         # B) boiler, fraction heat load served = 1-1/COP
         fraction_heat_load_served = heating_system.fraction_heat_load_served
@@ -5663,7 +5663,7 @@ module Defaults
   # not run diagonally, plus 10 feet of piping for each floor level, plus 5 feet of piping for
   # unconditioned basements (if any).
   #
-  # Source: ANSI/RESNET/ICC 301-2022
+  # Source: ANSI/RESNET/ICC 301-2025 PipeL
   #
   # @param has_uncond_bsmnt [Boolean] Whether the dwelling unit has an unconditioned basement
   # @param has_cond_bsmnt [Boolean] Whether the dwelling unit has a conditioned basement
@@ -5676,7 +5676,7 @@ module Defaults
       bsmnt = 1
     end
 
-    return (2.0 * (cfa / ncfl)**0.5 + 10.0 * ncfl + 5.0 * bsmnt).round(2) # PipeL in ANSI/RESNET/ICC 301
+    return (2.0 * (cfa / ncfl)**0.5 + 10.0 * ncfl + 5.0 * bsmnt).round(2)
   end
 
   # Gets the default loop piping length for a recirculation hot water distribution system.
@@ -5686,7 +5686,7 @@ module Defaults
   # plus 20 feet of piping for each floor level greater than one plus 10 feet of piping for
   # unconditioned basements.
   #
-  # Source: ANSI/RESNET/ICC 301-2022
+  # Source: ANSI/RESNET/ICC 301-2025 refLoopL
   #
   # @param has_uncond_bsmnt [Boolean] Whether the dwelling unit has an unconditioned basement
   # @param has_cond_bsmnt [Boolean] Whether the dwelling unit has a conditioned basement
@@ -5695,7 +5695,7 @@ module Defaults
   # @return [Double] Piping length (ft)
   def self.get_recirc_loop_length(has_uncond_bsmnt, has_cond_bsmnt, cfa, ncfl)
     std_pipe_length = get_std_pipe_length(has_uncond_bsmnt, has_cond_bsmnt, cfa, ncfl)
-    return (2.0 * std_pipe_length - 20.0).round(2) # refLoopL in ANSI/RESNET/ICC 301
+    return (2.0 * std_pipe_length - 20.0).round(2)
   end
 
   # Gets the default branch piping length for a recirculation hot water distribution system.
@@ -5704,25 +5704,28 @@ module Defaults
   # to the farthest hot water fixture from the recirculation loop, measured longitudinally
   # from plans, assuming the branch hot water piping does not run diagonally.
   #
-  # Source: ANSI/RESNET/ICC 301-2022
+  # Source: ANSI/RESNET/ICC 301-2025 pRatio
   #
   # @return [Double] Piping length (ft)
   def self.get_recirc_branch_length()
-    return 10.0 # See pRatio in ANSI/RESNET/ICC 301
+    return 10.0
   end
 
   # Gets the default pump power for a recirculation system.
   #
+  # Source: ANSI/RESNET/ICC 301-2025 Equation 4-54
+  #
   # @return [Double] Pump power (W)
   def self.get_recirc_pump_power()
-    return 50.0 # See pumpW in ANSI/RESNET/ICC 301
+    return 50.0
   end
 
   # Gets the default pump power for a shared recirculation system.
   #
+  # Source: ANSI/RESNET/ICC 301-2025 Equation 4-55
+  #
   # @return [Double] Pump power (W)
   def self.get_shared_recirc_pump_power()
-    # From ANSI/RESNET/ICC 301-2022 Eq. 4.2-43b
     pump_horsepower = 0.25
     motor_efficiency = 0.85
     pump_kw = pump_horsepower * 0.746 / motor_efficiency
@@ -5766,17 +5769,21 @@ module Defaults
   # Gets the default specific leakage area (SLA) for a vented attic.
   # SLA is the effective leakage area (ELA) divided by the floor area.
   #
+  # Source: ANSI/RESNET/ICC 301-2025 Table 402.2(1) for the Reference Home attic
+  #
   # @return [Double] Specific leakage area (frac)
   def self.get_vented_attic_sla()
-    return (1.0 / 300.0).round(6) # ANSI/RESNET/ICC 301, Table 4.2.2(1) - Attics
+    return (1.0 / 300.0).round(6)
   end
 
   # Gets the default specific leakage area (SLA) for a vented crawlspace.
   # SLA is the effective leakage area (ELA) divided by the floor area.
   #
+  # Source: ANSI/RESNET/ICC 301-2025 Table 402.2(1) for the Reference Home crawlspace
+  #
   # @return [Double] Specific leakage area (frac)
   def self.get_vented_crawl_sla()
-    return (1.0 / 150.0).round(6) # ANSI/RESNET/ICC 301, Table 4.2.2(1) - Crawlspaces
+    return (1.0 / 150.0).round(6)
   end
 
   # Gets the default whole-home mechanical ventilation fan flow rate required to
@@ -5785,13 +5792,14 @@ module Defaults
   # The required fan flow rate, combined with an infiltration credit, will equal
   # the ASHRAE 62.2 total air exchange rate requirement.
   #
+  # Source: ANSI/RESNET/ICC 301
+  #
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param vent_fan [HPXML::VentilationFan] The HPXML ventilation fan of interest
   # @param weather [WeatherFile] Weather object containing EPW information
   # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @return [Double] Fan flow rate (cfm)
   def self.get_mech_vent_flow_rate_for_vent_fan(hpxml_bldg, vent_fan, weather, eri_version)
-    # Calculates Qfan cfm requirement per ASHRAE 62.2 / ANSI/RESNET/ICC 301
     cfa = hpxml_bldg.building_construction.conditioned_floor_area
     nbeds = hpxml_bldg.building_construction.number_of_bedrooms
     infil_values = Airflow.get_values_from_air_infiltration_measurements(hpxml_bldg, weather)
@@ -5811,13 +5819,13 @@ module Defaults
 
   # Gets the default whole-home mechanical ventilation fan efficiency.
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2025 Table 402.2(1a)
   #
   # @param vent_fan [HPXML::VentilationFan] The HPXML ventilation fan of interest
   # @return [Double] Fan efficiency (W/cfm)
   def self.get_mech_vent_fan_efficiency(vent_fan)
     if vent_fan.is_shared_system
-      return 1.00 # Table 4.2.2(1) Note (n)
+      return 1.00 # ANSI/RESNET/ICC 301-2025 Table 402.2(1) note m
     end
 
     case vent_fan.fan_type
@@ -6091,13 +6099,14 @@ module Defaults
   # effects (i.e., interior/exterior air films, adjustments for presence of round ducts, and adjustments
   # when buried in loose-fill attic insulation)
   #
+  # Source: ANSI/RESNET/ICC 301-2025 Section 402.2.5
+  #
   # @param r_nominal [Double] Duct nominal insulation R-value (hr-ft2-F/Btu)
   # @param side [String] Whether the duct is on the supply or return side (HPXML::DuctTypeXXX)
   # @param buried_level [String] How deeply the duct is buried in loose-fill insulation (HPXML::DuctBuriedInsulationXXX)
   # @param f_rect [Double] The fraction of duct length that is rectangular (not round)
   # @return [Double] Duct effective R-value (hr-ft2-F/Btu)
   def self.get_duct_effective_r_value(r_nominal, side, buried_level, f_rect)
-    # This methodology has been proposed for ANSI/RESNET/ICC 301-2025.
     if buried_level == HPXML::DuctBuriedInsulationNone
       if r_nominal <= 0
         # Uninsulated ducts are set to R-1.7 based on ASHRAE HOF and the above paper.
@@ -6151,11 +6160,12 @@ module Defaults
 
   # Gets the default location for a water heater based on the IECC climate zone (if available).
   #
+  # Source: ANSI/RESNET/ICC 301-2025 Table 402.2(1) for Reference Home
+  #
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param iecc_zone [String] IECC climate zone
   # @return [String] Water heater location (HPXML::LocationXXX)
   def self.get_water_heater_location(hpxml_bldg, iecc_zone)
-    # ANSI/RESNET/ICC 301-2022C
     case iecc_zone
     when '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'
       location_hierarchy = [HPXML::LocationGarage,
@@ -6201,9 +6211,9 @@ module Defaults
   def self.get_water_heater_performance_adjustment(water_heating_system)
     return unless water_heating_system.water_heater_type == HPXML::WaterHeaterTypeTankless
     if not water_heating_system.energy_factor.nil?
-      return 0.92 # Applies to EF, ANSI/RESNET/ICC 301-2022
+      return 0.92 # Applies to EF, ANSI/RESNET/ICC 301-2025 Table 402.2(1) note s
     elsif not water_heating_system.uniform_energy_factor.nil?
-      return 0.94 # Applies to UEF, ANSI/RESNET/ICC 301-2022
+      return 0.94 # Applies to UEF, ANSI/RESNET/ICC 301-2025 Table 402.2(1) note s
     end
   end
 
@@ -6607,7 +6617,7 @@ module Defaults
 
   # Gets the default fan power for a ceiling fan.
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2025 Section 402.3.8.2.12
   #
   # @return [Double] Fan power (W)
   def self.get_ceiling_fan_power()
@@ -6616,7 +6626,7 @@ module Defaults
 
   # Gets the default number of ceiling fans.
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2025 Section 402.3.8.2.12
   #
   # @param nbeds [Integer] Number of bedrooms in the dwelling unit
   # @return [Integer] Number of ceiling fans
@@ -6741,7 +6751,8 @@ module Defaults
         else
           aux_in = 0.0 # ANSI/RESNET/ICC 301-2019 Section 4.4.7.2
         end
-        # ANSI/RESNET/ICC 301-2019 Equation 4.4-5
+
+        # ANSI/RESNET/ICC 301-2025 Equation 4-66
         return (((sp_kw / n_dweq) + aux_in) * 2080.0).round(2) # kWh/yr
       elsif distribution_type == HPXML::HVACDistributionTypeHydronic
         # kWh/yr, per ANSI/RESNET/ICC 301-2019 Table 4.5.2(5)
@@ -6757,7 +6768,7 @@ module Defaults
       end
 
     else # In-unit boilers
-
+      # ANSI/RESNET/ICC 301-2025 Table 402.2.7
       if [HPXML::FuelTypeNaturalGas,
           HPXML::FuelTypePropane,
           HPXML::FuelTypeElectricity,
@@ -6807,10 +6818,12 @@ module Defaults
   # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @return [Array<String, String>] 24 hourly comma-separated weekday and weekend setpoints
   def self.get_heating_setpoint(control_type, eri_version)
+    # ANSI/RESNET/ICC 301-2025 Table 402.2(1) for Thermostat
     htg_wd_setpoints = '68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68'
     htg_we_setpoints = '68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68'
     if control_type == HPXML::HVACControlTypeProgrammable
       if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2022')
+        # ANSI/RESNET/ICC 301-2025 Section 404.1.1
         htg_wd_setpoints = '66, 66, 66, 66, 66, 67, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 66'
         htg_we_setpoints = '66, 66, 66, 66, 66, 67, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 68, 66'
       else
@@ -6831,10 +6844,12 @@ module Defaults
   # @param eri_version [String] Version of the ANSI/RESNET/ICC 301 Standard to use for equations/assumptions
   # @return [Array<String, String>] 24 hourly comma-separated weekday and weekend setpoints
   def self.get_cooling_setpoint(control_type, eri_version)
+    # ANSI/RESNET/ICC 301-2025 Table 402.2(1) for Thermostat
     clg_wd_setpoints = '78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78'
     clg_we_setpoints = '78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78'
     if control_type == HPXML::HVACControlTypeProgrammable
       if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2022')
+        # ANSI/RESNET/ICC 301-2025 Section 404.1.1
         clg_wd_setpoints = '78, 78, 78, 78, 78, 78, 78, 78, 78, 80, 80, 80, 80, 80, 79, 78, 78, 78, 78, 78, 78, 78, 78, 78'
         clg_we_setpoints = '78, 78, 78, 78, 78, 78, 78, 78, 78, 80, 80, 80, 80, 80, 79, 78, 78, 78, 78, 78, 78, 78, 78, 78'
       else
@@ -6849,7 +6864,7 @@ module Defaults
 
   # Gets the monthly ceiling fan operation schedule.
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2025 Section 402.3.8.2.12
   #
   # @param weather [WeatherFile] Weather object containing EPW information
   # @return [Array<Integer>] monthly array of 1s and 0s
@@ -7560,9 +7575,10 @@ module Defaults
 
   # Gets the default values associated with occupant internal gains.
   #
+  # Source: ANSI/RESNET/ICC 301-2025 Table 402.2.8.1.7
+  #
   # @return [Array<Double, Double, Double>] Heat gain (Btu/person/day), sensible/latent fractions
   def self.get_occupancy_values()
-    # ANSI/RESNET/ICC 301 - Table 4.2.2(3). Internal Gains for Reference Homes
     sens_gains = 3716.0 # Btu/person/day
     lat_gains = 2884.0 # Btu/person/day
     tot_gains = sens_gains + lat_gains # Btu/person/day
@@ -7583,7 +7599,7 @@ module Defaults
       # Operational calculation w/ zero occupants, zero out energy use
       annual_kwh = 0.0
     elsif n_occ.nil? # Asset calculation
-      # ANSI/RESNET/ICC 301
+      # ANSI/RESNET/ICC 301-2025 Table 402.2.8.1.1
       annual_kwh = 0.91 * cfa
     else # Operational calculation
       # RECS 2020
@@ -7615,7 +7631,7 @@ module Defaults
       # Operational calculation w/ zero occupants, zero out energy use
       annual_kwh = 0.0
     elsif n_occ.nil? # Asset calculation
-      # ANSI/RESNET/ICC 301
+      # ANSI/RESNET/ICC 301-2025 Table 402.2.8.1.1
       annual_kwh = 413.0 + 69.0 * nbeds
     else # Operational calculation
       # RECS 2020
@@ -7853,7 +7869,7 @@ module Defaults
 
     nbeds_eq = get_equivalent_nbeds(nbeds, n_occ, unit_type)
 
-    # ANSI/RESNET/ICC 301 - Table 4.2.2(3). Internal Gains for Reference Homes
+    # ANSI/RESNET/ICC 301-2025 Table 402.2.8.1.7
     sens_gains = (-1227.0 - 409.0 * nbeds_eq) * general_water_use_usage_multiplier # Btu/day
     lat_gains = (1245.0 + 415.0 * nbeds_eq) * general_water_use_usage_multiplier # Btu/day
     return sens_gains * 365.0, lat_gains * 365.0
@@ -8002,7 +8018,7 @@ module Defaults
 
     clg_ap = cooling_system.additional_properties
 
-    # Refrigerant charge fault coefficients per ANSI/RESNET 301-2022 Tables 4.2.2.4(1) and 4.2.2.4(5)
+    # Refrigerant charge fault coefficients per ANSI/RESNET/ICC 301-2025 Tables 402.2.4.2.1(1) and 402.2.4.2.2(1)
     if cooling_system.charge_defect_ratio.to_f <= 0
       clg_ap.cool_qgr_values = [-9.46E-01, 4.93E-02, -1.18E-03, -1.15E+00]
       clg_ap.cool_p_values = [-3.13E-01, 1.15E-02, 2.66E-03, -1.16E-01]
@@ -8012,9 +8028,9 @@ module Defaults
     end
     clg_ap.cool_ff_chg_values = [26.67, 35.0]
 
-    # Coefficients for HVAC installation quality per RESNET HERS Addendum 82
-    clg_ap.cool_cap_fflow_spec_iq = [0.718664047, 0.41797409, -0.136638137]
-    clg_ap.cool_eir_fflow_spec_iq = [1.143487507, -0.13943972, -0.004047787]
+    # Coefficients for HVAC installation quality per ANSI/RESNET/ICC 301-2025 Tables 402.2.4.2.1(3) and 402.2.4.2.2(3)
+    clg_ap.cool_cap_fflow_spec_iq = [7.19E-01, 4.18E-01, -1.37E-01]
+    clg_ap.cool_eir_fflow_spec_iq = [1.14E+00, -1.39E-01, -4.05E-03]
 
     if cooling_system.is_a?(HPXML::HeatPump) && cooling_system.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir
       # Based on RESNET HERS Addendum 82
@@ -8215,7 +8231,7 @@ module Defaults
 
     htg_ap = heating_system.additional_properties
 
-    # Refrigerant charge fault coefficients per ANSI/RESNET 301-2022 Tables 4.2.2.4(2) and 4.2.2.4(6)
+    # Refrigerant charge fault coefficients per ANSI/RESNET/ICC 301-2025 Tables 402.2.4.2.1(2) and 402.2.4.2.2(2)
     # Note: We added a zero term to make cooling and heating calculations consistent
     if heating_system.charge_defect_ratio.to_f <= 0
       htg_ap.heat_qgr_values = [-3.39E-02, 0.0, 2.03E-02, -2.62E+00]
@@ -8226,9 +8242,9 @@ module Defaults
     end
     htg_ap.heat_ff_chg_values = [0.0, 8.33] # Add a zero term to combine cooling and heating calculation
 
-    # Coefficients for HVAC installation quality per RESNET HERS Addendum 82
-    htg_ap.heat_cap_fflow_spec_iq = [0.694045465, 0.474207981, -0.168253446]
-    htg_ap.heat_eir_fflow_spec_iq = [2.185418751, -1.942827919, 0.757409168]
+    # Coefficients for HVAC installation quality per ANSI/RESNET/ICC 301-2025 Tables 402.2.4.2.1(4) and 402.2.4.2.2(4)
+    htg_ap.heat_cap_fflow_spec_iq = [6.94E-01, 4.74E-01, -1.68E-01]
+    htg_ap.heat_eir_fflow_spec_iq = [2.19E+00, -1.94E+00, 7.57E-01]
 
     if heating_system.is_a?(HPXML::HeatPump) && heating_system.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir
       # Based on RESNET HERS Addendum 82
