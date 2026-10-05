@@ -8029,8 +8029,9 @@ module Defaults
     clg_ap.cool_ff_chg_values = [26.67, 35.0]
 
     # Coefficients for HVAC installation quality per ANSI/RESNET/ICC 301-2025 Tables 402.2.4.2.1(3) and 402.2.4.2.2(3)
-    clg_ap.cool_cap_fflow_spec_iq = [7.19E-01, 4.18E-01, -1.37E-01]
-    clg_ap.cool_eir_fflow_spec_iq = [1.14E+00, -1.39E-01, -4.05E-03]
+    # Note that HERS Addendum 82 inconsistently has higher precision, so using those numbers for now.
+    clg_ap.cool_cap_fflow_spec_iq = [0.718664047, 0.41797409, -0.136638137]
+    clg_ap.cool_eir_fflow_spec_iq = [1.143487507, -0.13943972, -0.004047787]
 
     if cooling_system.is_a?(HPXML::HeatPump) && cooling_system.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir
       # Based on RESNET HERS Addendum 82
@@ -8243,8 +8244,9 @@ module Defaults
     htg_ap.heat_ff_chg_values = [0.0, 8.33] # Add a zero term to combine cooling and heating calculation
 
     # Coefficients for HVAC installation quality per ANSI/RESNET/ICC 301-2025 Tables 402.2.4.2.1(4) and 402.2.4.2.2(4)
-    htg_ap.heat_cap_fflow_spec_iq = [6.94E-01, 4.74E-01, -1.68E-01]
-    htg_ap.heat_eir_fflow_spec_iq = [2.19E+00, -1.94E+00, 7.57E-01]
+    # Note that HERS Addendum 82 inconsistently has higher precision, so using those numbers for now.
+    htg_ap.heat_cap_fflow_spec_iq = [0.694045465, 0.474207981, -0.168253446]
+    htg_ap.heat_eir_fflow_spec_iq = [2.185418751, -1.942827919, 0.757409168]
 
     if heating_system.is_a?(HPXML::HeatPump) && heating_system.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir
       # Based on RESNET HERS Addendum 82
