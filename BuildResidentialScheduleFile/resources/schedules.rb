@@ -919,7 +919,7 @@ class ScheduleGenerator
   def get_plugload_daily_schedules(default_schedules_csv_data, schedules_csv_data, weather)
     {
       plug_loads_other: {
-        # Table C.3(1) of ANSI/RESNET/ICC 301-2022 Addendum C
+        # Table C101.3(1) of ANSI/RESNET/ICC 301-2025
         weekday: Schedule.validate_values(default_schedules_csv_data[SchedulesFile::Columns[:PlugLoadsOther].name]['WeekdayScheduleFractions'], 24, 'weekday'),
         weekend: Schedule.validate_values(default_schedules_csv_data[SchedulesFile::Columns[:PlugLoadsOther].name]['WeekendScheduleFractions'], 24, 'weekend'),
         # Figure 24 of the 2010 BAHSP
@@ -932,7 +932,7 @@ class ScheduleGenerator
         monthly: Schedule.validate_values(schedules_csv_data[SchedulesFile::Columns[:PlugLoadsTV].name]['PlugLoadsTVMonthlyMultipliers'], 12, 'monthly')
       },
       ceiling_fan: {
-        # Table C.3(5) of ANSI/RESNET/ICC 301-2022 Addendum C
+        # Table C101.3(5) of ANSI/RESNET/ICC 301-2025
         weekday: Schedule.validate_values(default_schedules_csv_data[SchedulesFile::Columns[:CeilingFan].name]['WeekdayScheduleFractions'], 24, 'weekday'),
         weekend: Schedule.validate_values(default_schedules_csv_data[SchedulesFile::Columns[:CeilingFan].name]['WeekendScheduleFractions'], 24, 'weekend'),
         # Based on monthly average outdoor temperatures per ANSI/RESNET/ICC 301

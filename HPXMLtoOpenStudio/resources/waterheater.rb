@@ -348,7 +348,7 @@ module Waterheater
   # Calculates the water heating energy consumption adjustment factor (EC_adj) due to the effectiveness of
   # the hot water distribution system.
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2025 Equation 4-56
   #
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param water_heating_system [HPXML::WaterHeatingSystem] The HPXML water heating system of interest
@@ -366,7 +366,6 @@ module Waterheater
     cfa = hpxml_bldg.building_construction.conditioned_floor_area
     ncfl = hpxml_bldg.building_construction.number_of_conditioned_floors
 
-    # ANSI/RESNET/ICC 301-2022 Eq. 4.2-44
     ew_fact = get_dist_energy_waste_factor(hot_water_distribution)
     o_frac = 0.25 # fraction of hot water waste from standard operating conditions
     oew_fact = ew_fact * o_frac # standard operating condition portion of hot water energy waste
@@ -385,12 +384,11 @@ module Waterheater
 
   # Retrieves the hot water distribution system relative annual energy waste factors.
   #
-  # Source: ANSI/RESNET/ICC 301
+  # Source: ANSI/RESNET/ICC 301-2025 Table 402.2.8.2.11.2(2)
   #
   # @param hot_water_distribution [HPXML::HotWaterDistribution] The HPXML hot water distribution system of interest
   # @return [Double] Energy waste factor
   def self.get_dist_energy_waste_factor(hot_water_distribution)
-    # ANSI/RESNET/ICC 301-2022 Table 4.2.2.7.2.11(6)
     if hot_water_distribution.system_type == HPXML::DHWDistTypeRecirc
       case hot_water_distribution.recirculation_control_type
       when HPXML::DHWRecircControlTypeNone, HPXML::DHWRecircControlTypeTimer

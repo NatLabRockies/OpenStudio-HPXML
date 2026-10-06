@@ -449,7 +449,7 @@ module Airflow
     neutral_level = 0.5
     hor_lk_frac = 0.0
     c_w, c_s = calc_wind_stack_coeffs(hpxml_bldg, hor_lk_frac, neutral_level, HPXML::LocationConditionedSpace, infil_values[:height])
-    max_oa_hr = 0.0115 # From ANSI/RESNET/ICC 301-2022
+    max_oa_hr = 0.0115 # From ANSI/RESNET/ICC 301-2025 Section 404.1.8
 
     clg_avail_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleCoolingAvailability }
     clg_season_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorScheduleBAHSPCoolingSeason }
@@ -1395,7 +1395,7 @@ module Airflow
     duct_subroutine.addLine('  Set SupLatLkToDZ = sup_lk_mfr*h_fg*(AH_Wout-DZ_W)') # W
     duct_subroutine.addLine('  Set SupSensLkToDZ = SupTotLkToDZ-SupLatLkToDZ') # W
 
-    # Handle duct leakage imbalance induced infiltration (ANSI/RESNET/ICC 301-2022 Addendum C Table 4.2.2(1c)
+    # Handle duct leakage imbalance induced infiltration (ANSI/RESNET/ICC 301-2025 Table 402.2(1c))
     leakage_supply = leakage_fracs[HPXML::DuctTypeSupply].to_f
     leakage_return = leakage_fracs[HPXML::DuctTypeReturn].to_f
     if leakage_supply == leakage_return
@@ -2770,7 +2770,7 @@ module Airflow
 
   # Returns infiltration normalized leakage given SLA.
   #
-  # Source: ANSI/RESNET/ICC 301-2022 Addendum C Appendix C2.2 Eq. 1
+  # Source: ANSI/RESNET/ICC 301-2025 Equation C-1
   #
   # @param sla [Double] Specific leakage area
   # @param infil_height [Double] Vertical distance between the lowest and highest above-grade points within the pressure boundary, per ASHRAE 62.2 (ft)
@@ -2781,7 +2781,7 @@ module Airflow
 
   # Returns the infiltration annual average ACH given a SLA.
   #
-  # Source: ANSI/RESNET/ICC 301-2022 Addendum C Appendix C2.2 Eq. 6
+  # Source: ANSI/RESNET/ICC 301-2025 Equation C-6
   #
   # @param sla [Double] Specific leakage area
   # @param infil_height [Double] Vertical distance between the lowest and highest above-grade points within the pressure boundary, per ASHRAE 62.2 (ft)
@@ -2795,7 +2795,7 @@ module Airflow
 
   # Returns the infiltration SLA given an annual average ACH.
   #
-  # Source: ANSI/RESNET/ICC 301-2022 Addendum C Appendix C2.2 Eq. 5
+  # Source: ANSI/RESNET/ICC 301-2025 Equation C-5
   #
   # @param ach [Double] Annual average air changes per hour
   # @param infil_height [Double] Vertical distance between the lowest and highest above-grade points within the pressure boundary, per ASHRAE 62.2 (ft)
@@ -2808,7 +2808,7 @@ module Airflow
 
   # Returns the infiltration SLA given a ACH50.
   #
-  # Source: ANSI/RESNET/ICC 301-2022 Addendum C Appendix C2.2 Eq. 16
+  # Source: ANSI/RESNET/ICC 301-2025 Equation C-16
   #
   # @param ach50 [Double] Air changes per hour at 50 Pa
   # @param infil_avg_ceil_height [Double] Average floor to ceiling height (ft)
@@ -2820,7 +2820,7 @@ module Airflow
 
   # Returns the infiltration ACH50 given a SLA.
   #
-  # Source: ANSI/RESNET/ICC 301-2022 Addendum C Appendix C2.2 Eq. 15
+  # Source: ANSI/RESNET/ICC 301-2025 Equation C-15
   #
   # @param sla [Double] Specific leakage area
   # @param infil_avg_ceil_height [Double] Average floor to ceiling height (ft)
@@ -2877,6 +2877,7 @@ module Airflow
   def self.get_mech_vent_qfan_cfm(q_tot, q_inf, is_balanced, frac_imbal, a_ext, unit_type, eri_version, hours_in_operation)
     q_inf_eff = q_inf * a_ext
     if Constants::ERIVersions.index(eri_version) >= Constants::ERIVersions.index('2022')
+      # ANSI/RESNET/ICC 301-2025 Table 402.2(1) note dd
       if frac_imbal == 0
         q_fan = q_tot - q_inf_eff
       else
