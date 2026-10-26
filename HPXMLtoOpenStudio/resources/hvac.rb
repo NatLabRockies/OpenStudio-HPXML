@@ -1262,6 +1262,7 @@ module HVAC
       zone_hvac.setMaximumSupplyAirFlowRate(UnitConversions.convert(fan_cfm, 'cfm', 'm^3/s'))
       zone_hvac.setMaximumHotWaterFlowRate(max_water_flow)
       zone_hvac.addToThermalZone(control_zone)
+      zone_hvac.additionalProperties.setFeature('HPXML_ID', heating_system.id) # Used by reporting measure
       add_fan_pump_disaggregation_ems_program(model, pump, zone_hvac, nil, nil, heating_system)
     else
       # Heating Coil
