@@ -363,20 +363,37 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     return args
   end
 
-  # Returns whether the plant loop contains a domestic water heater.
+  # Returns whether the plant loop is associated with domestic water heating.
   #
   # @param plant_loop [OpenStudio::Model::PlantLoop] Plant loop to inspect
   # @return [Boolean] Whether the loop contains a water heater
   def water_heating_plant_loop?(plant_loop)
-    components = plant_loop.supplyComponents + plant_loop.demandComponents
-    contains_water_heater = false
+    components = plant_loop.supplyComponents
+    contains_water_heating_equipment = false
     components.each do |component|
-      if component.to_WaterHeaterMixed.is_initialized || component.to_WaterHeaterStratified.is_initialized
-        contains_water_heater = true
+      is_water_heater = component.to_WaterHeaterMixed.is_initialized || component.to_WaterHeaterStratified.is_initialized
+      is_combi_boiler = component.additionalProperties.getFeatureAsBoolean('IsCombiBoiler')
+      if is_water_heater || (is_combi_boiler.is_initialized && is_combi_boiler.get)
+        contains_water_heating_equipment = true
         break
       end
     end
-    return contains_water_heater
+    return contains_water_heating_equipment
+  end
+
+  # Returns water heaters that represent primary DHW systems, excluding solar preheat tanks.
+  #
+  # @return [Array<OpenStudio::Model::WaterHeaterMixed, OpenStudio::Model::WaterHeaterStratified>]
+  def dhw_water_heaters
+    water_heaters = @model.getWaterHeaterMixeds + @model.getWaterHeaterStratifieds
+    dhw_water_heaters = []
+    water_heaters.each do |water_heater|
+      object_type = water_heater.additionalProperties.getFeatureAsString('ObjectType').to_s
+      next if object_type == Constants::ObjectTypeSolarHotWater
+
+      dhw_water_heaters << water_heater
+    end
+    return dhw_water_heaters
   end
 
   # Returns the unique HPXML system IDs attached to model objects.
@@ -657,6 +674,12 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           Model.add_output_variable(model, key_value: key_value, variable_name: output_variable_name, reporting_frequency: args[:timeseries_frequency])
         end
       end
+      model.getZoneHVACFourPipeFanCoils.each do |fan_coil|
+        key_value = fan_coil.outletNode.get.name.to_s.upcase
+        ['System Node Temperature', 'System Node Relative Humidity', 'System Node Humidity Ratio'].each do |output_variable_name|
+          Model.add_output_variable(model, key_value: key_value, variable_name: output_variable_name, reporting_frequency: args[:timeseries_frequency])
+        end
+      end
       model.getPlantLoops.each do |plant_loop|
         next if water_heating_plant_loop?(plant_loop)
         next unless plant_loop.fluidType == EPlus::FluidWater
@@ -665,7 +688,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       end
 
       # DHW outputs
-      (model.getWaterHeaterMixeds + model.getWaterHeaterStratifieds).each do |water_heater|
+      dhw_water_heaters.each do |water_heater|
         Model.add_output_variable(model, key_value: water_heater.name.to_s.upcase, variable_name: 'Water Heater Use Side Outlet Temperature', reporting_frequency: args[:timeseries_frequency])
       end
     end
@@ -1383,7 +1406,14 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
         'System Node Relative Humidity' => ['Supply Air Relative Humidity', nil, 1.0, 0.0],
         'System Node Humidity Ratio' => ['Supply Air Humidity Ratio', 'fraction', 1.0, 0.0]
       }.each do |output_variable_name, output_spec|
-        next if @model.getAirLoopHVACs.empty?
+        supply_air_nodes = []
+        @model.getAirLoopHVACs.each do |air_loop|
+          supply_air_nodes << [air_loop.demandInletNode, air_loop_hpxml_system_ids(air_loop)]
+        end
+        @model.getZoneHVACFourPipeFanCoils.each do |fan_coil|
+          supply_air_nodes << [fan_coil.outletNode.get, hpxml_system_ids([fan_coil])]
+        end
+        next if supply_air_nodes.empty?
 
         output_name, output_units, unit_conv, unit_adder = output_spec
         key_values, units = get_output_variable_key_values_and_units(output_variable_name)
@@ -1392,13 +1422,13 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           next
         end
 
-        @model.getAirLoopHVACs.each do |air_loop|
-          requested_key_value = air_loop.demandInletNode.name.to_s
+        supply_air_nodes.each do |node, system_ids|
+          requested_key_value = node.name.to_s
           key_value = key_values.find { |key| key.casecmp?(requested_key_value) }
           next if key_value.nil?
 
-          distribution_ids = hvac_distribution_ids(air_loop_hpxml_system_ids(air_loop))
-          distribution_ids = [air_loop.name.to_s] if distribution_ids.empty?
+          distribution_ids = hvac_distribution_ids(system_ids)
+          distribution_ids = [node.name.to_s] if distribution_ids.empty?
           distribution_ids.each do |distribution_id|
             @supply_conds[[output_variable_name, key_value, distribution_id]] = OutputVariableOrMeter.new
             @supply_conds[[output_variable_name, key_value, distribution_id]].name = "#{output_name}: #{distribution_id}"
@@ -1419,7 +1449,23 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           key_value = key_values.find { |key| key.casecmp?(requested_key_value) }
           next if key_value.nil?
 
-          distribution_ids = hvac_distribution_ids(hpxml_system_ids(plant_loop.supplyComponents + plant_loop.demandComponents))
+          system_ids = hpxml_system_ids(plant_loop.supplyComponents + plant_loop.demandComponents)
+          water_heating_systems = []
+          @hpxml_bldgs.each do |hpxml_bldg|
+            hpxml_bldg.water_heating_systems.each do |water_heating_system|
+              water_heating_systems << water_heating_system
+            end
+          end
+          related_system_ids = []
+          system_ids.each do |system_id|
+            water_heating_system = water_heating_systems.find { |system| system.id == system_id }
+            if water_heating_system.nil? || water_heating_system.related_hvac_idref.nil?
+              related_system_ids << system_id
+            else
+              related_system_ids << water_heating_system.related_hvac_idref
+            end
+          end
+          distribution_ids = hvac_distribution_ids(related_system_ids)
           distribution_ids = [requested_key_value] if distribution_ids.empty?
           distribution_ids.each do |distribution_id|
             @supply_conds[[output_variable_name, key_value, distribution_id]] = OutputVariableOrMeter.new
@@ -1431,7 +1477,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       end
 
       # DHW outputs
-      water_heaters = @model.getWaterHeaterMixeds + @model.getWaterHeaterStratifieds
+      water_heaters = dhw_water_heaters
       output_variable_name = 'Water Heater Use Side Outlet Temperature'
       key_values, units = get_output_variable_key_values_and_units(output_variable_name)
       if units.nil? && !water_heaters.empty?
