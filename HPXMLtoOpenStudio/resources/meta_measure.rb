@@ -70,6 +70,14 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
     end
   end
 
+  # Remove sizing objects that we don't use
+  # Remove this case when https://github.com/NatLabRockies/OpenStudio/issues/5601 is addressed
+  ['Sizing:Parameters', 'Sizing:System'].each do |sizing_type|
+    workspace.getObjectsByType(sizing_type.to_IddObjectType).each do |sizing_obj|
+      sizing_obj.remove
+    end
+  end
+
   if not success
     print "Creating input unsuccessful.\n"
     print "See #{File.join(rundir, 'run.log')} for details.\n"
@@ -104,6 +112,10 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
   # Run simulation
   print "Running simulation...\n" unless suppress_print
   ep_path = File.absolute_path(File.join(OpenStudio.getOpenStudioCLI.to_s, '..', '..', 'EnergyPlus', 'energyplus')) # getEnergyPlusDirectory can be unreliable, using getOpenStudioCLI instead
+  # Support OpenStudio development builds that use a versioned EnergyPlus directory.
+  unless File.exist?(ep_path) || File.exist?("#{ep_path}.exe")
+    ep_path = File.join(OpenStudio.getEnergyPlusDirectory.to_s, 'energyplus')
+  end
   simulation_start = Time.now
   command = "\"#{ep_path}\" -w \"#{model.getWeatherFile.path.get}\" #{ep_input_filename}"
   if debug

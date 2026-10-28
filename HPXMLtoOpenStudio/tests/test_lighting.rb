@@ -2,7 +2,6 @@
 
 require_relative '../resources/minitest_helper'
 require 'openstudio'
-require 'openstudio/measure/ShowRunnerOutput'
 require 'fileutils'
 require_relative '../measure.rb'
 require_relative '../resources/util.rb'
@@ -12,12 +11,13 @@ class HPXMLtoOpenStudioLightingTest < Minitest::Test
   def setup
     @root_path = File.absolute_path(File.join(File.dirname(__FILE__), '..', '..'))
     @sample_files_path = File.join(@root_path, 'workflow', 'sample_files')
-    @tmp_hpxml_path = File.join(@sample_files_path, 'tmp.xml')
+    @tmp_hpxml_path = File.join(File.dirname(__FILE__), 'tmp.xml')
+    @schema_validator = XMLValidator.get_xml_validator(File.join(File.dirname(__FILE__), '..', 'resources', 'hpxml_schema', 'HPXML.xsd'))
+    @schematron_validator = XMLValidator.get_xml_validator(File.join(File.dirname(__FILE__), '..', 'resources', 'hpxml_schematron', 'EPvalidator.sch'))
   end
 
   def teardown
-    File.delete(@tmp_hpxml_path) if File.exist? @tmp_hpxml_path
-    cleanup_results_files
+    cleanup_output_files([@tmp_hpxml_path])
   end
 
   def get_kwh_per_year(model, name)
@@ -26,13 +26,6 @@ class HPXMLtoOpenStudioLightingTest < Minitest::Test
 
       hrs = Schedule.annual_equivalent_full_load_hrs(model.yearDescription.get.assumedYear, ltg.schedule.get)
       kwh_yr = UnitConversions.convert(hrs * ltg.lightingLevel.get * ltg.multiplier * ltg.space.get.multiplier, 'Wh', 'kWh')
-      return kwh_yr
-    end
-    model.getExteriorLightss.each do |ltg|
-      next unless ltg.name.to_s == name
-
-      hrs = Schedule.annual_equivalent_full_load_hrs(model.yearDescription.get.assumedYear, ltg.schedule.get)
-      kwh_yr = UnitConversions.convert(hrs * ltg.exteriorLightsDefinition.designLevel * ltg.multiplier, 'Wh', 'kWh')
       return kwh_yr
     end
     model.getElectricEquipments.each do |ee|
@@ -50,10 +43,8 @@ class HPXMLtoOpenStudioLightingTest < Minitest::Test
     args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base.xml'))
     model, _hpxml, _hpxml_bldg = _test_measure(args_hash)
 
-    # Check interior lighting
+    # Check lighting
     assert_in_delta(1322, get_kwh_per_year(model, Constants::ObjectTypeLightingInterior).round, 1.0)
-
-    # Check exterior lighting
     assert_in_delta(98, get_kwh_per_year(model, Constants::ObjectTypeLightingExterior), 1.0)
   end
 
@@ -62,13 +53,9 @@ class HPXMLtoOpenStudioLightingTest < Minitest::Test
     args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-enclosure-2stories-garage.xml'))
     model, _hpxml, _hpxml_bldg = _test_measure(args_hash)
 
-    # Check interior lighting
+    # Check lighting
     assert_in_delta(1544, get_kwh_per_year(model, Constants::ObjectTypeLightingInterior), 1.0)
-
-    # Check garage lighting
     assert_in_delta(42, get_kwh_per_year(model, Constants::ObjectTypeLightingGarage), 1.0)
-
-    # Check exterior lighting
     assert_in_delta(109, get_kwh_per_year(model, Constants::ObjectTypeLightingExterior), 1.0)
   end
 
@@ -94,12 +81,11 @@ class HPXMLtoOpenStudioLightingTest < Minitest::Test
     args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-lighting-kwh-per-year.xml'))
     model, _hpxml, hpxml_bldg = _test_measure(args_hash)
 
-    # Check interior lighting
+    # Check lighting
     int_kwh_yr = hpxml_bldg.lighting_groups.find { |lg| lg.location == HPXML::LocationInterior }.kwh_per_year
     int_kwh_yr *= hpxml_bldg.lighting.interior_usage_multiplier unless hpxml_bldg.lighting.interior_usage_multiplier.nil?
     assert_in_delta(int_kwh_yr, get_kwh_per_year(model, Constants::ObjectTypeLightingInterior).round, 1.0)
 
-    # Check exterior lighting
     ext_kwh_yr = hpxml_bldg.lighting_groups.find { |lg| lg.location == HPXML::LocationExterior }.kwh_per_year
     ext_kwh_yr *= hpxml_bldg.lighting.exterior_usage_multiplier unless hpxml_bldg.lighting.exterior_usage_multiplier.nil?
     assert_in_delta(ext_kwh_yr, get_kwh_per_year(model, Constants::ObjectTypeLightingExterior), 1.0)
@@ -110,13 +96,9 @@ class HPXMLtoOpenStudioLightingTest < Minitest::Test
     args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-lighting-none.xml'))
     model, _hpxml, _hpxml_bldg = _test_measure(args_hash)
 
-    # Check interior lighting
+    # Check lighting
     assert_equal(0.0, get_kwh_per_year(model, Constants::ObjectTypeLightingInterior))
-
-    # Check garage lighting
     assert_equal(0.0, get_kwh_per_year(model, Constants::ObjectTypeLightingGarage))
-
-    # Check exterior lighting
     assert_equal(0.0, get_kwh_per_year(model, Constants::ObjectTypeLightingExterior))
   end
 
@@ -144,17 +126,34 @@ class HPXMLtoOpenStudioLightingTest < Minitest::Test
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     model, _hpxml, _hpxml_bldg = _test_measure(args_hash)
 
-    # Check interior lighting
+    # Check lighting
     assert_equal(0.0, get_kwh_per_year(model, Constants::ObjectTypeLightingInterior))
-
-    # Check garage lighting
     assert_equal(0.0, get_kwh_per_year(model, Constants::ObjectTypeLightingGarage))
-
-    # Check exterior lighting
     assert_equal(0.0, get_kwh_per_year(model, Constants::ObjectTypeLightingExterior))
 
     # Check ceiling fan
     assert_equal(0.0, get_kwh_per_year(model, Constants::ObjectTypeCeilingFan))
+  end
+
+  def test_operational_0_occupants_kwh_per_year
+    # Test that any provided kWh/yr values are not overridden
+    args_hash = {}
+    args_hash['hpxml_path'] = @tmp_hpxml_path
+    hpxml, hpxml_bldg = _create_hpxml('base-enclosure-garage.xml')
+    hpxml_bldg.building_occupancy.number_of_residents = 0
+    hpxml_bldg.lighting_groups.clear
+    [HPXML::LocationInterior, HPXML::LocationExterior, HPXML::LocationGarage].each do |location|
+      hpxml_bldg.lighting_groups.add(id: "LightingGroup#{hpxml_bldg.lighting_groups.size + 1}",
+                                     location: location,
+                                     kwh_per_year: 100)
+    end
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    model, _hpxml, _hpxml_bldg = _test_measure(args_hash)
+
+    # Check lighting
+    assert_in_delta(100, get_kwh_per_year(model, Constants::ObjectTypeLightingInterior), 1.0)
+    assert_in_delta(100, get_kwh_per_year(model, Constants::ObjectTypeLightingExterior), 1.0)
+    assert_in_delta(100, get_kwh_per_year(model, Constants::ObjectTypeLightingGarage), 1.0)
   end
 
   def _test_measure(args_hash)
@@ -183,14 +182,31 @@ class HPXMLtoOpenStudioLightingTest < Minitest::Test
     result = runner.result
 
     # show the output
-    show_output(result) unless result.value.valueName == 'Success'
+    result.showOutput() unless result.value.valueName == 'Success'
 
     # assert that it ran correctly
     assert_equal('Success', result.value.valueName)
 
-    hpxml = HPXML.new(hpxml_path: File.join(File.dirname(__FILE__), 'in.xml'))
+    hpxml_defaults_path = File.join(File.dirname(__FILE__), 'in.xml')
+    if args_hash['hpxml_path'] == @tmp_hpxml_path
+      # Since there is a penalty to performing schema/schematron validation, we only do it for custom models
+      # Sample files already have their in.xml's checked in the workflow tests
+      schema_validator = @schema_validator
+      schematron_validator = @schematron_validator
+    else
+      schema_validator = nil
+      schematron_validator = nil
+    end
+    hpxml = HPXML.new(hpxml_path: hpxml_defaults_path, schema_validator: schema_validator, schematron_validator: schematron_validator)
+    if not hpxml.errors.empty?
+      puts 'ERRORS:'
+      hpxml.errors.each do |error|
+        puts error
+      end
+      flunk "Validation error(s) in #{hpxml_defaults_path}."
+    end
 
-    File.delete(File.join(File.dirname(__FILE__), 'in.xml'))
+    File.delete(hpxml_defaults_path)
 
     return model, hpxml, hpxml.buildings[0]
   end

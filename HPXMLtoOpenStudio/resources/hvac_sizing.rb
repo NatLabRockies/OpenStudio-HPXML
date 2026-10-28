@@ -17,16 +17,16 @@ module HVACSizing
     check_for_errors(hpxml_bldg, hvac_systems)
 
     mj = MJValues.new
-    process_site_calcs_and_design_temps(mj, weather, hpxml_bldg)
+    process_site_calcs_and_design_temps(mj, weather, hpxml_bldg, hpxml_header)
 
     # Calculate individual design load components
     all_zone_loads, all_space_loads = init_loads(hpxml_bldg)
-    process_load_windows_skylights(mj, hpxml_bldg, all_zone_loads, all_space_loads)
+    process_load_windows_skylights(mj, runner, hpxml_bldg, all_zone_loads, all_space_loads)
     process_load_doors(mj, hpxml_bldg, all_zone_loads, all_space_loads)
-    process_load_walls(mj, hpxml_bldg, all_zone_loads, all_space_loads)
+    process_load_walls(mj, hpxml_header, hpxml_bldg, all_zone_loads, all_space_loads)
     process_load_roofs(mj, hpxml_bldg, all_zone_loads, all_space_loads)
-    process_load_ceilings(mj, hpxml_bldg, all_zone_loads, all_space_loads)
-    process_load_floors(mj, hpxml_bldg, all_zone_loads, all_space_loads)
+    process_load_ceilings(mj, hpxml_header, hpxml_bldg, all_zone_loads, all_space_loads)
+    process_load_floors(mj, hpxml_header, hpxml_bldg, all_zone_loads, all_space_loads)
     process_load_slabs(mj, hpxml_bldg, all_zone_loads, all_space_loads)
     process_load_infiltration_ventilation(mj, hpxml_bldg, all_zone_loads, all_space_loads, weather)
     process_load_internal_gains(hpxml_bldg, all_zone_loads, all_space_loads)
@@ -179,8 +179,9 @@ module HVACSizing
   # @param mj [MJValues] Object with a collection of misc Manual J values
   # @param weather [WeatherFile] Weather object containing EPW information
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
+  # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @return [nil]
-  def self.process_site_calcs_and_design_temps(mj, weather, hpxml_bldg)
+  def self.process_site_calcs_and_design_temps(mj, weather, hpxml_bldg, hpxml_header)
     # CLTD adjustments based on daily temperature range
     mj.daily_range_temp_adjust = [4, 0, -5]
 
@@ -207,7 +208,7 @@ module HVACSizing
     mj.cool_indoor_wetbulb = Psychrometrics.Twb_fT_R_P(nil, mj.cool_setpoint, hpxml_bldg.header.manualj_humidity_setpoint, mj.p_psi)
     mj.cool_outdoor_wetbulb = Psychrometrics.Twb_fT_w_P(nil, hpxml_bldg.header.manualj_cooling_design_temp, weather.design.CoolingHumidityRatio, mj.p_psi)
 
-    # Design Grains (DG), difference between absolute humidity of the outdoor air and outdoor humidity of the indoor air
+    # Design Grains (DG), difference between absolute humidity of the outdoor air and absolute humidity of the indoor air
     mj.cool_design_grains = hpxml_bldg.header.manualj_humidity_difference
 
     # Calculate indoor enthalpy in Btu/lb for cooling
@@ -222,7 +223,8 @@ module HVACSizing
     # Other
     if (not hpxml_bldg.site.soil_type.nil?) && (not hpxml_bldg.site.moisture_type.nil?)
       if ([HPXML::SiteSoilTypeClay,
-           HPXML::SiteSoilTypeUnknown].include?(hpxml_bldg.site.soil_type) &&
+           HPXML::SiteSoilTypeUnknown,
+           HPXML::SiteSoilTypeOther].include?(hpxml_bldg.site.soil_type) &&
           [HPXML::SiteSoilMoistureTypeWet,
            HPXML::SiteSoilMoistureTypeMixed].include?(hpxml_bldg.site.moisture_type))
         # Heavy moist soil, R-value/ft=1.25 (Manual J default for Table 4A)
@@ -248,6 +250,8 @@ module HVACSizing
 
     locations = []
     hpxml_bldg.surfaces.each do |surface|
+      next if hpxml_header.whole_sfa_or_mf_building_sim && ((not surface.sameas_id.nil?) || (surface.additional_properties.respond_to? :adjacent_hpxml_id)) # Ignore inter-unit heat transfer
+
       locations << surface.interior_adjacent_to
       locations << surface.exterior_adjacent_to
     end
@@ -425,7 +429,7 @@ module HVACSizing
           else
             if not roof.radiant_barrier
               case roof.roof_type
-              when HPXML::RoofTypeAsphaltShingles
+              when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeShingles
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 130.0 * roof.net_area
@@ -434,28 +438,30 @@ module HVACSizing
                 end
               when HPXML::RoofTypeWoodShingles
                 cool_temp += 120.0 * roof.net_area
-              when HPXML::RoofTypeMetal
+              when HPXML::RoofTypeMetal, HPXML::RoofTypePlasticRubber, HPXML::RoofTypeEPS
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 130.0 * roof.net_area
-                when HPXML::ColorMedium, HPXML::ColorLight
+                when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 120.0 * roof.net_area
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile
+              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 110.0 * roof.net_area
-                when HPXML::ColorMedium, HPXML::ColorLight
+                when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 105.0 * roof.net_area
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
+              else
+                fail "Invalid Roof Type: #{roof.roof_type}."
               end
             else # with a radiant barrier
               case roof.roof_type
-              when HPXML::RoofTypeAsphaltShingles
+              when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeShingles
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 120.0 * roof.net_area
@@ -464,28 +470,32 @@ module HVACSizing
                 end
               when HPXML::RoofTypeWoodShingles
                 cool_temp += 110.0 * roof.net_area
-              when HPXML::RoofTypeMetal
+              when HPXML::RoofTypeMetal, HPXML::RoofTypePlasticRubber, HPXML::RoofTypeEPS
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 120.0 * roof.net_area
-                when HPXML::ColorMedium, HPXML::ColorLight
+                when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 110.0 * roof.net_area
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile
+              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 105.0 * roof.net_area
-                when HPXML::ColorMedium, HPXML::ColorLight
+                when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
                   cool_temp += 100.0 * roof.net_area
                 when HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              end
-            end
+              else
+                fail "Invalid Roof Type: #{roof.roof_type}."
+              end # roof type
+            end # w/ or w/o radiant barrier
           end # vented/unvented
         end # each roof surface
+
+        fail 'Unexpected case.' if cool_temp == 0
 
         cool_temp /= tot_roof_area
 
@@ -584,11 +594,12 @@ module HVACSizing
   # Calculates heating and cooling loads for windows & skylights.
   #
   # @param mj [MJValues] Object with a collection of misc Manual J values
+  # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param all_zone_loads [Hash] Map of HPXML::Zones => DesignLoadValues object
   # @param all_space_loads [Hash] Map of HPXML::Spaces => DesignLoadValues object
   # @return [nil]
-  def self.process_load_windows_skylights(mj, hpxml_bldg, all_zone_loads, all_space_loads)
+  def self.process_load_windows_skylights(mj, runner, hpxml_bldg, all_zone_loads, all_space_loads)
     # Average cooling load factors (CLF) for windows/skylights WITHOUT internal shading (MJ8 Table 3D-3)
     clf_avg_nois = [0.24, 0.35, 0.38, 0.4, 0.48, 0.4, 0.38, 0.35, 0.24]
     clf_avg_nois_horiz = 0.68
@@ -726,7 +737,7 @@ module HVACSizing
 
       cnt45 = (get_mj_azimuth(window.azimuth) / 45.0).round.to_i
 
-      window_ufactor, window_shgc = Constructions.get_ufactor_shgc_adjusted_by_storms(window.storm_type, window.ufactor, window.shgc)
+      window_ufactor, window_shgc = Constructions.get_ufactor_shgc_adjusted_by_storms(runner, window.storm_type, window.ufactor, window.shgc)
       htg_htm = window_ufactor * mj.htd
       htg_loads = htg_htm * window.area
       all_zone_loads[zone].Heat_Windows += htg_loads
@@ -836,7 +847,7 @@ module HVACSizing
       cnt45 = (get_mj_azimuth(skylight.azimuth) / 45.0).round.to_i
       inclination_angle = UnitConversions.convert(Math.atan(roof.pitch / 12.0), 'rad', 'deg')
 
-      skylight_ufactor, skylight_shgc = Constructions.get_ufactor_shgc_adjusted_by_storms(skylight.storm_type, skylight.ufactor, skylight.shgc)
+      skylight_ufactor, skylight_shgc = Constructions.get_ufactor_shgc_adjusted_by_storms(runner, skylight.storm_type, skylight.ufactor, skylight.shgc)
 
       # Calculate U-effective by including curb/shaft impacts
       u_eff_skylight = skylight_ufactor
@@ -1007,14 +1018,16 @@ module HVACSizing
   # Calculates heating and cooling loads for above-grade and below-grade HPXML walls.
   #
   # @param mj [MJValues] Object with a collection of misc Manual J values
+  # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param all_zone_loads [Hash] Map of HPXML::Zones => DesignLoadValues object
   # @param all_space_loads [Hash] Map of HPXML::Spaces => DesignLoadValues object
   # @return [nil]
-  def self.process_load_walls(mj, hpxml_bldg, all_zone_loads, all_space_loads)
+  def self.process_load_walls(mj, hpxml_header, hpxml_bldg, all_zone_loads, all_space_loads)
     # Above-Grade Wall Area
     (hpxml_bldg.walls + hpxml_bldg.rim_joists + hpxml_bldg.foundation_walls).each do |wall|
       next unless wall.is_thermal_boundary
+      next if hpxml_header.whole_sfa_or_mf_building_sim && ((not wall.sameas_id.nil?) || (wall.additional_properties.respond_to? :adjacent_hpxml_id)) # Ignore inter-unit heat transfer
 
       space = wall.space
       zone = space.zone
@@ -1088,9 +1101,8 @@ module HVACSizing
         clg_htm = (1.0 / assembly_r) * cltd
         htg_htm = (1.0 / assembly_r) * mj.htd
       else # Partition wall
-        adjacent_space = wall.exterior_adjacent_to
-        clg_htm = (1.0 / assembly_r) * (mj.cool_design_temps[adjacent_space] - mj.cool_setpoint)
-        htg_htm = (1.0 / assembly_r) * (mj.heat_setpoint - mj.heat_design_temps[adjacent_space])
+        clg_htm = (1.0 / assembly_r) * (mj.cool_design_temps[wall.exterior_adjacent_to] - mj.cool_setpoint)
+        htg_htm = (1.0 / assembly_r) * (mj.heat_setpoint - mj.heat_design_temps[wall.exterior_adjacent_to])
       end
       clg_loads = clg_htm * net_area
       htg_loads = htg_htm * net_area
@@ -1111,6 +1123,7 @@ module HVACSizing
     hpxml_bldg.foundation_walls.each do |foundation_wall|
       next unless foundation_wall.is_thermal_boundary
       next if foundation_wall.depth_below_grade < 2 # Already handled in above grade walls
+      next if hpxml_header.whole_sfa_or_mf_building_sim && ((not foundation_wall.sameas_id.nil?) || (foundation_wall.additional_properties.respond_to? :adjacent_hpxml_id)) # Ignore inter-unit heat transfer
 
       space = foundation_wall.space
       zone = space.zone
@@ -1162,17 +1175,17 @@ module HVACSizing
       # Base CLTD color adjustment based on notes in MJ8 Figure A12-16
       case roof.roof_color
       when HPXML::ColorDark, HPXML::ColorMediumDark
-        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeWoodShingles].include? roof.roof_type
+        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool].include? roof.roof_type
           cltd *= 0.83
         end
-      when HPXML::ColorMedium, HPXML::ColorLight
-        if [HPXML::RoofTypeClayTile].include? roof.roof_type
+      when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
+        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete, HPXML::RoofTypeCool].include? roof.roof_type
           cltd *= 0.65
         else
           cltd *= 0.83
         end
       when HPXML::ColorReflective
-        if [HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles].include? roof.roof_type
+        if [HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeShingles].include? roof.roof_type
           cltd *= 0.83
         else
           cltd *= 0.65
@@ -1203,14 +1216,16 @@ module HVACSizing
   # Calculates heating and cooling loads for ceilings.
   #
   # @param mj [MJValues] Object with a collection of misc Manual J values
+  # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param all_zone_loads [Hash] Map of HPXML::Zones => DesignLoadValues object
   # @param all_space_loads [Hash] Map of HPXML::Spaces => DesignLoadValues object
   # @return [nil]
-  def self.process_load_ceilings(mj, hpxml_bldg, all_zone_loads, all_space_loads)
+  def self.process_load_ceilings(mj, hpxml_header, hpxml_bldg, all_zone_loads, all_space_loads)
     hpxml_bldg.floors.each do |floor|
-      next unless floor.is_ceiling
       next unless floor.is_thermal_boundary
+      next if hpxml_header.whole_sfa_or_mf_building_sim && ((not floor.sameas_id.nil?) || (floor.additional_properties.respond_to? :adjacent_hpxml_id)) # Ignore inter-unit heat transfer
+      next unless floor.is_ceiling
 
       space = floor.space
       zone = space.zone
@@ -1219,9 +1234,8 @@ module HVACSizing
         clg_htm = (1.0 / floor.insulation_assembly_r_value) * (mj.ctd - 5.0 + mj.daily_range_temp_adjust[mj.daily_range_num])
         htg_htm = (1.0 / floor.insulation_assembly_r_value) * mj.htd
       else
-        adjacent_space = floor.exterior_adjacent_to
-        clg_htm = (1.0 / floor.insulation_assembly_r_value) * (mj.cool_design_temps[adjacent_space] - mj.cool_setpoint)
-        htg_htm = (1.0 / floor.insulation_assembly_r_value) * (mj.heat_setpoint - mj.heat_design_temps[adjacent_space])
+        clg_htm = (1.0 / floor.insulation_assembly_r_value) * (mj.cool_design_temps[floor.exterior_adjacent_to] - mj.cool_setpoint)
+        htg_htm = (1.0 / floor.insulation_assembly_r_value) * (mj.heat_setpoint - mj.heat_design_temps[floor.exterior_adjacent_to])
       end
       clg_loads = clg_htm * floor.net_area
       htg_loads = htg_htm * floor.net_area
@@ -1242,14 +1256,16 @@ module HVACSizing
   # Calculates heating and cooling loads for floors.
   #
   # @param mj [MJValues] Object with a collection of misc Manual J values
+  # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param all_zone_loads [Hash] Map of HPXML::Zones => DesignLoadValues object
   # @param all_space_loads [Hash] Map of HPXML::Spaces => DesignLoadValues object
   # @return [nil]
-  def self.process_load_floors(mj, hpxml_bldg, all_zone_loads, all_space_loads)
+  def self.process_load_floors(mj, hpxml_header, hpxml_bldg, all_zone_loads, all_space_loads)
     hpxml_bldg.floors.each do |floor|
-      next unless floor.is_floor
       next unless floor.is_thermal_boundary
+      next if hpxml_header.whole_sfa_or_mf_building_sim && ((not floor.sameas_id.nil?) || (floor.additional_properties.respond_to? :adjacent_hpxml_id)) # Ignore inter-unit heat transfer
+      next unless floor.is_floor
 
       space = floor.space
       zone = space.zone
@@ -1264,13 +1280,11 @@ module HVACSizing
         clg_htm = u_floor * (mj.ctd - 5.0 + mj.daily_range_temp_adjust[mj.daily_range_num])
         htg_htm = u_floor * htd_adj
       else # Partition floor
-        adjacent_space = floor.exterior_adjacent_to
-        if [HPXML::LocationCrawlspaceVented, HPXML::LocationCrawlspaceUnvented, HPXML::LocationBasementUnconditioned].include?(adjacent_space)
-
+        if [HPXML::LocationCrawlspaceVented, HPXML::LocationCrawlspaceUnvented, HPXML::LocationBasementUnconditioned].include?(floor.exterior_adjacent_to)
           sum_ua_wall = 0.0
           sum_a_wall = 0.0
           hpxml_bldg.foundation_walls.each do |foundation_wall|
-            next unless foundation_wall.is_exterior && foundation_wall.interior_adjacent_to == adjacent_space
+            next unless foundation_wall.is_exterior && foundation_wall.interior_adjacent_to == floor.exterior_adjacent_to
 
             bg_area = foundation_wall.below_grade_area
             if bg_area > 0
@@ -1287,7 +1301,7 @@ module HVACSizing
             sum_ua_wall += (u_wall_ag * ag_area)
           end
           hpxml_bldg.walls.each do |wall|
-            next unless wall.is_exterior && wall.interior_adjacent_to == adjacent_space
+            next unless wall.is_exterior && wall.interior_adjacent_to == floor.exterior_adjacent_to
 
             sum_a_wall += wall.net_area
             sum_ua_wall += (1.0 / wall.insulation_assembly_r_value * wall.net_area)
@@ -1301,11 +1315,11 @@ module HVACSizing
 
           # Calculate partition temperature different cooling (PTDC) per Manual J Figure A12-17
           # Calculate partition temperature different heating (PTDH) per Manual J Figure A12-6
-          if [HPXML::LocationCrawlspaceVented].include? adjacent_space
+          if [HPXML::LocationCrawlspaceVented].include? floor.exterior_adjacent_to
             # Vented or Leaky
             ptdc_floor = mj.ctd / (1.0 + (4.0 * u_floor) / (u_wall + 0.11))
             ptdh_floor = htd_adj / (1.0 + (4.0 * u_floor) / (u_wall + 0.11))
-          elsif [HPXML::LocationCrawlspaceUnvented, HPXML::LocationBasementUnconditioned].include? adjacent_space
+          elsif [HPXML::LocationCrawlspaceUnvented, HPXML::LocationBasementUnconditioned].include? floor.exterior_adjacent_to
             # Sealed Tight
             ptdc_floor = u_wall * mj.ctd / (4.0 * u_floor + u_wall)
             ptdh_floor = u_wall * htd_adj / (4.0 * u_floor + u_wall)
@@ -1314,9 +1328,9 @@ module HVACSizing
           clg_htm = u_floor * ptdc_floor
           htg_htm = u_floor * ptdh_floor
         else # E.g., floor over garage
-          htd_adj = mj.heat_setpoint - mj.heat_design_temps[adjacent_space]
+          htd_adj = mj.heat_setpoint - mj.heat_design_temps[floor.exterior_adjacent_to]
           htd_adj += 25.0 if has_radiant_floor # Manual J Figure A12-6 footnote 2), and Table 4A: Radiant floor over garage: HTM = U-Value × (HTD + 25)
-          clg_htm = u_floor * (mj.cool_design_temps[adjacent_space] - mj.cool_setpoint)
+          clg_htm = u_floor * (mj.cool_design_temps[floor.exterior_adjacent_to] - mj.cool_setpoint)
           htg_htm = u_floor * htd_adj
         end
       end
@@ -1560,11 +1574,11 @@ module HVACSizing
 
       # Infiltration assignment by exterior wall area
       zone.spaces.each do |space|
-        space.additional_properties.wall_area_ratio = space.additional_properties.total_exposed_wall_area / bldg_exposed_wall_area
+        space.additional_properties.wall_area_ratio = (bldg_exposed_wall_area == 0.0) ? 0.0 : space.additional_properties.total_exposed_wall_area / bldg_exposed_wall_area
         all_space_loads[space].Heat_Infil = bldg_Heat_Infil * space.additional_properties.wall_area_ratio
         all_space_loads[space].Cool_Infil_Sens = bldg_Cool_Infil_Sens * space.additional_properties.wall_area_ratio
       end
-      zone_wall_area_ratio = zone.spaces.map { |space| space.additional_properties.total_exposed_wall_area }.sum / bldg_exposed_wall_area
+      zone_wall_area_ratio = (bldg_exposed_wall_area == 0.0) ? 0.0 : (zone.spaces.map { |space| space.additional_properties.total_exposed_wall_area }.sum / bldg_exposed_wall_area)
       all_zone_loads[zone].Heat_Infil = bldg_Heat_Infil * zone_wall_area_ratio
       all_zone_loads[zone].Cool_Infil_Sens = bldg_Cool_Infil_Sens * zone_wall_area_ratio
       all_zone_loads[zone].Cool_Infil_Lat = bldg_Cool_Infil_Lat * zone_wall_area_ratio
@@ -1874,7 +1888,7 @@ module HVACSizing
           # Calculate the delivery effectiveness
           de_prev = de
           de = calc_delivery_effectiveness_heating(mj, q_s, q_r, heat_cfm, heat_load_next, t_amb_s, t_amb_r, a_s, a_r, mj.heat_setpoint, f_regain_s, f_regain_r, rvalue_s, rvalue_r)
-          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NREL/OpenStudio-HPXML/pull/2004
+          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2004
 
           # Calculate the increase in heating load due to ducts
           heat_load_prev = heat_load_next
@@ -1927,7 +1941,7 @@ module HVACSizing
           # Calculate the delivery effectiveness
           de_prev = de
           de = calc_delivery_effectiveness_cooling(mj, q_s, q_r, clg_ap.leaving_air_temp, cool_cfm, cool_load_sens, cool_load_tot, t_amb_s, t_amb_r, a_s, a_r, mj.cool_setpoint, f_regain_s, f_regain_r, h_r, rvalue_s, rvalue_r)
-          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NREL/OpenStudio-HPXML/pull/2004
+          de = (de + de_prev) / 2.0 unless de_prev.nil? # Force towards convergence, see https://github.com/NatLabRockies/OpenStudio-HPXML/pull/2004
 
           # Calculate the increase in cooling load due to ducts
           cool_load_tot_prev = cool_load_tot_next
@@ -2618,7 +2632,7 @@ module HVACSizing
     hr_indoor_cooling_rated = Psychrometrics.w_fT_Twb_P(rated_idb, rated_iwb, rated_barometric_pressure_psi) # [lbm/lbm]
 
     # Calculate A_o using rated conditions; used to calculate an initial estimate of the design SHR
-    a_o_rated = Psychrometrics.CoilAoFactor(rated_idb, rated_barometric_pressure_psi, UnitConversions.convert(cool_cap_rated, 'btu/hr', 'kbtu/hr'), cool_cfm_rated, clg_ap.cool_rated_shr_gross, hr_indoor_cooling_rated)
+    a_o_rated = Psychrometrics.CoilAoFactor(rated_idb, rated_barometric_pressure_psi, cool_cap_rated, cool_cfm_rated, clg_ap.cool_rated_shr_gross, hr_indoor_cooling_rated)
     cool_cap_design = hvac_sizings.Cool_Load_Tot
 
     # initial estimate for design airflow rate [cfm]
@@ -2639,7 +2653,7 @@ module HVACSizing
 
       # Calculate the coil SHR at the given incoming air state, CFM, total capacity, and coil Ao factor
       # CFM changes in the iteration based on current value of design_shr
-      design_shr = Psychrometrics.CalculateSHR(mj.cool_setpoint, mj.p_psi, UnitConversions.convert(cool_cap_design, 'btu/hr', 'kbtu/hr'), airflow, a_o_rated, hr_indoor_cooling_design)
+      design_shr = Psychrometrics.CalculateSHR(mj.cool_setpoint, mj.p_psi, cool_cap_design, airflow, a_o_rated, hr_indoor_cooling_design)
 
       # calculate sensible/latent split at design conditions
       cool_sens_cap_design = cool_cap_design * design_shr
@@ -2789,7 +2803,7 @@ module HVACSizing
 
       entering_temp = clg_ap.design_chw
       hvac_cooling_speed = get_nominal_speed(clg_ap, true)
-      if [HPXML::AdvancedResearchGroundToAirHeatPumpModelTypeStandard].include? hpxml_header.ground_to_air_heat_pump_model_type
+      if [HPXML::GroundToAirHeatPumpModelTypeStandard].include? hpxml_header.ground_to_air_heat_pump_model_type
         # TODO: replace hardcoded bypass factor and curve?
         gshp_coil_bf = 0.0806
         gshp_coil_bf_ft_spec = [1.21005458, -0.00664200, 0.00000000, 0.00348246, 0.00000000, 0.00000000]
@@ -2814,7 +2828,7 @@ module HVACSizing
         hvac_sizings.Cool_Capacity = cool_cap_design / total_cap_curve_value
         hvac_sizings.Cool_Capacity_Sens = hvac_sizings.Cool_Capacity * clg_ap.cool_rated_shr_gross
         hvac_sizings.Cool_Airflow = calc_airflow_rate(:clg, hvac_cooling, hvac_sizings.Cool_Capacity, hpxml_bldg)
-      elsif [HPXML::AdvancedResearchGroundToAirHeatPumpModelTypeExperimental].include? hpxml_header.ground_to_air_heat_pump_model_type
+      elsif [HPXML::GroundToAirHeatPumpModelTypeExperimental].include? hpxml_header.ground_to_air_heat_pump_model_type
         total_cap_curve_value = MathTools.biquadratic(UnitConversions.convert(mj.cool_indoor_wetbulb, 'F', 'C'), UnitConversions.convert(entering_temp, 'F', 'C'), clg_ap.cool_cap_ft_spec[hvac_cooling_speed])
         calculate_cooling_capacities(mj, clg_ap, hvac_sizings, hpxml_bldg.header.manualj_humidity_setpoint, total_cap_curve_value, undersize_limit, oversize_limit, HVAC::GroundSourceCoolRatedIDB, HVAC::GroundSourceCoolRatedIWB, hvac_cooling, hpxml_bldg)
       end
@@ -2863,6 +2877,8 @@ module HVACSizing
       end
     end
 
+    heating_load = hvac_sizings.Heat_Load
+
     if hvac_sizings.Heat_Load <= 0
 
       hvac_sizings.Heat_Capacity = 0.0
@@ -2874,7 +2890,7 @@ module HVACSizing
            HPXML::HVACTypeHeatPumpPTHP,
            HPXML::HVACTypeHeatPumpRoom].include? heating_type
 
-      calculate_heat_pump_capacities(mj, runner, hvac_sizings, weather, hvac_heating, total_cap_curve_value, hvac_system, oversize_limit, oversize_delta, hpxml_bldg, hpxml_header)
+      heating_load = calculate_heat_pump_capacities(mj, runner, hvac_sizings, weather, hvac_heating, total_cap_curve_value, hvac_system, oversize_limit, oversize_delta, hpxml_bldg, hpxml_header)
 
       hvac_sizings.Heat_Capacity_Supp = calculate_heat_pump_backup_load(mj, hvac_heating, hvac_sizings.Heat_Load_Supp, hvac_sizings.Heat_Capacity, hpxml_bldg)
       hvac_sizings.Heat_Airflow = calc_airflow_rate(:htg, hvac_heating, hvac_sizings.Heat_Capacity, hpxml_bldg)
@@ -2885,7 +2901,7 @@ module HVACSizing
       hvac_sizings.Heat_Capacity = hvac_sizings.Heat_Load / htg_cap_curve_value
       hvac_sizings.Heat_Capacity_Supp = hvac_sizings.Heat_Load_Supp
       if hvac_sizings.Cool_Capacity > 0
-        if (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::AdvancedResearchGroundToAirHeatPumpModelTypeStandard) && (hvac_heating.compressor_type == HPXML::HVACCompressorTypeSingleStage)
+        if (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeStandard) && (hvac_heating.compressor_type == HPXML::HVACCompressorTypeSingleStage)
           # For single stage compressor, when heating capacity is much larger than cooling capacity,
           # in order to avoid frequent cycling in cooling mode, heating capacity is derated to 75%.
           # Currently only keep it for standard ghp models
@@ -2946,7 +2962,7 @@ module HVACSizing
     # If HERS sizing methodology, ensure HP capacity is at least equal to larger of
     # heating and sensible cooling loads.
     if is_heatpump_with_both_htg_and_clg && (hpxml_bldg.header.heat_pump_sizing_methodology == HPXML::HeatPumpSizingHERS)
-      min_capacity = [hvac_sizings.Heat_Load, hvac_sizings.Cool_Load_Sens].max
+      min_capacity = [heating_load, hvac_sizings.Cool_Load_Sens].max
       if hvac_sizings.Cool_Capacity < min_capacity
         scaling_factor = min_capacity / hvac_sizings.Cool_Capacity
         hvac_sizings.Cool_Capacity *= scaling_factor
@@ -3408,11 +3424,22 @@ module HVACSizing
       cooling_month = 6 # July
     end
 
-    rtf_DesignMon_Heat = [0.25, (71.0 - weather.data.MonthlyAvgDrybulbs[heating_month]) / mj.htd].max
-    rtf_DesignMon_Cool = [0.25, (weather.data.MonthlyAvgDrybulbs[cooling_month] - 76.0) / mj.ctd].max
+    # Runtime fraction average in heating/cooling months, assumed
+    if mj.htd > 0
+      rtf_design_mon_heat = (mj.heat_setpoint - weather.data.MonthlyAvgDrybulbs[heating_month]) / mj.htd
+    else
+      rtf_design_mon_heat = 0
+    end
+    if mj.ctd > 0
+      rtf_design_mon_cool = (weather.data.MonthlyAvgDrybulbs[cooling_month] - mj.cool_setpoint) / mj.ctd
+    else
+      rtf_design_mon_cool = 0
+    end
+    rtf_design_mon_heat = [[rtf_design_mon_heat, 0.25].max, 1.0].min
+    rtf_design_mon_cool = [[rtf_design_mon_cool, 0.25].max, 1.0].min
 
-    nom_length_heat = (1.0 - 1.0 / clg_ap.heat_rated_cops[0]) * (r_value_bore + r_value_ground * rtf_DesignMon_Heat) / (weather.data.DeepGroundAnnualTemp - (2.0 * clg_ap.design_hw - clg_ap.design_delta_t) / 2.0) * UnitConversions.convert(1.0, 'ton', 'Btu/hr')
-    nom_length_cool = (1.0 + 1.0 / clg_ap.cool_rated_cops[0]) * (r_value_bore + r_value_ground * rtf_DesignMon_Cool) / ((2.0 * clg_ap.design_chw + clg_ap.design_delta_t) / 2.0 - weather.data.DeepGroundAnnualTemp) * UnitConversions.convert(1.0, 'ton', 'Btu/hr')
+    nom_length_heat = (1.0 - 1.0 / clg_ap.heat_rated_cops[0]) * (r_value_bore + r_value_ground * rtf_design_mon_heat) / (weather.data.DeepGroundAnnualTemp - (2.0 * clg_ap.design_hw - clg_ap.design_delta_t) / 2.0) * UnitConversions.convert(1.0, 'ton', 'Btu/hr')
+    nom_length_cool = (1.0 + 1.0 / clg_ap.cool_rated_cops[0]) * (r_value_bore + r_value_ground * rtf_design_mon_cool) / ((2.0 * clg_ap.design_chw + clg_ap.design_delta_t) / 2.0 - weather.data.DeepGroundAnnualTemp) * UnitConversions.convert(1.0, 'ton', 'Btu/hr')
 
     return nom_length_heat, nom_length_cool
   end
@@ -3623,7 +3650,7 @@ module HVACSizing
   # @param oversize_limit [Double] Oversize fraction (frac)
   # @param oversize_delta [Double] Oversize delta (Btu/hr)
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
-  # @return [nil]
+  # @return [Double] Design heating load used for sizing the heat pump
   def self.calculate_heat_pump_capacities(mj, runner, hvac_sizings, weather, hvac_heating, cool_cap_adj_factor, hvac_system,
                                           oversize_limit, oversize_delta, hpxml_bldg, hpxml_header)
 
@@ -3631,6 +3658,13 @@ module HVACSizing
       min_compressor_temp = hvac_heating.backup_heating_switchover_temp
     elsif not hvac_heating.compressor_lockout_temp.nil?
       min_compressor_temp = hvac_heating.compressor_lockout_temp
+    end
+
+    # If switchover temperature is high (e.g., 40F for a dual-fuel heat pump), instead use
+    # 25F (proposed for ANSI 301) to allow some extra capacity should the homeowner want to
+    # use a lower switchover temperature later (say, based on changes to local utility rates).
+    if not min_compressor_temp.nil?
+      min_compressor_temp = [min_compressor_temp, 25.0].min
     end
 
     if (not min_compressor_temp.nil?) && (min_compressor_temp > hpxml_bldg.header.manualj_heating_design_temp)
@@ -3679,6 +3713,8 @@ module HVACSizing
       hvac_sizings.Cool_Airflow = cfm_per_btuh * hvac_sizings.Cool_Capacity
       hvac_sizings.Heat_Capacity = hvac_sizings.Cool_Capacity
     end
+
+    return heating_load
   end
 
   # Retrieves a collection of ventilation information from the HPXML building.
@@ -3851,7 +3887,7 @@ module HVACSizing
   # @param hvac_heating_speed [Integer] Array index of the nominal speed
   # @return [Double] Heating capacity fraction of nominal
   def self.calc_gshp_htg_curve_value(htg_ap, hpxml_header, db_temp, w_temp, hvac_heating_speed)
-    if (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::AdvancedResearchGroundToAirHeatPumpModelTypeStandard)
+    if (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeStandard)
 
       # Reference conditions in thesis with largest capacity:
       # See Appendix B Figure B.3 of  https://hvac.okstate.edu/sites/default/files/pubs/theses/MS/27-Tang_Thesis_05.pdf
@@ -3861,7 +3897,7 @@ module HVACSizing
       w_temp = UnitConversions.convert(w_temp, 'F', 'K')
 
       htg_cap_curve_value = MathTools.quadlinear(db_temp / ref_temp, w_temp / ref_temp, 1.0, 1.0, htg_ap.heat_cap_curve_spec[hvac_heating_speed])
-    elsif (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::AdvancedResearchGroundToAirHeatPumpModelTypeExperimental)
+    elsif (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental)
       htg_cap_curve_value = MathTools.biquadratic(UnitConversions.convert(db_temp, 'F', 'C'), UnitConversions.convert(w_temp, 'F', 'C'), htg_ap.heat_cap_ft_spec[hvac_heating_speed])
     end
 
@@ -4404,7 +4440,7 @@ module HVACSizing
       wall_ufactor = 1.0 / wall.insulation_assembly_r_value
 
       if wall_type == HPXML::WallTypeWoodStud
-        if wall.siding == HPXML::SidingTypeBrick
+        if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
           if wall_ufactor <= 0.070
             table_4a_wall_group = 'K'
           elsif wall_ufactor <= 0.083
@@ -4445,7 +4481,7 @@ module HVACSizing
         end
 
       elsif wall_type == HPXML::WallTypeSteelStud
-        if wall.siding == HPXML::SidingTypeBrick
+        if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
           if wall_ufactor <= 0.090
             table_4a_wall_group = 'K'
           elsif wall_ufactor <= 0.105
@@ -4487,20 +4523,20 @@ module HVACSizing
 
       elsif wall_type == HPXML::WallTypeDoubleWoodStud
         table_4a_wall_group = 'J' # assumed since MJ8 does not include double stud constructions
-        if wall.siding == HPXML::SidingTypeBrick
+        if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
           table_4a_wall_group = 'K'
         end
 
       elsif wall_type == HPXML::WallTypeSIP
         # Manual J refers to SIPs as Structural Foam Panel (SFP)
         if wall_ufactor >= (0.072 + 0.050) / 2
-          if wall.siding == HPXML::SidingTypeBrick
+          if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
             table_4a_wall_group = 'J'
           else
             table_4a_wall_group = 'G'
           end
         elsif wall_ufactor >= 0.050
-          if wall.siding == HPXML::SidingTypeBrick
+          if [HPXML::SidingTypeBrick, HPXML::SidingTypeStone].include? wall.siding
             table_4a_wall_group = 'K'
           else
             table_4a_wall_group = 'I'
@@ -4525,7 +4561,7 @@ module HVACSizing
           table_4a_wall_group = 'E'
         end
 
-      elsif [HPXML::WallTypeBrick, HPXML::WallTypeAdobe, HPXML::WallTypeConcrete].include? wall_type
+      elsif [HPXML::WallTypeBrick, HPXML::WallTypeAdobe, HPXML::WallTypeConcrete, HPXML::WallTypeStone].include? wall_type
         # Two Courses Brick or 8 Inches Concrete
         if wall_ufactor >= (0.218 + 0.179) / 2
           table_4a_wall_group = 'G'
@@ -4553,7 +4589,7 @@ module HVACSizing
           table_4a_wall_group = 'K'
         end
 
-      elsif [HPXML::WallTypeICF, HPXML::WallTypeStrawBale, HPXML::WallTypeStone].include? wall_type
+      elsif [HPXML::WallTypeICF, HPXML::WallTypeStrawBale].include? wall_type
         table_4a_wall_group = 'K'
 
       end
@@ -4756,7 +4792,7 @@ module HVACSizing
     end
 
     assembly_r = Material.FoundationWallMaterial(foundation_wall.type, foundation_wall.thickness).rvalue
-    assembly_r += Material.AirFilmVertical.rvalue + Material.AirFilmOutside.rvalue
+    assembly_r += Material.AirFilmIndoorWall.rvalue + Material.AirFilmOutside.rvalue
     if not include_insulation_layers
       return 1.0 / assembly_r
     end
@@ -4934,7 +4970,7 @@ module HVACSizing
   # @param window [HPXML::Window] The window of interest
   # @return [Double] Interior shading coefficient
   def self.get_window_interior_shading_coefficient(window)
-    return 1.0 if window.interior_shading_type == HPXML::InteriorShadingTypeNone
+    return 1.0 if window.interior_shading_type == HPXML::InteriorShadingTypeNotPresent
 
     # Look up window type
     if window.glass_layers.nil? || window.glass_type.nil?

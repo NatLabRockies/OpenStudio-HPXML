@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # see the URL below for information on how to write OpenStudio measures
-# http://nrel.github.io/OpenStudio-user-documentation/reference/measure_writing_guide/
+# http://natlabrockies.github.io/OpenStudio-user-documentation/reference/measure_writing_guide/
 
 require 'msgpack'
 require 'time'
@@ -16,7 +16,6 @@ require_relative '../HPXMLtoOpenStudio/resources/util'
 class ReportUtilityBills < OpenStudio::Measure::ReportingMeasure
   # human readable name
   def name
-    # Measure name should be the title case of the class name.
     return 'Utility Bills Report'
   end
 
@@ -42,19 +41,19 @@ class ReportUtilityBills < OpenStudio::Measure::ReportingMeasure
     format_chs << 'json'
     format_chs << 'msgpack'
     # format_chs << 'csv_dview': # TODO: support this
-    arg = OpenStudio::Measure::OSArgument::makeChoiceArgument('output_format', format_chs, false)
+    arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('output_format', format_chs, false)
     arg.setDisplayName('Output Format')
     arg.setDescription('The file format of the annual (and timeseries, if requested) outputs.')
     arg.setDefaultValue('csv')
     args << arg
 
-    arg = OpenStudio::Measure::OSArgument::makeBoolArgument('include_annual_bills', false)
+    arg = OpenStudio::Measure::OSArgument.makeBoolArgument('include_annual_bills', false)
     arg.setDisplayName('Generate Annual Utility Bills')
     arg.setDescription('Generates output file containing annual utility bills.')
     arg.setDefaultValue(true)
     args << arg
 
-    arg = OpenStudio::Measure::OSArgument::makeBoolArgument('include_monthly_bills', false)
+    arg = OpenStudio::Measure::OSArgument.makeBoolArgument('include_monthly_bills', false)
     arg.setDisplayName('Generate Monthly Utility Bills')
     arg.setDescription('Generates output file containing monthly utility bills.')
     arg.setDefaultValue(true)
@@ -63,29 +62,29 @@ class ReportUtilityBills < OpenStudio::Measure::ReportingMeasure
     timestamp_chs = OpenStudio::StringVector.new
     timestamp_chs << 'start'
     timestamp_chs << 'end'
-    arg = OpenStudio::Measure::OSArgument::makeChoiceArgument('monthly_timestamp_convention', timestamp_chs, false)
+    arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('monthly_timestamp_convention', timestamp_chs, false)
     arg.setDisplayName('Generate Monthly Output: Timestamp Convention')
     arg.setDescription('Determines whether monthly timestamps use the start-of-period or end-of-period convention.')
     arg.setDefaultValue('start')
     args << arg
 
-    arg = OpenStudio::Measure::OSArgument::makeStringArgument('annual_output_file_name', false)
+    arg = OpenStudio::Measure::OSArgument.makeStringArgument('annual_output_file_name', false)
     arg.setDisplayName('Annual Output File Name')
     arg.setDescription("If not provided, defaults to 'results_bills.csv' (or 'results_bills.json' or 'results_bills.msgpack').")
     args << arg
 
-    arg = OpenStudio::Measure::OSArgument::makeStringArgument('monthly_output_file_name', false)
+    arg = OpenStudio::Measure::OSArgument.makeStringArgument('monthly_output_file_name', false)
     arg.setDisplayName('Monthly Output File Name')
     arg.setDescription("If not provided, defaults to 'results_bills_monthly.csv' (or 'results_bills_monthly.json' or 'results_bills_monthly.msgpack').")
     args << arg
 
-    arg = OpenStudio::Measure::OSArgument::makeBoolArgument('register_annual_bills', false)
+    arg = OpenStudio::Measure::OSArgument.makeBoolArgument('register_annual_bills', false)
     arg.setDisplayName('Register Annual Utility Bills')
     arg.setDescription('Registers annual utility bills with the OpenStudio runner for downstream processing.')
     arg.setDefaultValue(true)
     args << arg
 
-    arg = OpenStudio::Measure::OSArgument::makeBoolArgument('register_monthly_bills', false)
+    arg = OpenStudio::Measure::OSArgument.makeBoolArgument('register_monthly_bills', false)
     arg.setDisplayName('Register Monthly Utility Bills')
     arg.setDescription('Registers monthly utility bills with the OpenStudio runner for downstream processing.')
     arg.setDefaultValue(false)
@@ -104,28 +103,6 @@ class ReportUtilityBills < OpenStudio::Measure::ReportingMeasure
     if !(@hpxml_header.sim_begin_month == 1 && @hpxml_header.sim_begin_day == 1 && @hpxml_header.sim_end_month == 12 && @hpxml_header.sim_end_day == 31)
       if @hpxml_buildings.count { |hpxml_bldg| !hpxml_bldg.pv_systems.empty? } > 0
         warnings << 'A full annual simulation is required for calculating utility bills for homes with PV.'
-      end
-    end
-
-    # Require not DSE
-    @hpxml_buildings.each do |hpxml_bldg|
-      (hpxml_bldg.heating_systems + hpxml_bldg.heat_pumps).each do |htg_system|
-        next unless (htg_system.is_a?(HPXML::HeatingSystem) && htg_system.is_heat_pump_backup_system) || htg_system.fraction_heat_load_served > 0
-        next if htg_system.distribution_system_idref.nil?
-        next unless htg_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
-        next if htg_system.distribution_system.annual_heating_dse.nil?
-        next if htg_system.distribution_system.annual_heating_dse == 1
-
-        warnings << 'DSE is not currently supported when calculating utility bills.'
-      end
-      (hpxml_bldg.cooling_systems + hpxml_bldg.heat_pumps).each do |clg_system|
-        next unless clg_system.fraction_cool_load_served > 0
-        next if clg_system.distribution_system_idref.nil?
-        next unless clg_system.distribution_system.distribution_system_type == HPXML::HVACDistributionTypeDSE
-        next if clg_system.distribution_system.annual_cooling_dse.nil?
-        next if clg_system.distribution_system.annual_cooling_dse == 1
-
-        warnings << 'DSE is not currently supported when calculating utility bills.'
       end
     end
 
@@ -189,7 +166,7 @@ class ReportUtilityBills < OpenStudio::Measure::ReportingMeasure
 
     # Fuel outputs
     fuels.each do |(fuel_type, is_production), fuel|
-      next unless has_fuel[get_hpxml_fuel(fuel_type)]
+      next unless has_fuel[Outputs::FT_to_HPXML_fuel_map[fuel_type]]
       next if is_production && !has_pv # we don't need to request this meter if there isn't pv
 
       Model.add_output_meter(model, meter_name: fuel.meter, reporting_frequency: 'monthly')
@@ -514,7 +491,7 @@ class ReportUtilityBills < OpenStudio::Measure::ReportingMeasure
   def get_utility_rates(hpxml_path, has_fuel, utility_rates, bill_scenario, pv_monthly_fee, num_units = 1)
     warnings = []
     utility_rates.each do |fuel_type, rate|
-      next unless has_fuel[get_hpxml_fuel(fuel_type)]
+      next unless has_fuel[Outputs::FT_to_HPXML_fuel_map[fuel_type]]
 
       case fuel_type
       when FT::Elec
@@ -750,20 +727,6 @@ class ReportUtilityBills < OpenStudio::Measure::ReportingMeasure
       vals << row[row.keys[0]][index] * unit_conv
     end
     return vals
-  end
-
-  # Get HPXML fuel type according to output reporting fuel type constant.
-  #
-  # @param fuel_type [String] Constant fuel type for output reporting
-  # @return [String] HPXML fuel type
-  def get_hpxml_fuel(fuel_type)
-    return { FT::Elec => HPXML::FuelTypeElectricity,
-             FT::Gas => HPXML::FuelTypeNaturalGas,
-             FT::Oil => HPXML::FuelTypeOil,
-             FT::Propane => HPXML::FuelTypePropane,
-             FT::WoodCord => HPXML::FuelTypeWoodCord,
-             FT::WoodPellets => HPXML::FuelTypeWoodPellets,
-             FT::Coal => HPXML::FuelTypeCoal }[fuel_type]
   end
 end
 

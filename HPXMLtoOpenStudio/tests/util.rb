@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
-def cleanup_results_files
+def cleanup_output_files(list_of_additional_files = [])
   ['csv', 'json', 'msgpack'].each do |file_ext|
     Dir["#{File.dirname(__FILE__)}/results_*.#{file_ext}"].each do |results_file|
       File.delete(results_file)
     end
   end
-  if File.exist? File.join(File.dirname(__FILE__), 'in.schedules.csv')
-    File.delete(File.join(File.dirname(__FILE__), 'in.schedules.csv'))
+  Dir["#{File.dirname(__FILE__)}/in.*"].each do |in_file|
+    File.delete(in_file)
+  end
+  list_of_additional_files.each do |addtl_file|
+    File.delete(addtl_file) if File.exist? addtl_file
   end
 end
 

@@ -2,7 +2,6 @@
 
 require_relative '../resources/minitest_helper'
 require 'openstudio'
-require 'openstudio/measure/ShowRunnerOutput'
 require 'fileutils'
 require_relative '../measure.rb'
 require_relative '../resources/util.rb'
@@ -12,12 +11,13 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
   def setup
     @root_path = File.absolute_path(File.join(File.dirname(__FILE__), '..', '..'))
     @sample_files_path = File.join(@root_path, 'workflow', 'sample_files')
-    @tmp_hpxml_path = File.join(@sample_files_path, 'tmp.xml')
+    @tmp_hpxml_path = File.join(File.dirname(__FILE__), 'tmp.xml')
+    @schema_validator = XMLValidator.get_xml_validator(File.join(File.dirname(__FILE__), '..', 'resources', 'hpxml_schema', 'HPXML.xsd'))
+    @schematron_validator = XMLValidator.get_xml_validator(File.join(File.dirname(__FILE__), '..', 'resources', 'hpxml_schematron', 'EPvalidator.sch'))
   end
 
   def teardown
-    File.delete(@tmp_hpxml_path) if File.exist? @tmp_hpxml_path
-    cleanup_results_files
+    cleanup_output_files([@tmp_hpxml_path])
   end
 
   def get_eed_for_ventilation(model, ee_name)
@@ -132,7 +132,7 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     assert_in_epsilon(UnitConversions.convert(9.75, 'ft', 'm'), program_values['z_s'].sum, 0.01)
   end
 
-  def test_infiltration_natural_ela
+  def test_infiltration_ela
     args_hash = {}
     args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-enclosure-infil-ela.xml'))
     model, _hpxml, _hpxml_bldg = _test_measure(args_hash)
@@ -140,6 +140,19 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     # Check infiltration/ventilation program
     program_values = get_ems_values(model.getEnergyManagementSystemPrograms, "#{Constants::ObjectTypeInfiltration} program")
     assert_in_epsilon(0.0904, program_values['c'].sum, 0.01)
+    assert_in_epsilon(0.0573, program_values['Cs'].sum, 0.01)
+    assert_in_epsilon(0.1446, program_values['Cw'].sum, 0.01)
+    assert_in_epsilon(UnitConversions.convert(9.75, 'ft', 'm'), program_values['z_s'].sum, 0.01)
+  end
+
+  def test_infiltration_sla
+    args_hash = {}
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-enclosure-infil-sla.xml'))
+    model, _hpxml, _hpxml_bldg = _test_measure(args_hash)
+
+    # Check infiltration/ventilation program
+    program_values = get_ems_values(model.getEnergyManagementSystemPrograms, "#{Constants::ObjectTypeInfiltration} program")
+    assert_in_epsilon(0.0914, program_values['c'].sum, 0.01)
     assert_in_epsilon(0.0573, program_values['Cs'].sum, 0.01)
     assert_in_epsilon(0.1446, program_values['Cw'].sum, 0.01)
     assert_in_epsilon(UnitConversions.convert(9.75, 'ft', 'm'), program_values['z_s'].sum, 0.01)
@@ -607,6 +620,15 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
   end
 
   def test_ducts_leakage_cfm25
+    def get_dx_max_capacity(detailed_perf_data, odb)
+      capacities = detailed_perf_data.select { |dp| dp.outdoor_temperature == odb }.map { |dp| dp.capacity }
+      return UnitConversions.convert(capacities.max, 'Btu/hr', 'ton')
+    end
+
+    furnance_cfm_per_ton = 240
+    dx_cfm_per_ton = 360
+
+    # Central AC (1-speed) plus furnace
     args_hash = {}
     args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base.xml'))
     model, _hpxml, hpxml_bldg = _test_measure(args_hash)
@@ -614,13 +636,54 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     # Get HPXML values
     supply_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeSupply }
     return_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeReturn }
-    supply_leakage_cfm25 = supply_leakage.duct_leakage_value
-    return_leakage_cfm25 = return_leakage.duct_leakage_value
+    max_heating_capacity = UnitConversions.convert(hpxml_bldg.heating_systems[0].heating_capacity, 'Btu/hr', 'ton')
+    max_cooling_capacity = get_dx_max_capacity(hpxml_bldg.cooling_systems[0].cooling_detailed_performance_data, HVAC::AirSourceCoolRatedODB)
+    max_airflow_cfm = [max_heating_capacity * furnance_cfm_per_ton, max_cooling_capacity * dx_cfm_per_ton].max
+    supply_leakage_frac = supply_leakage.duct_leakage_value / max_airflow_cfm
+    return_leakage_frac = return_leakage.duct_leakage_value / max_airflow_cfm
 
     # Check ducts program
     program_values = get_ems_values(model.getEnergyManagementSystemSubroutines, 'duct subroutine')
-    assert_in_epsilon(supply_leakage_cfm25, UnitConversions.convert(program_values['f_sup'].sum, 'm^3/s', 'cfm'), 0.01)
-    assert_in_epsilon(return_leakage_cfm25, UnitConversions.convert(program_values['f_ret'].sum, 'm^3/s', 'cfm'), 0.01)
+    assert_in_epsilon(supply_leakage_frac, program_values['f_sup'].sum, 0.01)
+    assert_in_epsilon(return_leakage_frac, program_values['f_ret'].sum, 0.01)
+
+    # ASHP (2-speed)
+    args_hash = {}
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-2-speed.xml'))
+    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+
+    # Get HPXML values
+    supply_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeSupply }
+    return_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeReturn }
+    max_heating_capacity = get_dx_max_capacity(hpxml_bldg.heat_pumps[0].heating_detailed_performance_data, HVAC::AirSourceHeatRatedODB)
+    max_cooling_capacity = get_dx_max_capacity(hpxml_bldg.heat_pumps[0].cooling_detailed_performance_data, HVAC::AirSourceCoolRatedODB)
+    max_airflow_cfm = [max_heating_capacity * dx_cfm_per_ton, max_cooling_capacity * dx_cfm_per_ton].max
+    supply_leakage_frac = supply_leakage.duct_leakage_value / max_airflow_cfm
+    return_leakage_frac = return_leakage.duct_leakage_value / max_airflow_cfm
+
+    # Check ducts program
+    program_values = get_ems_values(model.getEnergyManagementSystemSubroutines, 'duct subroutine')
+    assert_in_epsilon(supply_leakage_frac, program_values['f_sup'].sum, 0.01)
+    assert_in_epsilon(return_leakage_frac, program_values['f_ret'].sum, 0.01)
+
+    # ASHP (variable-speed)
+    args_hash = {}
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-hvac-air-to-air-heat-pump-var-speed.xml'))
+    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+
+    # Get HPXML values
+    supply_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeSupply }
+    return_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeReturn }
+    max_heating_capacity = get_dx_max_capacity(hpxml_bldg.heat_pumps[0].heating_detailed_performance_data, HVAC::AirSourceHeatRatedODB)
+    max_cooling_capacity = get_dx_max_capacity(hpxml_bldg.heat_pumps[0].cooling_detailed_performance_data, HVAC::AirSourceCoolRatedODB)
+    max_airflow_cfm = [max_heating_capacity * dx_cfm_per_ton, max_cooling_capacity * dx_cfm_per_ton].max
+    supply_leakage_frac = supply_leakage.duct_leakage_value / max_airflow_cfm
+    return_leakage_frac = return_leakage.duct_leakage_value / max_airflow_cfm
+
+    # Check ducts program
+    program_values = get_ems_values(model.getEnergyManagementSystemSubroutines, 'duct subroutine')
+    assert_in_epsilon(supply_leakage_frac, program_values['f_sup'].sum, 0.01)
+    assert_in_epsilon(return_leakage_frac, program_values['f_ret'].sum, 0.01)
   end
 
   def test_ducts_leakage_cfm50
@@ -631,13 +694,18 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     # Get HPXML values
     supply_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeSupply }
     return_leakage = hpxml_bldg.hvac_distributions[0].duct_leakage_measurements.find { |m| m.duct_type == HPXML::DuctTypeReturn }
-    supply_leakage_cfm50 = supply_leakage.duct_leakage_value
-    return_leakage_cfm50 = return_leakage.duct_leakage_value
+    heating_airflow_cfm_per_ton = 240 # furnace
+    cooling_airflow_cfm_per_ton = 360 # central AC
+    heating_airflow_cfm = UnitConversions.convert(hpxml_bldg.heating_systems[0].heating_capacity, 'Btu/hr', 'ton') * heating_airflow_cfm_per_ton
+    cooling_airflow_cfm = UnitConversions.convert(hpxml_bldg.cooling_systems[0].cooling_capacity, 'Btu/hr', 'ton') * cooling_airflow_cfm_per_ton
+    max_airflow_cfm = [heating_airflow_cfm, cooling_airflow_cfm].max
+    supply_leakage_frac = supply_leakage.duct_leakage_value * (25.0 / 50.0)**0.65 / max_airflow_cfm
+    return_leakage_frac = return_leakage.duct_leakage_value * (25.0 / 50.0)**0.65 / max_airflow_cfm
 
     # Check ducts program
     program_values = get_ems_values(model.getEnergyManagementSystemSubroutines, 'duct subroutine')
-    assert_in_epsilon(supply_leakage_cfm50 * (25.0 / 50.0)**0.65, UnitConversions.convert(program_values['f_sup'].sum, 'm^3/s', 'cfm'), 0.01)
-    assert_in_epsilon(return_leakage_cfm50 * (25.0 / 50.0)**0.65, UnitConversions.convert(program_values['f_ret'].sum, 'm^3/s', 'cfm'), 0.01)
+    assert_in_epsilon(supply_leakage_frac, program_values['f_sup'].sum, 0.01)
+    assert_in_epsilon(return_leakage_frac, program_values['f_ret'].sum, 0.01)
   end
 
   def test_ducts_leakage_percent
@@ -692,19 +760,19 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
   def test_infiltration_compartmentalization_area
     # Test conditioned basement
     _hpxml, hpxml_bldg = _create_hpxml('base.xml')
-    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg)
+    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg, nil)
     assert_in_delta(5216, exterior_area, 1.0)
     assert_in_delta(5216, total_area, 1.0)
 
     # Test w/ conditioned basement not within infiltration volume
     hpxml_bldg.foundations[0].within_infiltration_volume = false
-    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg)
+    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg, nil)
     assert_in_delta(2550, exterior_area, 1.0)
     assert_in_delta(2550, total_area, 1.0)
 
     # Test adjacent garage
     _hpxml, hpxml_bldg = _create_hpxml('base-enclosure-garage.xml')
-    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg)
+    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg, nil)
     assert_in_delta(4976, exterior_area, 1.0)
     assert_in_delta(5216, total_area, 1.0)
 
@@ -716,7 +784,7 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     hpxml_bldg.foundations.each do |foundation|
       foundation.within_infiltration_volume = true
     end
-    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg)
+    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg, nil)
     assert_in_delta(5000, exterior_area, 1.0)
     assert_in_delta(5000, total_area, 1.0)
 
@@ -728,13 +796,13 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     hpxml_bldg.foundations.each do |foundation|
       foundation.within_infiltration_volume = false
     end
-    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg)
+    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg, nil)
     assert_in_delta(3900, exterior_area, 1.0)
     assert_in_delta(3900, total_area, 1.0)
 
     # Test multifamily
     _hpxml, hpxml_bldg = _create_hpxml('base-bldgtype-mf-unit.xml')
-    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg)
+    total_area, exterior_area = Defaults.get_compartmentalization_boundary_areas(hpxml_bldg, nil)
     assert_in_delta(686, exterior_area, 1.0)
     assert_in_delta(2780, total_area, 1.0)
   end
@@ -849,7 +917,7 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
       assert_in_epsilon(expected_r, effective_r, 0.1)
     end
 
-    # Buried duct expected values below from Table 13 in https://www.nrel.gov/docs/fy13osti/55876.pdf
+    # Buried duct expected values below from Table 13 in https://docs.nlr.gov/docs/fy13osti/55876.pdf
     # Assuming 6-inch supply ducts and 14-inch return ducts
 
     # Supply, partially buried
@@ -955,14 +1023,31 @@ class HPXMLtoOpenStudioAirflowTest < Minitest::Test
     result = runner.result
 
     # show the output
-    show_output(result) unless result.value.valueName == 'Success'
+    result.showOutput() unless result.value.valueName == 'Success'
 
     # assert that it ran correctly
     assert_equal('Success', result.value.valueName)
 
-    hpxml = HPXML.new(hpxml_path: File.join(File.dirname(__FILE__), 'in.xml'))
+    hpxml_defaults_path = File.join(File.dirname(__FILE__), 'in.xml')
+    if args_hash['hpxml_path'] == @tmp_hpxml_path
+      # Since there is a penalty to performing schema/schematron validation, we only do it for custom models
+      # Sample files already have their in.xml's checked in the workflow tests
+      schema_validator = @schema_validator
+      schematron_validator = @schematron_validator
+    else
+      schema_validator = nil
+      schematron_validator = nil
+    end
+    hpxml = HPXML.new(hpxml_path: hpxml_defaults_path, schema_validator: schema_validator, schematron_validator: schematron_validator)
+    if not hpxml.errors.empty?
+      puts 'ERRORS:'
+      hpxml.errors.each do |error|
+        puts error
+      end
+      flunk "Validation error(s) in #{hpxml_defaults_path}."
+    end
 
-    File.delete(File.join(File.dirname(__FILE__), 'in.xml'))
+    File.delete(hpxml_defaults_path)
 
     return model, hpxml, hpxml.buildings[0]
   end

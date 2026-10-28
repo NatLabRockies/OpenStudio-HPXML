@@ -669,7 +669,7 @@ module Schedule
       # Special Values
       # FUTURE: Assign an object type to the schedules and use that to determine what
       # kind of schedule each is, rather than looking at object names. That would
-      # be more robust. See https://github.com/NREL/OpenStudio-HPXML/issues/1450.
+      # be more robust. See https://github.com/NatLabRockies/OpenStudio-HPXML/issues/1450.
       if sch_name.include? Constants::ObjectTypeWaterHeaterSetpoint
         # Water heater setpoint
         # Temperature of tank < 2C indicates of possibility of freeze.
@@ -834,7 +834,9 @@ module Schedule
       end
     end
 
-    runner.registerWarning("Could not find row='#{schedule_name}' in unavailable_periods.csv; it will not be affected by the '#{col_name}' unavailable period.")
+    if not runner.nil?
+      runner.registerWarning("Could not find row='#{schedule_name}' in unavailable_periods.csv; it will not be affected by the '#{col_name}' unavailable period.")
+    end
     return false
   end
 
@@ -1013,7 +1015,7 @@ class SchedulesFile
     HeatingSetpoint: Column.new('heating_setpoint', false, false, :setpoint),
     CoolingSetpoint: Column.new('cooling_setpoint', false, false, :setpoint),
     WaterHeaterSetpoint: Column.new('water_heater_setpoint', false, false, :setpoint),
-    WaterHeaterOperatingMode: Column.new('water_heater_operating_mode', false, false, :zero_or_one),
+    WaterHeaterHPWHOperatingMode: Column.new('water_heater_operating_mode', false, false, :zero_or_one),
     Battery: Column.new('battery', false, false, :neg_one_to_one),
     BatteryCharging: Column.new('battery_charging', true, false, nil),
     BatteryDischarging: Column.new('battery_discharging', true, false, nil),
@@ -1097,7 +1099,9 @@ class SchedulesFile
         column = Columns.values.find { |c| c.name == col_name }
         if column.nil?
           @schedules[col_name] = col[1..-1]
-          runner.registerWarning("Unknown column found in schedule file: #{col_name}. [context: #{schedules_path}]")
+          if not runner.nil?
+            runner.registerWarning("Unknown column found in schedule file: #{col_name}. [context: #{schedules_path}]")
+          end
           next
         end
         values = col[1..-1].reject { |v| v.nil? }

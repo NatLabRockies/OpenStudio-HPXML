@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<HPXML xmlns='http://hpxmlonline.com/2023/09' schemaVersion='4.2'>
+<HPXML xmlns='http://hpxmlonline.com/2025/12' schemaVersion='5.0'>
   <XMLTransactionHeaderInformation>
     <XMLType>HPXML</XMLType>
     <XMLGeneratedBy>tasks.rb</XMLGeneratedBy>
@@ -72,7 +72,6 @@
               <UnitofMeasure>ACH</UnitofMeasure>
               <AirLeakage>12.16</AirLeakage>
             </BuildingAirLeakage>
-            <InfiltrationVolume>7200.0</InfiltrationVolume>
             <extension>
               <Aext>0.2</Aext>
             </extension>
@@ -84,6 +83,7 @@
             <AtticType>
               <BelowApartment/>
             </AtticType>
+            <AttachedToFloor idref='Floor2'/>
           </Attic>
         </Attics>
         <Foundations>
@@ -92,6 +92,7 @@
             <FoundationType>
               <AboveApartment/>
             </FoundationType>
+            <AttachedToFloor idref='Floor1'/>
           </Foundation>
         </Foundations>
         <Walls>
@@ -104,11 +105,7 @@
             </WallType>
             <Area>685.9</Area>
             <Siding>wood siding</Siding>
-            <SolarAbsorptance>0.7</SolarAbsorptance>
-            <Emittance>0.92</Emittance>
-            <InteriorFinish>
-              <Type>gypsum board</Type>
-            </InteriorFinish>
+            <Color>medium</Color>
             <Insulation>
               <SystemIdentifier id='Wall1Insulation'/>
               <AssemblyEffectiveRValue>22.7</AssemblyEffectiveRValue>
@@ -122,11 +119,6 @@
               <WoodStud/>
             </WallType>
             <Area>293.9</Area>
-            <SolarAbsorptance>0.7</SolarAbsorptance>
-            <Emittance>0.92</Emittance>
-            <InteriorFinish>
-              <Type>gypsum board</Type>
-            </InteriorFinish>
             <Insulation>
               <SystemIdentifier id='Wall2Insulation'/>
               <AssemblyEffectiveRValue>4.0</AssemblyEffectiveRValue>
@@ -157,9 +149,6 @@
               <WoodFrame/>
             </FloorType>
             <Area>900.0</Area>
-            <InteriorFinish>
-              <Type>gypsum board</Type>
-            </InteriorFinish>
             <Insulation>
               <SystemIdentifier id='Floor2Insulation'/>
               <AssemblyEffectiveRValue>2.1</AssemblyEffectiveRValue>
@@ -247,8 +236,8 @@
               <CompressorType>single stage</CompressorType>
               <FractionCoolLoadServed>1.0</FractionCoolLoadServed>
               <AnnualCoolingEfficiency>
-                <Units>SEER</Units>
-                <Value>13.0</Value>
+                <Units>SEER2</Units>
+                <Value>13.4</Value>
               </AnnualCoolingEfficiency>
             </CoolingSystem>
           </HVACPlant>
