@@ -108,7 +108,8 @@ module Constructions
       ]
       match, constr_set, cavity_r = pick_sip_construction_set(assembly_r, constr_sets, interior_film, exterior_film)
       apply_sip_roof(model, surfaces, "#{roof.id} construction", cavity_r,
-                     constr_set.ins_thick_in, constr_set.framing_factor, constr_set.mat_int_finish,
+                     constr_set.ins_thick_in, constr_set.framing_factor, constr_set.sheath_thick_in,
+                     constr_set.mat_int_finish,
                      constr_set.osb_thick_in, constr_set.rigid_r, constr_set.mat_ext_finish,
                      has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade,
                      roof.solar_absorptance, roof.emittance)
@@ -851,6 +852,7 @@ module Constructions
   # @param ins_r [Double] R-value of the insulating core of the SIP (hr-ft2-F/Btu)
   # @param ins_thick_in [Double] Thickness of the insulating core of the SIP (in)
   # @param framing_factor [Double] Fraction of total surface area comprised of framing for windows/doors (frac)
+  # @param sheath_thick_in [Double] Thickness of the SIP sheathing (in)
   # @param mat_int_finish [Material] Material properties for the interior finish (e.g., drywall)
   # @param osb_thick_in [Double] Thickness of the OSB sheathing (in)
   # @param rigid_r [Double] R-value of the continuous insulation (hr-ft2-F/Btu)
@@ -863,7 +865,7 @@ module Constructions
   # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_sip_roof(model, surfaces, constr_name, ins_r, ins_thick_in, framing_factor,
-                          mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish,
+                          sheath_thick_in, mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish,
                           has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade,
                           solar_absorptance = nil, emittance = nil)
 
@@ -912,6 +914,9 @@ module Constructions
     constr.add_layer([mat_framing_inner_outer, mat_spline, mat_ins_inner_outer], 'roof spline layer')
     constr.add_layer([mat_framing_middle, mat_ins_middle, mat_ins_middle], 'roof ins layer')
     constr.add_layer([mat_framing_inner_outer, mat_spline, mat_ins_inner_outer], 'roof spline layer')
+    if sheath_thick_in > 0
+      constr.add_layer(Material.OSBSheathing(sheath_thick_in))
+    end
     if not mat_int_finish.nil?
       constr.add_layer(mat_int_finish)
     end
@@ -1716,6 +1721,7 @@ module Constructions
   # @param ins_r [Double] R-value of the insulating core of the SIP (hr-ft2-F/Btu)
   # @param ins_thick_in [Double] Thickness of the insulating core of the SIP (in)
   # @param framing_factor [Double] Fraction of total surface area comprised of structural framing (frac)
+  # @param sheath_thick_in [Double] Thickness of the SIP sheathing (in)
   # @param mat_int_finish [Material] Material properties for the interior finish (e.g., drywall)
   # @param osb_thick_in [Double] Thickness of the OSB sheathing (in)
   # @param rigid_r [Double] R-value of the continuous insulation (hr-ft2-F/Btu)
@@ -1728,7 +1734,7 @@ module Constructions
   # @param emittance [Double] Emittance of the outermost material (frac)
   # @return [nil]
   def self.apply_sip_floor_ceiling(model, surfaces, constr_name, is_ceiling, ins_r, ins_thick_in,
-                                   framing_factor, mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish,
+                                   framing_factor, sheath_thick_in, mat_int_finish, osb_thick_in, rigid_r, mat_ext_finish,
                                    has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade,
                                    solar_absorptance = nil, emittance = nil)
 
@@ -1776,7 +1782,9 @@ module Constructions
     if not mat_rb.nil?
       constr.add_layer(mat_rb)
     end
-    # Fixme: review the layers, are we missing inner/outer wood layers?
+    if sheath_thick_in > 0
+      constr.add_layer(Material.OSBSheathing(sheath_thick_in))
+    end
     constr.add_layer([mat_framing_inner_outer, mat_spline, mat_ins_inner_outer], "#{constr_type} spline layer")
     constr.add_layer([mat_framing_middle, mat_ins_middle, mat_ins_middle], "#{constr_type} ins layer")
     constr.add_layer([mat_framing_inner_outer, mat_spline, mat_ins_inner_outer], "#{constr_type} spline layer")
@@ -2924,8 +2932,8 @@ module Constructions
       match, constr_set, cavity_r = pick_sip_construction_set(assembly_r, constr_sets, interior_film, exterior_film)
 
       apply_sip_floor_ceiling(model, surface, "#{floor_id} construction", is_ceiling, cavity_r,
-                              constr_set.ins_thick_in, constr_set.framing_factor, constr_set.mat_int_finish,
-                              constr_set.osb_thick_in, constr_set.rigid_r, constr_set.mat_ext_finish,
+                              constr_set.ins_thick_in, constr_set.framing_factor, constr_set.sheath_thick_in,
+                              constr_set.mat_int_finish, constr_set.osb_thick_in, constr_set.rigid_r, constr_set.mat_ext_finish,
                               has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade)
 
     when HPXML::FloorRoofTypeConcrete
