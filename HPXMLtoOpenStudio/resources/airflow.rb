@@ -70,15 +70,28 @@ module Airflow
     # Natural ventilation and whole house fans
     apply_natural_ventilation_and_whole_house_fan(runner, model, spaces, hpxml_bldg, hpxml_header, vent_fans, infil_values, sensors)
 
+    # Warmup workaround, see https://github.com/NatLabRockies/EnergyPlus/pull/11551
+    init_program = Model.add_ems_program(
+      model,
+      name: "init program"
+    )
+
+    Model.add_ems_program_calling_manager(
+      model,
+      name: "init calling manager",
+      calling_point: 'BeginNewEnvironment',
+      ems_programs: [init_program]
+    )
+
     # Infiltration/ventilation
     apply_infiltration_to_garage(model, spaces, hpxml_bldg, infil_values, duct_lk_imbals)
     apply_infiltration_to_unconditioned_basement(model, spaces, duct_lk_imbals)
     apply_infiltration_to_vented_crawlspace(model, spaces, weather, hpxml_bldg, duct_lk_imbals)
     apply_infiltration_to_unvented_crawlspace(model, spaces, duct_lk_imbals)
     apply_infiltration_to_vented_attic(model, spaces, weather, hpxml_bldg, hpxml_header, duct_lk_imbals)
-    apply_infiltration_to_unvented_attic(model, spaces, duct_lk_imbals)
+    apply_infiltration_to_unvented_attic(model, spaces, duct_lk_imbals, init_program)
     apply_infiltration_ventilation_to_conditioned(runner, model, spaces, weather, hpxml_bldg, hpxml_header, vent_fans, infil_values,
-                                                  schedules_file, duct_lk_imbals, cfis_data, fan_data, sensors)
+                                                  schedules_file, duct_lk_imbals, cfis_data, fan_data, sensors, init_program)
   end
 
   # Creates a variety of EMS sensors used in airflow calculations.
@@ -309,8 +322,9 @@ module Airflow
   # @param c_w_SG [Double] Sherman-Grimsrud (ASHRAE Basic Model) wind coefficient
   # @param c_s_SG [Double] Sherman-Grimsrud (ASHRAE Basic Model) stack coefficient
   # @param duct_lk_imbals [Array] List of duct leakage imbalance information
+  # @param init_program TODO
   # @return [nil]
-  def self.apply_infiltration_to_unconditioned_space(model, space, ach, ela, c_w_SG, c_s_SG, duct_lk_imbals)
+  def self.apply_infiltration_to_unconditioned_space(model, space, ach, ela, c_w_SG, c_s_SG, duct_lk_imbals, init_program)
     # Infiltration/Ventilation
 
     if ach.to_f > 0
@@ -365,6 +379,9 @@ module Airflow
 
         uncond_infil_program.addLine("Set Qducts = Qducts - #{duct_lk_supply_fan_equiv_var.name}")
         uncond_infil_program.addLine("Set Qducts = Qducts + #{duct_lk_exhaust_fan_equiv_var.name}")
+
+        init_program.addLine("Set #{duct_lk_supply_fan_equiv_var.name} = 0")
+        init_program.addLine("Set #{duct_lk_exhaust_fan_equiv_var.name} = 0")
       end
       uncond_infil_program.addLine("Set #{uncond_infil_actuator.name} = (@Abs(Qducts))")
 
@@ -1809,13 +1826,14 @@ module Airflow
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
   # @param duct_lk_imbals [Array] List of duct leakage imbalance information
+  # @param init_program TODO
   # @return [nil]
-  def self.apply_infiltration_to_unvented_attic(model, spaces, duct_lk_imbals)
+  def self.apply_infiltration_to_unvented_attic(model, spaces, duct_lk_imbals, init_program)
     return if spaces[HPXML::LocationAtticUnvented].nil?
 
     space = spaces[HPXML::LocationAtticUnvented]
     ach = UnventedSpaceACH
-    apply_infiltration_to_unconditioned_space(model, space, ach, nil, nil, nil, duct_lk_imbals)
+    apply_infiltration_to_unconditioned_space(model, space, ach, nil, nil, nil, duct_lk_imbals, init_program)
   end
 
   # Adds fan energy associated with the HPXML Local VentilationFan to an OpenStudio ElectricEquipment object.
@@ -2302,11 +2320,12 @@ module Airflow
   # @param hpxml_bldg [HPXML::Building] HPXML Building object representing an individual dwelling unit
   # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @param infil_program [OpenStudio::Model::EnergyManagementSystemProgram] EMS program for the infiltration calculations
+  # @param init_program TODO
   # @param vent_fans [Hash] Map of vent fan types => list of HPXML VentilationFans
   # @param duct_lk_imbals [Array] List of duct leakage imbalance information
   # @param schedules_file [SchedulesFile] SchedulesFile wrapper class instance of detailed schedule files
   # @return [nil]
-  def self.apply_infiltration_adjustment_to_conditioned(runner, model, spaces, hpxml_bldg, hpxml_header, infil_program, vent_fans, duct_lk_imbals, schedules_file)
+  def self.apply_infiltration_adjustment_to_conditioned(runner, model, spaces, hpxml_bldg, hpxml_header, infil_program, init_program, vent_fans, duct_lk_imbals, schedules_file)
     conditioned_space = spaces[HPXML::LocationConditionedSpace]
     conditioned_zone = conditioned_space.thermalZone.get
     unit_multiplier = hpxml_bldg.building_construction.number_of_units
@@ -2324,14 +2343,6 @@ module Airflow
       comp_type_and_control: EPlus::EMSActuatorZoneInfiltrationFlowRate
     )
     infil_flow.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeInfiltration)
-
-    # Warmup workaround, see https://github.com/NatLabRockies/EnergyPlus/pull/11409
-    ['Qducts', 'Qexhaust', 'Qsupply'].each do |var|
-      Model.add_ems_global_var(
-        model,
-        var_name: var
-      )
-    end
 
     # Average in-unit CFMs (include recirculation from in unit CFMs for shared systems)
     sup_cfm_tot = vent_fans[:mech_supply].map { |vent_mech| vent_mech.average_unit_flow_rate }.sum(0.0)
@@ -2407,6 +2418,9 @@ module Airflow
 
       infil_program.addLine("Set Qducts = Qducts - #{duct_lk_supply_fan_equiv_var.name}")
       infil_program.addLine("Set Qducts = Qducts + #{duct_lk_exhaust_fan_equiv_var.name}")
+
+      init_program.addLine("Set #{duct_lk_supply_fan_equiv_var.name} = 0")
+      init_program.addLine("Set #{duct_lk_exhaust_fan_equiv_var.name} = 0")
     end
     infil_program.addLine('If Qducts < 0')
     infil_program.addLine('  Set Qsupply = Qsupply - Qducts')
@@ -2661,9 +2675,10 @@ module Airflow
   # @param cfis_data [Hash] Map with various CFIS-relative OpenStudio model objects
   # @param fan_data [Hash] Map of HVAC blower fan properties => values
   # @param sensors [Hash] Map of :sensor_types => OpenStudio::Model::EnergyManagementSystemSensor objects
+  # @param init_program TODO
   # @return [nil]
   def self.apply_infiltration_ventilation_to_conditioned(runner, model, spaces, weather, hpxml_bldg, hpxml_header, vent_fans, infil_values,
-                                                         schedules_file, duct_lk_imbals, cfis_data, fan_data, sensors)
+                                                         schedules_file, duct_lk_imbals, cfis_data, fan_data, sensors, init_program)
     # Categorize fans into different types
     vent_fans[:mech_preheat] = vent_fans[:mech].select { |vent_mech| (not vent_mech.preheating_efficiency_cop.nil?) }
     vent_fans[:mech_precool] = vent_fans[:mech].select { |vent_mech| (not vent_mech.precooling_efficiency_cop.nil?) }
@@ -2708,7 +2723,7 @@ module Airflow
     apply_cfis(runner, infil_program, vent_fans[:mech_cfis], cfis_data, cfis_fan_actuator, cfis_suppl_fan_actuator, fan_data)
 
     # Calculate adjusted infiltration (infiltration adjusted by mechanical ventilation)
-    apply_infiltration_adjustment_to_conditioned(runner, model, spaces, hpxml_bldg, hpxml_header, infil_program, vent_fans, duct_lk_imbals, schedules_file)
+    apply_infiltration_adjustment_to_conditioned(runner, model, spaces, hpxml_bldg, hpxml_header, infil_program, init_program, vent_fans, duct_lk_imbals, schedules_file)
 
     # Address load of Qfan (Qload)
     # Qload as variable for tracking outdoor air flow rate, excluding recirculation
