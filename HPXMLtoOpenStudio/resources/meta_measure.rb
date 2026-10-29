@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require_relative 'version'
+
+if Version::UseEPModel
+  OpenStudio::Model.send(:remove_const, :Model)
+  OpenStudio::Model.const_set(:Model, OpenStudio::EPModel::Model)
+end
 
 # Initialize OpenStudio objects (log, model, runner, etc.).
 # Call run methods of OpenStudio Model measures.
@@ -38,6 +44,10 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
 
   # Apply measures
   success = apply_measures(measures_dir, measures, runner, model, false, 'OpenStudio::Measure::ModelMeasure')
+  epw_path = nil
+  if Version::UseEPModel && runner.lastEpwFilePath.is_initialized
+    epw_path = runner.lastEpwFilePath.get.to_s
+  end
   report_measure_errors_warnings(runner, rundir, debug)
   report_os_warnings(os_log, rundir)
 
@@ -103,7 +113,13 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
     return { success: success, runner: runner }
   end
 
-  if not model.getWeatherFile.path.is_initialized
+  if not Version::UseEPModel
+    if model.getWeatherFile.path.is_initialized
+      epw_path = model.getWeatherFile.path.get.to_s
+    end
+  end
+
+  if epw_path.nil?
     print "Creating input unsuccessful.\n"
     print "See #{File.join(rundir, 'run.log')} for details.\n"
     return { success: false, runner: runner }
@@ -114,7 +130,7 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
   ep_path = File.absolute_path(File.join(OpenStudio.getOpenStudioCLI.to_s, '..', '..', 'EnergyPlus', 'energyplus')) # getEnergyPlusDirectory can be unreliable, using getOpenStudioCLI instead
   simulation_start = Time.now
   # Passed to system() in argv form below, so the path is not shell-interpreted
-  command = [ep_path, '-w', model.getWeatherFile.path.get.to_s, ep_input_filename]
+  command = [ep_path, '-w', epw_path, ep_input_filename]
   if debug
     File.open(File.join(rundir, 'run.log'), 'a') do |f|
       f << "Executing command '#{command.join(' ')}' from working directory '#{rundir}'.\n"
@@ -470,6 +486,10 @@ def run_measure(model, measure, argument_map, runner)
       measure.run(model, runner_child, argument_map)
     end
     result_child = runner_child.result
+
+    if Version::UseEPModel && runner_child.lastEpwFilePath.is_initialized
+      runner.setLastEpwFilePath(runner_child.lastEpwFilePath.get)
+    end
 
     # get initial and final condition
     if result_child.initialCondition.is_initialized

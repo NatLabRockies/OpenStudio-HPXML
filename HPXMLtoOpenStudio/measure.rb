@@ -132,6 +132,9 @@ class HPXMLToOpenStudio < OpenStudio::Measure::ModelMeasure
 
       # Do these once upfront for the entire HPXML object
       weather = process_weather(runner, hpxml, args)
+      if Version::UseEPModel
+        runner.setLastEpwFilePath(File.expand_path(weather.epw_path))
+      end
       hpxml_sch_map, design_loads_results_out = process_defaults_schedules_emissions_files(runner, weather, hpxml, args)
 
       # Write updated HPXML object (w/ defaults) to file for inspection

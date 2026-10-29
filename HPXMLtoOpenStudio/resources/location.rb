@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'version'
+
 # Collection of methods for applying site, year, daylight saving time, and ground temperature properties.
 # Also includes some helper methods for getting IECC climate zone based on WMO, EPW file path, and simulation calendar year.
 module Location
@@ -24,7 +26,9 @@ module Location
   # @param weather [WeatherFile] Weather object containing EPW information
   # @return [nil]
   def self.apply_weather_file(model, weather)
-    OpenStudio::Model::WeatherFile.setWeatherFile(model, weather.epw_file)
+    if not Version::UseEPModel
+      OpenStudio::Model::WeatherFile.setWeatherFile(model, weather.epw_file)
+    end
   end
 
   # Set latitude, longitude, time zone, and elevation on the OpenStudio Site object.
