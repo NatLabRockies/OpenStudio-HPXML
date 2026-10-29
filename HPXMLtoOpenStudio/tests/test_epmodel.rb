@@ -34,6 +34,43 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     end
   end
 
+  def test_apply_ground_temps_shallow
+    model = OpenStudio::Model::Model.new
+    hpxml = HPXML.new
+    hpxml.buildings.add
+    building = hpxml.buildings[0]
+    [0.0, 10.0].each do |offset|
+      monthly_celsius = Array.new(12) { |index| offset + index }
+      monthly_fahrenheit = monthly_celsius.map { |temperature| temperature * 1.8 + 32.0 }
+      weather = Struct.new(:data).new(Struct.new(:ShallowGroundMonthlyTemps).new(monthly_fahrenheit))
+
+      Location.apply_ground_temps(model, weather, building)
+
+      Date::MONTHNAMES[1..12].each_with_index do |month, index|
+        assert_in_delta(monthly_celsius[index], model.getSiteGroundTemperatureShallow.public_send("#{month.downcase}SurfaceGroundTemperature"), 0.0001)
+      end
+      assert(model.getOptionalSiteGroundTemperatureDeep.empty?)
+    end
+  end
+
+  def test_apply_ground_temps_deep
+    model = OpenStudio::Model::Model.new
+    hpxml = HPXML.new
+    hpxml.buildings.add
+    building = hpxml.buildings[0]
+    building.heat_pumps.add(heat_pump_type: HPXML::HVACTypeHeatPumpGroundToAir)
+    [10.0, 20.0].each do |temperature_celsius|
+      data = Struct.new(:ShallowGroundMonthlyTemps, :DeepGroundAnnualTemp).new([50.0] * 12, temperature_celsius * 1.8 + 32.0)
+      weather = Struct.new(:data).new(data)
+
+      Location.apply_ground_temps(model, weather, building)
+
+      Date::MONTHNAMES[1..12].each do |month|
+        assert_in_delta(temperature_celsius, model.getSiteGroundTemperatureDeep.public_send("#{month.downcase}DeepGroundTemperature"), 0.0001)
+      end
+    end
+  end
+
   def test_apply_year_requires_leap_weather
     header = HPXML.new.header
     header.sim_calendar_year = 2012
