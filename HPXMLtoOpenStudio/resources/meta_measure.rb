@@ -4,8 +4,8 @@ require 'fileutils'
 require_relative 'version'
 
 if Version::UseEPModel
-  OpenStudio::Model.send(:remove_const, :Model)
-  OpenStudio::Model.const_set(:Model, OpenStudio::EPModel::Model)
+  OpenStudio.send(:remove_const, :Model)
+  OpenStudio.const_set(:Model, OpenStudio::EPModel)
 end
 
 # Initialize OpenStudio objects (log, model, runner, etc.).

@@ -3,6 +3,36 @@ require 'openstudio'
 require_relative '../measure.rb'
 
 class HPXMLtoOpenStudioEPModelTest < Minitest::Test
+  def test_model_namespace
+    if Version::UseEPModel
+      assert_same(OpenStudio::EPModel, OpenStudio::Model)
+      assert_same(OpenStudio::EPModel::Model, OpenStudio::Model::Model)
+    else
+      assert_equal('OpenStudio::Model', OpenStudio::Model.name)
+    end
+  end
+
+  def test_space_and_zone_constructors
+    model = OpenStudio::Model::Model.new
+    thermal_zone = OpenStudio::Model::ThermalZone.new(model)
+    space = OpenStudio::Model::Space.new(model)
+    thermal_zone.setName('Test Zone')
+    thermal_zone.setMultiplier(3)
+    space.setName('Test Space')
+
+    assert(space.setThermalZone(thermal_zone))
+    assert_equal(thermal_zone.handle, space.thermalZone.get.handle)
+    assert_equal('Test Zone', thermal_zone.name.to_s)
+    assert_equal('Test Space', space.name.to_s)
+    assert_equal(3, thermal_zone.multiplier)
+    assert_equal(1, model.getThermalZones.size)
+    assert_equal(1, model.getSpaces.size)
+    if Version::UseEPModel
+      assert_instance_of(OpenStudio::EPModel::ThermalZone, thermal_zone)
+      assert_instance_of(OpenStudio::EPModel::Space, space)
+    end
+  end
+
   def test_apply_year_run_period
     weather = Struct.new(:header).new(Struct.new(:NumRecords).new(8784))
     [[2007, 1, 1, 12, 31, 2007, 'Monday'],
