@@ -3,6 +3,73 @@ require 'openstudio'
 require_relative '../measure.rb'
 
 class HPXMLtoOpenStudioEPModelTest < Minitest::Test
+  def test_additional_properties
+    model = OpenStudio::Model::Model.new
+    zone = OpenStudio::Model::ThermalZone.new(model)
+    properties = zone.additionalProperties
+    getters = [:getFeatureAsString, :getFeatureAsInteger, :getFeatureAsDouble, :getFeatureAsBoolean]
+    getters.each do |getter|
+      assert(properties.public_send(getter, 'missing').empty?)
+    end
+
+    object_type = 'conditioned space'
+    assert(properties.setFeature('ObjectType', object_type))
+    object_type.replace('changed after assignment')
+    assert(properties.setFeature('BuildingID', 'Building1'))
+    assert(properties.setFeature('Integer', 3))
+    assert(properties.setFeature('Double', 3.5))
+    assert(properties.setFeature('Boolean', false))
+    retrieved = model.getThermalZones[0].additionalProperties
+    assert_equal('conditioned space', retrieved.getFeatureAsString('ObjectType').get)
+    assert_equal('Building1', retrieved.getFeatureAsString('BuildingID').get)
+    assert_equal(3, retrieved.getFeatureAsInteger('Integer').get)
+    assert_equal(3.5, retrieved.getFeatureAsDouble('Double').get)
+    assert(retrieved.getFeatureAsBoolean('Boolean').is_initialized)
+    assert_equal(false, retrieved.getFeatureAsBoolean('Boolean').get)
+    assert(retrieved.getFeatureAsInteger('ObjectType').empty?)
+    assert(retrieved.getFeatureAsString('Integer').empty?)
+    assert(retrieved.getFeatureAsDouble('Integer').empty?)
+    assert(retrieved.getFeatureAsInteger('Double').empty?)
+    assert(retrieved.getFeatureAsBoolean('Integer').empty?)
+
+    properties.setFeature('Integer', 4.5)
+    assert(retrieved.getFeatureAsInteger('Integer').empty?)
+    assert_equal(4.5, retrieved.getFeatureAsDouble('Integer').get)
+    properties.setFeature('Boolean', true)
+    assert_equal(true, retrieved.getFeatureAsBoolean('Boolean').get)
+    zone.setName('Renamed Zone')
+    assert_equal('Building1', model.getThermalZones[0].additionalProperties.getFeatureAsString('BuildingID').get)
+
+    other_zone = OpenStudio::Model::ThermalZone.new(model)
+    assert(other_zone.additionalProperties.getFeatureAsString('ObjectType').empty?)
+    other_model = OpenStudio::Model::Model.new
+    other_model_zone = OpenStudio::Model::ThermalZone.new(other_model)
+    assert(other_model_zone.additionalProperties.getFeatureAsString('ObjectType').empty?)
+    site = model.getSite
+    site.additionalProperties.setFeature('ObjectType', 'site')
+    assert_equal('site', model.getSite.additionalProperties.getFeatureAsString('ObjectType').get)
+    assert_equal('conditioned space', retrieved.getFeatureAsString('ObjectType').get)
+  end
+
+  def test_ground_temperature_bulk_helpers
+    model = OpenStudio::Model::Model.new
+    [[model.getSiteGroundTemperatureShallow, 'SurfaceGroundTemperature'],
+     [model.getSiteGroundTemperatureDeep, 'DeepGroundTemperature']].each do |ground, field_suffix|
+      assert(ground.setAllMonthlyTemperatures([10.0] * 12))
+      assert_equal(false, ground.setAllMonthlyTemperatures([20.0] * 11))
+      assert_equal(false, ground.setAllMonthlyTemperatures([20.0] * 13))
+      Date::MONTHNAMES[1..12].each do |month|
+        assert_in_delta(10.0, ground.public_send("#{month.downcase}#{field_suffix}"), 0.0001)
+      end
+
+      ground.resetAllMonths
+
+      Date::MONTHNAMES[1..12].each do |month|
+        assert(ground.public_send("is#{month}#{field_suffix}Defaulted"))
+      end
+    end
+  end
+
   def test_model_namespace
     if Version::UseEPModel
       assert_same(OpenStudio::EPModel, OpenStudio::Model)

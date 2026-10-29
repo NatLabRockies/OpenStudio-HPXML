@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'version'
+require_relative 'epmodel'
 
 # Collection of methods for applying site, year, daylight saving time, and ground temperature properties.
 # Also includes some helper methods for getting IECC climate zone based on WMO, EPW file path, and simulation calendar year.
@@ -106,26 +106,14 @@ module Location
   def self.apply_ground_temps(model, weather, hpxml_bldg)
     # Shallow ground temperatures only currently used for ducts located under slab
     sgts = model.getSiteGroundTemperatureShallow
-    if Version::UseEPModel
-      Date::MONTHNAMES[1..12].each_with_index do |month, index|
-        sgts.public_send("set#{month}SurfaceGroundTemperature", UnitConversions.convert(weather.data.ShallowGroundMonthlyTemps[index], 'F', 'C'))
-      end
-    else
-      sgts.resetAllMonths
-      sgts.setAllMonthlyTemperatures(weather.data.ShallowGroundMonthlyTemps.map { |t| UnitConversions.convert(t, 'F', 'C') })
-    end
+    sgts.resetAllMonths
+    sgts.setAllMonthlyTemperatures(weather.data.ShallowGroundMonthlyTemps.map { |t| UnitConversions.convert(t, 'F', 'C') })
 
     if hpxml_bldg.heat_pumps.count { |h| h.heat_pump_type == HPXML::HVACTypeHeatPumpGroundToAir } > 0
       # Deep ground temperatures used by GSHP setpoint manager
       dgts = model.getSiteGroundTemperatureDeep
-      if Version::UseEPModel
-        Date::MONTHNAMES[1..12].each do |month|
-          dgts.public_send("set#{month}DeepGroundTemperature", UnitConversions.convert(weather.data.DeepGroundAnnualTemp, 'F', 'C'))
-        end
-      else
-        dgts.resetAllMonths
-        dgts.setAllMonthlyTemperatures([UnitConversions.convert(weather.data.DeepGroundAnnualTemp, 'F', 'C')] * 12)
-      end
+      dgts.resetAllMonths
+      dgts.setAllMonthlyTemperatures([UnitConversions.convert(weather.data.DeepGroundAnnualTemp, 'F', 'C')] * 12)
     end
   end
 

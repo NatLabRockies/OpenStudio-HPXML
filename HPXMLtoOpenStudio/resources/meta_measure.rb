@@ -1,12 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
-require_relative 'version'
-
-if Version::UseEPModel
-  OpenStudio.send(:remove_const, :Model)
-  OpenStudio.const_set(:Model, OpenStudio::EPModel)
-end
+require_relative 'epmodel'
 
 # Initialize OpenStudio objects (log, model, runner, etc.).
 # Call run methods of OpenStudio Model measures.
