@@ -133,11 +133,11 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                                                             'Expected CapacityFractionOfNominal to be 1.0'],
                             'hvac-detailed-performance-incomplete-pair' => ['Cooling detailed performance data for outdoor temperature > 95.0 is incomplete; there must be exactly one minimum and one maximum capacity datapoint.',
                                                                             'Heating detailed performance data for outdoor temperature < 5.0 is incomplete; there must be exactly one minimum and one maximum capacity datapoint.'],
-                            'hvac-detailed-performance-invalid-data' => ['Cooling detailed performance data for outdoor temperature = 82.0 is invalid; Power (capacity / COP) at minimum capacity must be less than power at maximum capacity.',
+                            'hvac-detailed-performance-invalid-data' => ['Cooling detailed performance data for outdoor temperature = 82.0 is invalid; Power (capacity / COP) at minimum capacity must be less than power at maximum capacity plus 341.2 Btuh (100W).',
                                                                          'Cooling detailed performance data for outdoor temperature = 95.0 is invalid; Minimum capacity must be less than maximum capacity.',
                                                                          'Cooling detailed performance data for outdoor temperature = 95.0 is invalid; Minimum capacity must be less than or equal to nominal capacity.',
-                                                                         'Heating detailed performance data for outdoor temperature = 47.0 is invalid; Power (capacity / COP) at minimum capacity must be less than power at maximum capacity.',
-                                                                         'Heating detailed performance data for outdoor temperature = 47.0 is invalid; Power (capacity / COP) at minimum capacity must be less than or equal to power at nominal capacity.',
+                                                                         'Heating detailed performance data for outdoor temperature = 47.0 is invalid; Power (capacity / COP) at minimum capacity must be less than power at maximum capacity plus 341.2 Btuh (100W).',
+                                                                         'Heating detailed performance data for outdoor temperature = 47.0 is invalid; Power (capacity / COP) at minimum capacity must be less than or equal to power at nominal capacity plus 341.2 Btuh (100W).',
                                                                          'Heating detailed performance data for outdoor temperature = 5.0 is invalid; Minimum capacity must be less than maximum capacity.'],
                             'hvac-distribution-return-duct-leakage-missing' => ['Expected DuctLeakageMeasurement[DuctType="return"]/DuctLeakage[(Units="CFM25" or Units="CFM50" or Units="Percent") and TotalOrToOutside="to outside"] [context: /HPXML/Building/BuildingDetails/Systems/HVAC/HVACDistribution/DistributionSystemType/AirDistribution[AirDistributionType[text()="regular velocity" or text()="gravity"]], id: "HVACDistribution1"]'],
                             'hvac-frac-load-served' => ['Expected sum(FractionHeatLoadServed) to be less than or equal to 1 [context: /HPXML/Building/BuildingDetails, id: "MyBuilding"]',
@@ -282,6 +282,7 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
                                                                         'Expected only SystemIdentifier to be specified when sameas attribute used'],
                             'multifamily-common-space-whole-sfa-or-mf-building-sim-false' => ['Expected ExteriorAdjacentTo'],
                             'multifamily-reference-appliance' => ['There are references to "other housing unit" but ResidentialFacilityType is not "single-family attached" or "apartment unit".'],
+                            'multifamily-reference-battery' => ['There are references to "other heated space" but ResidentialFacilityType is not "single-family attached" or "apartment unit".'],
                             'multifamily-reference-duct' => ['There are references to "other multifamily buffer space" but ResidentialFacilityType is not "single-family attached" or "apartment unit".'],
                             'multifamily-reference-surface' => ['There are references to "other heated space" but ResidentialFacilityType is not "single-family attached" or "apartment unit".'],
                             'multifamily-reference-water-heater' => ['There are references to "other non-freezing space" but ResidentialFacilityType is not "single-family attached" or "apartment unit".'],
@@ -921,6 +922,9 @@ class HPXMLtoOpenStudioValidationTest < Minitest::Test
       when 'multifamily-reference-appliance'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.clothes_washers[0].location = HPXML::LocationOtherHousingUnit
+      when 'multifamily-reference-battery'
+        hpxml, hpxml_bldg = _create_hpxml('base-pv-battery.xml')
+        hpxml_bldg.batteries[0].location = HPXML::LocationOtherHeatedSpace
       when 'multifamily-reference-duct'
         hpxml, hpxml_bldg = _create_hpxml('base.xml')
         hpxml_bldg.hvac_distributions[0].ducts[0].duct_location = HPXML::LocationOtherMultifamilyBufferSpace

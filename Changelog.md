@@ -12,6 +12,7 @@ __Features__
 - PV systems:
   - Allows `CollectorArea` or `NumberOfPanels` instead of `MaxPowerOutput`.
   - Allows `YearInstalled` instead of `YearModulesManufactured` for age-based degradation.
+- Allows batteries to be located in multifamily spaces; these locations are modeled as outside, so battery heat gains are not assigned to the dwelling unit.
 - To accommodate electric furnaces/boilers, allows heating efficiency with units of "Percent" as an alternative to "AFUE"; the two units are modeled identically.
 - **Breaking change**: In the HPXML v6 schema, roof material moves from `Roof/RoofType` to `Roof/RoofMaterial`, and `Roof/RoofType` represents roof construction type. Allow modeling wood-frame, structural insulated panel, steel-frame, and solid-concrete roofs with required `Roof/RoofType`.
 - Updates to some roof/wall solar absorptance defaults.
@@ -35,6 +36,10 @@ __Bugfixes__
 - Fixes specific heat for drywall (0.2 -> 0.26 Btu/lb-F).
 - Fixes order-dependent effective below-grade depth when collapsing similar foundation walls.
 - Fixes default water heater location hierarchy for locations where the IECC climate zone cannot be determined.
+- Expands schematron validation tolerances in power order checks for heating/cooling detailed performance datapoints.
+- Fixes missing timeseries temperature outputs for manufactured home belly and wing foundation type.
+- Removes `Location` input for "instantaneous water heater" and "space-heating boiler with tankless coil" water heater types.
+- Fixes possibility of iteration limit error when providing detailed HVAC performance data.
 
 ## OpenStudio-HPXML v1.12.0
 
