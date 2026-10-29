@@ -13,6 +13,7 @@ __Features__
   - Allows `CollectorArea` or `NumberOfPanels` instead of `MaxPowerOutput`.
   - Allows `YearInstalled` instead of `YearModulesManufactured` for age-based degradation.
 - To accommodate electric furnaces/boilers, allows heating efficiency with units of "Percent" as an alternative to "AFUE"; the two units are modeled identically.
+- **Breaking change**: In the HPXML v6 schema, roof material moves from `Roof/RoofType` to `Roof/RoofMaterial`, and `Roof/RoofType` represents roof construction type. Allow modeling wood-frame, structural insulated panel, steel-frame, and solid-concrete roofs with required `Roof/RoofType`.
 - Updates to some roof/wall solar absorptance defaults.
 - Updates garage ventilation rate to be SLA=1/150 (same as a vented crawlspace).
 - Reverts E+ radiant exchange algorithm from CarrollMRT to ScriptF.
