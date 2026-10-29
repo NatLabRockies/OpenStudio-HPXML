@@ -63,8 +63,21 @@ module Location
       end
     end
 
-    year_description = model.getYearDescription
-    year_description.setCalendarYear(hpxml_header.sim_calendar_year)
+    if Version::UseEPModel
+      begin_date = Date.new(hpxml_header.sim_calendar_year, hpxml_header.sim_begin_month, hpxml_header.sim_begin_day)
+      end_date = Date.new(hpxml_header.sim_calendar_year, hpxml_header.sim_end_month, hpxml_header.sim_end_day)
+      end_year = hpxml_header.sim_calendar_year
+      if end_date < begin_date
+        end_year += 1
+      end
+      run_period = model.getRunPeriod
+      run_period.setInt(run_period.iddObject.getFieldIndex('Begin Year').get, hpxml_header.sim_calendar_year)
+      run_period.setInt(run_period.iddObject.getFieldIndex('End Year').get, end_year)
+      run_period.setString(run_period.iddObject.getFieldIndex('Day of Week for Start Day').get, begin_date.strftime('%A'))
+    else
+      year_description = model.getYearDescription
+      year_description.setCalendarYear(hpxml_header.sim_calendar_year)
+    end
   end
 
   # If enabled, set daylight saving time start and end dates on the OpenStudio RunPeriodControlDaylightSavingTime object.
