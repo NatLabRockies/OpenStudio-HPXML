@@ -1676,7 +1676,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                            interior_adjacent_to: Geometry.get_surface_adjacent_to(surface),
                            azimuth: azimuth,
                            area: UnitConversions.convert(surface.grossArea, 'm^2', 'ft^2'),
-                           roof_type: args[:enclosure_roof_material_type],
+                           roof_material: args[:enclosure_roof_material_type],
                            roof_color: args[:enclosure_roof_material_color],
                            solar_absorptance: args[:enclosure_roof_material_solar_absorptance],
                            emittance: args[:enclosure_roof_material_emittance],

@@ -989,6 +989,7 @@
 											<xs:attribute name="dataSource" type="DataSource"/>
 										</xs:complexType>
 									</xs:element>
+									<xs:element minOccurs="0" name="VentilationRate" type="VentilationType"/>
 									<xs:element minOccurs="0" name="AttachedToRoof" type="LocalReference" maxOccurs="unbounded"/>
 									<xs:element minOccurs="0" name="AttachedToWall" type="LocalReference" maxOccurs="unbounded"/>
 									<xs:element minOccurs="0" name="AttachedToFoundationWall" type="LocalReference" maxOccurs="unbounded"/>
@@ -1034,7 +1035,8 @@
 											<xs:documentation>[deg]</xs:documentation>
 										</xs:annotation>
 									</xs:element>
-									<xs:element minOccurs="0" name="RoofType" type="RoofType"/>
+									<xs:element minOccurs="0" name="RoofType" type="FloorOrRoofType"/>
+									<xs:element minOccurs="0" name="RoofMaterial" type="RoofMaterial"/>
 									<xs:element minOccurs="0" name="CoolRoof" type="HPXMLBoolean">
 										<xs:annotation>
 											<xs:documentation>A cool roof has a material or coating that lowers the roof surface temperature, by having a low solar absorptance and/or high thermal emittance. Products may be designated by an efficiency program or similar.</xs:documentation>
@@ -1132,7 +1134,7 @@
 									</xs:element>
 									<xs:element minOccurs="0" name="Area" type="SurfaceArea">
 										<xs:annotation>
-											<xs:documentation>[sq.ft.] Gross wall area</xs:documentation>
+											<xs:documentation>[sq.ft.] Gross wall area, e.g., includes window/door area</xs:documentation>
 										</xs:annotation>
 									</xs:element>
 									<xs:element minOccurs="0" name="Orientation" type="OrientationType"/>
@@ -1253,7 +1255,7 @@
 											<xs:documentation>From the perspective of the living/conditioned space.</xs:documentation>
 										</xs:annotation>
 									</xs:element>
-									<xs:element minOccurs="0" name="FloorType" type="FloorType"/>
+									<xs:element minOccurs="0" name="FloorType" type="FloorOrRoofType"/>
 									<xs:element minOccurs="0" name="FloorJoists" type="StudProperties"/>
 									<xs:element minOccurs="0" name="FloorTrusses" type="StudProperties"/>
 									<xs:element minOccurs="0" name="FloorCovering" type="FloorCovering">
@@ -1263,7 +1265,7 @@
 									</xs:element>
 									<xs:element minOccurs="0" name="Area" type="SurfaceArea">
 										<xs:annotation>
-											<xs:documentation>[sq.ft.]</xs:documentation>
+											<xs:documentation>[sq.ft.] Gross floor area, e.g., includes skylight shaft or sun tunnel area penetration through ceiling (attic floor)</xs:documentation>
 										</xs:annotation>
 									</xs:element>
 									<xs:element minOccurs="0" name="InteriorFinish" type="InteriorFinishInfo"/>
@@ -1400,10 +1402,51 @@
 											<xs:documentation>Pitch of skylight ?/12</xs:documentation>
 										</xs:annotation>
 									</xs:element>
+									<xs:element minOccurs="0" name="Curb">
+										<xs:annotation>
+											<xs:documentation>A skylight curb is a raised frame that elevates the skylight above the roof (in contrast to deck mounted skylights that are flush with the roof).</xs:documentation>
+										</xs:annotation>
+										<xs:complexType>
+											<xs:sequence>
+												<xs:element minOccurs="0" name="Material" type="SkylightCurbMaterial">
+													<xs:annotation>
+														<xs:documentation/>
+													</xs:annotation>
+												</xs:element>
+												<xs:element minOccurs="0" name="Height" type="LengthMeasurement">
+													<xs:annotation>
+														<xs:documentation>[in] Height above roof plane</xs:documentation>
+													</xs:annotation>
+												</xs:element>
+												<xs:element minOccurs="0" name="SurfaceArea" type="SurfaceArea">
+													<xs:annotation>
+														<xs:documentation>[sq.ft.] Curb height above roof plane multiplied by the perimeter</xs:documentation>
+													</xs:annotation>
+												</xs:element>
+												<xs:element name="InsulationNominalRValue" type="RValue" minOccurs="0"/>
+												<xs:element minOccurs="0" name="AssemblyEffectiveRValue" type="RValueGreaterThanZero">
+													<xs:annotation>
+														<xs:documentation>This should indicate the effective R-value of the complete assembly including any air films or other treatments. For below-grade surfaces adjacent to ground, it should not include the insulating effect of the ground.</xs:documentation>
+													</xs:annotation>
+												</xs:element>
+												<xs:element ref="extension" minOccurs="0"/>
+											</xs:sequence>
+										</xs:complexType>
+									</xs:element>
 									<xs:element minOccurs="0" name="AttachedToRoof" type="LocalReference"/>
+									<xs:element minOccurs="0" name="AttachedToKneeWall" type="LocalReference">
+										<xs:annotation>
+											<xs:documentation>For a skylight that includes a shaft or a sun tunnel, reference the knee wall (i.e., Wall with AtticWallType="knee wall") that describes the wall construction/area.</xs:documentation>
+										</xs:annotation>
+									</xs:element>
 									<xs:element minOccurs="0" name="AttachedToFloor" type="LocalReference">
 										<xs:annotation>
-											<xs:documentation>For a skylight that includes a shaft or a sun tunnel, reference the attic floor that it penetrates.</xs:documentation>
+											<xs:documentation>For a skylight that includes a shaft or a sun tunnel, reference the ceiling (attic floor) that it penetrates.</xs:documentation>
+										</xs:annotation>
+									</xs:element>
+									<xs:element minOccurs="0" name="CeilingAreaDisplaced" type="SurfaceArea">
+										<xs:annotation>
+											<xs:documentation>[sq.ft.] For a skylight that includes a shaft or sun tunnel, the ceiling (attic floor) area that is displaced by the skylight penetration. This is typically greater than or equal to the skylight area.</xs:documentation>
 										</xs:annotation>
 									</xs:element>
 									<xs:element name="AnnualEnergyUse" minOccurs="0">
@@ -1788,7 +1831,11 @@
 											<xs:documentation>If a water heating system is present but the type is not known, use "unknown". If a water heating system is known to be not present, use "not present".</xs:documentation>
 										</xs:annotation>
 									</xs:element>
-									<xs:element name="Location" type="UnitLocation" minOccurs="0"/>
+									<xs:element name="Location" type="UnitLocation" minOccurs="0">
+										<xs:annotation>
+											<xs:documentation>Use "outdoor closet" when the water heater is installed in a small enclosure adjacent to a home's exterior wall. If the enclosure is not fully enclosed (open to the outdoors), use "outside".</xs:documentation>
+										</xs:annotation>
+									</xs:element>
 									<xs:element minOccurs="0" name="YearInstalled" type="Year"/>
 									<xs:element name="ModelYear" type="Year" minOccurs="0"/>
 									<xs:element name="Manufacturer" type="Manufacturer" minOccurs="0"/>
@@ -4534,6 +4581,43 @@
 											</xs:sequence>
 										</xs:complexType>
 									</xs:element>
+									<xs:element minOccurs="0" name="Neighbors">
+										<xs:annotation>
+											<xs:documentation>Presence of neighboring buildings, which can impact solar shading and wind shielding.</xs:documentation>
+										</xs:annotation>
+										<xs:complexType>
+											<xs:sequence>
+												<xs:element maxOccurs="unbounded" name="NeighborBuilding">
+													<xs:complexType>
+														<xs:sequence>
+															<xs:element minOccurs="0" name="Azimuth" type="AzimuthType">
+																<xs:annotation>
+																	<xs:documentation>Direction from the center of the home to the center of the neighbor home.</xs:documentation>
+																</xs:annotation>
+															</xs:element>
+															<xs:element minOccurs="0" name="Orientation" type="OrientationType">
+																<xs:annotation>
+																	<xs:documentation>Direction from the center of the home to the center of the neighbor home.</xs:documentation>
+																</xs:annotation>
+															</xs:element>
+															<xs:element minOccurs="0" name="Distance" type="HPXMLDoubleGreaterThanZero">
+																<xs:annotation>
+																	<xs:documentation>[ft] Distance between closest edges of home and neighbor building.</xs:documentation>
+																</xs:annotation>
+															</xs:element>
+															<xs:element name="NumberofStoriesAboveGrade" type="IntegerGreaterThanZero" minOccurs="0"/>
+															<xs:element minOccurs="0" name="Height" type="HPXMLDoubleGreaterThanZero">
+																<xs:annotation>
+																	<xs:documentation>[ft] Height of neighboring building relative to the grade of the home (to account for the possibility of sloped grade).</xs:documentation>
+																</xs:annotation>
+															</xs:element>
+															<xs:element minOccurs="0" ref="extension"/>
+														</xs:sequence>
+													</xs:complexType>
+												</xs:element>
+											</xs:sequence>
+										</xs:complexType>
+									</xs:element>
 									<xs:element minOccurs="0" ref="extension"/>
 								</xs:sequence>
 								<xs:attribute name="dataSource" type="DataSource"/>
@@ -4640,8 +4724,8 @@
 									</xs:element>
 									<xs:element minOccurs="0" name="NumberofRooms" type="IntegerGreaterThanZero"/>
 									<xs:element name="NumberofBedrooms" type="IntegerGreaterThanOrEqualToZero" minOccurs="0"/>
-									<xs:element name="NumberofBathrooms" type="IntegerGreaterThanZero" minOccurs="0"/>
-									<xs:element minOccurs="0" name="NumberofCompleteBathrooms" type="IntegerGreaterThanZero">
+									<xs:element name="NumberofBathrooms" type="IntegerGreaterThanOrEqualToZero" minOccurs="0"/>
+									<xs:element minOccurs="0" name="NumberofCompleteBathrooms" type="IntegerGreaterThanOrEqualToZero">
 										<xs:annotation>
 											<xs:documentation>Number of bathrooms with a tub or shower</xs:documentation>
 										</xs:annotation>
@@ -6288,7 +6372,7 @@
 		</xs:choice>
 		<xs:attribute name="dataSource" type="DataSource"/>
 	</xs:complexType>
-	<xs:complexType name="FloorType">
+	<xs:complexType name="FloorOrRoofType">
 		<xs:choice>
 			<xs:element name="WoodFrame">
 				<xs:complexType>
@@ -8752,6 +8836,22 @@
 			</xs:extension>
 		</xs:simpleContent>
 	</xs:complexType>
+	<xs:simpleType name="SkylightCurbMaterial_simple">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="metal"/>
+			<xs:enumeration value="wood"/>
+			<xs:enumeration value="other"/>
+			<xs:enumeration value="unknown"/>
+			<xs:enumeration value="not present"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="SkylightCurbMaterial">
+		<xs:simpleContent>
+			<xs:extension base="SkylightCurbMaterial_simple">
+				<xs:attribute name="dataSource" type="DataSource"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
 	<xs:simpleType name="GlassLayers_simple">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="single-pane"/>
@@ -9411,6 +9511,8 @@
 			<xs:enumeration value="other interior"/>
 			<xs:enumeration value="other multifamily buffer space"/>
 			<xs:enumeration value="other non-freezing space"/>
+			<xs:enumeration value="outdoor closet"/>
+			<xs:enumeration value="outside"/>
 			<xs:enumeration value="roof deck"/>
 			<xs:enumeration value="unconditioned space"/>
 		</xs:restriction>
@@ -10715,7 +10817,7 @@
 			</xs:extension>
 		</xs:simpleContent>
 	</xs:complexType>
-	<xs:simpleType name="RoofType_simple">
+	<xs:simpleType name="RoofMaterial_simple">
 		<xs:restriction base="xs:string">
 			<xs:enumeration value="shingles"/>
 			<xs:enumeration value="slate or tile shingles"/>
@@ -10724,15 +10826,15 @@
 			<xs:enumeration value="metal surfacing"/>
 			<xs:enumeration value="expanded polystyrene sheathing"/>
 			<xs:enumeration value="plastic/rubber/synthetic sheeting"/>
-			<xs:enumeration value="concrete"/>
+			<xs:enumeration value="concrete tiles"/>
 			<xs:enumeration value="green roof"/>
 			<xs:enumeration value="no one major type"/>
 			<xs:enumeration value="other"/>
 		</xs:restriction>
 	</xs:simpleType>
-	<xs:complexType name="RoofType">
+	<xs:complexType name="RoofMaterial">
 		<xs:simpleContent>
-			<xs:extension base="RoofType_simple">
+			<xs:extension base="RoofMaterial_simple">
 				<xs:attribute name="dataSource" type="DataSource"/>
 			</xs:extension>
 		</xs:simpleContent>

@@ -18,9 +18,9 @@ module Constructions
     interior_film = Material.AirFilmIndoorRoof(UnitConversions.convert(surfaces[0].tilt, 'rad', 'deg'), hpxml_header.apply_ashrae140_assumptions)
     exterior_film = Material.AirFilmOutside(false, hpxml_header.apply_ashrae140_assumptions)
     if hpxml_header.apply_ashrae140_assumptions
-      mat_ext_finish = Material.RoofMaterialAndSheathing(roof.roof_type, 0.5) # Combined roof material + OSB sheathing
+      mat_ext_finish = Material.RoofMaterialAndSheathing(roof.roof_material, 0.5) # Combined roof material + OSB sheathing
     else
-      mat_ext_finish = Material.RoofMaterialAndSheathing(roof.roof_type) # Combined roof material + OSB sheathing
+      mat_ext_finish = Material.RoofMaterialAndSheathing(roof.roof_material) # Combined roof material + OSB sheathing
     end
     mat_int_finish = Material.InteriorFinishMaterial(roof.interior_finish_type, roof.interior_finish_thickness)
     if mat_int_finish.nil?
@@ -1965,51 +1965,51 @@ module Constructions
     map = {}
 
     # Asphalt/wood shingles
-    [HPXML::RoofTypeAsphaltShingles,
-     HPXML::RoofTypeWoodShingles,
-     HPXML::RoofTypeShingles,
-     HPXML::RoofTypeEPS].each do |roof_type|
-      map[[HPXML::ColorDark, roof_type]] = 0.92 # ASHRAE HOF
-      map[[HPXML::ColorMediumDark, roof_type]] = 0.89 # Average of dark & medium
-      map[[HPXML::ColorMedium, roof_type]] = 0.85 # ASHRAE HOF
-      map[[HPXML::ColorMediumLight, roof_type]] = 0.80 # Average of medium & light
-      map[[HPXML::ColorLight, roof_type]] = 0.75 # ASHRAE HOF
-      map[[HPXML::ColorWhite, roof_type]] = 0.75 # ASHRAE HOF
-      map[[HPXML::ColorReflective, roof_type]] = 0.25 # Engineering judgment; assume a reflective coating
+    [HPXML::RoofMaterialAsphaltShingles,
+     HPXML::RoofMaterialWoodShingles,
+     HPXML::RoofMaterialShingles,
+     HPXML::RoofMaterialEPS].each do |roof_material|
+      map[[HPXML::ColorDark, roof_material]] = 0.92 # ASHRAE HOF
+      map[[HPXML::ColorMediumDark, roof_material]] = 0.89 # Average of dark & medium
+      map[[HPXML::ColorMedium, roof_material]] = 0.85 # ASHRAE HOF
+      map[[HPXML::ColorMediumLight, roof_material]] = 0.80 # Average of medium & light
+      map[[HPXML::ColorLight, roof_material]] = 0.75 # ASHRAE HOF
+      map[[HPXML::ColorWhite, roof_material]] = 0.75 # ASHRAE HOF
+      map[[HPXML::ColorReflective, roof_material]] = 0.25 # Engineering judgment; assume a reflective coating
     end
 
     # Concrete/clay tile
-    [HPXML::RoofTypeClayTile,
-     HPXML::RoofTypeConcrete].each do |roof_type|
-      map[[HPXML::ColorDark, roof_type]] = 0.85 # CRRC for black Tile products
-      map[[HPXML::ColorMediumDark, roof_type]] = 0.80 # ASHRAE HOF dark & medium
-      map[[HPXML::ColorMedium, roof_type]] = 0.75 # CRRC for Tile products, FSEC
-      map[[HPXML::ColorMediumLight, roof_type]] = 0.65 # CRRC for Tile products, FSEC
-      map[[HPXML::ColorLight, roof_type]] = 0.40 # ASHRAE HOF
-      map[[HPXML::ColorWhite, roof_type]] = 0.30 # ASHRAE HOF
-      map[[HPXML::ColorReflective, roof_type]] = 0.25 # Engineering judgment; assume a reflective coating
+    [HPXML::RoofMaterialClayTile,
+     HPXML::RoofMaterialConcrete].each do |roof_material|
+      map[[HPXML::ColorDark, roof_material]] = 0.85 # CRRC for black Tile products
+      map[[HPXML::ColorMediumDark, roof_material]] = 0.80 # ASHRAE HOF dark & medium
+      map[[HPXML::ColorMedium, roof_material]] = 0.75 # CRRC for Tile products, FSEC
+      map[[HPXML::ColorMediumLight, roof_material]] = 0.65 # CRRC for Tile products, FSEC
+      map[[HPXML::ColorLight, roof_material]] = 0.40 # ASHRAE HOF
+      map[[HPXML::ColorWhite, roof_material]] = 0.30 # ASHRAE HOF
+      map[[HPXML::ColorReflective, roof_material]] = 0.25 # Engineering judgment; assume a reflective coating
     end
 
     # Metal roofing
-    [HPXML::RoofTypeMetal].each do |roof_type|
-      map[[HPXML::ColorDark, roof_type]] = 0.90 # ASHRAE HOF
-      map[[HPXML::ColorMediumDark, roof_type]] = 0.80 # Average above/below
-      map[[HPXML::ColorMedium, roof_type]] = 0.70 # ASHRAE HOF
-      map[[HPXML::ColorMediumLight, roof_type]] = 0.60 # Average of medium & light
-      map[[HPXML::ColorLight, roof_type]] = 0.50 # ASHRAE HOF
-      map[[HPXML::ColorWhite, roof_type]] = 0.35 # ASHRAE HOF
-      map[[HPXML::ColorReflective, roof_type]] = 0.25 # Engineering judgment; assume a reflective coating
+    [HPXML::RoofMaterialMetal].each do |roof_material|
+      map[[HPXML::ColorDark, roof_material]] = 0.90 # ASHRAE HOF
+      map[[HPXML::ColorMediumDark, roof_material]] = 0.80 # Average above/below
+      map[[HPXML::ColorMedium, roof_material]] = 0.70 # ASHRAE HOF
+      map[[HPXML::ColorMediumLight, roof_material]] = 0.60 # Average of medium & light
+      map[[HPXML::ColorLight, roof_material]] = 0.50 # ASHRAE HOF
+      map[[HPXML::ColorWhite, roof_material]] = 0.35 # ASHRAE HOF
+      map[[HPXML::ColorReflective, roof_material]] = 0.25 # Engineering judgment; assume a reflective coating
     end
 
     # Plastic/rubber
-    [HPXML::RoofTypePlasticRubber].each do |roof_type|
-      map[[HPXML::ColorDark, roof_type]] = 0.90 # CRRC for black Single-Ply products
-      map[[HPXML::ColorMediumDark, roof_type]] = 0.78 # Average of dark & medium
-      map[[HPXML::ColorMedium, roof_type]] = 0.65 # Average of dark & light
-      map[[HPXML::ColorMediumLight, roof_type]] = 0.53 # Average of medium & light
-      map[[HPXML::ColorLight, roof_type]] = 0.40 # CRRC for off-white/tan Single-Ply products
-      map[[HPXML::ColorWhite, roof_type]] = 0.30 # CRRC for bright white Single-Ply products
-      map[[HPXML::ColorReflective, roof_type]] = 0.25 # Engineering judgment; assume a reflective coating
+    [HPXML::RoofMaterialPlasticRubber].each do |roof_material|
+      map[[HPXML::ColorDark, roof_material]] = 0.90 # CRRC for black Single-Ply products
+      map[[HPXML::ColorMediumDark, roof_material]] = 0.78 # Average of dark & medium
+      map[[HPXML::ColorMedium, roof_material]] = 0.65 # Average of dark & light
+      map[[HPXML::ColorMediumLight, roof_material]] = 0.53 # Average of medium & light
+      map[[HPXML::ColorLight, roof_material]] = 0.40 # CRRC for off-white/tan Single-Ply products
+      map[[HPXML::ColorWhite, roof_material]] = 0.30 # CRRC for bright white Single-Ply products
+      map[[HPXML::ColorReflective, roof_material]] = 0.25 # Engineering judgment; assume a reflective coating
     end
 
     return map
@@ -2719,7 +2719,7 @@ module Constructions
     elsif type == 'roof'
       apply_open_cavity_roof(model, surfaces, 'AdiabaticRoofConstruction',
                              0, 1, 7.25, 0.07, 7.25, 0.0, 99,
-                             Material.RoofMaterialAndSheathing(HPXML::RoofTypeAsphaltShingles),
+                             Material.RoofMaterialAndSheathing(HPXML::RoofMaterialAsphaltShingles),
                              false, Material.AirFilmOutside,
                              Material.AirFilmIndoorRoof(UnitConversions.convert(surfaces[0].tilt, 'rad', 'deg')), nil)
     end
