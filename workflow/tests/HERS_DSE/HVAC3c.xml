@@ -105,7 +105,7 @@
             <InteriorAdjacentTo>attic - vented</InteriorAdjacentTo>
             <Area>811.1</Area>
             <Azimuth>0</Azimuth>
-            <RoofType>asphalt or fiberglass shingles</RoofType>
+            <RoofMaterial>asphalt or fiberglass shingles</RoofMaterial>
             <SolarAbsorptance>0.6</SolarAbsorptance>
             <Emittance>0.9</Emittance>
             <Pitch>4.0</Pitch>
@@ -119,7 +119,7 @@
             <InteriorAdjacentTo>attic - vented</InteriorAdjacentTo>
             <Area>811.1</Area>
             <Azimuth>180</Azimuth>
-            <RoofType>asphalt or fiberglass shingles</RoofType>
+            <RoofMaterial>asphalt or fiberglass shingles</RoofMaterial>
             <SolarAbsorptance>0.6</SolarAbsorptance>
             <Emittance>0.9</Emittance>
             <Pitch>4.0</Pitch>

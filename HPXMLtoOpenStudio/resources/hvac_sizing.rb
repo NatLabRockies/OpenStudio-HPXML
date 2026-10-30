@@ -435,17 +435,17 @@ module HVACSizing
             end
           else
             if not roof.radiant_barrier
-              case roof.roof_type
-              when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeShingles
+              case roof.roof_material
+              when HPXML::RoofMaterialAsphaltShingles, HPXML::RoofMaterialShingles
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 130.0 * roof.net_area
                 else
                   cool_temp += 120.0 * roof.net_area
                 end
-              when HPXML::RoofTypeWoodShingles
+              when HPXML::RoofMaterialWoodShingles
                 cool_temp += 120.0 * roof.net_area
-              when HPXML::RoofTypeMetal, HPXML::RoofTypePlasticRubber, HPXML::RoofTypeEPS
+              when HPXML::RoofMaterialMetal, HPXML::RoofMaterialPlasticRubber, HPXML::RoofMaterialEPS
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 130.0 * roof.net_area
@@ -454,7 +454,7 @@ module HVACSizing
                 when HPXML::ColorWhite, HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete
+              when HPXML::RoofMaterialClayTile, HPXML::RoofMaterialConcrete
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 110.0 * roof.net_area
@@ -464,20 +464,20 @@ module HVACSizing
                   cool_temp += 95.0 * roof.net_area
                 end
               else
-                fail "Invalid Roof Type: #{roof.roof_type}."
+                fail "Invalid Roof Material: #{roof.roof_material}."
               end
             else # with a radiant barrier
-              case roof.roof_type
-              when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeShingles
+              case roof.roof_material
+              when HPXML::RoofMaterialAsphaltShingles, HPXML::RoofMaterialShingles
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 120.0 * roof.net_area
                 else
                   cool_temp += 110.0 * roof.net_area
                 end
-              when HPXML::RoofTypeWoodShingles
+              when HPXML::RoofMaterialWoodShingles
                 cool_temp += 110.0 * roof.net_area
-              when HPXML::RoofTypeMetal, HPXML::RoofTypePlasticRubber, HPXML::RoofTypeEPS
+              when HPXML::RoofMaterialMetal, HPXML::RoofMaterialPlasticRubber, HPXML::RoofMaterialEPS
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 120.0 * roof.net_area
@@ -486,7 +486,7 @@ module HVACSizing
                 when HPXML::ColorWhite, HPXML::ColorReflective
                   cool_temp += 95.0 * roof.net_area
                 end
-              when HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete
+              when HPXML::RoofMaterialClayTile, HPXML::RoofMaterialConcrete
                 case roof.roof_color
                 when HPXML::ColorDark, HPXML::ColorMediumDark
                   cool_temp += 105.0 * roof.net_area
@@ -496,7 +496,7 @@ module HVACSizing
                   cool_temp += 95.0 * roof.net_area
                 end
               else
-                fail "Invalid Roof Type: #{roof.roof_type}."
+                fail "Invalid Roof Material: #{roof.roof_material}."
               end # roof type
             end # w/ or w/o radiant barrier
           end # vented/unvented
@@ -1179,17 +1179,17 @@ module HVACSizing
       # Base CLTD color adjustment based on notes in MJ8 Figure A12-16
       case roof.roof_color
       when HPXML::ColorDark, HPXML::ColorMediumDark
-        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeConcrete].include? roof.roof_type
+        if [HPXML::RoofMaterialClayTile, HPXML::RoofMaterialWoodShingles, HPXML::RoofMaterialConcrete].include? roof.roof_material
           cltd *= 0.83
         end
       when HPXML::ColorMedium, HPXML::ColorMediumLight, HPXML::ColorLight
-        if [HPXML::RoofTypeClayTile, HPXML::RoofTypeConcrete].include? roof.roof_type
+        if [HPXML::RoofMaterialClayTile, HPXML::RoofMaterialConcrete].include? roof.roof_material
           cltd *= 0.65
         else
           cltd *= 0.83
         end
       when HPXML::ColorWhite, HPXML::ColorReflective
-        if [HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeShingles].include? roof.roof_type
+        if [HPXML::RoofMaterialAsphaltShingles, HPXML::RoofMaterialWoodShingles, HPXML::RoofMaterialShingles].include? roof.roof_material
           cltd *= 0.83
         else
           cltd *= 0.65
