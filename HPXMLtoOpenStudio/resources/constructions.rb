@@ -2946,6 +2946,10 @@ module Constructions
   # @param match [Boolean] Whether we are expecting the construction R-value to match the target assembly R-value
   # @return [nil]
   def self.check_surface_assembly_rvalue(runner, surfaces, interior_film, exterior_film, assembly_r, match)
+    if Version::UseEPModel
+      return
+    end
+
     film_r = 0.0
     film_r += interior_film.rvalue unless interior_film.nil?
     film_r += exterior_film.rvalue unless exterior_film.nil?
@@ -3088,10 +3092,22 @@ class Construction
       surface.setConstruction(constr)
 
       # Assign reverse construction to adjacent surface as needed
-      next if surface.is_a?(OpenStudio::Model::SubSurface) || surface.is_a?(OpenStudio::Model::InternalMassDefinition) || (not surface.adjacentSurface.is_initialized)
+      is_internal_mass_definition = false
+      if not Version::UseEPModel
+        is_internal_mass_definition = surface.is_a?(OpenStudio::Model::InternalMassDefinition)
+      end
+      next if surface.is_a?(OpenStudio::Model::SubSurface) || is_internal_mass_definition || (not surface.adjacentSurface.is_initialized)
 
       if revconstr.nil?
-        revconstr = constr.reverseConstruction
+        if Version::UseEPModel
+          revconstr = Model.add_construction(
+            model,
+            name: "#{@name} reversed",
+            layers: materials.reverse
+          )
+        else
+          revconstr = constr.reverseConstruction
+        end
       end
       adjacent_surface = surface.adjacentSurface.get
       adjacent_surface.setConstruction(revconstr)

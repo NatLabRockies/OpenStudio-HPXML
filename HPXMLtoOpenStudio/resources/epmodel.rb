@@ -50,6 +50,27 @@ if Version::UseEPModel
     end
   end
 
+  if not OpenStudio::EPModel::FoundationKiva.method_defined?(:addCustomBlock)
+    OpenStudio::EPModel::FoundationKiva.define_method(:addCustomBlock) do |material, depth, x_position, z_position|
+      if numExtensibleGroups >= 10
+        return false
+      end
+
+      group = pushExtensibleGroup
+      fields_set = group.setString(0, material.name.to_s)
+      fields_set &&= group.setDouble(1, depth)
+      fields_set &&= group.setDouble(2, x_position)
+      fields_set &&= group.setDouble(3, z_position)
+
+      if not fields_set
+        eraseExtensibleGroup(group.groupIndex)
+        return false
+      end
+
+      return true
+    end
+  end
+
   { OpenStudio::EPModel::SiteGroundTemperatureShallow => 'SurfaceGroundTemperature',
     OpenStudio::EPModel::SiteGroundTemperatureDeep => 'DeepGroundTemperature' }.each do |ground_temperature_class, field_suffix|
     if not ground_temperature_class.method_defined?(:resetAllMonths)
