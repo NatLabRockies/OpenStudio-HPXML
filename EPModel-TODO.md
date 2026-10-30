@@ -15,7 +15,10 @@ handling separately from remaining work.
 | Open | Calendar year | Replace generic IDD-name-based field access with typed EPModel APIs when available. | Set RunPeriod Begin Year, End Year, and Day of Week for Start Day directly, preserving year-crossing behavior and leap-weather validation. Schedule calculations branch in place to read Begin Year; 3.11 retains `YearDescription.assumedYear`. |
 | Open | Ground temperatures | Remove the Ruby bulk-helper shims when EPModel provides equivalent native APIs. | Shims implement `resetAllMonths` and `setAllMonthlyTemperatures` using typed monthly setters for shallow and deep temperatures. The original HPXML calls are restored; OpenStudio 3.11 retains its native helpers. |
 | Open | Object metadata | Replace the temporary adapter with native SDK support; address persistence, cloning/merging, and cleanup before relying on those paths. | A process-local, handle-keyed Ruby store implements `setFeature` and the four typed getters through `ModelObject#additionalProperties`. Repeated object lookups retain metadata, including zone `ObjectType` and `BuildingID`. |
-| Open | Schedules | Adapt ruleset schedule creation to supported EPModel schedule objects or a compatible API. | `OpenStudio::EPModel::ScheduleRuleset` is absent in `Model.add_schedule_ruleset`. This is the current 4.0 baseline blocker. |
+| Open | Schedules | Validate ruleset rule/day-schedule APIs across representative workflows. | The current 4.0 build now initializes `ScheduleRuleset`; the base workflow proceeds beyond schedule creation. |
+| Open | EMS sensors | Retain the setter-based workaround unless EPModel adds a constructor overload that accepts the output-variable name. | EPModel only accepts the model in the constructor, so HPXML calls `setOutputVariableOrMeterName` afterward. OpenStudio 3.11 retains the two-argument constructor; the EPModel workflow proceeds beyond sensor creation. |
+| Open | Space floor area | Adapt the conditioned-space floor-area flag to the supported EPModel API. | Skip `setPartofTotalFloorArea` when `Version::UseEPModel` is true; OpenStudio 3.11 retains the native setter. The EPModel flag remains unsupported. |
+| Open | Internal mass definitions | Adapt surface checks to supported EPModel classes. | `OpenStudio::EPModel::InternalMassDefinition` is missing; construction assignment now stops while checking whether a surface is an internal mass definition. |
 
 ## OpenStudio
 
@@ -27,7 +30,10 @@ handling separately from remaining work.
 | Open | RunPeriod field access | Expose typed begin/end year setters and confirm the supported start-weekday API. | Calendar setup currently uses generic setters with IDD field names. |
 | Open | Ground temperatures | Provide bulk `resetAllMonths` / `setAllMonthlyTemperatures` helpers for shallow and deep temperatures, or establish their replacements. | Ruby shims implement the missing helpers using the existing typed monthly setters. |
 | Open | Object metadata | Resolve the absence of native `additionalProperties` on EPModel objects, confirmed for Site and ThermalZone, or establish an alternative. | A temporary Ruby adapter provides process-local metadata only; it is not native model metadata and does not provide serialization or clone/merge support. |
-| Open | Schedules | Provide `ScheduleRuleset` or establish the supported replacement. | Ruleset construction currently blocks the 4.0 baseline after zone and space setup. |
+| Open | Schedules | Confirm native support for ruleset rules and day-schedule operations used by HPXML. | `ScheduleRuleset` initialization succeeds in the current build; the base workflow has advanced beyond schedule creation, but broader API coverage remains to be validated. |
+| Open | EMS sensor constructor | Add an overload accepting the output-variable name, or establish the setter-based form as the supported API. | The two-argument constructor is unavailable in EPModel; HPXML currently works around this with the model-only constructor and `setOutputVariableOrMeterName`. |
+| Open | Space floor area | Expose `Space#setPartofTotalFloorArea` or establish the supported replacement. | HPXML skips this flag under EPModel because it is missing in the current binding; OpenStudio 3.11 continues to set it for unconditioned spaces. |
+| Open | Internal mass definitions | Expose `EPModel::InternalMassDefinition` or establish the supported replacement. | Construction assignment checks for this class when deciding whether to set an adjacent surface's reverse construction. |
 
 ## Temporary Shim Limits
 

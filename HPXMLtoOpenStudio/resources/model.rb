@@ -886,7 +886,12 @@ module Model
   # @param key_name [OpenStudio::Model::XXX] Model object name or 'Environment' or nil
   # @return [OpenStudio::Model::EnergyManagementSystemSensor] The model object
   def self.add_ems_sensor(model, name:, output_var_or_meter_name:, key_name:)
-    sensor = OpenStudio::Model::EnergyManagementSystemSensor.new(model, output_var_or_meter_name)
+    if Version::UseEPModel
+      sensor = OpenStudio::Model::EnergyManagementSystemSensor.new(model)
+      sensor.setOutputVariableOrMeterName(output_var_or_meter_name)
+    else
+      sensor = OpenStudio::Model::EnergyManagementSystemSensor.new(model, output_var_or_meter_name)
+    end
     sensor.setName(ems_friendly_name(name))
     sensor.setKeyName(key_name.to_s) unless key_name.nil?
     return sensor
