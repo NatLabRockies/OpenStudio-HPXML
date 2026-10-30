@@ -96,6 +96,7 @@
             <RoofType>
               <WoodFrame/>
             </RoofType>
+            <RoofMaterial>asphalt or fiberglass shingles</RoofMaterial>
             <RoofColor>medium</RoofColor>
             <Pitch>6.0</Pitch>
             <RadiantBarrier>false</RadiantBarrier>

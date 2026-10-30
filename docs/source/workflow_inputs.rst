@@ -1282,7 +1282,7 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
   .. [#] RoofType child element choices are ``WoodFrame``, ``StructuralInsulatedPanel``, ``SteelFrame``, or ``SolidConcrete``.
   .. [#] RoofMaterial choices are "asphalt or fiberglass shingles", "wood shingles or shakes", "shingles", "slate or tile shingles", "metal surfacing", "plastic/rubber/synthetic sheeting", "expanded polystyrene sheathing", or "concrete tiles".
   .. [#] RoofColor choices are "dark", "medium dark", "medium", "medium light", "light", "white", or "reflective".
-  .. [#] If SolarAbsorptance not provided, defaults based on RoofType and RoofColor:
+  .. [#] If SolarAbsorptance not provided, defaults based on RoofMaterial and RoofColor:
 
          \- **asphalt or fiberglass shingles**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
