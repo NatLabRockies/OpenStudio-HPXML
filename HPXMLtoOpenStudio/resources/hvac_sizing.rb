@@ -497,7 +497,7 @@ module HVACSizing
                 end
               else
                 fail "Invalid Roof Material: #{roof.roof_material}."
-              end # roof type
+              end # roof material
             end # w/ or w/o radiant barrier
           end # vented/unvented
         end # each roof surface
