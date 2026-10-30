@@ -101,6 +101,34 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
         _check_surface(hpxml_bldg.roofs[i], os_surface, roof_values[:layer_names])
       end
     end
+
+    # Roof construction types
+    roof_type_values = [
+      [{ assembly_r: 0.1, layer_names: ['asphalt or fiberglass shingles + osb'] },
+       { assembly_r: 5.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins'] },
+       { assembly_r: 20.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins'] }],
+      [{ assembly_r: 0.1, layer_names: ['asphalt or fiberglass shingles + osb', 'roof spline layer', 'roof ins layer', 'roof spline layer'] },
+       { assembly_r: 5.0, layer_names: ['asphalt or fiberglass shingles + osb', 'osb 0.5 in.', 'roof spline layer', 'roof ins layer', 'roof spline layer', 'osb 0.44 in.'] },
+       { assembly_r: 20.0, layer_names: ['asphalt or fiberglass shingles + osb', 'osb 0.5 in.', 'roof spline layer', 'roof ins layer', 'roof spline layer', 'osb 0.44 in.'] }],
+      [{ assembly_r: 0.1, layer_names: ['asphalt or fiberglass shingles + osb', 'roof layer'] },
+       { assembly_r: 5.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof layer'] },
+       { assembly_r: 20.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins', 'roof layer'] }],
+      [{ assembly_r: 0.1, layer_names: ['asphalt or fiberglass shingles + osb'] },
+       { assembly_r: 5.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins'] },
+       { assembly_r: 20.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins'] }]
+    ]
+
+    hpxml, hpxml_bldg = _create_hpxml('base-enclosure-rooftypes.xml')
+    hpxml_bldg.roofs.each_with_index do |roof, i|
+      roof_type_values[i].each_with_index do |roof_values, j|
+        roof.insulation_assembly_r_value = roof_values[:assembly_r]
+        XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+        model, _hpxml, hpxml_bldg = _test_measure(args_hash, skip_in_xml_validation: i + j > 0) # Only validate in.xml once for speed
+
+        os_surface = model.getSurfaces.find { |s| s.name.to_s.start_with? "#{roof.id}:" }
+        _check_surface(hpxml_bldg.roofs[i], os_surface, roof_values[:layer_names])
+      end
+    end
   end
 
   def test_radiant_barriers
@@ -408,8 +436,8 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
     ceilings_values = [
       # SIP
       [{ assembly_r: 0.1, layer_names: ['ceiling spline layer', 'ceiling ins layer', 'ceiling spline layer', 'gypsum board'] },
-       { assembly_r: 5.0, layer_names: ['ceiling spline layer', 'ceiling ins layer', 'ceiling spline layer', 'gypsum board'] },
-       { assembly_r: 20.0, layer_names: ['ceiling spline layer', 'ceiling ins layer', 'ceiling spline layer', 'gypsum board'] }],
+       { assembly_r: 5.0, layer_names: ['osb 0.44 in.', 'ceiling spline layer', 'ceiling ins layer', 'ceiling spline layer', 'osb', 'gypsum board'] },
+       { assembly_r: 20.0, layer_names: ['osb 0.44 in.', 'ceiling spline layer', 'ceiling ins layer', 'ceiling spline layer', 'osb', 'gypsum board'] }],
       # Solid Concrete
       [{ assembly_r: 0.1, layer_names: ['ceiling layer', 'gypsum board'] },
        { assembly_r: 5.0, layer_names: ['ceiling layer', 'gypsum board'] },
@@ -458,8 +486,8 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
     floors_values = [
       # SIP
       [{ assembly_r: 0.1, layer_names: ['floor spline layer', 'floor ins layer', 'floor spline layer', 'floor covering'] },
-       { assembly_r: 5.0, layer_names: ['floor spline layer', 'floor ins layer', 'floor spline layer', 'osb', 'floor covering'] },
-       { assembly_r: 20.0, layer_names: ['floor spline layer', 'floor ins layer', 'floor spline layer', 'osb', 'floor covering'] }],
+       { assembly_r: 5.0, layer_names: ['osb 0.44 in.', 'floor spline layer', 'floor ins layer', 'floor spline layer', 'osb', 'floor covering'] },
+       { assembly_r: 20.0, layer_names: ['osb 0.44 in.', 'floor spline layer', 'floor ins layer', 'floor spline layer', 'osb', 'floor covering'] }],
       # Solid Concrete
       [{ assembly_r: 0.1, layer_names: ['floor layer', 'floor covering'] },
        { assembly_r: 5.0, layer_names: ['floor layer', 'osb', 'floor covering'] },

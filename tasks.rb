@@ -864,21 +864,21 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                             exterior_adjacent_to: HPXML::LocationOtherNonFreezingSpace,
                             interior_adjacent_to: HPXML::LocationConditionedSpace,
-                            floor_type: HPXML::FloorTypeWoodFrame,
+                            floor_type: HPXML::FloorRoofTypeWoodFrame,
                             area: 550,
                             insulation_assembly_r_value: 18.7,
                             floor_or_ceiling: HPXML::FloorOrCeilingFloor)
       hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                             exterior_adjacent_to: HPXML::LocationOtherMultifamilyBufferSpace,
                             interior_adjacent_to: HPXML::LocationConditionedSpace,
-                            floor_type: HPXML::FloorTypeWoodFrame,
+                            floor_type: HPXML::FloorRoofTypeWoodFrame,
                             area: 200,
                             insulation_assembly_r_value: 18.7,
                             floor_or_ceiling: HPXML::FloorOrCeilingFloor)
       hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                             exterior_adjacent_to: HPXML::LocationOtherHeatedSpace,
                             interior_adjacent_to: HPXML::LocationConditionedSpace,
-                            floor_type: HPXML::FloorTypeWoodFrame,
+                            floor_type: HPXML::FloorRoofTypeWoodFrame,
                             area: 150,
                             insulation_assembly_r_value: 5.3,
                             floor_or_ceiling: HPXML::FloorOrCeilingFloor)
@@ -945,6 +945,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
                            interior_adjacent_to: HPXML::LocationAtticUnvented,
                            area: 504,
+                           roof_type: hpxml_bldg.roofs[0].roof_type,
                            roof_material: hpxml_bldg.roofs[0].roof_material,
                            pitch: hpxml_bldg.roofs[0].pitch,
                            roof_color: hpxml_bldg.roofs[0].roof_color,
@@ -989,7 +990,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                             exterior_adjacent_to: HPXML::LocationAtticUnvented,
                             interior_adjacent_to: HPXML::LocationConditionedSpace,
-                            floor_type: HPXML::FloorTypeWoodFrame,
+                            floor_type: HPXML::FloorRoofTypeWoodFrame,
                             area: 450,
                             insulation_assembly_r_value: 39.3,
                             floor_or_ceiling: HPXML::FloorOrCeilingCeiling)
@@ -1296,7 +1297,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                             exterior_adjacent_to: HPXML::LocationCrawlspaceUnvented,
                             interior_adjacent_to: HPXML::LocationConditionedSpace,
-                            floor_type: HPXML::FloorTypeWoodFrame,
+                            floor_type: HPXML::FloorRoofTypeWoodFrame,
                             area: 675,
                             insulation_assembly_r_value: 18.7,
                             floor_or_ceiling: HPXML::FloorOrCeilingFloor)
@@ -1412,7 +1413,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                             exterior_adjacent_to: HPXML::LocationGarage,
                             interior_adjacent_to: HPXML::LocationConditionedSpace,
-                            floor_type: HPXML::FloorTypeWoodFrame,
+                            floor_type: HPXML::FloorRoofTypeWoodFrame,
                             area: 400,
                             insulation_assembly_r_value: 39.3,
                             floor_or_ceiling: HPXML::FloorOrCeilingFloor)
@@ -1445,9 +1446,9 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.floors.reverse_each do |floor|
         floor.delete
       end
-      floors_map = { HPXML::FloorTypeSIP => 16.1,
-                     HPXML::FloorTypeConcrete => 3.2,
-                     HPXML::FloorTypeSteelFrame => 8.1 }
+      floors_map = { HPXML::FloorRoofTypeSIP => 16.1,
+                     HPXML::FloorRoofTypeConcrete => 3.2,
+                     HPXML::FloorRoofTypeSteelFrame => 8.1 }
       floors_map.each_with_index do |(floor_type, assembly_r), _i|
         hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                               exterior_adjacent_to: exterior_adjacent_to,
@@ -1465,9 +1466,9 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.floors.reverse_each do |floor|
         floor.delete
       end
-      floors_map = { HPXML::FloorTypeSIP => 16.1,
-                     HPXML::FloorTypeConcrete => 3.2,
-                     HPXML::FloorTypeSteelFrame => 8.1 }
+      floors_map = { HPXML::FloorRoofTypeSIP => 16.1,
+                     HPXML::FloorRoofTypeConcrete => 3.2,
+                     HPXML::FloorRoofTypeSteelFrame => 8.1 }
       floors_map.each_with_index do |(floor_type, assembly_r), _i|
         hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                               exterior_adjacent_to: exterior_adjacent_to,
@@ -1623,6 +1624,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
                              interior_adjacent_to: HPXML::LocationAtticUnvented,
                              area: 1509.3 / roof_properties.size,
+                             roof_type: HPXML::FloorRoofTypeWoodFrame,
                              roof_material: roof_property[0],
                              roof_color: roof_property[1],
                              pitch: 6,
@@ -1630,6 +1632,23 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                              interior_finish_type: int_finish_types[i % int_finish_types.size][0],
                              interior_finish_thickness: int_finish_types[i % int_finish_types.size][1],
                              insulation_assembly_r_value: roof_property[0] == HPXML::RoofMaterialEPS ? 7.0 : 2.3)
+        hpxml_bldg.attics[0].attached_to_roof_idrefs << hpxml_bldg.roofs[-1].id
+      end
+    elsif ['base-enclosure-rooftypes.xml'].include? hpxml_file
+      hpxml_bldg.roofs.reverse_each do |roof|
+        roof.delete
+      end
+      roofs_map = { HPXML::FloorRoofTypeWoodFrame => 26.1,
+                    HPXML::FloorRoofTypeSIP => 16.1,
+                    HPXML::FloorRoofTypeConcrete => 3.2,
+                    HPXML::FloorRoofTypeSteelFrame => 8.1 }
+      roofs_map.each_with_index do |(roof_type, assembly_r), _i|
+        hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
+                             interior_adjacent_to: HPXML::LocationAtticUnvented,
+                             area: (1509.3 / roofs_map.size).round(1),
+                             roof_type: roof_type,
+                             pitch: 6,
+                             insulation_assembly_r_value: assembly_r)
         hpxml_bldg.attics[0].attached_to_roof_idrefs << hpxml_bldg.roofs[-1].id
       end
     elsif ['base-enclosure-overhangs.xml'].include? hpxml_file

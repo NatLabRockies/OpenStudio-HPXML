@@ -101,6 +101,9 @@
             <SystemIdentifier id='Roof1'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
             <Area>1391.5</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>asphalt or fiberglass shingles</RoofMaterial>
             <RoofColor>light</RoofColor>
             <Pitch>3.0</Pitch>

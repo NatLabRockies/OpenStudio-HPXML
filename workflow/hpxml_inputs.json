@@ -1191,6 +1191,9 @@
   "sample_files/base-enclosure-roofmaterials.xml": {
     "parent_hpxml": "sample_files/base.xml"
   },
+  "sample_files/base-enclosure-rooftypes.xml": {
+    "parent_hpxml": "sample_files/base.xml"
+  },
   "sample_files/base-enclosure-skylights.xml": {
     "parent_hpxml": "sample_files/base.xml",
     "enclosure_skylight": "Double, Low-E, Metal, Med Gain",
