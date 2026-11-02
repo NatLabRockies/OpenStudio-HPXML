@@ -2128,14 +2128,14 @@ module Constructions
       # Get heating/cooling setpoints for the simulation start
       htg_setpoint_sch = setpoint_sch.heatingSetpointTemperatureSchedule.get
       if htg_setpoint_sch.to_ScheduleRuleset.is_initialized
-        htg_day_sch = htg_setpoint_sch.to_ScheduleRuleset.get.getDaySchedules(sim_begin_date, sim_begin_date)[0]
+        htg_day_sch = htg_setpoint_sch.to_ScheduleRuleset.get.getDaySchedule(sim_begin_date)
         heat_setpoint = UnitConversions.convert(htg_day_sch.values[0], 'C', 'F')
       else
         heat_setpoint = schedules_file.schedules[SchedulesFile::Columns[:HeatingSetpoint].name][sim_begin_hour]
       end
       clg_setpoint_sch = setpoint_sch.coolingSetpointTemperatureSchedule.get
       if clg_setpoint_sch.to_ScheduleRuleset.is_initialized
-        clg_day_sch = clg_setpoint_sch.to_ScheduleRuleset.get.getDaySchedules(sim_begin_date, sim_begin_date)[0]
+        clg_day_sch = clg_setpoint_sch.to_ScheduleRuleset.get.getDaySchedule(sim_begin_date)
         cool_setpoint = UnitConversions.convert(clg_day_sch.values[0], 'C', 'F')
       else
         cool_setpoint = schedules_file.schedules[SchedulesFile::Columns[:CoolingSetpoint].name][sim_begin_hour]
