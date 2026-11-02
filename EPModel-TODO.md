@@ -87,6 +87,33 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 | `FoundationKivaSettings#setSoilConductivity` | Yes | `resources/constructions.rb` | |
 | `FoundationKivaSettings#setSoilDensity` | Yes | `resources/constructions.rb` | |
 | `FoundationKivaSettings#setSoilSpecificHeat` | Yes | `resources/constructions.rb` | |
+| `GroundHeatExchangerVertical#addGFunction(lnValue, gValue)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#boreHoleLength` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#boreHoleRadius` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#designFlowRate` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#gFunctionReferenceRatio` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#gFunctions` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#groundThermalConductivity` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#groundThermalHeatCapacity` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#groundTemperature` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim delegates to `undisturbedGroundTemperatureModel().averageSoilSurfaceTemperature`. No direct EnergyPlus field; temperature is managed by undisturbed ground model. |
+| `GroundHeatExchangerVertical#maximumLengthofSimulation` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim returns default OptionalInt(1). No direct EnergyPlus field; this is a known EPModel limitation. |
+| `GroundHeatExchangerVertical#numberofBoreHoles` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#removeAllGFunctions` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setBoreHoleLength(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setBoreHoleRadius(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setDesignFlowRate(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setGFunctionReferenceRatio(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setGroundThermalConductivity(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setGroundThermalHeatCapacity(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setGroundTemperature(temperature)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim delegates to `undisturbedGroundTemperatureModel().setAverageSoilSurfaceTemperature()`. No direct EnergyPlus field; temperature is managed by undisturbed ground model. |
+| `GroundHeatExchangerVertical#setGroutThermalConductivity(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setMaximumLengthofSimulation(value)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim silently succeeds (returns true). No direct EnergyPlus field; this is a known EPModel limitation. |
+| `GroundHeatExchangerVertical#setNumberofBoreHoles(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setPipeOutDiameter(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setPipeThermalConductivity(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setPipeThickness(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#setUTubeDistance(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical#undisturbedGroundTemperatureModel` | Yes | `resources/hvac.rb` | |
 | `InsideSurfaceConvectionAlgorithm#setAlgorithm` | Yes | `resources/simcontrols.rb` | |
 | `InteriorPartitionSurface#setConstruction` | Yes | `resources/epmodel.rb` | |
 | `InteriorPartitionSurface#setName` | Yes | `resources/epmodel.rb` | |

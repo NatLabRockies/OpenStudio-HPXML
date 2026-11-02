@@ -1213,4 +1213,55 @@ if Version::UseEPModel
       end
     end
   end
+
+  # GroundHeatExchangerVertical compatibility shims for methods not exposed by EPModel
+  # These are methods from OpenStudio 3.11 SDK that EPModel doesn't directly expose.
+  # Note: groundTemperature and maximumLengthofSimulation have no direct EnergyPlus fields
+  # and need special handling.
+
+  unless OpenStudio::EPModel::GroundHeatExchangerVertical.method_defined?(:setGroundTemperature)
+    OpenStudio::EPModel::GroundHeatExchangerVertical.define_method(:setGroundTemperature) do |temperature|
+      # Set temperature on the undisturbed ground temperature model
+      begin
+        xing = undisturbedGroundTemperatureModel.to_SiteGroundTemperatureUndisturbedXing
+        if xing.is_initialized
+          xing.get.setAverageSoilSurfaceTemperature(temperature)
+          return true
+        end
+      rescue StandardError
+        # If to_SiteGroundTemperatureUndisturbedXing fails, this isn't an Xing model
+      end
+      false
+    end
+  end
+
+  unless OpenStudio::EPModel::GroundHeatExchangerVertical.method_defined?(:groundTemperature)
+    OpenStudio::EPModel::GroundHeatExchangerVertical.define_method(:groundTemperature) do
+      # Get temperature from the undisturbed ground temperature model
+      begin
+        xing = undisturbedGroundTemperatureModel.to_SiteGroundTemperatureUndisturbedXing
+        if xing.is_initialized
+          return OpenStudio::OptionalDouble.new(xing.get.averageSoilSurfaceTemperature)
+        end
+      rescue StandardError
+        # If to_SiteGroundTemperatureUndisturbedXing fails, this isn't an Xing model
+      end
+      OpenStudio::OptionalDouble.new
+    end
+  end
+
+  unless OpenStudio::EPModel::GroundHeatExchangerVertical.method_defined?(:setMaximumLengthofSimulation)
+    OpenStudio::EPModel::GroundHeatExchangerVertical.define_method(:setMaximumLengthofSimulation) do |_value|
+      # maximumLengthofSimulation has no direct EnergyPlus field
+      # This is a known limitation of EPModel - just silently succeed
+      true
+    end
+  end
+
+  unless OpenStudio::EPModel::GroundHeatExchangerVertical.method_defined?(:maximumLengthofSimulation)
+    OpenStudio::EPModel::GroundHeatExchangerVertical.define_method(:maximumLengthofSimulation) do
+      # maximumLengthofSimulation has no direct EnergyPlus field - return default
+      OpenStudio::OptionalInt.new(1)
+    end
+  end
 end
