@@ -115,6 +115,12 @@ if Version::UseEPModel
     end
   end
 
+  unless OpenStudio::EPModel::Model.method_defined?(:getShadingSurfaceGroups)
+    OpenStudio::EPModel::Model.define_method(:getShadingSurfaceGroups) do
+      getObjectsByType(OpenStudio::IddObjectType.new('OS_ShadingSurfaceGroup'))
+    end
+  end
+
   if not OpenStudio::EPModel::ModelObject.method_defined?(:additionalProperties)
     OpenStudio::EPModel::ModelObject.define_method(:additionalProperties) do
       EPModelCompatibility::AdditionalProperties.for_object(self)

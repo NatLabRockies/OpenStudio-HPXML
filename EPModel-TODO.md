@@ -1,157 +1,240 @@
 # EPModel Compatibility TODOs
 
-`Version::UseEPModel` selects the temporary OpenStudio 4.0 EPModel path when
-`OpenStudio::EPModel` is present. When false, retain the OpenStudio 3.11 workflow.
-Record each new EPModel-specific workaround or missing API under its owning
-project. A workaround does not resolve the underlying SDK gap; track current
-handling separately from remaining work.
+`Version::UseEPModel` selects the temporary OpenStudio 4.0 EPModel path when `OpenStudio::EPModel` is present.
+When false, retain the OpenStudio 3.11 workflow.
+Record each new EPModel-specific workaround or missing API under its owning project.
+A workaround does not resolve the underlying SDK gap; track current handling separately from remaining work.
 
-## OpenStudio-HPXML
+## EPModel API Calls
 
-### `resources/epmodel.rb`
+Unique API calls observed in the `base.xml` input-creation path.
+`Yes` means the method is provided natively by EPModel; a blank means the call is shimmed or missing.
+Ruby core methods and constructors' internal `initialize` calls are omitted.
 
-| Status | Area | Remaining Work | Current Handling |
+| API Method Called | Native EPModel? | File location | Remaining Work / Current Handling |
 | --- | --- | --- | --- |
-| Open | Model namespace | Remove the namespace alias in `HPXMLtoOpenStudio/resources/epmodel.rb` when the SDK returns to the `Model` namespace. | The centralized Ruby shim aliases the entire `OpenStudio::Model` namespace to `OpenStudio::EPModel`. Existing constructor calls resolve to EPModel classes without individual aliases; missing classes and methods still need explicit handling. |
-| Open | Ground temperatures | Remove the Ruby bulk-helper shims when EPModel provides equivalent native APIs. | Shims implement `resetAllMonths` and `setAllMonthlyTemperatures` using typed monthly setters for shallow and deep temperatures. The original HPXML calls are restored; OpenStudio 3.11 retains its native helpers. |
-| Open | Object metadata persistence | Replace the process-local store with native typed metadata once EPModel persists it through model serialization. | A process-local, handle-keyed Ruby store implements `setFeature` and the four typed getters through `ModelObject#additionalProperties`. Repeated object lookups retain metadata, including zone `ObjectType` and `BuildingID`. |
-| Open | Metadata clone/merge | Define clone/merge handle remapping and cleanup, and test that copied objects do not share metadata and reused handles do not leak values. | The store is keyed by handle and lasts for the process; clone/merge isolation and handle remapping are not implemented. |
+| `AdditionalProperties#getFeatureAsDouble` |  | `resources/epmodel.rb` | Process-local metadata adapter. |
+| `AdditionalProperties#getFeatureAsInteger` |  | `resources/epmodel.rb` | Process-local metadata adapter. |
+| `AdditionalProperties#getFeatureAsString` |  | `resources/epmodel.rb` | Process-local metadata adapter. |
+| `AdditionalProperties#setFeature` |  | `resources/epmodel.rb` | Process-local, handle-keyed metadata; not serialized, and clone/merge isolation and handle remapping are not implemented. Reused handles can share metadata. |
+| `Construction#setLayers` | Yes | `resources/model.rb` | |
+| `Construction#setName` | Yes | `resources/model.rb` | |
+| `Construction.new(model)` | Yes | `resources/model.rb` | |
+| `ConvergenceLimits#setMaximumHVACIterations` | Yes | `resources/simcontrols.rb` | |
+| `ConvergenceLimits#setMinimumSystemTimestep` | Yes | `resources/simcontrols.rb` | |
+| `EnergyManagementSystemSensor#setKeyName` | Yes | `resources/model.rb` | |
+| `EnergyManagementSystemSensor#setName` | Yes | `resources/model.rb` | |
+| `EnergyManagementSystemSensor#setOutputVariableOrMeterName` | Yes | `resources/model.rb` | Used after construction as an overload workaround. |
+| `EnergyManagementSystemSensor.new(model)` | Yes | `resources/model.rb` | Uses model-only constructor, then sets the output name because the two-argument overload is unavailable. |
+| `FoundationKiva#addCustomBlock(material, depth, x, z)` |  | `resources/constructions.rb` | Implemented with extensible-group field writes in `epmodel.rb`. |
+| `FoundationKiva#numExtensibleGroups` | Yes | `resources/epmodel.rb` | Used to enforce the ten-group limit. |
+| `FoundationKiva#pushExtensibleGroup` | Yes | `resources/epmodel.rb` | Used by the `addCustomBlock` shim. |
+| `FoundationKiva#setInitialIndoorAirTemperature` | Yes | `resources/constructions.rb` | |
+| `FoundationKiva#setWallDepthBelowSlab` | Yes | `resources/constructions.rb` | |
+| `FoundationKiva#setWallHeightAboveGrade` | Yes | `resources/constructions.rb` | |
+| `FoundationKiva.new(model)` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setDeepGroundBoundaryCondition` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setDeepGroundDepth` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setFarFieldWidth` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setGroundSolarAbsorptivity` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setGroundSurfaceRoughness` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setGroundThermalAbsorptivity` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setMaximumCellGrowthCoefficient` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setMinimumCellDimension` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setSimulationTimestep` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setSoilConductivity` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setSoilDensity` | Yes | `resources/constructions.rb` | |
+| `FoundationKivaSettings#setSoilSpecificHeat` | Yes | `resources/constructions.rb` | |
+| `InsideSurfaceConvectionAlgorithm#setAlgorithm` | Yes | `resources/simcontrols.rb` | |
+| `InteriorPartitionSurface#setConstruction` | Yes | `resources/epmodel.rb` | |
+| `InteriorPartitionSurface#setName` | Yes | `resources/epmodel.rb` | |
+| `InteriorPartitionSurface#setPointer` | Yes | `resources/epmodel.rb` | Sets the Space reference. |
+| `InteriorPartitionSurface#setSurfaceArea` | Yes | `resources/epmodel.rb` | |
+| `InteriorPartitionSurface.new(vertices, model)` | Yes | `resources/epmodel.rb` | Underlying object for the InternalMass compatibility façade. |
+| `InternalMass#internalMassDefinition` |  | `resources/constructions.rb` | Returns the façade used for construction assignment. |
+| `InternalMass#setName` |  | `resources/model.rb` | Compatibility façade. |
+| `InternalMass#setSpace` |  | `resources/model.rb` | Compatibility façade. |
+| `InternalMass.new(definition)` |  | `resources/model.rb` | Compatibility façade over `InteriorPartitionSurface`. |
+| `InternalMassDefinition#adjacentSurface` |  | `resources/constructions.rb` | Returns an empty optional; EPModel internal masses have no adjacent surface. |
+| `InternalMassDefinition#setConstruction` |  | `resources/constructions.rb` | Delegates to `InteriorPartitionSurface#setConstruction`. |
+| `InternalMassDefinition#setName` |  | `resources/model.rb` | Delegates to `InteriorPartitionSurface#setName`. |
+| `InternalMassDefinition#setSpace` |  | `resources/model.rb` | Writes the EnergyPlus Space reference. |
+| `InternalMassDefinition#setSurfaceArea` |  | `resources/model.rb` | Delegates to `InteriorPartitionSurface#setSurfaceArea`. |
+| `InternalMassDefinition.new(model)` |  | `resources/model.rb` | Creates an `InteriorPartitionSurface` with placeholder vertices, then sets its explicit area. |
+| `Model#getConvergenceLimits` | Yes | `resources/simcontrols.rb` | |
+| `Model#getFoundationKivas` | Yes | `resources/epmodel.rb` | Resolves the typed target for `adjacentFoundation`. |
+| `Model#getFoundationKivaSettings` | Yes | `resources/constructions.rb` | |
+| `Model#getInsideSurfaceConvectionAlgorithm` | Yes | `resources/simcontrols.rb` | |
+| `Model#getOutsideSurfaceConvectionAlgorithm` | Yes | `resources/simcontrols.rb` | |
+| `Model#getRunPeriod` | Yes | `resources/location.rb`, `resources/schedules.rb`, `resources/simcontrols.rb` | |
+| `Model#getRunPeriodControlDaylightSavingTime` | Yes | `resources/location.rb` | |
+| `Model#getScheduleTypeLimitss` | Yes | `resources/model.rb` | |
+| `Model#getShadingSurfaceGroups` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim queries `OS_ShadingSurfaceGroup` through `Model#getObjectsByType` and returns generic WorkspaceObjects; EPModel still lacks typed shading-group/surface objects and their `shadingSurfaces` relationship. |
+| `Model#getShadowCalculation` | Yes | `resources/simcontrols.rb` | |
+| `Model#getSimpleGlazings` | Yes | `resources/model.rb` | |
+| `Model#getSimulationControl` | Yes | `resources/simcontrols.rb` | |
+| `Model#getSite` | Yes | `resources/location.rb` | |
+| `Model#getSiteGroundTemperatureShallow` | Yes | `resources/location.rb` | |
+| `Model#getStandardOpaqueMaterials` | Yes | `resources/model.rb` | |
+| `Model#getSurfacePropertyExposedFoundationPerimeters` | Yes | `resources/epmodel.rb` | Checks for an existing property before creating one. |
+| `Model#getSurfaces` | Yes | `resources/geometry.rb` | |
+| `Model#getTimestep` | Yes | `resources/simcontrols.rb` | |
+| `Model#getYearDescription` |  | `resources/location.rb`, `resources/schedules.rb` | Called only when `Version::UseEPModel` is false; EPModel reads/writes year fields through `RunPeriod`. |
+| `Model#getZoneCapacitanceMultiplierResearchSpecial` | Yes | `resources/simcontrols.rb` | |
+| `Model#objects` | Yes | `resources/model.rb`, `resources/meta_measure.rb` | |
+| `Model.new` | Yes | `resources/meta_measure.rb` | |
+| `ModelObject#additionalProperties` |  | `resources/epmodel.rb` | Returns the process-local compatibility adapter. |
+| `ModelObject#getTarget` | Yes | `resources/epmodel.rb` | Resolves object references in association shims. |
+| `ModelObject#iddObject` | Yes | `resources/epmodel.rb`, `resources/location.rb`, `resources/schedules.rb` | Used for generic RunPeriod field access and shim field lookup. |
+| `ModelObject#setPointer` | Yes | `resources/epmodel.rb` | Used by relationship shims. |
+| `OptionalFoundationKiva#get` | Yes | `resources/geometry.rb` | |
+| `OptionalSchedule#get` | Yes | `resources/constructions.rb` | |
+| `OptionalScheduleRuleset#get` | Yes | `resources/constructions.rb` | |
+| `OptionalScheduleRuleset#is_initialized` | Yes | `resources/constructions.rb` | |
+| `OptionalSurface#get` | Yes | `resources/geometry.rb` | |
+| `OptionalSurface#is_initialized` | Yes | `resources/constructions.rb` | |
+| `OptionalSurface.new` | Yes | `resources/epmodel.rb` | Empty optional returned by the InternalMass compatibility façade. |
+| `OptionalSurfacePropertyExposedFoundationPerimeter.new` | Yes | `resources/epmodel.rb` | Wraps the exposed-perimeter object returned by the Surface shim. |
+| `OptionalThermalZone#get` | Yes | `resources/geometry.rb`, `resources/hvac.rb` | |
+| `OptionalThermostatSetpointDualSetpoint#get` | Yes | `resources/constructions.rb` | |
+| `OptionalThermostatSetpointDualSetpoint#is_initialized` | Yes | `resources/constructions.rb` | |
+| `OutsideSurfaceConvectionAlgorithm#setAlgorithm` | Yes | `resources/simcontrols.rb` | |
+| `RunPeriod#getInt` | Yes | `resources/schedules.rb` | Generic field-index read of Begin Year. |
+| `RunPeriod#iddObject` | Yes | `resources/location.rb`, `resources/schedules.rb` | Retrieves field indices for generic RunPeriod field access. |
+| `RunPeriod#setBeginDayOfMonth` | Yes | `resources/simcontrols.rb` | |
+| `RunPeriod#setBeginMonth` | Yes | `resources/simcontrols.rb` | |
+| `RunPeriod#setEndDayOfMonth` | Yes | `resources/simcontrols.rb` | |
+| `RunPeriod#setEndMonth` | Yes | `resources/simcontrols.rb` | |
+| `RunPeriod#setInt` | Yes | `resources/location.rb` | Generic field-index writes for Begin/End Year. |
+| `RunPeriod#setString` | Yes | `resources/location.rb` | Generic field-index write for Day of Week for Start Day. |
+| `RunPeriodControlDaylightSavingTime#setEndDate` | Yes | `resources/location.rb` | |
+| `RunPeriodControlDaylightSavingTime#setStartDate` | Yes | `resources/location.rb` | |
+| `Schedule#to_ScheduleRuleset` | Yes | `resources/constructions.rb` | |
+| `ScheduleConstant#setName` | Yes | `resources/model.rb` | |
+| `ScheduleConstant#setScheduleTypeLimits` | Yes | `resources/model.rb` | |
+| `ScheduleConstant#setValue` | Yes | `resources/model.rb` | |
+| `ScheduleConstant.new(model)` | Yes | `resources/model.rb` | |
+| `ScheduleDay#addValue` | Yes | `resources/model.rb` | |
+| `ScheduleDay#setName` | Yes | `resources/model.rb` | |
+| `ScheduleDay#values` | Yes | `resources/constructions.rb` | |
+| `ScheduleRule#daySchedule` | Yes | `resources/model.rb` | |
+| `ScheduleRule#setApplyFriday` | Yes | `resources/model.rb` | |
+| `ScheduleRule#setApplyMonday` | Yes | `resources/model.rb` | |
+| `ScheduleRule#setApplySaturday` | Yes | `resources/model.rb` | |
+| `ScheduleRule#setApplySunday` | Yes | `resources/model.rb` | |
+| `ScheduleRule#setApplyThursday` | Yes | `resources/model.rb` | |
+| `ScheduleRule#setApplyTuesday` | Yes | `resources/model.rb` | |
+| `ScheduleRule#setApplyWednesday` | Yes | `resources/model.rb` | |
+| `ScheduleRule#setEndDate` | Yes | `resources/model.rb`, `resources/schedules.rb` | |
+| `ScheduleRule#setName` | Yes | `resources/model.rb` | |
+| `ScheduleRule#setStartDate` | Yes | `resources/model.rb` | |
+| `ScheduleRule.new(schedule)` | Yes | `resources/model.rb` | |
+| `ScheduleRuleset#defaultDaySchedule` | Yes | `resources/model.rb` | |
+| `ScheduleRuleset#getDaySchedule(date)` | Yes | `resources/constructions.rb` | |
+| `ScheduleRuleset#name` | Yes | `resources/model.rb` | |
+| `ScheduleRuleset#setName` | Yes | `resources/model.rb` | |
+| `ScheduleRuleset.new(model)` | Yes | `resources/model.rb` | |
+| `ScheduleTypeLimits#name` | Yes | `resources/model.rb` | |
+| `ScheduleTypeLimits#setLowerLimitValue` | Yes | `resources/model.rb` | |
+| `ScheduleTypeLimits#setName` | Yes | `resources/model.rb` | |
+| `ScheduleTypeLimits#setNumericType` | Yes | `resources/model.rb` | |
+| `ScheduleTypeLimits#setUpperLimitValue` | Yes | `resources/model.rb` | |
+| `ScheduleTypeLimits.new(model)` | Yes | `resources/model.rb` | |
+| `ShadowCalculation#setMaximumFiguresInShadowOverlapCalculations` | Yes | `resources/simcontrols.rb` | |
+| `ShadowCalculation#setShadingCalculationUpdateFrequency` | Yes | `resources/simcontrols.rb` | |
+| `SimpleGlazing#name` | Yes | `resources/model.rb` | |
+| `SimpleGlazing#setName` | Yes | `resources/model.rb` | |
+| `SimpleGlazing#setSolarHeatGainCoefficient` | Yes | `resources/model.rb` | |
+| `SimpleGlazing#setUFactor` | Yes | `resources/model.rb` | |
+| `SimpleGlazing#solarHeatGainCoefficient` | Yes | `resources/model.rb` | |
+| `SimpleGlazing#uFactor` | Yes | `resources/model.rb` | |
+| `SimpleGlazing.new(model)` | Yes | `resources/model.rb` | |
+| `SimulationControl#setRunSimulationforSizingPeriods` | Yes | `resources/simcontrols.rb` | |
+| `Site#setElevation` | Yes | `resources/location.rb` | |
+| `Site#setKeepSiteLocationInformation` | Yes | `resources/location.rb` | |
+| `Site#setLatitude` | Yes | `resources/location.rb` | |
+| `Site#setLongitude` | Yes | `resources/location.rb` | |
+| `Site#setName` | Yes | `resources/location.rb` | |
+| `Site#setTimeZone` | Yes | `resources/location.rb` | |
+| `SiteGroundTemperatureShallow#resetAllMonths` |  | `resources/location.rb` | Compatibility helper delegates to native monthly reset methods. |
+| `SiteGroundTemperatureShallow#setAllMonthlyTemperatures` |  | `resources/location.rb` | Compatibility helper delegates to native monthly setters. |
+| `Space#floorArea` | Yes | `resources/constructions.rb` | |
+| `Space#name` | Yes | `resources/constructions.rb` | |
+| `Space#setName` | Yes | `resources/geometry.rb` | |
+| `Space#setThermalZone` | Yes | `resources/geometry.rb` | |
+| `Space#setVolume` | Yes | `resources/geometry.rb` | |
+| `Space#thermalZone` | Yes | `resources/constructions.rb`, `resources/geometry.rb`, `resources/hvac.rb` | |
+| `Space.new(model)` | Yes | `resources/geometry.rb` | |
+| `StandardOpaqueMaterial#conductivity` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#density` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#name` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#roughness` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#setConductivity` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#setDensity` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#setName` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#setRoughness` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#setSolarAbsorptance` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#setSpecificHeat` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#setThermalAbsorptance` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#setThickness` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#setVisibleAbsorptance` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#solarAbsorptance` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#specificHeat` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#thermalAbsorptance` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial#thickness` | Yes | `resources/model.rb` | |
+| `StandardOpaqueMaterial.new(model)` | Yes | `resources/model.rb` | |
+| `SubSurface#setConstruction` | Yes | `resources/constructions.rb` | |
+| `SubSurface#setName` | Yes | `resources/geometry.rb` | |
+| `SubSurface#setSubSurfaceType` | Yes | `resources/geometry.rb` | |
+| `SubSurface#setSurface` | Yes | `resources/geometry.rb` | |
+| `SubSurface#subSurfaceType` | Yes | `resources/epmodel.rb` | Validates allowed types in the incident-solar multiplier constructor shim. |
+| `SubSurface.new(vertices, model)` | Yes | `resources/geometry.rb` | |
+| `Surface#<=>` | Yes | `resources/geometry.rb` | |
+| `Surface#adjacentFoundation` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim resolves the stored Kiva handle to a typed optional. |
+| `Surface#adjacentSurface` | Yes | `resources/constructions.rb` | |
+| `Surface#createAdjacentSurface` | Yes | `resources/geometry.rb` | |
+| `Surface#createSurfacePropertyExposedFoundationPerimeter` |  | `resources/constructions.rb` | Shim creates and links the property through `Surface Name`. |
+| `Surface#outsideBoundaryCondition` | Yes | `resources/geometry.rb` | |
+| `Surface#setAdjacentFoundation(foundation)` |  | `resources/constructions.rb` | Shim sets the Kiva pointer and `OutsideBoundaryCondition`. |
+| `Surface#setConstruction` | Yes | `resources/constructions.rb` | |
+| `Surface#setName` | Yes | `resources/geometry.rb` | |
+| `Surface#setOutsideBoundaryCondition` | Yes | `resources/geometry.rb`, `resources/epmodel.rb` | |
+| `Surface#setSpace` | Yes | `resources/geometry.rb` | |
+| `Surface#setSunExposure` | Yes | `resources/geometry.rb` | |
+| `Surface#setSurfaceType` | Yes | `resources/geometry.rb` | |
+| `Surface#setWindExposure` | Yes | `resources/geometry.rb` | |
+| `Surface#surfaceType` | Yes | `resources/geometry.rb` | |
+| `Surface#tilt` | Yes | `resources/constructions.rb` | |
+| `Surface.new(vertices, model)` | Yes | `resources/geometry.rb` | |
+| `SurfacePropertyExposedFoundationPerimeter#setExposedPerimeterCalculationMethod` | Yes | `resources/epmodel.rb` | |
+| `SurfacePropertyExposedFoundationPerimeter#setTotalExposedPerimeter` | Yes | `resources/epmodel.rb` | |
+| `SurfacePropertyExposedFoundationPerimeter.new(model)` | Yes | `resources/epmodel.rb` | Native object constructor used by the Surface shim. |
+| `SurfacePropertyIncidentSolarMultiplier#setIncidentSolarMultiplier` | Yes | `resources/epmodel.rb` | Sets the legacy constructor's default value of 1.0. |
+| `SurfacePropertyIncidentSolarMultiplier#setIncidentSolarMultiplierSchedule` |  | `resources/constructions.rb`, `resources/epmodel.rb` | Compatibility shim writes the schedule reference. |
+| `SurfacePropertyIncidentSolarMultiplier#setSubSurface` |  | `resources/epmodel.rb` | Compatibility shim writes the subsurface reference. |
+| `SurfacePropertyIncidentSolarMultiplier.new(model)` | Yes | `resources/epmodel.rb` | Native constructor used by the subsurface overload. |
+| `SurfacePropertyIncidentSolarMultiplier.new(subsurface)` |  | `resources/constructions.rb` | Constructor overload supplied by the compatibility shim. |
+| `ThermalZone#name` | Yes | `resources/hvac.rb` | |
+| `ThermalZone#setMultiplier` | Yes | `resources/geometry.rb` | |
+| `ThermalZone#setName` | Yes | `resources/geometry.rb` | |
+| `ThermalZone#setThermostatSetpointDualSetpoint` | Yes | `resources/hvac.rb` | |
+| `ThermalZone#setVolume` | Yes | `resources/geometry.rb` | |
+| `ThermalZone#thermostatSetpointDualSetpoint` | Yes | `resources/constructions.rb` | |
+| `ThermalZone.new(model)` | Yes | `resources/geometry.rb` | |
+| `ThermostatSetpointDualSetpoint#coolingSetpointTemperatureSchedule` | Yes | `resources/constructions.rb` | |
+| `ThermostatSetpointDualSetpoint#heatingSetpointTemperatureSchedule` | Yes | `resources/constructions.rb` | |
+| `ThermostatSetpointDualSetpoint#setCoolingSetpointTemperatureSchedule` | Yes | `resources/hvac.rb` | |
+| `ThermostatSetpointDualSetpoint#setHeatingSetpointTemperatureSchedule` | Yes | `resources/hvac.rb` | |
+| `ThermostatSetpointDualSetpoint#setName` | Yes | `resources/hvac.rb` | |
+| `ThermostatSetpointDualSetpoint#setTemperatureDifferenceBetweenCutoutAndSetpoint` | Yes | `resources/hvac.rb` | |
+| `ThermostatSetpointDualSetpoint.new(model)` | Yes | `resources/hvac.rb` | |
+| `Timestep#setNumberOfTimestepsPerHour` | Yes | `resources/simcontrols.rb` | |
+| `WeatherFile.setWeatherFile(model, epw_file)` |  | `resources/location.rb` | Called only when `Version::UseEPModel` is false. For EPModel, `meta_measure.rb` retains the EPW path through runner reset and passes it to EnergyPlus with `-w`. |
+| `YearDescription#assumedYear` |  | `resources/schedules.rb` | Used only on the OpenStudio 3.11 branch; EPModel reads RunPeriod Begin Year instead. |
+| `YearDescription#setCalendarYear` |  | `resources/location.rb` | Used only on the OpenStudio 3.11 branch; EPModel writes RunPeriod year fields instead. |
+| `ZoneCapacitanceMultiplierResearchSpecial#setHumidityCapacityMultiplier` | Yes | `resources/simcontrols.rb` | |
+| `ZoneCapacitanceMultiplierResearchSpecial#setTemperatureCapacityMultiplier` | Yes | `resources/simcontrols.rb` | |
 
-### `resources/location.rb`
-
-| Status | Area | Remaining Work | Current Handling |
-| --- | --- | --- | --- |
-| Open | Weather file | Remove the external EPW-path handoff once EPModel supports an in-model weather-file API. | EPModel skips the old weather-file assignment and uses `model.getSite` for location fields. `meta_measure.rb` retains the EPW path through child and parent runners, copies it before runner reset, and passes it to EnergyPlus with `-w`. |
-| Open | Calendar year | Replace generic field-index access for RunPeriod Begin Year, End Year, and Day of Week for Start Day with typed EPModel APIs when exposed; replace the generic Begin Year read in `schedules.rb` as well. | `location.rb` writes the three RunPeriod fields by IDD field index. `schedules.rb` reads Begin Year the same way. Year-crossing and leap-weather behavior are preserved; 3.11 retains `YearDescription.assumedYear`. |
-
-### `resources/schedules.rb`
-
-| Status | Area | Remaining Work | Current Handling |
-| --- | --- | --- | --- |
-| Open | Schedules | Run `tests/test_schedules.rb` under EPModel; require default/simple schedules, weekday/weekend rules, vacancy and outage periods, and annual-hours checks to pass. | The base workflow confirms `ScheduleRuleset` construction only; the schedule test suite has not been validated under EPModel. |
-
-### `resources/model.rb`
-
-| Status | Area | Remaining Work | Current Handling |
-| --- | --- | --- | --- |
-| Open | EMS sensors | Replace the model-only constructor plus setter with the output-variable constructor once EPModel exposes that overload. | EPModel currently accepts only the model in the constructor, so HPXML calls `setOutputVariableOrMeterName` afterward. OpenStudio 3.11 retains the two-argument constructor; the EPModel workflow proceeds beyond sensor creation. |
-| Open | Internal mass definitions | Replace the compatibility façade once EPModel exposes native internal-mass creation and relationship APIs. | `epmodel.rb` maps the legacy `InternalMassDefinition`/`InternalMass` calls to `InteriorPartitionSurface`, including area, Space reference, and construction. The workflow now advances beyond internal-mass creation. |
-
-### `resources/geometry.rb`
-
-| Status | Area | Remaining Work | Current Handling |
-| --- | --- | --- | --- |
-| Open | Space floor area | Restore `setPartofTotalFloorArea(false)` for unconditioned spaces when EPModel exposes an equivalent property; otherwise document the omitted floor-area behavior as an accepted limitation. | The flag is skipped when `Version::UseEPModel` is true; OpenStudio 3.11 retains the native setter. |
-| Open | Neighbor shading groups | Enumerate and explode neighbor shading surfaces through an EPModel model API. | `geometry.rb` calls the missing `Model#getShadingSurfaceGroups`; the base workflow now stops in `explode_surfaces`. |
-
-### `resources/constructions.rb`
-
-| Status | Area | Remaining Work | Current Handling |
-| --- | --- | --- | --- |
-| Open | Construction R-value check | Remove the EPModel skip once `ConstructionBase#uFactor` or a validated equivalent is available. | `check_surface_assembly_rvalue` returns early under EPModel because `uFactor` is unavailable; OpenStudio 3.11 retains the native check. |
-| Open | Reverse construction | Replace the `materials.reverse` fallback with `reverseConstruction` once EPModel exposes that method, and verify equivalent layer order. | EPModel creates the reverse construction from reversed material layers; OpenStudio 3.11 uses the native method. |
-| Open | Kiva custom blocks | Remove the shim once EPModel exposes `FoundationKiva#addCustomBlock`. | `epmodel.rb` writes the material reference, depth, X-position, and Z-position into one extensible group. It accepts up to 10 groups and removes a partially written group if a field write fails. The workflow advances past custom-block creation. |
-| Open | Foundation association | Remove the setter/getter shims once EPModel exposes typed `setAdjacentFoundation` and `adjacentFoundation` methods. | `epmodel.rb` writes the foundation handle and `OutsideBoundaryCondition` value, then resolves the target to a typed Kiva optional. The workflow now advances past wall association. |
-| Open | Exposed foundation perimeter | Remove the property-creation shim once EPModel exposes the Surface convenience method. | `epmodel.rb` creates the property, links its `Surface Name`, and sets its calculation method and perimeter. The workflow now advances past Kiva slab setup. |
-| Open | Kiva initial temperature | Run the focused ruleset test for default-day and rule-override dates. | The rebuilt workflow passed both `getDaySchedule(sim_begin_date)` calls and advanced beyond Kiva initial-temperature setup. |
-| Open | Incident solar multiplier | Remove the constructor and schedule-setter shims when EPModel exposes the corresponding relationship APIs. | `epmodel.rb` overloads `new(subsurface)`, sets the subsurface reference and default multiplier, and sets the incident-solar schedule reference. The workflow now advances past window shading setup. |
-
-## OpenStudio
-
-### `Model.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Model namespace | Complete the planned rename from `EPModel` back to `Model`. | Remove the temporary namespace alias after the rename. |
-| Open | Weather file | Expose `EPModel::WeatherFile` / `Model#getWeatherFile`, or establish the supported replacement. | EPModel has no `WeatherFile` header or `Model#getWeatherFile`; the EPW path currently has to be retained outside the model. |
-| Open | Calendar year | Expose `Model#getYearDescription`, or establish the supported calendar API. | Calendar setup and schedule year reads currently use RunPeriod fields instead. |
-| Open | Neighbor shading groups | Expose `Model#getShadingSurfaceGroups` and the typed shading-group/surface objects needed to enumerate neighbor shading. | `geometry.rb` calls the missing collection getter in `explode_surfaces`; the base workflow stops there. |
-
-### `ParentObject/RunPeriod.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | RunPeriod field access | Expose typed access for `Begin Year`, `End Year`, and `Day of Week for Start Day`, including a typed `Begin Year` read. | `location.rb` writes the three fields and `schedules.rb` reads `Begin Year` through generic IDD field indices. |
-
-### `ModelObject/SiteGroundTemperatureShallow.hpp` and `ModelObject/SiteGroundTemperatureDeep.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Ground temperatures | Provide bulk `resetAllMonths` / `setAllMonthlyTemperatures` helpers for shallow and deep temperatures, or establish their replacements. | Ruby shims implement the missing helpers using the existing typed monthly setters. |
-
-### `ModelObject/ModelObject.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Object metadata persistence | Expose native typed `additionalProperties` access that persists through model serialization. | HPXML currently uses a process-local Ruby adapter; metadata is not serialized with the model. |
-| Open | Metadata clone/merge | Define metadata behavior for cloning, merging, handle remapping, and handle reuse. | The current adapter has no clone/merge isolation or handle remapping; reusing handles can share metadata. |
-
-### `Schedule/ScheduleRuleset.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Schedules | Verify EPModel exposes the ruleset, rule date/day-selection, day-value, and rule end-date operations used by `resources/schedules.rb`; add wrappers for any missing operations. | `ScheduleRuleset` construction succeeds, but the EPModel schedule tests have not been run. |
-| Open | `ScheduleDayVector` Ruby binding | Directly verify Ruby can index `getDaySchedules` results and add a binding-level regression test if needed. | The ScheduleRuleset SWIG interface imports `ScheduleDayVector` from ScheduleBase, but the latest workflow uses scalar `getDaySchedule` and does not exercise the vector return. |
-| Open | Scalar day schedule accessor | Record the focused ruleset test result for `getDaySchedule(date)`, covering both default-day and rule-override dates. | The rebuilt base workflow successfully uses `getDaySchedule` for heating and cooling and proceeds to the shading-group blocker; the focused C++ test result is not recorded here. `getDaySchedules` remains available for range queries. |
-
-### `ModelObject/EnergyManagementSystemSensor.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | EMS sensor constructor | Add an overload accepting the output-variable name, or establish the setter-based form as the supported API. | The two-argument constructor is unavailable in EPModel; HPXML currently works around this with the model-only constructor and `setOutputVariableOrMeterName`. |
-
-### `ModelObject/SurfacePropertyIncidentSolarMultiplier.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Surface and schedule relationships | Expose the `SubSurface`-taking constructor and incident-solar schedule relationship methods, or equivalent typed APIs. | EPModel only exposes construction from `Model` and scalar multiplier fields; `epmodel.rb` supplies the missing relationships for the unchanged HPXML callsite. |
-
-### `PlanarSurfaceGroup/Space.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Space floor area | Expose `Space#setPartofTotalFloorArea` or an equivalent that excludes unconditioned spaces from total floor area. | HPXML skips this flag under EPModel; OpenStudio 3.11 sets it for unconditioned spaces. |
-
-### Missing EPModel class header
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Internal mass definitions | Expose native `InternalMassDefinition`/`InternalMass` APIs, or define `InteriorPartitionSurface` as the supported replacement. | EPModel has no `InternalMassDefinition` header; `epmodel.rb` adapts the legacy helper calls to `InteriorPartitionSurface`. |
-
-### `ConstructionBase/ConstructionBase.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Construction R-value | Expose `ConstructionBase#uFactor` or establish an equivalent calculation API. | HPXML skips assembly R-value validation under EPModel; OpenStudio 3.11 continues to validate it. |
-
-### `LayeredConstruction/Construction.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Reverse construction | Expose `Construction#reverseConstruction` or establish a supported replacement. | HPXML reverses the layer list to build an adjacent-surface construction under EPModel. |
-
-### `ModelObject/FoundationKiva.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Kiva custom blocks | Expose `FoundationKiva#addCustomBlock` or provide a custom-insulation API for material, depth, and position. | `ModelObject/FoundationKiva.hpp` omits the extensible-list convenience methods; HPXML reproduces the four fields through the EPModel shim. |
-
-### `PlanarSurface/Surface.hpp`
-
-| Status | Area | SDK Work Needed | OpenStudio-HPXML Impact |
-| --- | --- | --- | --- |
-| Open | Foundation association | Expose `Surface#setAdjacentFoundation` and `Surface#adjacentFoundation`, or equivalent typed APIs for setting and resolving the foundation reference. | HPXML uses both methods; `epmodel.rb` currently shims them using the boundary-condition pointer and typed Kiva collection. |
-| Open | Exposed foundation perimeter | Expose `Surface#createSurfacePropertyExposedFoundationPerimeter` or an equivalent Surface convenience API. | HPXML currently creates the exposed-perimeter property through the EPModel shim. |
-
-## Temporary Shim Limits
-
-- Shims live in `HPXMLtoOpenStudio/resources/epmodel.rb` and apply only when
-	`Version::UseEPModel` is true. Existing native methods are not replaced.
-- Metadata is keyed by object handle and retained until the process exits. It is
-	not serialized with the model, and clone/merge isolation and handle remapping
-	are not implemented. Reusing handles can share metadata unintentionally.
-- The metadata adapter implements only the five methods currently called by
-	HPXML. Weather-file and calendar workarounds remain explicit branches for now.
 
 ## Baseline Checks
 
