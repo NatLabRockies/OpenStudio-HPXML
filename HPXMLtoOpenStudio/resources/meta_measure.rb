@@ -60,18 +60,26 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
   apply_model_output_requests(measures_dir, measures, runner, model)
 
   # Translate model to workspace
-  forward_translator = OpenStudio::EnergyPlus::ForwardTranslator.new
-  forward_translator.setExcludeLCCObjects(true)
-  workspace = forward_translator.translateModel(model)
-  success = report_ft_errors_warnings(forward_translator, rundir)
+  if Version::UseEPModel
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    EPModelCompatibility.normalize_workspace(workspace, model)
+    success = true
+  else
+    forward_translator = OpenStudio::EnergyPlus::ForwardTranslator.new
+    forward_translator.setExcludeLCCObjects(true)
+    workspace = forward_translator.translateModel(model)
+    success = report_ft_errors_warnings(forward_translator, rundir)
+  end
 
   # Remove unused objects automatically added by OpenStudio?
-  [model.alwaysOnContinuousSchedule,
-   model.alwaysOnDiscreteSchedule,
-   model.alwaysOffDiscreteSchedule].each do |sch|
-    # Don't know why we need to check for AdditionalProperties too, but it works
-    if sch.directUseCount == 0 || sch.sources.all? { |s| s.to_AdditionalProperties.is_initialized }
-      workspace.getObjectByTypeAndName('Schedule:Constant'.to_IddObjectType, sch.name.to_s).get.remove
+  unless Version::UseEPModel
+    [model.alwaysOnContinuousSchedule,
+     model.alwaysOnDiscreteSchedule,
+     model.alwaysOffDiscreteSchedule].each do |sch|
+      # Don't know why we need to check for AdditionalProperties too, but it works
+      if sch.directUseCount == 0 || sch.sources.all? { |source| source.to_AdditionalProperties.is_initialized }
+        workspace.getObjectByTypeAndName('Schedule:Constant'.to_IddObjectType, sch.name.to_s).get.remove
+      end
     end
   end
 
@@ -123,6 +131,10 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
   # Run simulation
   print "Running simulation...\n" unless suppress_print
   ep_path = File.absolute_path(File.join(OpenStudio.getOpenStudioCLI.to_s, '..', '..', 'EnergyPlus', 'energyplus')) # getEnergyPlusDirectory can be unreliable, using getOpenStudioCLI instead
+  if not File.exist?(ep_path) && OpenStudio.respond_to?(:getEnergyPlusDirectory)
+    ep_path = File.join(OpenStudio.getEnergyPlusDirectory.to_s, 'energyplus')
+    ep_path += '.exe' if Gem.win_platform? && File.exist?("#{ep_path}.exe")
+  end
   simulation_start = Time.now
   # Passed to system() in argv form below, so the path is not shell-interpreted
   command = [ep_path, '-w', epw_path, ep_input_filename]

@@ -2420,7 +2420,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
     return if @model.nil?
 
     @model.getModelObjects.sort.each do |object|
-      next if object.to_AdditionalProperties.is_initialized
+      next if !Version::UseEPModel && object.to_AdditionalProperties.is_initialized
 
       [EUT, HWT, LT, RT].each do |class_type|
         vars_by_key = Outputs.get_object_outputs_by_key(object, class_type)

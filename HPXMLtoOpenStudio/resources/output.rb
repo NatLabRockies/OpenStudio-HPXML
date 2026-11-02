@@ -1560,7 +1560,7 @@ module Outputs
     FT_to_EPlus_fuel_map.values.each do |fuel_type|
       key_vars = []
       model.getModelObjects.sort.each do |object|
-        next if object.to_AdditionalProperties.is_initialized
+        next if !Version::UseEPModel && object.to_AdditionalProperties.is_initialized
 
         vars_by_key = get_object_outputs_by_key(object, EUT)
         vars_by_key.each do |key, output_vars|
@@ -1615,7 +1615,7 @@ module Outputs
   def self.get_object_outputs_for_hpxml_system(model, sys_id, eut_filter = nil)
     vars = {}
     model.getModelObjects.sort.each do |object|
-      next if object.to_AdditionalProperties.is_initialized
+      next if !Version::UseEPModel && object.to_AdditionalProperties.is_initialized
 
       obj_id = object.additionalProperties.getFeatureAsString('HPXML_ID')
       next unless obj_id.is_initialized
