@@ -952,7 +952,9 @@ module Model
   # @param comp_type_and_control [Array<String, String>] The type of component and its control type
   # @return [OpenStudio::Model::EnergyManagementSystemActuator] The model object
   def self.add_ems_actuator(name:, model_object:, comp_type_and_control:)
-    if model_object.to_SpaceLoadInstance.is_initialized
+    if Version::UseEPModel
+      act = OpenStudio::Model::EnergyManagementSystemActuator.new(model_object, *comp_type_and_control)
+    elsif model_object.to_SpaceLoadInstance.is_initialized
       act = OpenStudio::Model::EnergyManagementSystemActuator.new(model_object, *comp_type_and_control, model_object.space.get)
     else
       act = OpenStudio::Model::EnergyManagementSystemActuator.new(model_object, *comp_type_and_control)

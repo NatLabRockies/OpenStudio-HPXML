@@ -569,7 +569,7 @@ module Schedule
   # @param schedule [OpenStudio::Model::ScheduleInterval or OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] the OpenStudio Schedule object
   # @return [Double] annual equivalent full load hours
   def self.annual_equivalent_full_load_hrs(modelYear, schedule)
-    if schedule.to_ScheduleInterval.is_initialized
+    if !Version::UseEPModel && schedule.to_ScheduleInterval.is_initialized
       timeSeries = schedule.to_ScheduleInterval.get.timeSeries
       annual_flh = timeSeries.averageValue * 8760
       return annual_flh
