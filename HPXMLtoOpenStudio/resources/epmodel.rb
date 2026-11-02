@@ -6,6 +6,11 @@ if Version::UseEPModel
   OpenStudio.const_set(:Model, OpenStudio::EPModel)
 
   module EPModelCompatibility
+    def self.set_pointer(object, field_name, target)
+      field_index = object.iddObject.getFieldIndex(field_name)
+      field_index.is_initialized && object.setPointer(field_index.get, target.handle)
+    end
+
     class AdditionalProperties
       def self.for_object(object)
         @features_by_handle ||= {}
@@ -61,12 +66,7 @@ if Version::UseEPModel
       end
 
       def setSpace(space)
-        field_index = @surface.iddObject.getFieldIndex('Space or SpaceList Name')
-        if not field_index.is_initialized
-          return false
-        end
-
-        return @surface.setPointer(field_index.get, space.handle)
+        EPModelCompatibility.set_pointer(@surface, 'Space or SpaceList Name', space)
       end
 
       def setConstruction(construction)
@@ -182,8 +182,7 @@ if Version::UseEPModel
       end
 
       def setTargetTemperatureSchedule(schedule)
-        field_index = @equipment.iddObject.getFieldIndex('Target Temperature Schedule Name')
-        field_index.is_initialized && @equipment.setPointer(field_index.get, schedule.handle)
+        EPModelCompatibility.set_pointer(@equipment, 'Target Temperature Schedule Name', schedule)
       end
     end
 
@@ -410,20 +409,31 @@ if Version::UseEPModel
     end
 
     def self.normalize_workspace(workspace, model)
-      geometry_rules_type = OpenStudio::IddObjectType.new('GlobalGeometryRules')
-      if workspace.getObjectsByType(geometry_rules_type).empty?
-        geometry_rules = OpenStudio::IdfObject.new(geometry_rules_type)
-        { 'Starting Vertex Position' => 'UpperLeftCorner',
-          'Vertex Entry Direction' => 'Counterclockwise',
-          'Coordinate System' => 'Relative',
-          'Daylighting Reference Point Coordinate System' => 'Relative',
-          'Rectangular Surface Coordinate System' => 'Relative' }.each do |field_name, value|
-          field_index = geometry_rules.iddObject.getFieldIndex(field_name)
-          geometry_rules.setString(field_index.get, value) if field_index.is_initialized
-        end
-        workspace.addObject(geometry_rules)
-      end
+      add_global_geometry_rules(workspace)
+      normalize_surface_types(workspace)
+      normalize_people_temperature_type(workspace)
+      declare_ems_output_globals(workspace)
+      repair_demand_branch_endpoints(workspace)
+      add_default_heating_plant_schemes(workspace, model)
+    end
 
+    def self.add_global_geometry_rules(workspace)
+      geometry_rules_type = OpenStudio::IddObjectType.new('GlobalGeometryRules')
+      return unless workspace.getObjectsByType(geometry_rules_type).empty?
+
+      geometry_rules = OpenStudio::IdfObject.new(geometry_rules_type)
+      { 'Starting Vertex Position' => 'UpperLeftCorner',
+        'Vertex Entry Direction' => 'Counterclockwise',
+        'Coordinate System' => 'Relative',
+        'Daylighting Reference Point Coordinate System' => 'Relative',
+        'Rectangular Surface Coordinate System' => 'Relative' }.each do |field_name, value|
+        field_index = geometry_rules.iddObject.getFieldIndex(field_name)
+        geometry_rules.setString(field_index.get, value) if field_index.is_initialized
+      end
+      workspace.addObject(geometry_rules)
+    end
+
+    def self.normalize_surface_types(workspace)
       ground_boundary_conditions = ['Ground', 'GroundFCfactorMethod', 'GroundSlabPreprocessorAverage',
                                     'GroundSlabPreprocessorCore', 'GroundSlabPreprocessorPerimeter',
                                     'GroundBasementPreprocessorAverageWall', 'GroundBasementPreprocessorAverageFloor',
@@ -439,7 +449,9 @@ if Version::UseEPModel
         is_envelope = boundary_condition.casecmp('Outdoors').zero? || ground_boundary_conditions.include?(boundary_condition)
         surface.setString(surface_type_index.get, is_envelope ? 'Roof' : 'Ceiling')
       end
+    end
 
+    def self.normalize_people_temperature_type(workspace)
       people_type = OpenStudio::IddObjectType.new('People')
       workspace.getObjectsByType(people_type).each do |people|
         field_index = people.iddObject.getFieldIndex('Mean Radiant Temperature Calculation Type')
@@ -448,7 +460,9 @@ if Version::UseEPModel
 
         people.setString(field_index.get, 'EnclosureAveraged')
       end
+    end
 
+    def self.declare_ems_output_globals(workspace)
       ems_global_type = OpenStudio::IddObjectType.new('EnergyManagementSystem_GlobalVariable')
       existing_ems_globals = workspace.getObjectsByType(ems_global_type).flat_map do |global_variable|
         global_variable.extensibleGroups.filter_map do |group|
@@ -479,7 +493,9 @@ if Version::UseEPModel
         workspace.addObject(global_variable)
         existing_ems_variables << variable_name.get
       end
+    end
 
+    def self.repair_demand_branch_endpoints(workspace)
       plant_loop_type = OpenStudio::IddObjectType.new('PlantLoop')
       branch_list_type = OpenStudio::IddObjectType.new('BranchList')
       branch_type = OpenStudio::IddObjectType.new('Branch')
@@ -532,7 +548,9 @@ if Version::UseEPModel
           end
         end
       end
+    end
 
+    def self.add_default_heating_plant_schemes(workspace, model)
       operation_scheme_type = OpenStudio::IddObjectType.new('PlantEquipmentOperationSchemes')
       heating_operation_type = OpenStudio::IddObjectType.new('PlantEquipmentOperation_HeatingLoad')
       equipment_list_type = OpenStudio::IddObjectType.new('PlantEquipmentList')
@@ -669,36 +687,31 @@ if Version::UseEPModel
 
   unless OpenStudio::EPModel::OtherEquipment.method_defined?(:setSpace)
     OpenStudio::EPModel::OtherEquipment.define_method(:setSpace) do |space|
-      field_index = iddObject.getFieldIndex('Zone or ZoneList or Space or SpaceList Name')
-      field_index.is_initialized && setPointer(field_index.get, space.handle)
+      EPModelCompatibility.set_pointer(self, 'Zone or ZoneList or Space or SpaceList Name', space)
     end
   end
 
   unless OpenStudio::EPModel::OtherEquipment.method_defined?(:setSchedule)
     OpenStudio::EPModel::OtherEquipment.define_method(:setSchedule) do |schedule|
-      field_index = iddObject.getFieldIndex('Schedule Name')
-      field_index.is_initialized && setPointer(field_index.get, schedule.handle)
+      EPModelCompatibility.set_pointer(self, 'Schedule Name', schedule)
     end
   end
 
   unless OpenStudio::EPModel::ElectricEquipment.method_defined?(:setSpace)
     OpenStudio::EPModel::ElectricEquipment.define_method(:setSpace) do |space|
-      field_index = iddObject.getFieldIndex('Zone or ZoneList or Space or SpaceList Name')
-      field_index.is_initialized && setPointer(field_index.get, space.handle)
+      EPModelCompatibility.set_pointer(self, 'Zone or ZoneList or Space or SpaceList Name', space)
     end
   end
 
   unless OpenStudio::EPModel::ElectricEquipment.method_defined?(:setSchedule)
     OpenStudio::EPModel::ElectricEquipment.define_method(:setSchedule) do |schedule|
-      field_index = iddObject.getFieldIndex('Schedule Name')
-      field_index.is_initialized && setPointer(field_index.get, schedule.handle)
+      EPModelCompatibility.set_pointer(self, 'Schedule Name', schedule)
     end
   end
 
   unless OpenStudio::EPModel::WaterUseEquipment.method_defined?(:setFlowRateFractionSchedule)
     OpenStudio::EPModel::WaterUseEquipment.define_method(:setFlowRateFractionSchedule) do |schedule|
-      field_index = iddObject.getFieldIndex('Flow Rate Fraction Schedule Name')
-      field_index.is_initialized && setPointer(field_index.get, schedule.handle)
+      EPModelCompatibility.set_pointer(self, 'Flow Rate Fraction Schedule Name', schedule)
     end
   end
 
@@ -710,36 +723,31 @@ if Version::UseEPModel
 
   unless OpenStudio::EPModel::Lights.method_defined?(:setSpace)
     OpenStudio::EPModel::Lights.define_method(:setSpace) do |space|
-      field_index = iddObject.getFieldIndex('Zone or ZoneList or Space or SpaceList Name')
-      field_index.is_initialized && setPointer(field_index.get, space.handle)
+      EPModelCompatibility.set_pointer(self, 'Zone or ZoneList or Space or SpaceList Name', space)
     end
   end
 
   unless OpenStudio::EPModel::Lights.method_defined?(:setSchedule)
     OpenStudio::EPModel::Lights.define_method(:setSchedule) do |schedule|
-      field_index = iddObject.getFieldIndex('Schedule Name')
-      field_index.is_initialized && setPointer(field_index.get, schedule.handle)
+      EPModelCompatibility.set_pointer(self, 'Schedule Name', schedule)
     end
   end
 
   unless OpenStudio::EPModel::People.method_defined?(:setSpace)
     OpenStudio::EPModel::People.define_method(:setSpace) do |space|
-      field_index = iddObject.getFieldIndex('Zone or ZoneList or Space or SpaceList Name')
-      field_index.is_initialized && setPointer(field_index.get, space.handle)
+      EPModelCompatibility.set_pointer(self, 'Zone or ZoneList or Space or SpaceList Name', space)
     end
   end
 
   unless OpenStudio::EPModel::People.method_defined?(:setActivityLevelSchedule)
     OpenStudio::EPModel::People.define_method(:setActivityLevelSchedule) do |schedule|
-      field_index = iddObject.getFieldIndex('Activity Level Schedule Name')
-      field_index.is_initialized && setPointer(field_index.get, schedule.handle)
+      EPModelCompatibility.set_pointer(self, 'Activity Level Schedule Name', schedule)
     end
   end
 
   unless OpenStudio::EPModel::People.method_defined?(:setNumberofPeopleSchedule)
     OpenStudio::EPModel::People.define_method(:setNumberofPeopleSchedule) do |schedule|
-      field_index = iddObject.getFieldIndex('Number of People Schedule Name')
-      field_index.is_initialized && setPointer(field_index.get, schedule.handle)
+      EPModelCompatibility.set_pointer(self, 'Number of People Schedule Name', schedule)
     end
   end
 
@@ -759,15 +767,13 @@ if Version::UseEPModel
 
   unless OpenStudio::EPModel::SpaceInfiltrationDesignFlowRate.method_defined?(:setSpace)
     OpenStudio::EPModel::SpaceInfiltrationDesignFlowRate.define_method(:setSpace) do |space|
-      field_index = iddObject.getFieldIndex('Zone or ZoneList or Space or SpaceList Name')
-      field_index.is_initialized && setPointer(field_index.get, space.handle)
+      EPModelCompatibility.set_pointer(self, 'Zone or ZoneList or Space or SpaceList Name', space)
     end
   end
 
   unless OpenStudio::EPModel::SpaceInfiltrationDesignFlowRate.method_defined?(:setSchedule)
     OpenStudio::EPModel::SpaceInfiltrationDesignFlowRate.define_method(:setSchedule) do |schedule|
-      field_index = iddObject.getFieldIndex('Schedule Name')
-      field_index.is_initialized && setPointer(field_index.get, schedule.handle)
+      EPModelCompatibility.set_pointer(self, 'Schedule Name', schedule)
     end
   end
 
@@ -823,6 +829,12 @@ if Version::UseEPModel
         zone = space.thermalZone
         zone.is_initialized && zone.get.handle.to_s == handle.to_s
       end
+    end
+  end
+
+  unless OpenStudio::EPModel::ThermalZone.method_defined?(:floorArea)
+    OpenStudio::EPModel::ThermalZone.define_method(:floorArea) do
+      spaces.sum(&:floorArea)
     end
   end
 

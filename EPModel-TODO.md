@@ -12,6 +12,14 @@ A workaround does not resolve the underlying SDK gap; track current handling sep
 ../OS-build-release-dev-4-312/Products/openstudio.exe workflow/run_simulation.rb -x workflow/sample_files/base.xml -d -o 2
 ```
 
+### Observed EPModel Messages
+
+Successful EPModel base runs emit these nonfatal OpenStudio messages:
+
+- A `ZoneHVAC:EquipmentConnections` object has no name, and automatic naming fails. Its origin and impact remain unexplained.
+- Plant-side and demand-side branch lists have one branch; EPModel treats it as the equipment branch and adds inlet/outlet branches.
+- PlantLoop connector port counts differ from the branch lists; EPModel rebuilds the ports from branch order.
+
 ## EPModel API Calls
 
 Unique API calls observed in the `base.xml` input-creation path.
@@ -282,6 +290,7 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 | `ThermalZone#setMultiplier` | Yes | `resources/geometry.rb` | |
 | `ThermalZone#setName` | Yes | `resources/geometry.rb` | |
 | `ThermalZone#spaces` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim filters `Model#getSpaces` by the Space's typed ThermalZone reference. |
+| `ThermalZone#floorArea` |  | `ReportSimulationOutput/measure.rb`, `resources/epmodel.rb` | Shim sums the `floorArea` of spaces assigned to the zone, matching the legacy ThermalZone API. |
 | `ThermalZone#isPlenum` |  | `resources/output.rb`, `resources/epmodel.rb` | Shim checks return and supply plenum objects for a matching ThermalZone reference. |
 | `ThermalZone#setSequentialCoolingFractionSchedule(equipment, schedule)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim resolves the zone's `ZoneHVACEquipmentConnections` and delegates to its native equipment-list setter. |
 | `ThermalZone#setSequentialHeatingFractionSchedule(equipment, schedule)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim resolves the zone's `ZoneHVACEquipmentConnections` and delegates to its native equipment-list setter. |
@@ -311,4 +320,4 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 - Maps `RoofCeiling` to EnergyPlus `Roof` or `Ceiling` based on envelope boundary conditions.
 - Maps `ZoneAveraged` to EnergyPlus `EnclosureAveraged` for People objects.
 - Adds missing EMS global declarations referenced by `EnergyManagementSystem:OutputVariable`, except when the name already belongs to a global variable or actuator.
-- Fills empty `PlantEquipmentOperationSchemes` with a default heating-load scheme for heating supply components, and adds adiabatic pipes to empty demand-side endpoint branches to match the PlantLoop inlet and outlet nodes.
+- Fills empty `PlantEquipmentOperationSchemes` with a default heating-load scheme for heating supply components, and adds adiabatic pipes to empty demand-side endpoint branches to match the PlantLoop inlet and outlet nodes. Cooling and uncontrolled schemes are not synthesized: EPModel `HVACComponent#componentType` currently reports `Heating` for some cooling equipment, so it is not a reliable general classifier.
