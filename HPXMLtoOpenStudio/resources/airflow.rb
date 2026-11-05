@@ -72,6 +72,23 @@ module Airflow
     duct_lk_imbals = []
     apply_ducts(runner, model, spaces, hpxml_bldg, airloop_map, vent_fans, cfis_data, fan_data, duct_lk_imbals)
 
+    # Warmup workaround, see https://github.com/NatLabRockies/EnergyPlus/pull/11551
+    unless duct_lk_imbals.empty?
+      duct_imbalance_init_program = Model.add_ems_program(
+        model,
+        name: 'duct leakage imbalance initialization program'
+      )
+      duct_lk_imbals.flat_map { |values| values[1..2] }.uniq { |variable| variable.handle.to_s }.each do |variable|
+        duct_imbalance_init_program.addLine("Set #{variable.name} = 0")
+      end
+      Model.add_ems_program_calling_manager(
+        model,
+        name: 'duct leakage imbalance initialization manager',
+        calling_point: 'BeginNewEnvironment',
+        ems_programs: [duct_imbalance_init_program]
+      )
+    end
+
     # Apply infiltration/ventilation
     set_wind_speed_correction(model, hpxml_bldg)
 

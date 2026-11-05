@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>15d5647a-d4f1-4228-a87f-cc3daaf97ec5</version_id>
-  <version_modified>2026-11-04T20:55:43Z</version_modified>
+  <version_id>3cc32804-14e8-450b-a7be-67c4e16e434f</version_id>
+  <version_modified>2026-11-05T21:20:19Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -217,7 +217,7 @@
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>F53FCBCD</checksum>
+      <checksum>EBF3D7A2</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
@@ -475,7 +475,7 @@
       <filename>meta_measure.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>7BC28502</checksum>
+      <checksum>C37AD52C</checksum>
     </file>
     <file>
       <filename>minitest_helper.rb</filename>
@@ -499,7 +499,7 @@
       <filename>output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>79DB94CC</checksum>
+      <checksum>061580F3</checksum>
     </file>
     <file>
       <filename>psychrometrics.rb</filename>
@@ -709,13 +709,13 @@
       <filename>version.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>61087CF3</checksum>
+      <checksum>FBE4F304</checksum>
     </file>
     <file>
       <filename>waterheater.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>FD8F02AD</checksum>
+      <checksum>AB4BD010</checksum>
     </file>
     <file>
       <filename>weather.rb</filename>
