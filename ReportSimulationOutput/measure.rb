@@ -409,9 +409,15 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       next unless hpxml_bldgs_size > 1
 
       for unit_num in 0..(hpxml_bldgs_size - 1)
-        Model.add_output_meter(model, meter_name: Model.make_unit_meter_name(fuel.meter, unit_num, hpxml_bldgs_size), reporting_frequency: 'runperiod')
+        meter_name = Model.make_unit_meter_name(fuel.meter, unit_num, hpxml_bldgs_size)
+
+        # Check if unit has this fuel type
+        meter = (model.getMeterCustoms + model.getMeterCustomDecrements).find { |m| m.name.to_s.upcase == meter_name.upcase }
+        next if meter.nil?
+
+        Model.add_output_meter(model, meter_name: meter_name, reporting_frequency: 'runperiod')
         if args[:include_timeseries_fuel_consumptions] && args[:include_timeseries_dwelling_unit_outputs]
-          Model.add_output_meter(model, meter_name: Model.make_unit_meter_name(fuel.meter, unit_num, hpxml_bldgs_size), reporting_frequency: args[:timeseries_frequency])
+          Model.add_output_meter(model, meter_name: meter_name, reporting_frequency: args[:timeseries_frequency])
         end
       end
     end
@@ -535,13 +541,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Mean Air Temperature', reporting_frequency: args[:timeseries_frequency])
 
       # For reporting temperature-scheduled spaces timeseries temperatures.
-      keys = [HPXML::LocationOtherHeatedSpace,
-              HPXML::LocationOtherMultifamilyBufferSpace,
-              HPXML::LocationOtherNonFreezingSpace,
-              HPXML::LocationOtherHousingUnit,
-              HPXML::LocationExteriorWall,
-              HPXML::LocationUnderSlab]
-      keys.each do |key|
+      HPXML::scheduled_locations.each do |key|
         schedules = @model.getScheduleConstants.select { |sch| sch.additionalProperties.getFeatureAsString('ObjectType').to_s == key }
         next if schedules.empty?
 
@@ -549,8 +549,8 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       end
 
       # Also report thermostat setpoints
-      # Note that we use the schedule value, rather than the Zone Thermostat Heating (or Cooling) Setpoint Temperature output variable,
-      # because the latter is adjusted when the on-off thermostat deadband model is used.
+      # Note that we use the schedule value, rather than the Zone Thermostat Heating (or Cooling) Setpoint Temperature output
+      # variable, because the latter gets adjusted by EnergyPlus when the on-off thermostat deadband model is used.
       heated_zones.each do |heated_zone|
         thermal_zone = model.getThermalZones.find { |z| z.name.to_s == heated_zone }
         sched_name = thermal_zone.thermostatSetpointDualSetpoint.get.heatingSetpointTemperatureSchedule.get.name.to_s.upcase
@@ -565,7 +565,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
     # Detailed air condition outputs (timeseries only)
     if args[:include_timeseries_zone_conditions]
-      Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Air Humidity Ratio', reporting_frequency: args[:timeseries_frequency])
+      Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Mean Air Humidity Ratio', reporting_frequency: args[:timeseries_frequency])
       Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Air Relative Humidity', reporting_frequency: args[:timeseries_frequency])
       Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Mean Air Dewpoint Temperature', reporting_frequency: args[:timeseries_frequency])
       Model.add_output_variable(model, key_value: '*', variable_name: 'Zone Mean Radiant Temperature', reporting_frequency: args[:timeseries_frequency])
@@ -897,6 +897,10 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
       if key == UHT::Driving && unmet_hour.annual_output > 0.0
         runner.registerWarning("A total of #{unmet_hour.annual_output} driving hours could not be met due to insufficient vehicle charge. This issue may result from a combination EV battery parameters, charging power, and driving or discharging schedules.")
+      elsif key == UHT::Heating && unmet_hour.annual_output > 300
+        runner.registerWarning("There are a large number of unmet hours (#{unmet_hour.annual_output}) for heating; this may indicate the heating system is undersized or can be caused by recovery from thermostat setbacks.")
+      elsif key == UHT::Cooling && unmet_hour.annual_output > 300
+        runner.registerWarning("There are a large number of unmet hours (#{unmet_hour.annual_output}) for cooling; this may indicate the cooling system is undersized or can be caused by recovery from thermostat setbacks.")
       end
     end
 
@@ -1171,9 +1175,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       end
 
       # Scheduled temperatures
-      [HPXML::LocationOtherHeatedSpace, HPXML::LocationOtherMultifamilyBufferSpace,
-       HPXML::LocationOtherNonFreezingSpace, HPXML::LocationOtherHousingUnit,
-       HPXML::LocationExteriorWall, HPXML::LocationUnderSlab].each do |sch_location|
+      HPXML::scheduled_locations.each do |sch_location|
         @model.getScheduleConstants.each do |schedule|
           next unless schedule.additionalProperties.getFeatureAsString('ObjectType').to_s == sch_location
 
@@ -1229,7 +1231,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
           @zone_conds["#{zone_name} Humidity Ratio"] = ZoneCond.new
           @zone_conds["#{zone_name} Humidity Ratio"].name = "Humidity Ratio: #{sanitize_name(bldg_id, zone_name)}"
           @zone_conds["#{zone_name} Humidity Ratio"].timeseries_units = 'fraction'
-          @zone_conds["#{zone_name} Humidity Ratio"].timeseries_output = get_report_variable_data_timeseries([zone_name], ['Zone Air Humidity Ratio'], 1, 0, args[:timeseries_frequency])
+          @zone_conds["#{zone_name} Humidity Ratio"].timeseries_output = get_report_variable_data_timeseries([zone_name], ['Zone Mean Air Humidity Ratio'], 1, 0, args[:timeseries_frequency])
         end
       end
 
@@ -2203,6 +2205,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
 
       # Shift energy use adjustments that lag due to EMS
       [Constants::ObjectTypeWaterHeaterAdjustment,
+       Constants::ObjectTypeCrankcaseHeater,
        Constants::ObjectTypePanHeater,
        Constants::ObjectTypeHPDefrostSupplHeat,
        Constants::ObjectTypeDSEHeating,
@@ -2420,7 +2423,7 @@ class ReportSimulationOutput < OpenStudio::Measure::ReportingMeasure
       next if object.to_AdditionalProperties.is_initialized
 
       [EUT, HWT, LT, RT].each do |class_type|
-        vars_by_key = Outputs.get_object_outputs_by_key(@model, object, class_type)
+        vars_by_key = Outputs.get_object_outputs_by_key(object, class_type)
         next if vars_by_key.size == 0
 
         sys_id = object.additionalProperties.getFeatureAsString('HPXML_ID')

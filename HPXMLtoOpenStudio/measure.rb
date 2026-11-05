@@ -13,7 +13,7 @@ Dir["#{File.dirname(__FILE__)}/resources/*.rb"].each do |resource_file|
 end
 
 # start the measure
-class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
+class HPXMLToOpenStudio < OpenStudio::Measure::ModelMeasure
   # human readable name
   def name
     return 'HPXML to OpenStudio Translator'
@@ -58,19 +58,19 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
 
     arg = OpenStudio::Measure::OSArgument.makeStringArgument('annual_output_file_name', false)
     arg.setDisplayName('Annual Output File Name')
-    arg.setDescription("The name of the file w/ HVAC design loads and capacities. If not provided, defaults to 'results_annual.csv' (or '.json' or '.msgpack').")
+    arg.setDescription("The name of the file w/ HVAC design loads and capacities. If not provided, defaults to 'results_annual.csv' (or '.json' or '.msgpack'). Use 'null' to skip.")
     arg.setDefaultValue('results_annual')
     args << arg
 
     arg = OpenStudio::Measure::OSArgument.makeStringArgument('electric_panel_output_file_name', false)
     arg.setDisplayName('Electric Panel Output File Name')
-    arg.setDescription("The name of the file w/ electric panel outputs. If not provided, defaults to 'results_panel.csv' (or '.json' or '.msgpack').")
+    arg.setDescription("The name of the file w/ electric panel outputs. If not provided, defaults to 'results_panel.csv' (or '.json' or '.msgpack'). Use 'null' to skip.")
     arg.setDefaultValue('results_panel')
     args << arg
 
     arg = OpenStudio::Measure::OSArgument.makeStringArgument('design_load_details_output_file_name', false)
     arg.setDisplayName('Design Load Details Output File Name')
-    arg.setDescription("The name of the file w/ additional HVAC design load details. If not provided, defaults to 'results_design_load_details.csv' (or '.json' or '.msgpack').")
+    arg.setDescription("The name of the file w/ additional HVAC design load details. If not provided, defaults to 'results_design_load_details.csv' (or '.json' or '.msgpack'). Use 'null' to skip.")
     arg.setDefaultValue('results_design_load_details')
     args << arg
 
@@ -152,8 +152,8 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
         end
       end
 
-      # Merge unit models into final model
       if hpxml.buildings.size > 1
+        # Merge unit models into final model
         Model.merge_unit_models(model, hpxml_osm_map)
       end
 
@@ -208,20 +208,26 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
       args[:output_dir] = File.expand_path(args[:output_dir])
     end
 
-    if File.extname(args[:annual_output_file_name]).length == 0
-      args[:annual_output_file_name] = "#{args[:annual_output_file_name]}.#{args[:output_format]}"
+    if args[:annual_output_file_name] != 'null'
+      if File.extname(args[:annual_output_file_name]).length == 0
+        args[:annual_output_file_name] = "#{args[:annual_output_file_name]}.#{args[:output_format]}"
+      end
+      args[:annual_output_file_path] = File.join(args[:output_dir], args[:annual_output_file_name])
     end
-    args[:annual_output_file_path] = File.join(args[:output_dir], args[:annual_output_file_name])
 
-    if File.extname(args[:electric_panel_output_file_name]).length == 0
-      args[:electric_panel_output_file_name] = "#{args[:electric_panel_output_file_name]}.#{args[:output_format]}"
+    if args[:electric_panel_output_file_name] != 'null'
+      if File.extname(args[:electric_panel_output_file_name]).length == 0
+        args[:electric_panel_output_file_name] = "#{args[:electric_panel_output_file_name]}.#{args[:output_format]}"
+      end
+      args[:electric_panel_output_file_path] = File.join(args[:output_dir], args[:electric_panel_output_file_name])
     end
-    args[:electric_panel_output_file_path] = File.join(args[:output_dir], args[:electric_panel_output_file_name])
 
-    if File.extname(args[:design_load_details_output_file_name]).length == 0
-      args[:design_load_details_output_file_name] = "#{args[:design_load_details_output_file_name]}.#{args[:output_format]}"
+    if args[:design_load_details_output_file_name] != 'null'
+      if File.extname(args[:design_load_details_output_file_name]).length == 0
+        args[:design_load_details_output_file_name] = "#{args[:design_load_details_output_file_name]}.#{args[:output_format]}"
+      end
+      args[:design_load_details_output_file_path] = File.join(args[:output_dir], args[:design_load_details_output_file_name])
     end
-    args[:design_load_details_output_file_path] = File.join(args[:output_dir], args[:design_load_details_output_file_name])
 
     args[:hpxml_defaults_path] = File.join(args[:output_dir], 'in.xml')
   end
@@ -331,10 +337,11 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     SimControls.apply(model, hpxml.header)
     Location.apply(model, weather, hpxml_bldg, hpxml.header)
 
-    # Conditioned space & setpoints
+    # Conditioned space and setpoints
     spaces = {} # Map of HPXML locations => OpenStudio Space objects
     Geometry.create_or_get_space(model, spaces, HPXML::LocationConditionedSpace, hpxml_bldg)
-    hvac_days = HVAC.apply_setpoints(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file)
+    hvac_season_days = HVAC.apply_setpoints(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file)
+    create_global_ems_sensors(model, spaces)
 
     # Geometry & Enclosure
     Geometry.apply_foundation_and_walls_top(hpxml_bldg, hpxml.header)
@@ -352,7 +359,7 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
     Geometry.explode_surfaces(model, hpxml_bldg)
 
     # HVAC
-    airloop_map = HVAC.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file, hvac_days)
+    airloop_map = HVAC.apply_hvac_systems(runner, model, weather, spaces, hpxml_bldg, hpxml.header, schedules_file, hvac_season_days)
     HVAC.apply_dehumidifiers(runner, model, spaces, hpxml_bldg, hpxml.header)
     HVAC.apply_ceiling_fans(runner, model, spaces, weather, hpxml_bldg, hpxml.header, schedules_file)
 
@@ -420,7 +427,125 @@ class HPXMLtoOpenStudio < OpenStudio::Measure::ModelMeasure
       hpxml_header.apply_ashrae140_assumptions = false
     end
   end
+
+  # Creates a variety of global EMS sensors used throughout the code. Prevents creating
+  # duplicate sensors for different EMS programs.
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param spaces [Hash] Map of HPXML locations => OpenStudio Space objects
+  # @return [nil]
+  def create_global_ems_sensors(model, spaces)
+    # Create site sensors
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'out_db_s',
+      output_var_or_meter_name: 'Site Outdoor Air Drybulb Temperature',
+      key_name: 'Environment'
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteOutdoorAirDBTemp)
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'out_rh_s',
+      output_var_or_meter_name: 'Site Outdoor Air Relative Humidity',
+      key_name: 'Environment'
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteOutdoorAirRH)
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'out_hr_s',
+      output_var_or_meter_name: 'Site Outdoor Air Humidity Ratio',
+      key_name: 'Environment'
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteOutdoorAirHR)
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'out_pb_s',
+      output_var_or_meter_name: 'Site Outdoor Air Barometric Pressure',
+      key_name: 'Environment'
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteOutdoorAirBarPressure)
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'out_vw_s',
+      output_var_or_meter_name: 'Site Wind Speed',
+      key_name: 'Environment'
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteWindSpeed)
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'ground_temp_s',
+      output_var_or_meter_name: 'Site Surface Ground Temperature',
+      key_name: nil
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteGroundTemp)
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'mains_temp_s',
+      output_var_or_meter_name: 'Site Mains Water Temperature',
+      key_name: 'Environment'
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorSiteMainsWaterTemp)
+
+    # Create conditioned zone temperatures
+
+    conditioned_zone = spaces[HPXML::LocationConditionedSpace].thermalZone.get
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'in_db_s',
+      output_var_or_meter_name: 'Zone Mean Air Temperature',
+      key_name: conditioned_zone.name
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorAirDBTemp)
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'in_rh_s',
+      output_var_or_meter_name: 'Zone Air Relative Humidity',
+      key_name: conditioned_zone.name
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorAirRH)
+
+    s = Model.add_ems_sensor(
+      model,
+      name: 'in_hr_s',
+      output_var_or_meter_name: 'Zone Mean Air Humidity Ratio',
+      key_name: conditioned_zone.name
+    )
+    s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorAirHR)
+
+    # Conditioned zone setpoints
+    # Note that we use the schedule value, rather than the Zone Thermostat Heating (or Cooling) Setpoint Temperature output
+    # variable, because the latter gets adjusted by EnergyPlus when the on-off thermostat deadband model is used.
+
+    if conditioned_zone.thermostatSetpointDualSetpoint.is_initialized
+      thermostat = conditioned_zone.thermostatSetpointDualSetpoint.get
+
+      s = Model.add_ems_sensor(
+        model,
+        name: 'in_clg_sp_s',
+        output_var_or_meter_name: 'Schedule Value',
+        key_name: thermostat.coolingSetpointTemperatureSchedule.get.name
+      )
+      s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorCoolingSetpointTemp)
+
+      s = Model.add_ems_sensor(
+        model,
+        name: 'in_htg_sp_s',
+        output_var_or_meter_name: 'Schedule Value',
+        key_name: thermostat.heatingSetpointTemperatureSchedule.get.name
+      )
+      s.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeSensorIndoorHeatingSetpointTemp)
+    end
+  end
 end
 
 # register the measure to be used by the application
-HPXMLtoOpenStudio.new.registerWithApplication
+HPXMLToOpenStudio.new.registerWithApplication

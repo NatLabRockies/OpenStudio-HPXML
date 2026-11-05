@@ -379,7 +379,6 @@ class ReportSimulationOutputTest < Minitest::Test
     'Surface Construction Index: Foundationwall1',
     'Surface Construction Index: Floor1',
     'Surface Construction Index: Furniture Mass Conditioned Space 1',
-    'Surface Construction Index: Inferred Conditioned Ceiling',
     'Surface Construction Index: Inferred Conditioned Floor',
     'Surface Construction Index: Partition Wall Mass',
     'Surface Construction Index: Rimjoist1:0',
@@ -1544,8 +1543,8 @@ class ReportSimulationOutputTest < Minitest::Test
     assert(File.exist?(annual_csv))
     assert(!File.exist?(timeseries_csv))
     actual_annual_rows = _get_annual_values(annual_csv)
-    assert_equal(9.0, actual_annual_rows['HVAC Geothermal Loop: Borehole/Trench Count'])
-    assert_equal(315.0, actual_annual_rows['HVAC Geothermal Loop: Borehole/Trench Length (ft)'])
+    assert_equal(4.0, actual_annual_rows['HVAC Geothermal Loop: Borehole/Trench Count'])
+    assert_equal(150.0, actual_annual_rows['HVAC Geothermal Loop: Borehole/Trench Length (ft)'])
   end
 
   private
@@ -1583,7 +1582,7 @@ class ReportSimulationOutputTest < Minitest::Test
     assert_equal(args_hash.size, found_args.size)
 
     # Run OSW
-    success = system("#{OpenStudio.getOpenStudioCLI} run -w \"#{osw_path}\"")
+    success = system("\"#{OpenStudio.getOpenStudioCLI}\" run -w \"#{osw_path}\"")
     assert_equal(expect_success, success)
 
     # Cleanup
