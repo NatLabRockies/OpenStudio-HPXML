@@ -31,6 +31,8 @@ module EPlus
   EMSActuatorFrostHeatingInputPowerMultiplierMultiSpeedDX = 'Coil:Heating:DX:MultiSpeed', 'Frost Heating Input Power Multiplier'
   EMSIntVarFanMFR = 'Fan Maximum Mass Flow Rate'
   EMSIntVarPumpMFR = 'Pump Maximum Mass Flow Rate'
+  FanSpeedControlDiscrete = 'Discrete'
+  FanSpeedControlContinuous = 'Continuous'
   FluidPropyleneGlycol = 'PropyleneGlycol'
   FluidWater = 'Water'
   FuelTypeCoal = 'Coal'

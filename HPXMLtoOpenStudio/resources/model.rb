@@ -400,18 +400,20 @@ module Model
   # @param end_use [String] Name of the end use subcategory for output processing
   # @param power_per_flow [Double] Electric power per flow rate (W/(m^3/s))
   # @param max_flow_rate [Double] Design volume flow rate (m^3/s)
+  # @param control_method [String] Whether the fan operates at discrete speeds or not (EPlus::FanSpeedControlXXX)
   # @return [OpenStudio::Model::FanSystemModel] The model object
-  def self.add_fan_system_model(model, name:, end_use:, power_per_flow:, max_flow_rate:)
+  def self.add_fan_system_model(model, name:, end_use:, power_per_flow:, max_flow_rate:, control_method:)
     fan = OpenStudio::Model::FanSystemModel.new(model)
     fan.setName(name)
     fan.setEndUseSubcategory(end_use)
-    fan.setSpeedControlMethod('Discrete')
+    fan.setSpeedControlMethod(control_method)
     fan.setDesignPowerSizingMethod('PowerPerFlow')
     fan.setElectricPowerPerUnitFlowRate([power_per_flow, 0.000001].max)
     fan.setAvailabilitySchedule(model.alwaysOnDiscreteSchedule)
     fan.setMotorEfficiency(1.0)
     fan.setMotorInAirStreamFraction(1.0)
     fan.setDesignMaximumAirFlowRate(max_flow_rate)
+    fan.setElectricPowerMinimumFlowRateFraction(0.0)
     return fan
   end
 
@@ -419,7 +421,7 @@ module Model
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param name [String] Name for the OpenStudio object
-  # @param fluid_type [String] Fluid type (Eplus::FluidXXX)
+  # @param fluid_type [String] Fluid type (EPlus::FluidXXX)
   # @param glycol_concentration [Integer] Percent glycol concentration, only used if fluid is propylene glycol
   # @param volume [Double] Volume of the entire loop, both demand and supply side (m^3)
   # @param min_temp [Double] Minimum loop temperature (C)
@@ -682,6 +684,31 @@ module Model
     curve.setCoefficient4x(coeff[3])
     curve.setCoefficient5y(coeff[4])
     curve.setCoefficient6z(coeff[5])
+    return curve
+  end
+
+  # Adds a CurveExponent object to the OpenStudio model.
+  #
+  # y = C1 + C2*x^C3
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param name [String] Name for the OpenStudio object
+  # @param coeff [Array<Double>] Coefficients for the above equation
+  # @param min_x [Double] Minimum allowable value for x
+  # @param max_x [Double] Maximum allowable value for x
+  # @return [OpenStudio::Model::CurveExponent] The model object
+  def self.add_curve_exponent(model, name:, coeff:, min_x: nil, max_x: nil)
+    if coeff.length != 3
+      fail 'Error: There must be 3 coefficients in an exponent curve'
+    end
+
+    curve = OpenStudio::Model::CurveExponent.new(model)
+    curve.setName(name)
+    curve.setCoefficient1Constant(coeff[0])
+    curve.setCoefficient2Constant(coeff[1])
+    curve.setCoefficient3Constant(coeff[2])
+    curve.setMinimumValueofx(min_x) unless min_x.nil?
+    curve.setMaximumValueofx(max_x) unless max_x.nil?
     return curve
   end
 
