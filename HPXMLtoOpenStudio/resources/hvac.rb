@@ -2488,7 +2488,11 @@ module HVAC
       max_flow_rate: UnitConversions.convert(max_fan_cfm, 'cfm', 'm^3/s')
     )
 
-    fan_cfms.sort.each do |fan_cfm|
+    sorted_fan_cfms = fan_cfms.sort
+
+    sorted_fan_cfms.each_with_index do |fan_cfm, i|
+      next if i > 0 && fan_cfm == sorted_fan_cfms[i - 1] # Avoid duplicate fan speeds (e.g., for a HP where heating capacity/airflow == cooling capacity airflow)
+
       fan_ratio = fan_cfm / max_fan_cfm
       power_fraction = (fan_watts_per_cfm == 0) ? 1.0 : calculate_fan_power(1.0, fan_ratio, hvac_system)
       fan.addSpeed(fan_ratio.round(5), power_fraction.round(5))
