@@ -753,9 +753,10 @@ module Airflow
     supply_fan = supply_fan.to_FanSystemModel.get
     fan_data[:max_airflow_m3s][object] = supply_fan.designMaximumAirFlowRate.get
 
-    if supply_fan.to_FanSystemModel.is_initialized
-      fan_data[:rtf_sensor][object] = []
-      num_speeds = supply_fan.to_FanSystemModel.get.numberofSpeeds
+    # Supply fan runtime fraction
+    fan_data[:rtf_sensor][object] = []
+    if supply_fan.speedControlMethod == EPlus::FanSpeedControlDiscrete
+      num_speeds = supply_fan.numberofSpeeds
       for i in 1..num_speeds
         if num_speeds == 1
           var_name = 'Fan Runtime Fraction'
@@ -769,8 +770,11 @@ module Airflow
           key_name: supply_fan.name
         )
       end
-    else
-      fail "Unexpected fan: #{supply_fan.name}"
+    elsif supply_fan.speedControlMethod == EPlus::FanSpeedControlContinuous
+      # There is no runtime fraction output, so we create an object with
+      # a .name property to mimic an EMS sensor
+      rtf_obj = Struct.new(:name)
+      fan_data[:rtf_sensor][object] << rtf_obj.new(1.0)
     end
   end
 
