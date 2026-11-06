@@ -2470,14 +2470,31 @@ module HVAC
       max_flow_rate: UnitConversions.convert(max_fan_cfm, 'cfm', 'm^3/s')
     )
 
-    sorted_fan_cfms = fan_cfms.sort
+    curve_type, coeff = get_fan_power_curve_spec(hvac_system)
+    if curve_type == 'quadratic'
+      power_curve = Model.add_curve_quadratic(
+        model,
+        name: "#{fan.name} power curve",
+        coeff: coeff,
+        min_x: 0, max_x: 1
+      )
+    elsif curve_type == 'exponent'
+      power_curve = Model.add_curve_exponent(
+        model,
+        name: "#{fan.name} power curve",
+        coeff: coeff,
+        min_x: 0, max_x: 1
+      )
+    end
+    fan.setElectricPowerFunctionofFlowFractionCurve(power_curve)
 
+    # Add discrete speeds (power will be calculated using the above curve)
+    sorted_fan_cfms = fan_cfms.sort
     sorted_fan_cfms.each_with_index do |fan_cfm, i|
       next if i > 0 && fan_cfm == sorted_fan_cfms[i - 1] # Avoid duplicate fan speeds (e.g., for a HP where heating capacity/airflow == cooling capacity airflow)
 
       fan_ratio = fan_cfm / max_fan_cfm
-      power_fraction = (fan_watts_per_cfm == 0) ? 1.0 : calculate_fan_power(1.0, fan_ratio, hvac_system)
-      fan.addSpeed(fan_ratio.round(5), power_fraction.round(5))
+      fan.addSpeed(fan_ratio.round(5))
     end
 
     return fan
@@ -2492,16 +2509,34 @@ module HVAC
   def self.calculate_fan_power(max_fan_power, fan_ratio, hvac_system)
     if hvac_system.fan_motor_type.nil?
       # For system types that fan_motor_type is not specified, the fan_ratio should be 1
-      fail 'Missing fan motor type for systems where more than one speed is modeled' unless (fan_ratio == 1.0 || max_fan_power == 0.0)
+      if not (fan_ratio == 1.0 || max_fan_power == 0.0)
+        fail 'Missing fan motor type for systems where more than one speed is modeled'
+      end
+    end
 
-      return max_fan_power
+    curve_type, coeff = get_fan_power_curve_spec(hvac_system)
+    if curve_type == 'quadratic'
+      return max_fan_power * MathTools.quadratic(fan_ratio, coeff)
+    elsif curve_type == 'exponent'
+      return max_fan_power * MathTools.exponent(fan_ratio, coeff)
+    end
+  end
+
+  # Returns the fan power curve specification (curve type and coefficients).
+  # The curve is based on the fan flow fraction and normalized to 1.
+  #
+  # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
+  # @return [Array<string, Array<double>>] Type of curve and array of curve coefficients
+  def self.get_fan_power_curve_spec(hvac_system)
+    if hvac_system.fan_motor_type.nil? # Single-speed
+      return 'quadratic', [1, 0, 0]
     else
       # Based on RESNET HERS Addendum 82
-      if hvac_system.fan_motor_type == HPXML::HVACFanMotorTypeBPM
+      if hvac_system.fan_motor_type == HPXML::HVACFanMotorTypePSC
+        return 'quadratic', [0, 0.7, 0.3]
+      elsif hvac_system.fan_motor_type == HPXML::HVACFanMotorTypeBPM
         pow = hvac_system.distribution_system_idref.nil? ? 3 : 2.75
-        return max_fan_power * (fan_ratio**pow)
-      elsif hvac_system.fan_motor_type == HPXML::HVACFanMotorTypePSC
-        return max_fan_power * fan_ratio * (0.3 * fan_ratio + 0.7)
+        return 'exponent', [0, 1, pow]
       end
     end
   end
