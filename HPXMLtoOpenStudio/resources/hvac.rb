@@ -2497,7 +2497,71 @@ module HVAC
       fan.addSpeed(fan_ratio.round(5))
     end
 
+    if hvac_system.respond_to?(:compressor_type) && (hvac_system.compressor_type == HPXML::HVACCompressorTypeVariableSpeed)
+      add_fan_power_override_ems_program(model, fan, hvac_system)
+    end
+
     return fan
+  end
+
+  # Creates an EMS program to set the fan power for variable-speed systems to
+  # work around an EnergyPlus bug.
+  # TODO: Remove this when https://github.com/NatLabRockies/EnergyPlus/issues/11909 bugfix is available
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param fan [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
+  # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
+  # @return [nil]
+  def self.add_fan_power_override_ems_program(model, fan, hvac_system)
+    # EMS Sensors
+    # Fan runtime fraction for each speed
+    rtf_sensors = []
+    for i in 1..fan.numberofSpeeds
+      rtf_sensors << Model.add_ems_sensor(
+        model,
+        name: "#{fan.name} rtf s",
+        output_var_or_meter_name: "Fan Runtime Fraction Speed #{i}",
+        key_name: fan.name
+      )
+    end
+
+    # EMS Actuators for fan efficiency and pressure rise
+    fan_eff_actuator = Model.add_ems_actuator(
+      name: "#{fan.name} eff act",
+      model_object: fan,
+      comp_type_and_control: EPlus::EMSActuatorFanTotalEfficiency
+    )
+    fan_press_actuator = Model.add_ems_actuator(
+      name: "#{fan.name} press act",
+      model_object: fan,
+      comp_type_and_control: EPlus::EMSActuatorFanPressureRise
+    )
+
+    # EMS program
+    fan_power_program = Model.add_ems_program(
+      model,
+      name: "#{fan.name} power override program"
+    )
+    curve_type, coeff = get_fan_power_curve_spec(hvac_system)
+    fan_power_program.addLine('Set FlowFraction = 0')
+    rtf_sensors.each_with_index do |rtf_sensor, i|
+      fan_power_program.addLine("Set FlowFraction = FlowFraction + (#{rtf_sensor.name} * #{fan.speeds[i].flowFraction})")
+    end
+    if curve_type == 'quadratic'
+      fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*FlowFraction) + (#{coeff[2]}*(FlowFraction^2))")
+    elsif curve_type == 'exponent'
+      fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*(FlowFraction^#{coeff[2]}))")
+    end
+    fan_power_program.addLine("Set #{fan_eff_actuator.name} = 1")
+    fan_power_program.addLine("Set #{fan_press_actuator.name} = FanPowerFraction * #{fan.electricPowerPerUnitFlowRate} * #{fan_eff_actuator.name}")
+
+    # EMS calling manager
+    Model.add_ems_program_calling_manager(
+      model,
+      name: "#{fan_power_program.name} manager",
+      calling_point: 'InsideHVACSystemIterationLoop',
+      ems_programs: [fan_power_program]
+    )
   end
 
   # Calculates fan power at any speed given the fan power at max speed and a fan speed ratio.
