@@ -2517,10 +2517,15 @@ module HVAC
     # Fan runtime fraction for each speed
     rtf_sensors = []
     for i in 1..fan.numberofSpeeds
+      if fan.numberofSpeeds == 1
+        var_name = 'Fan Runtime Fraction'
+      else
+        var_name = "Fan Runtime Fraction Speed #{i}"
+      end
       rtf_sensors << Model.add_ems_sensor(
         model,
         name: "#{fan.name} rtf s",
-        output_var_or_meter_name: "Fan Runtime Fraction Speed #{i}",
+        output_var_or_meter_name: var_name,
         key_name: fan.name
       )
     end
