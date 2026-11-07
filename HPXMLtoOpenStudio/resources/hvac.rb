@@ -2470,17 +2470,103 @@ module HVAC
       max_flow_rate: UnitConversions.convert(max_fan_cfm, 'cfm', 'm^3/s')
     )
 
-    sorted_fan_cfms = fan_cfms.sort
+    curve_type, coeff = get_fan_power_curve_spec(hvac_system)
+    if curve_type == 'quadratic'
+      power_curve = Model.add_curve_quadratic(
+        model,
+        name: "#{fan.name} power curve",
+        coeff: coeff,
+        min_x: 0, max_x: 1
+      )
+    elsif curve_type == 'exponent'
+      power_curve = Model.add_curve_exponent(
+        model,
+        name: "#{fan.name} power curve",
+        coeff: coeff,
+        min_x: 0, max_x: 1
+      )
+    end
+    fan.setElectricPowerFunctionofFlowFractionCurve(power_curve)
 
+    # Add discrete speeds (power will be calculated using the above curve)
+    sorted_fan_cfms = fan_cfms.sort
     sorted_fan_cfms.each_with_index do |fan_cfm, i|
       next if i > 0 && fan_cfm == sorted_fan_cfms[i - 1] # Avoid duplicate fan speeds (e.g., for a HP where heating capacity/airflow == cooling capacity airflow)
 
       fan_ratio = fan_cfm / max_fan_cfm
-      power_fraction = (fan_watts_per_cfm == 0) ? 1.0 : calculate_fan_power(1.0, fan_ratio, hvac_system)
-      fan.addSpeed(fan_ratio.round(5), power_fraction.round(5))
+      fan.addSpeed(fan_ratio.round(5))
+    end
+
+    if hvac_system.respond_to?(:compressor_type) && (hvac_system.compressor_type == HPXML::HVACCompressorTypeVariableSpeed)
+      add_fan_power_override_ems_program(model, fan, hvac_system)
     end
 
     return fan
+  end
+
+  # Creates an EMS program to set the fan power for variable-speed systems to
+  # work around an EnergyPlus bug.
+  # TODO: Remove this when https://github.com/NatLabRockies/EnergyPlus/issues/11909 bugfix is available
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param fan [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
+  # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
+  # @return [nil]
+  def self.add_fan_power_override_ems_program(model, fan, hvac_system)
+    # EMS Sensors
+    # Fan runtime fraction for each speed
+    rtf_sensors = []
+    for i in 1..fan.numberofSpeeds
+      if fan.numberofSpeeds == 1
+        var_name = 'Fan Runtime Fraction'
+      else
+        var_name = "Fan Runtime Fraction Speed #{i}"
+      end
+      rtf_sensors << Model.add_ems_sensor(
+        model,
+        name: "#{fan.name} rtf s",
+        output_var_or_meter_name: var_name,
+        key_name: fan.name
+      )
+    end
+
+    # EMS Actuators for fan efficiency and pressure rise
+    fan_eff_actuator = Model.add_ems_actuator(
+      name: "#{fan.name} eff act",
+      model_object: fan,
+      comp_type_and_control: EPlus::EMSActuatorFanTotalEfficiency
+    )
+    fan_press_actuator = Model.add_ems_actuator(
+      name: "#{fan.name} press act",
+      model_object: fan,
+      comp_type_and_control: EPlus::EMSActuatorFanPressureRise
+    )
+
+    # EMS program
+    fan_power_program = Model.add_ems_program(
+      model,
+      name: "#{fan.name} power override program"
+    )
+    curve_type, coeff = get_fan_power_curve_spec(hvac_system)
+    fan_power_program.addLine('Set FlowFraction = 0')
+    rtf_sensors.each_with_index do |rtf_sensor, i|
+      fan_power_program.addLine("Set FlowFraction = FlowFraction + (#{rtf_sensor.name} * #{fan.speeds[i].flowFraction})")
+    end
+    if curve_type == 'quadratic'
+      fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*FlowFraction) + (#{coeff[2]}*(FlowFraction^2))")
+    elsif curve_type == 'exponent'
+      fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*(FlowFraction^#{coeff[2]}))")
+    end
+    fan_power_program.addLine("Set #{fan_eff_actuator.name} = 1")
+    fan_power_program.addLine("Set #{fan_press_actuator.name} = FanPowerFraction * #{fan.electricPowerPerUnitFlowRate} * #{fan_eff_actuator.name}")
+
+    # EMS calling manager
+    Model.add_ems_program_calling_manager(
+      model,
+      name: "#{fan_power_program.name} manager",
+      calling_point: 'InsideHVACSystemIterationLoop',
+      ems_programs: [fan_power_program]
+    )
   end
 
   # Calculates fan power at any speed given the fan power at max speed and a fan speed ratio.
@@ -2492,16 +2578,34 @@ module HVAC
   def self.calculate_fan_power(max_fan_power, fan_ratio, hvac_system)
     if hvac_system.fan_motor_type.nil?
       # For system types that fan_motor_type is not specified, the fan_ratio should be 1
-      fail 'Missing fan motor type for systems where more than one speed is modeled' unless (fan_ratio == 1.0 || max_fan_power == 0.0)
+      if not (fan_ratio == 1.0 || max_fan_power == 0.0)
+        fail 'Missing fan motor type for systems where more than one speed is modeled'
+      end
+    end
 
-      return max_fan_power
+    curve_type, coeff = get_fan_power_curve_spec(hvac_system)
+    if curve_type == 'quadratic'
+      return max_fan_power * MathTools.quadratic(fan_ratio, coeff)
+    elsif curve_type == 'exponent'
+      return max_fan_power * MathTools.exponent(fan_ratio, coeff)
+    end
+  end
+
+  # Returns the fan power curve specification (curve type and coefficients).
+  # The curve is based on the fan flow fraction and normalized to 1.
+  #
+  # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
+  # @return [Array<string, Array<double>>] Type of curve and array of curve coefficients
+  def self.get_fan_power_curve_spec(hvac_system)
+    if hvac_system.fan_motor_type.nil? # Single-speed
+      return 'quadratic', [1, 0, 0]
     else
       # Based on RESNET HERS Addendum 82
-      if hvac_system.fan_motor_type == HPXML::HVACFanMotorTypeBPM
+      if hvac_system.fan_motor_type == HPXML::HVACFanMotorTypePSC
+        return 'quadratic', [0, 0.7, 0.3]
+      elsif hvac_system.fan_motor_type == HPXML::HVACFanMotorTypeBPM
         pow = hvac_system.distribution_system_idref.nil? ? 3 : 2.75
-        return max_fan_power * (fan_ratio**pow)
-      elsif hvac_system.fan_motor_type == HPXML::HVACFanMotorTypePSC
-        return max_fan_power * fan_ratio * (0.3 * fan_ratio + 0.7)
+        return 'exponent', [0, 1, pow]
       end
     end
   end

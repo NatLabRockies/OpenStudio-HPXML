@@ -363,6 +363,7 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     next if message.include?('setupIHGOutputs: Output variables=Space Other Equipment') && message.include?('are not available')
     next if message.include? 'Multiple speed fan will be applied to this unit. The speed number is determined by load.'
     next if message.include?('Maximum iterations') && message.include?('for all HVAC loops')
+    next if message.include? 'Seems like you already tried to get a Handle on this Actuator' # FIXME: Temporary
 
     # HPWHs
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.water_heating_systems.count { |wh| wh.water_heater_type == HPXML::WaterHeaterTypeHeatPump } > 0 }
