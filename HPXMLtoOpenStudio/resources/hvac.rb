@@ -431,10 +431,6 @@ module HVAC
     # Fan
     hvac_system = cooling_system.nil? ? heating_system : cooling_system
     fan = create_supply_fan(model, obj_name, fan_watts_per_cfm, fan_cfms, hvac_system)
-    if heating_system.is_a?(HPXML::HeatPump) && (not heating_system.backup_system.nil?) && (not htg_ap.hp_min_temp.nil?)
-      # Disable blower fan power below compressor lockout temperature if separate backup heating system
-      add_fan_power_ems_program(model, fan, htg_ap.hp_min_temp)
-    end
     if (not cooling_system.nil?) && (not heating_system.nil?) && (cooling_system == heating_system)
       add_fan_pump_disaggregation_ems_program(model, fan, htg_coil, clg_coil, htg_supp_coil, cooling_system)
     else
@@ -1879,52 +1875,6 @@ module HVAC
     return heating_season, cooling_season
   end
 
-  # Creates an EMS program to disable fan power below the heat pump's minimum compressor
-  # operating temperature; the backup heating system will be operating instead.
-  #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param fan [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
-  # @param hp_min_temp [Double] Minimum heat pump compressor operating temperature for heating
-  # @return [nil]
-  def self.add_fan_power_ems_program(model, fan, hp_min_temp)
-    # Sensors
-    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
-
-    # Actuators
-    fan_pressure_rise_act = Model.add_ems_actuator(
-      name: "#{fan.name} pressure rise act",
-      model_object: fan,
-      comp_type_and_control: EPlus::EMSActuatorFanPressureRise
-    )
-
-    fan_total_efficiency_act = Model.add_ems_actuator(
-      name: "#{fan.name} total efficiency act",
-      model_object: fan,
-      comp_type_and_control: EPlus::EMSActuatorFanTotalEfficiency
-    )
-
-    # Program
-    fan_program = Model.add_ems_program(
-      model,
-      name: "#{fan.name} power program"
-    )
-    fan_program.addLine("If #{t_out_sensor.name} < #{UnitConversions.convert(hp_min_temp, 'F', 'C').round(2)}")
-    fan_program.addLine("  Set #{fan_pressure_rise_act.name} = 0")
-    fan_program.addLine("  Set #{fan_total_efficiency_act.name} = 1")
-    fan_program.addLine('Else')
-    fan_program.addLine("  Set #{fan_pressure_rise_act.name} = NULL")
-    fan_program.addLine("  Set #{fan_total_efficiency_act.name} = NULL")
-    fan_program.addLine('EndIf')
-
-    # Calling Point
-    Model.add_ems_program_calling_manager(
-      model,
-      name: "#{fan_program.name} manager",
-      calling_point: 'AfterPredictorBeforeHVACManagers',
-      ems_programs: [fan_program]
-    )
-  end
-
   # Create EMS program to correctly account for pump power consumption based on heating object part load ratio
   # Without EMS, the pump power will vary according to the plant loop part load ratio
   # (based on flow rate) rather than the component part load ratio (based on load).
@@ -2497,70 +2447,102 @@ module HVAC
       fan.addSpeed(fan_ratio.round(5))
     end
 
-    if hvac_system.respond_to?(:compressor_type) && (hvac_system.compressor_type == HPXML::HVACCompressorTypeVariableSpeed)
-      add_fan_power_override_ems_program(model, fan, hvac_system)
-    end
+    add_fan_power_ems_program(model, fan, hvac_system)
 
     return fan
   end
 
-  # Creates an EMS program to set the fan power for variable-speed systems to
-  # work around an EnergyPlus bug.
-  # TODO: Remove this when https://github.com/NatLabRockies/EnergyPlus/issues/11909 bugfix is available
+  # Creates an EMS program to override the fan power:
+  # 1. If a heat pump w/ separate backup, disable fan power below the heat pump's
+  #    minimum operating temperature; the backup heating system will be operating
+  #    instead.
+  # 2. If a variable-speed system, work around an EnergyPlus bug. TODO: Remove
+  #    this when https://github.com/NatLabRockies/EnergyPlus/issues/11909 is fixed
+  #    and available.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param fan [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
   # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
   # @return [nil]
-  def self.add_fan_power_override_ems_program(model, fan, hvac_system)
-    # EMS Sensors
-    # Fan runtime fraction for each speed
-    rtf_sensors = []
-    for i in 1..fan.numberofSpeeds
-      if fan.numberofSpeeds == 1
-        var_name = 'Fan Runtime Fraction'
-      else
-        var_name = "Fan Runtime Fraction Speed #{i}"
+  def self.add_fan_power_ems_program(model, fan, hvac_system)
+    hvac_ap = hvac_system.additional_properties
+
+    is_hp_with_sep_backup = hvac_system.is_a?(HPXML::HeatPump) && (not hvac_system.backup_system.nil?) && (not hvac_ap.hp_min_temp.nil?)
+    is_var_speed = hvac_system.respond_to?(:compressor_type) && (hvac_system.compressor_type == HPXML::HVACCompressorTypeVariableSpeed)
+
+    return unless (is_var_speed || is_hp_with_sep_backup)
+
+    # Sensors
+    if is_hp_with_sep_backup
+      t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+    end
+    if is_var_speed
+      # Fan runtime fraction for each speed
+      rtf_sensors = []
+      for i in 1..fan.numberofSpeeds
+        if fan.numberofSpeeds == 1
+          var_name = 'Fan Runtime Fraction'
+        else
+          var_name = "Fan Runtime Fraction Speed #{i}"
+        end
+        rtf_sensors << Model.add_ems_sensor(
+          model,
+          name: "#{fan.name} rtf s",
+          output_var_or_meter_name: var_name,
+          key_name: fan.name
+        )
       end
-      rtf_sensors << Model.add_ems_sensor(
-        model,
-        name: "#{fan.name} rtf s",
-        output_var_or_meter_name: var_name,
-        key_name: fan.name
-      )
     end
 
-    # EMS Actuators for fan efficiency and pressure rise
+    # Actuators for fan efficiency and pressure rise
     fan_eff_actuator = Model.add_ems_actuator(
-      name: "#{fan.name} eff act",
+      name: "#{fan.name} total efficiency act",
       model_object: fan,
       comp_type_and_control: EPlus::EMSActuatorFanTotalEfficiency
     )
     fan_press_actuator = Model.add_ems_actuator(
-      name: "#{fan.name} press act",
+      name: "#{fan.name} pressure rise act",
       model_object: fan,
       comp_type_and_control: EPlus::EMSActuatorFanPressureRise
     )
 
-    # EMS program
+    # Program
     fan_power_program = Model.add_ems_program(
       model,
       name: "#{fan.name} power override program"
     )
-    curve_type, coeff = get_fan_power_curve_spec(hvac_system)
-    fan_power_program.addLine('Set FlowFraction = 0')
-    rtf_sensors.each_with_index do |rtf_sensor, i|
-      fan_power_program.addLine("Set FlowFraction = FlowFraction + (#{rtf_sensor.name} * #{fan.speeds[i].flowFraction})")
+    if is_hp_with_sep_backup
+      # Disable fan power below min HP temperature
+      fan_power_program.addLine("If #{t_out_sensor.name} < #{UnitConversions.convert(hvac_ap.hp_min_temp, 'F', 'C').round(2)}")
+      fan_power_program.addLine("  Set #{fan_eff_actuator.name} = 1")
+      fan_power_program.addLine("  Set #{fan_press_actuator.name} = 0")
+      fan_power_program.addLine('Else')
     end
-    if curve_type == 'quadratic'
-      fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*FlowFraction) + (#{coeff[2]}*(FlowFraction^2))")
-    elsif curve_type == 'exponent'
-      fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*(FlowFraction^#{coeff[2]}))")
+    if is_var_speed
+      # Set fan power based on fan power curve
+      curve_type, coeff = get_fan_power_curve_spec(hvac_system)
+      fan_power_program.addLine('Set FlowFraction = 0')
+      rtf_sensors.each_with_index do |rtf_sensor, i|
+        fan_power_program.addLine("Set FlowFraction = FlowFraction + (#{rtf_sensor.name} * #{fan.speeds[i].flowFraction})")
+      end
+      if curve_type == 'quadratic'
+        fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*FlowFraction) + (#{coeff[2]}*(FlowFraction^2))")
+      elsif curve_type == 'exponent'
+        fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*(FlowFraction^#{coeff[2]}))")
+      end
+      fan_power_program.addLine("Set #{fan_eff_actuator.name} = 1")
+      fan_power_program.addLine("Set #{fan_press_actuator.name} = FanPowerFraction * #{fan.electricPowerPerUnitFlowRate} * #{fan_eff_actuator.name}")
     end
-    fan_power_program.addLine("Set #{fan_eff_actuator.name} = 1")
-    fan_power_program.addLine("Set #{fan_press_actuator.name} = FanPowerFraction * #{fan.electricPowerPerUnitFlowRate} * #{fan_eff_actuator.name}")
+    if is_hp_with_sep_backup
+      if not is_var_speed
+        # If above min HP temperature, use E+ calculated fan power
+        fan_power_program.addLine("  Set #{fan_eff_actuator.name} = NULL")
+        fan_power_program.addLine("  Set #{fan_press_actuator.name} = NULL")
+      end
+      fan_power_program.addLine('EndIf')
+    end
 
-    # EMS calling manager
+    # Calling manager
     Model.add_ems_program_calling_manager(
       model,
       name: "#{fan_power_program.name} manager",
