@@ -227,6 +227,7 @@ base-hvac-air-to-air-heat-pump-1-speed-research-features.xml,370.933,0.0,0.0,128
 base-hvac-air-to-air-heat-pump-1-speed-seer-hspf.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,9011.1,4400.8,9011.1,9011.1,4400.8,9011.1,30753.0,24524.0,0.0
 base-hvac-air-to-air-heat-pump-1-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8965.7,4218.2,8965.7,8965.7,4218.2,8965.7,30753.0,24524.0,0.0
 base-hvac-air-to-air-heat-pump-2-speed-detailed-performance.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8870.8,4097.3,8870.8,8870.8,4097.3,8870.8,30764.0,26314.0,0.0
+base-hvac-air-to-air-heat-pump-2-speed-fan-motor-type.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8900.7,3856.7,8900.7,8900.7,3856.7,8900.7,30744.0,26547.0,0.0
 base-hvac-air-to-air-heat-pump-2-speed-research-features.xml,292.3,0.0,0.0,1286.4,890.5,12241.8,4208.1,20443.6,8273.3,20443.6,20443.6,8273.3,20443.6,61515.0,23998.0,0.0
 base-hvac-air-to-air-heat-pump-2-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8908.9,3879.2,8908.9,8908.9,3879.2,8908.9,30736.0,26540.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-autosize-acca.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7270.8,3803.1,7270.8,7270.8,3803.1,7270.8,30029.0,25496.0,0.0
@@ -240,6 +241,7 @@ base-hvac-air-to-air-heat-pump-var-speed-backup-furnace.xml,3.0,0.0,0.0,1286.4,8
 base-hvac-air-to-air-heat-pump-var-speed-detailed-performance-autosize.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7287.1,4902.8,7287.1,7287.1,4902.8,7287.1,30350.0,25707.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-detailed-performance-normalized-capacities.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7634.5,5027.5,7634.5,7634.5,5027.5,7634.5,30690.0,25953.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-detailed-performance.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7652.1,5022.5,7652.1,7652.1,5022.5,7652.1,30690.0,25955.0,0.0
+base-hvac-air-to-air-heat-pump-var-speed-fan-motor-type.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7560.5,3875.5,7560.5,7560.5,3875.5,7560.5,30358.0,25704.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-pan-heater-continuous-mode.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7508.5,3857.6,7508.5,7508.5,3857.6,7508.5,30363.0,25702.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-pan-heater-defrost-mode.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7416.5,3857.6,7416.5,7416.5,3857.6,7416.5,30363.0,25702.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-pan-heater-heat-pump-mode.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7508.5,3857.6,7508.5,7508.5,3857.6,7508.5,30363.0,25702.0,0.0
