@@ -39,6 +39,7 @@ __Bugfixes__
 - Fixes missing timeseries temperature outputs for manufactured home belly and wing foundation type.
 - Removes `Location` input for "instantaneous water heater" and "space-heating boiler with tankless coil" water heater types.
 - Fixes possibility of iteration limit error when providing detailed HVAC performance data.
+- Fixes requested EnergyPlus timeseries output variables/meters not displayed in DView if they don't have units (for csv, not csv_dview output format).
 
 ## OpenStudio-HPXML v1.12.0
 
