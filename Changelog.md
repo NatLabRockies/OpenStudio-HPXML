@@ -6,6 +6,7 @@ __Features__
   - `Roof/RoofColor` now has an additional option of "white".
 - **Breaking change**: Conditioned crawlspaces are no longer allowed; use unvented crawlspace instead.
 - **Breaking change**: For heat pump water heaters, ``HeatingCapacity`` is now *input* rather than *output* capacity, similar to other water heater types.
+- **Breaking change**: Deprecates the ``--ep-input-format`` argument from run_simulation.rb.
 - Water heater updates:
   - Allows modeling 120V HPWHs (including dedicated vs shared circuits) using `WaterHeatingSystem/HPWHVoltage`.
   - Allows modeling water heaters with a mixing valve using `HasMixingValve` and `MixingValveSetpoint`; assumes a mixing valve when water heater setpoint > 140F.
@@ -39,6 +40,7 @@ __Bugfixes__
 - Fixes missing timeseries temperature outputs for manufactured home belly and wing foundation type.
 - Removes `Location` input for "instantaneous water heater" and "space-heating boiler with tankless coil" water heater types.
 - Fixes possibility of iteration limit error when providing detailed HVAC performance data.
+- Fixes requested EnergyPlus timeseries output variables/meters not displayed in DView if they don't have units (for csv, not csv_dview output format).
 
 ## OpenStudio-HPXML v1.12.0
 
