@@ -115,7 +115,10 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
        { assembly_r: 20.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins', 'roof layer'] }],
       [{ assembly_r: 0.1, layer_names: ['asphalt or fiberglass shingles + osb'] },
        { assembly_r: 5.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins'] },
-       { assembly_r: 20.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins'] }]
+       { assembly_r: 20.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins'] }],
+      [{ assembly_r: 0.1, layer_names: ['asphalt or fiberglass shingles + osb', 'roof stud and cavity', 'gypsum board', 'radiant barrier'] },
+       { assembly_r: 5.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof stud and cavity', 'gypsum board', 'radiant barrier'] },
+       { assembly_r: 20.0, layer_names: ['asphalt or fiberglass shingles + osb', 'roof rigid ins', 'roof stud and cavity', 'gypsum board', 'radiant barrier'] }]
     ]
 
     hpxml, hpxml_bldg = _create_hpxml('base-enclosure-rooftypes.xml')
@@ -126,7 +129,7 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
         model, _hpxml, hpxml_bldg = _test_measure(args_hash, skip_in_xml_validation: i + j > 0) # Only validate in.xml once for speed
 
         os_surface = model.getSurfaces.find { |s| s.name.to_s.start_with? "#{roof.id}:" }
-        _check_surface(hpxml_bldg.roofs[i], os_surface, roof_values[:layer_names])
+        _check_surface(hpxml_bldg.roofs[i], os_surface, roof_values[:layer_names], roof.radiant_barrier ? 0.05 : nil)
       end
     end
   end

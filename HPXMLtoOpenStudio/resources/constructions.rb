@@ -48,6 +48,7 @@ module Constructions
           ]
           match, constr_set, cavity_r = pick_wood_stud_construction_set(assembly_r, wood_frame_constr_sets, interior_film, exterior_film)
           framing_factor = constr_set.framing_factor
+          cavity_depth_in = constr_set.stud.thick_in
         else
           corr_factor = 0.82
           steel_frame_constr_sets = [
@@ -61,9 +62,10 @@ module Constructions
           ]
           match, constr_set, cavity_r = pick_steel_stud_construction_set(assembly_r, steel_frame_constr_sets, interior_film, exterior_film)
           corr_factor = constr_set.corr_factor
+          cavity_depth_in = constr_set.cavity_depth_in
         end
         apply_closed_cavity_frame_roof(model, surfaces, "#{roof.id} construction", roof.roof_type,
-                                       cavity_r, install_grade, constr_set.stud.thick_in, true,
+                                       cavity_r, install_grade, cavity_depth_in, true,
                                        constr_set.mat_int_finish, constr_set.osb_thick_in, constr_set.rigid_r,
                                        constr_set.mat_ext_finish, has_radiant_barrier,
                                        interior_film, exterior_film, radiant_barrier_grade,
@@ -1387,7 +1389,7 @@ module Constructions
     constr.create_and_assign_constructions(surfaces, model)
   end
 
-  # Creates a closed cavity, wood frame roof construction and applies it to the specified surfaces.
+  # Creates a closed cavity, wood or steel frame roof construction and applies it to the specified surfaces.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param surfaces [Array<OpenStudio::Model::Surface>] array of OpenStudio::Model::Surface objects
@@ -1473,12 +1475,12 @@ module Constructions
     if not mat_osb.nil?
       constr.add_layer(mat_osb)
     end
-    if not mat_rb.nil?
-      constr.add_layer(mat_rb)
-    end
     constr.add_layer(stud_cavity_layers, 'roof stud and cavity')
     if not mat_int_finish.nil?
       constr.add_layer(mat_int_finish)
+    end
+    if not mat_rb.nil?
+      constr.add_layer(mat_rb)
     end
     constr.add_layer(interior_film)
 

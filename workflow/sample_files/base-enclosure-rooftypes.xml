@@ -84,6 +84,7 @@
             <AttachedToRoof idref='Roof2'/>
             <AttachedToRoof idref='Roof3'/>
             <AttachedToRoof idref='Roof4'/>
+            <AttachedToRoof idref='Roof5'/>
             <AttachedToWall idref='Wall2'/>
             <AttachedToFloor idref='Floor1'/>
           </Attic>
@@ -105,7 +106,7 @@
           <Roof>
             <SystemIdentifier id='Roof1'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
-            <Area>377.3</Area>
+            <Area>301.9</Area>
             <RoofType>
               <WoodFrame/>
             </RoofType>
@@ -118,7 +119,7 @@
           <Roof>
             <SystemIdentifier id='Roof2'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
-            <Area>377.3</Area>
+            <Area>301.9</Area>
             <RoofType>
               <StructuralInsulatedPanel/>
             </RoofType>
@@ -131,7 +132,7 @@
           <Roof>
             <SystemIdentifier id='Roof3'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
-            <Area>377.3</Area>
+            <Area>301.9</Area>
             <RoofType>
               <SolidConcrete/>
             </RoofType>
@@ -144,7 +145,7 @@
           <Roof>
             <SystemIdentifier id='Roof4'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
-            <Area>377.3</Area>
+            <Area>301.9</Area>
             <RoofType>
               <SteelFrame/>
             </RoofType>
@@ -152,6 +153,24 @@
             <Insulation>
               <SystemIdentifier id='Roof4Insulation'/>
               <AssemblyEffectiveRValue>8.1</AssemblyEffectiveRValue>
+            </Insulation>
+          </Roof>
+          <Roof>
+            <SystemIdentifier id='Roof5'/>
+            <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
+            <Area>301.9</Area>
+            <RoofType>
+              <SteelFrame/>
+            </RoofType>
+            <InteriorFinish>
+              <Type>gypsum board</Type>
+              <Thickness>0.5</Thickness>
+            </InteriorFinish>
+            <Pitch>6.0</Pitch>
+            <RadiantBarrier>true</RadiantBarrier>
+            <Insulation>
+              <SystemIdentifier id='Roof5Insulation'/>
+              <AssemblyEffectiveRValue>10.0</AssemblyEffectiveRValue>
             </Insulation>
           </Roof>
         </Roofs>
