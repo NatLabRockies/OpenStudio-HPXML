@@ -754,32 +754,12 @@ module Airflow
     fan_data[:max_airflow_m3s][object] = supply_fan.designMaximumAirFlowRate.get
 
     # Supply fan runtime fraction
-    fan_data[:rtf_sensor][object] = []
-    if supply_fan.speedControlMethod == EPlus::FanSpeedControlDiscrete
-      # TODO: Switch to the single RTF output variable when https://github.com/NatLabRockies/EnergyPlus/issues/11577 is available
-      num_speeds = supply_fan.numberofSpeeds
-      for i in 1..num_speeds
-        if num_speeds == 1
-          var_name = 'Fan Runtime Fraction'
-        else
-          var_name = "Fan Runtime Fraction Speed #{i}"
-        end
-        fan_data[:rtf_sensor][object] << Model.add_ems_sensor(
-          model,
-          name: "#{fan_data[:rtf_var][object].name} s",
-          output_var_or_meter_name: var_name,
-          key_name: supply_fan.name
-        )
-      end
-    elsif supply_fan.speedControlMethod == EPlus::FanSpeedControlContinuous
-      # FIXME: Need https://github.com/NatLabRockies/EnergyPlus/issues/11920
-      # There is no runtime fraction output, so we create an object with
-      # a .name property to mimic an EMS sensor, but this is not correct
-      # for timesteps where the load is less than the minimum capacity and
-      # the system is cycling.
-      rtf_obj = Struct.new(:name)
-      fan_data[:rtf_sensor][object] << rtf_obj.new(1.0)
-    end
+    fan_data[:rtf_sensor][object] = Model.add_ems_sensor(
+      model,
+      name: "#{fan_data[:rtf_var][object].name} s",
+      output_var_or_meter_name: 'Fan Runtime Fraction',
+      key_name: supply_fan.name
+    )
   end
 
   # Issues warnings/errors if duct leakage to outside is detected to be suspiciously high. We check here
@@ -1499,10 +1479,7 @@ module Airflow
       name: "#{object_name_idx} duct program"
     )
     duct_program.addLine("Set #{ah_mfr_var.name} = #{ah_mfr_sensor.name}")
-    duct_program.addLine("Set #{fan_data[:rtf_var][object].name} = 0")
-    fan_data[:rtf_sensor][object].each do |rtf_sensor|
-      duct_program.addLine("Set #{fan_data[:rtf_var][object].name} = #{fan_data[:rtf_var][object].name} + #{rtf_sensor.name}")
-    end
+    duct_program.addLine("Set #{fan_data[:rtf_var][object].name} = #{fan_data[:rtf_sensor][object].name}")
     duct_program.addLine("Set #{ah_vfr_var.name} = #{ah_vfr_sensor.name}")
     duct_program.addLine("Set #{ah_tout_var.name} = #{ah_tout_sensor.name}")
     duct_program.addLine("Set #{ah_wout_var.name} = #{ah_wout_sensor.name}")
