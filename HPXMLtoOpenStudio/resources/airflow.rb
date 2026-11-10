@@ -755,6 +755,7 @@ module Airflow
 
     if supply_fan.to_FanSystemModel.is_initialized
       fan_data[:rtf_sensor][object] = []
+      # TODO: Switch to the single RTF output variable when https://github.com/NatLabRockies/EnergyPlus/issues/11577 is available
       num_speeds = supply_fan.numberofSpeeds
       for i in 1..num_speeds
         if num_speeds == 1

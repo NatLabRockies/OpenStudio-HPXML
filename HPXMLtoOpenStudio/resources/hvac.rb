@@ -2478,6 +2478,7 @@ module HVAC
     end
     if is_var_speed
       # Fan runtime fraction for each speed
+      # TODO: Switch to the single RTF output variable when https://github.com/NatLabRockies/EnergyPlus/issues/11577 is available
       rtf_sensors = []
       for i in 1..fan.numberofSpeeds
         if fan.numberofSpeeds == 1
