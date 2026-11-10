@@ -431,10 +431,6 @@ module HVAC
     # Fan
     hvac_system = cooling_system.nil? ? heating_system : cooling_system
     fan = create_supply_fan(model, obj_name, fan_watts_per_cfm, fan_cfms, hvac_system)
-    if heating_system.is_a?(HPXML::HeatPump) && (not heating_system.backup_system.nil?) && (not htg_ap.hp_min_temp.nil?)
-      # Disable blower fan power below compressor lockout temperature if separate backup heating system
-      add_fan_power_ems_program(model, fan, htg_ap.hp_min_temp)
-    end
     if (not cooling_system.nil?) && (not heating_system.nil?) && (cooling_system == heating_system)
       add_fan_pump_disaggregation_ems_program(model, fan, htg_coil, clg_coil, htg_supp_coil, cooling_system)
     else
@@ -1879,52 +1875,6 @@ module HVAC
     return heating_season, cooling_season
   end
 
-  # Creates an EMS program to disable fan power below the heat pump's minimum compressor
-  # operating temperature; the backup heating system will be operating instead.
-  #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param fan [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
-  # @param hp_min_temp [Double] Minimum heat pump compressor operating temperature for heating
-  # @return [nil]
-  def self.add_fan_power_ems_program(model, fan, hp_min_temp)
-    # Sensors
-    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
-
-    # Actuators
-    fan_pressure_rise_act = Model.add_ems_actuator(
-      name: "#{fan.name} pressure rise act",
-      model_object: fan,
-      comp_type_and_control: EPlus::EMSActuatorFanPressureRise
-    )
-
-    fan_total_efficiency_act = Model.add_ems_actuator(
-      name: "#{fan.name} total efficiency act",
-      model_object: fan,
-      comp_type_and_control: EPlus::EMSActuatorFanTotalEfficiency
-    )
-
-    # Program
-    fan_program = Model.add_ems_program(
-      model,
-      name: "#{fan.name} power program"
-    )
-    fan_program.addLine("If #{t_out_sensor.name} < #{UnitConversions.convert(hp_min_temp, 'F', 'C').round(2)}")
-    fan_program.addLine("  Set #{fan_pressure_rise_act.name} = 0")
-    fan_program.addLine("  Set #{fan_total_efficiency_act.name} = 1")
-    fan_program.addLine('Else')
-    fan_program.addLine("  Set #{fan_pressure_rise_act.name} = NULL")
-    fan_program.addLine("  Set #{fan_total_efficiency_act.name} = NULL")
-    fan_program.addLine('EndIf')
-
-    # Calling Point
-    Model.add_ems_program_calling_manager(
-      model,
-      name: "#{fan_program.name} manager",
-      calling_point: 'AfterPredictorBeforeHVACManagers',
-      ems_programs: [fan_program]
-    )
-  end
-
   # Create EMS program to correctly account for pump power consumption based on heating object part load ratio
   # Without EMS, the pump power will vary according to the plant loop part load ratio
   # (based on flow rate) rather than the component part load ratio (based on load).
@@ -2505,7 +2455,62 @@ module HVAC
       end
     end
 
+    add_fan_power_ems_program(model, fan, hvac_system)
+
     return fan
+  end
+
+  # Creates an EMS program to override the fan power. If a heat pump w/ separate
+  # backup, disable fan power below the heat pump's minimum operating temperature;
+  # the backup heating system will be operating instead.
+  #
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
+  # @param fan [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
+  # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
+  # @return [nil]
+  def self.add_fan_power_ems_program(model, fan, hvac_system)
+    hvac_ap = hvac_system.additional_properties
+
+    is_hp_with_sep_backup = hvac_system.is_a?(HPXML::HeatPump) && (not hvac_system.backup_system.nil?) && (not hvac_ap.hp_min_temp.nil?)
+    return unless is_hp_with_sep_backup
+
+    # Sensors
+    t_out_sensor = model.getEnergyManagementSystemSensors.find { |s| s.additionalProperties.getFeatureAsString('ObjectType').to_s == Constants::ObjectTypeSensorSiteOutdoorAirDBTemp }
+
+    # Actuators for fan efficiency and pressure rise
+    fan_eff_actuator = Model.add_ems_actuator(
+      name: "#{fan.name} total efficiency act",
+      model_object: fan,
+      comp_type_and_control: EPlus::EMSActuatorFanTotalEfficiency
+    )
+    fan_press_actuator = Model.add_ems_actuator(
+      name: "#{fan.name} pressure rise act",
+      model_object: fan,
+      comp_type_and_control: EPlus::EMSActuatorFanPressureRise
+    )
+
+    # Program
+    fan_power_program = Model.add_ems_program(
+      model,
+      name: "#{fan.name} power override program"
+    )
+    # Disable fan power below min HP temperature
+    fan_power_program.addLine("If #{t_out_sensor.name} < #{UnitConversions.convert(hvac_ap.hp_min_temp, 'F', 'C').round(2)}")
+    fan_power_program.addLine("  Set #{fan_eff_actuator.name} = 1")
+    fan_power_program.addLine("  Set #{fan_press_actuator.name} = 0")
+    fan_power_program.addLine('Else')
+    # If above min HP temperature, use E+ calculated fan power
+    fan_power_program.addLine("  Set #{fan_eff_actuator.name} = NULL")
+    fan_power_program.addLine("  Set #{fan_press_actuator.name} = NULL")
+    fan_power_program.addLine('EndIf')
+
+    # Calling manager
+    Model.add_ems_program_calling_manager(
+      model,
+      name: "#{fan_power_program.name} manager",
+      calling_point: 'InsideHVACSystemIterationLoop',
+      ems_programs: [fan_power_program]
+    )
   end
 
   # Calculates fan power at any speed given the fan power at max speed and a fan speed ratio.

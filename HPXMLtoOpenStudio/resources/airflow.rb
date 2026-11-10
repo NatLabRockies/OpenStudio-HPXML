@@ -756,6 +756,7 @@ module Airflow
     # Supply fan runtime fraction
     fan_data[:rtf_sensor][object] = []
     if supply_fan.speedControlMethod == EPlus::FanSpeedControlDiscrete
+      # TODO: Switch to the single RTF output variable when https://github.com/NatLabRockies/EnergyPlus/issues/11577 is available
       num_speeds = supply_fan.numberofSpeeds
       for i in 1..num_speeds
         if num_speeds == 1
@@ -771,8 +772,11 @@ module Airflow
         )
       end
     elsif supply_fan.speedControlMethod == EPlus::FanSpeedControlContinuous
+      # FIXME: Need https://github.com/NatLabRockies/EnergyPlus/issues/11920
       # There is no runtime fraction output, so we create an object with
-      # a .name property to mimic an EMS sensor
+      # a .name property to mimic an EMS sensor, but this is not correct
+      # for timesteps where the load is less than the minimum capacity and
+      # the system is cycling.
       rtf_obj = Struct.new(:name)
       fan_data[:rtf_sensor][object] << rtf_obj.new(1.0)
     end
