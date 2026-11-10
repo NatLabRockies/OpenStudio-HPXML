@@ -429,9 +429,13 @@ module Model
   def self.add_plant_loop(model, name:, fluid_type: EPlus::FluidWater, glycol_concentration: 50, volume: nil, min_temp: nil, max_temp: nil, max_flow_rate: nil)
     plant_loop = OpenStudio::Model::PlantLoop.new(model)
     plant_loop.setName(name)
-    plant_loop.setFluidType(fluid_type)
-    if fluid_type == EPlus::FluidPropyleneGlycol
-      plant_loop.setGlycolConcentration(glycol_concentration)
+    if Version::UseEPModel && fluid_type == EPlus::FluidPropyleneGlycol
+      plant_loop.setGlycolFluidType(fluid_type, glycol_concentration)
+    else
+      plant_loop.setFluidType(fluid_type)
+      if fluid_type == EPlus::FluidPropyleneGlycol
+        plant_loop.setGlycolConcentration(glycol_concentration)
+      end
     end
     plant_loop.setMinimumLoopTemperature(min_temp) unless min_temp.nil?
     plant_loop.setMaximumLoopTemperature(max_temp) unless max_temp.nil?

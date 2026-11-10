@@ -79,6 +79,125 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     end
   end
 
+  def test_schedule_type_limits_propagation
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    ruleset = Model.add_schedule_ruleset(model, name: 'Test Ruleset', limits: EPlus::ScheduleTypeLimitsTemperature)
+    limits = ruleset.scheduleTypeLimits.get
+    assert_equal(limits.handle, ruleset.defaultDaySchedule.scheduleTypeLimits.get.handle)
+    rule = OpenStudio::Model::ScheduleRule.new(ruleset)
+    assert_equal(limits.handle, rule.daySchedule.scheduleTypeLimits.get.handle)
+
+    replacement = OpenStudio::Model::ScheduleTypeLimits.new(model)
+    replacement.setName('Replacement Limits')
+    assert(ruleset.setScheduleTypeLimits(replacement))
+    assert_equal(replacement.handle, rule.daySchedule.scheduleTypeLimits.get.handle)
+
+    thermostat = OpenStudio::Model::ThermostatSetpointDualSetpoint.new(model)
+    [:setHeatingSetpointTemperatureSchedule, :setCoolingSetpointTemperatureSchedule].each do |setter|
+      setpoint = Model.add_schedule_ruleset(model, name: setter.to_s)
+      setpoint_rule = OpenStudio::Model::ScheduleRule.new(setpoint)
+      assert(thermostat.public_send(setter, setpoint))
+      inferred_limits = setpoint.scheduleTypeLimits.get
+      assert_equal('Temperature', inferred_limits.unitType)
+      assert_equal(inferred_limits.handle, setpoint_rule.daySchedule.scheduleTypeLimits.get.handle)
+    end
+
+    fractional = Model.add_schedule_constant(model, name: 'Equipment Schedule', value: 0.5)
+    equipment = OpenStudio::Model::ElectricEquipment.new(OpenStudio::Model::ElectricEquipmentDefinition.new(model))
+    assert(equipment.setSchedule(fractional))
+    assert_equal('Fractional', fractional.scheduleTypeLimits.get.name.to_s)
+    assert_equal(0, fractional.scheduleTypeLimits.get.lowerLimitValue.get)
+    assert_equal(1, fractional.scheduleTypeLimits.get.upperLimitValue.get)
+
+    activity = Model.add_schedule_constant(model, name: 'Activity Schedule', value: 100.0)
+    people = OpenStudio::Model::People.new(OpenStudio::Model::PeopleDefinition.new(model))
+    assert(people.setActivityLevelSchedule(activity))
+    assert_equal('ActivityLevel', activity.scheduleTypeLimits.get.name.to_s)
+    assert_equal('ActivityLevel', activity.scheduleTypeLimits.get.unitType)
+    assert_equal(0, activity.scheduleTypeLimits.get.lowerLimitValue.get)
+
+    custom = OpenStudio::Model::ScheduleTypeLimits.new(model)
+    custom.setName('Custom Limits')
+    assert(activity.setScheduleTypeLimits(custom))
+    assert(people.setActivityLevelSchedule(activity))
+    assert_equal(custom.handle, activity.scheduleTypeLimits.get.handle)
+  end
+
+  def test_ground_heat_exchanger_and_glycol
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    plant_loop = OpenStudio::Model::PlantLoop.new(model)
+    plant_loop.setName('Test Condenser Loop')
+    assert(plant_loop.setGlycolFluidType('PropyleneGlycol', 20))
+    exchanger = OpenStudio::Model::GroundHeatExchangerVertical.new(model)
+    properties_index = exchanger.iddObject.getFieldIndex('GHE:Vertical:Properties Object Name').get
+    properties = exchanger.getTarget(properties_index).get
+
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    grout_heat_capacity_index = properties.iddObject.getFieldIndex('Grout Thermal Heat Capacity').get
+    pipe_heat_capacity_index = properties.iddObject.getFieldIndex('Pipe Thermal Heat Capacity').get
+    assert_in_delta(3.90e6, properties.getDouble(grout_heat_capacity_index).get, 0.1)
+    assert_in_delta(1.77e6, properties.getDouble(pipe_heat_capacity_index).get, 0.1)
+
+    idf_plant_loop = workspace.getObjectByTypeAndName('PlantLoop'.to_IddObjectType, 'Test Condenser Loop').get
+    fluid_type_index = idf_plant_loop.iddObject.getFieldIndex('Fluid Type').get
+    user_fluid_index = idf_plant_loop.iddObject.getFieldIndex('User Defined Fluid Type').get
+    assert_equal('UserDefinedFluidType', idf_plant_loop.getString(fluid_type_index).get)
+    assert_equal('PropyleneGlycol_20', idf_plant_loop.getString(user_fluid_index).get)
+
+    glycol = workspace.getObjectByTypeAndName('FluidProperties_GlycolConcentration'.to_IddObjectType, 'PropyleneGlycol_20').get
+    concentration_index = glycol.iddObject.getFieldIndex('Glycol Concentration').get
+    assert_in_delta(0.2, glycol.getDouble(concentration_index).get, 0.0001)
+    fluid = workspace.getObjectByTypeAndName('FluidProperties_Name'.to_IddObjectType, 'PropyleneGlycol_20').get
+    fluid_type_index = fluid.iddObject.getFieldIndex('Fluid Type').get
+    assert_equal('Glycol', fluid.getString(fluid_type_index).get)
+
+    other_loop = OpenStudio::Model::PlantLoop.new(model)
+    assert(other_loop.setGlycolFluidType('PropyleneGlycol', 20))
+    assert_equal(1, model.getObjectsByType('FluidProperties_GlycolConcentration'.to_IddObjectType).size)
+    assert_equal(1, model.getObjectsByType('FluidProperties_Name'.to_IddObjectType).size)
+    assert_raises(ArgumentError) { other_loop.setGlycolFluidType('PropyleneGlycol', 101) }
+  end
+
+  def test_ground_heat_exchanger_uncontrolled_operation
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    plant_loop = OpenStudio::Model::PlantLoop.new(model)
+    plant_loop.setName('Ground Loop')
+    exchanger = OpenStudio::Model::GroundHeatExchangerVertical.new(model)
+    exchanger.setName('Ground Exchanger')
+    assert(plant_loop.addSupplyBranchForComponent(exchanger))
+    model.alwaysOnDiscreteSchedule
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    EPModelCompatibility.add_ground_heat_exchanger_plant_schemes(workspace, model)
+    EPModelCompatibility.add_default_heating_plant_schemes(workspace, model)
+
+    list = workspace.getObjectByTypeAndName('PlantEquipmentList'.to_IddObjectType, 'Ground Loop Uncontrolled Equipment List').get
+    group = list.extensibleGroups[0]
+    assert_equal('GroundHeatExchanger:System', group.getString(0).get)
+    system_name = group.getString(1).get
+    system = workspace.getObjectByTypeAndName('GroundHeatExchanger_System'.to_IddObjectType, system_name).get
+    index = system.iddObject.getFieldIndex('GHE:Vertical:ResponseFactors Object Name').get
+    assert_equal('Ground Exchanger', system.getString(index).get)
+    assert(workspace.getObjectByTypeAndName('PlantEquipmentOperation_Uncontrolled'.to_IddObjectType, 'Ground Loop Uncontrolled Operation Scheme').is_initialized)
+    assert(workspace.getObjectByTypeAndName('PlantEquipmentList'.to_IddObjectType, 'Ground Loop Heating Equipment List').empty?)
+  end
+
+  def test_follow_ground_temperature_setpoint_node
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    plant_loop = OpenStudio::Model::PlantLoop.new(model)
+    manager = OpenStudio::Model::SetpointManagerFollowGroundTemperature.new(model)
+    assert(manager.addToNode(plant_loop.supplyOutletNode))
+    index = manager.iddObject.getFieldIndex('Setpoint Node or NodeList Name').get
+    assert_equal(plant_loop.supplyOutletNode.handle, manager.getTarget(index).get.handle)
+  end
+
   def test_space_and_zone_constructors
     model = OpenStudio::Model::Model.new
     thermal_zone = OpenStudio::Model::ThermalZone.new(model)

@@ -11,6 +11,26 @@ if Version::UseEPModel
       field_index.is_initialized && object.setPointer(field_index.get, target.handle)
     end
 
+    def self.set_default_schedule_type_limits(schedule, limits_name)
+      return if schedule.scheduleTypeLimits.is_initialized
+
+      limits = schedule.model.getScheduleTypeLimitss.find { |candidate| candidate.name.to_s == limits_name }
+      if limits.nil?
+        limits = OpenStudio::EPModel::ScheduleTypeLimits.new(schedule.model)
+        raise "Could not name schedule type limits '#{limits_name}'." unless limits.setName(limits_name)
+        raise "Could not set lower limit for '#{limits_name}'." unless limits.setLowerLimitValue(0)
+        if limits_name == 'Fractional'
+          raise "Could not set upper limit for '#{limits_name}'." unless limits.setUpperLimitValue(1)
+        elsif limits_name == 'ActivityLevel'
+          raise "Could not set unit type for '#{limits_name}'." unless limits.setUnitType('ActivityLevel')
+        else
+          raise "Unexpected schedule type limits '#{limits_name}'."
+        end
+        raise "Could not set numeric type for '#{limits_name}'." unless limits.setNumericType('Continuous')
+      end
+      raise "Could not set schedule type limits on '#{schedule.name}'." unless schedule.setScheduleTypeLimits(limits)
+    end
+
     class AdditionalProperties
       def self.for_object(object)
         @features_by_handle ||= {}
@@ -414,6 +434,7 @@ if Version::UseEPModel
       normalize_people_temperature_type(workspace)
       declare_ems_output_globals(workspace)
       repair_demand_branch_endpoints(workspace)
+      add_ground_heat_exchanger_plant_schemes(workspace, model)
       add_default_heating_plant_schemes(workspace, model)
     end
 
@@ -550,6 +571,61 @@ if Version::UseEPModel
       end
     end
 
+    def self.add_ground_heat_exchanger_plant_schemes(workspace, model)
+      schemes_type = OpenStudio::IddObjectType.new('PlantEquipmentOperationSchemes')
+      system_type = OpenStudio::IddObjectType.new('GroundHeatExchanger_System')
+      list_type = OpenStudio::IddObjectType.new('PlantEquipmentList')
+      operation_type = OpenStudio::IddObjectType.new('PlantEquipmentOperation_Uncontrolled')
+      model.getPlantLoops.each do |plant_loop|
+        exchangers = plant_loop.supplyComponents.select { |component| component.iddObject.name.to_s == 'GroundHeatExchanger:ResponseFactors' }
+        next if exchangers.empty?
+
+        scheme_index = plant_loop.iddObject.getFieldIndex('Plant Equipment Operation Scheme Name')
+        raise "Missing operation scheme field on '#{plant_loop.name}'." unless scheme_index.is_initialized
+
+        scheme_name = plant_loop.getString(scheme_index.get)
+        raise "Missing operation scheme on '#{plant_loop.name}'." unless scheme_name.is_initialized
+
+        scheme = workspace.getObjectByTypeAndName(schemes_type, scheme_name.get)
+        raise "Could not find operation scheme '#{scheme_name.get}'." unless scheme.is_initialized
+        next unless scheme.get.numExtensibleGroups == 0
+
+        schedule = workspace.getObjectByTypeAndName('Schedule_Constant'.to_IddObjectType, 'Always On Discrete')
+        raise 'Could not find Always On Discrete schedule.' unless schedule.is_initialized
+
+        list = OpenStudio::IdfObject.new(list_type)
+        list.setName("#{plant_loop.name} Uncontrolled Equipment List")
+        exchangers.each do |exchanger|
+          system = workspace.getObjectsByType(system_type).find do |candidate|
+            index = candidate.iddObject.getFieldIndex('GHE:Vertical:ResponseFactors Object Name')
+            next false unless index.is_initialized
+
+            name = candidate.getString(index.get)
+            name.is_initialized && name.get.casecmp(exchanger.name.to_s).zero?
+          end
+          raise "Could not find system for ground heat exchanger '#{exchanger.name}'." if system.nil?
+
+          group = list.pushExtensibleGroup
+          success = group.setString(0, system.iddObject.name.to_s)
+          success &&= group.setString(1, system.name.to_s)
+          raise "Could not add ground heat exchanger '#{exchanger.name}' to equipment list." unless success
+        end
+        raise "Could not add equipment list '#{list.name}'." unless workspace.addObject(list).is_initialized
+
+        operation = OpenStudio::IdfObject.new(operation_type)
+        operation.setName("#{plant_loop.name} Uncontrolled Operation Scheme")
+        list_index = operation.iddObject.getFieldIndex('Equipment List Name')
+        raise "Could not set equipment list for '#{operation.name}'." unless list_index.is_initialized && operation.setString(list_index.get, list.name.to_s)
+        raise "Could not add operation '#{operation.name}'." unless workspace.addObject(operation).is_initialized
+
+        group = scheme.get.pushExtensibleGroup
+        success = group.setString(0, operation.iddObject.name.to_s)
+        success &&= group.setString(1, operation.name.to_s)
+        success &&= group.setString(2, schedule.get.name.to_s)
+        raise "Could not set operation scheme for '#{plant_loop.name}'." unless success
+      end
+    end
+
     def self.add_default_heating_plant_schemes(workspace, model)
       operation_scheme_type = OpenStudio::IddObjectType.new('PlantEquipmentOperationSchemes')
       heating_operation_type = OpenStudio::IddObjectType.new('PlantEquipmentOperation_HeatingLoad')
@@ -565,11 +641,19 @@ if Version::UseEPModel
 
         scheme = workspace.getObjectByTypeAndName(operation_scheme_type, scheme_name.get)
         next unless scheme.is_initialized
-        next unless scheme.get.numExtensibleGroups == 0
+        if scheme.get.numExtensibleGroups != 0
+          uncontrolled_name = "#{plant_loop.name} Uncontrolled Operation Scheme"
+          has_ground_scheme = scheme.get.extensibleGroups.any? do |group|
+            operation_name = group.getString(1)
+            operation_name.is_initialized && operation_name.get == uncontrolled_name
+          end
+          next unless has_ground_scheme
+        end
 
         heating_components = plant_loop.supplyComponents.filter_map do |component|
           component_type = component.iddObject.name.to_s
           next if component_type == 'Node' || component_type.start_with?('Connector:', 'Pump:', 'Pipe:')
+          next if component_type == 'GroundHeatExchanger:ResponseFactors'
 
           hvac_component = component.to_HVACComponent
           next unless hvac_component.is_initialized
@@ -705,6 +789,7 @@ if Version::UseEPModel
 
   unless OpenStudio::EPModel::ElectricEquipment.method_defined?(:setSchedule)
     OpenStudio::EPModel::ElectricEquipment.define_method(:setSchedule) do |schedule|
+      EPModelCompatibility.set_default_schedule_type_limits(schedule, 'Fractional')
       EPModelCompatibility.set_pointer(self, 'Schedule Name', schedule)
     end
   end
@@ -741,6 +826,7 @@ if Version::UseEPModel
 
   unless OpenStudio::EPModel::People.method_defined?(:setActivityLevelSchedule)
     OpenStudio::EPModel::People.define_method(:setActivityLevelSchedule) do |schedule|
+      EPModelCompatibility.set_default_schedule_type_limits(schedule, 'ActivityLevel')
       EPModelCompatibility.set_pointer(self, 'Activity Level Schedule Name', schedule)
     end
   end
@@ -798,6 +884,44 @@ if Version::UseEPModel
   unless OpenStudio::EPModel::AirLoopHVAC.method_defined?(:multiAddBranchForZone)
     OpenStudio::EPModel::AirLoopHVAC.define_method(:multiAddBranchForZone) do |thermal_zone, air_terminal|
       addBranchForZone(thermal_zone, air_terminal)
+    end
+  end
+
+  native_ruleset_set_schedule_type_limits = OpenStudio::EPModel::ScheduleRuleset.instance_method(:setScheduleTypeLimits)
+  OpenStudio::EPModel::ScheduleRuleset.define_method(:setScheduleTypeLimits) do |limits|
+    return false unless native_ruleset_set_schedule_type_limits.bind(self).call(limits)
+
+    days = [defaultDaySchedule, summerDesignDaySchedule, winterDesignDaySchedule, holidaySchedule, customDay1Schedule, customDay2Schedule]
+    days.concat(scheduleRules.map(&:daySchedule))
+    days.uniq { |day| day.handle.to_s }.each do |day|
+      raise "Could not set schedule type limits on '#{day.name}'." unless day.setScheduleTypeLimits(limits)
+    end
+    true
+  end
+
+  native_schedule_rule_new = OpenStudio::EPModel::ScheduleRule.method(:new)
+  OpenStudio::EPModel::ScheduleRule.define_singleton_method(:new) do |*args|
+    rule = native_schedule_rule_new.call(*args)
+    limits = args[0].scheduleTypeLimits
+    if limits.is_initialized && !rule.daySchedule.setScheduleTypeLimits(limits.get)
+      raise "Could not set schedule type limits on '#{rule.daySchedule.name}'."
+    end
+    rule
+  end
+
+  [:setHeatingSetpointTemperatureSchedule, :setCoolingSetpointTemperatureSchedule].each do |method_name|
+    native_setter = OpenStudio::EPModel::ThermostatSetpointDualSetpoint.instance_method(method_name)
+    OpenStudio::EPModel::ThermostatSetpointDualSetpoint.define_method(method_name) do |schedule|
+      return false unless native_setter.bind(self).call(schedule)
+
+      ruleset = schedule.to_ScheduleRuleset
+      if ruleset.is_initialized
+        limits = ruleset.get.scheduleTypeLimits
+        if limits.is_initialized && !ruleset.get.setScheduleTypeLimits(limits.get)
+          raise "Could not set schedule type limits on '#{schedule.name}'."
+        end
+      end
+      true
     end
   end
 
@@ -1218,6 +1342,71 @@ if Version::UseEPModel
   # These are methods from OpenStudio 3.11 SDK that EPModel doesn't directly expose.
   # Note: groundTemperature and maximumLengthofSimulation have no direct EnergyPlus fields
   # and need special handling.
+
+  native_ground_heat_exchanger_vertical_new = OpenStudio::EPModel::GroundHeatExchangerVertical.method(:new)
+  OpenStudio::EPModel::GroundHeatExchangerVertical.define_singleton_method(:new) do |*args|
+    exchanger = native_ground_heat_exchanger_vertical_new.call(*args)
+    properties_index = exchanger.iddObject.getFieldIndex('GHE:Vertical:Properties Object Name')
+    raise 'Ground heat exchanger properties field is missing.' unless properties_index.is_initialized
+
+    properties = exchanger.getTarget(properties_index.get)
+    raise 'Ground heat exchanger properties are missing.' unless properties.is_initialized
+
+    { 'Grout Thermal Heat Capacity' => 3.90e6, 'Pipe Thermal Heat Capacity' => 1.77e6 }.each do |field_name, value|
+      index = properties.get.iddObject.getFieldIndex(field_name)
+      raise "Missing ground heat exchanger #{field_name} field." unless index.is_initialized
+      next if properties.get.getDouble(index.get).is_initialized
+
+      raise "Could not set ground heat exchanger #{field_name}." unless properties.get.setDouble(index.get, value)
+    end
+    exchanger
+  end
+
+  OpenStudio::EPModel::PlantLoop.define_method(:setGlycolFluidType) do |glycol_type, concentration|
+    raise ArgumentError, 'Glycol concentration must be an integer between 0 and 100.' unless concentration.is_a?(Integer) && concentration.between?(0, 100)
+
+    raise "Unsupported glycol type '#{glycol_type}'." unless ['PropyleneGlycol', 'EthyleneGlycol'].include?(glycol_type)
+
+    fluid_name = "#{glycol_type}_#{concentration}"
+    [
+      ['FluidProperties_GlycolConcentration', { 'Name' => fluid_name, 'Glycol Type' => glycol_type, 'Glycol Concentration' => concentration * 0.01 }],
+      ['FluidProperties_Name', { 'Fluid Name' => fluid_name, 'Fluid Type' => 'Glycol' }]
+    ].each do |type, fields|
+      idd_type = OpenStudio::IddObjectType.new(type)
+      existing = model.getObjectsByType(idd_type).find { |object| object.name.to_s.casecmp(fluid_name).zero? }
+      next unless existing.nil?
+
+      object = OpenStudio::IdfObject.new(idd_type)
+      fields.each do |field_name, value|
+        index = object.iddObject.getFieldIndex(field_name)
+        raise "Missing #{type} field '#{field_name}'." unless index.is_initialized
+
+        success = value.is_a?(Numeric) ? object.setDouble(index.get, value) : object.setString(index.get, value)
+        raise "Could not set #{type} field '#{field_name}'." unless success
+      end
+      raise "Could not add #{type} '#{fluid_name}'." unless model.addObject(object).is_initialized
+    end
+
+    fluid_type_index = iddObject.getFieldIndex('Fluid Type')
+    user_fluid_index = iddObject.getFieldIndex('User Defined Fluid Type')
+    success = fluid_type_index.is_initialized && user_fluid_index.is_initialized
+    success &&= setString(fluid_type_index.get, 'UserDefinedFluidType')
+    success &&= setString(user_fluid_index.get, fluid_name)
+    raise "Could not set user-defined glycol on PlantLoop '#{name}'." unless success
+
+    true
+  end
+
+  native_follow_ground_add_to_node = OpenStudio::EPModel::SetpointManagerFollowGroundTemperature.instance_method(:addToNode)
+  OpenStudio::EPModel::SetpointManagerFollowGroundTemperature.define_method(:addToNode) do |node|
+    return true if native_follow_ground_add_to_node.bind(self).call(node)
+
+    plant_loop = node.plantLoop
+    return false unless plant_loop.is_initialized && node.model == model
+    return false unless plant_loop.get.supplyOutletNode.handle == node.handle
+
+    EPModelCompatibility.set_pointer(self, 'Setpoint Node or NodeList Name', node)
+  end
 
   unless OpenStudio::EPModel::GroundHeatExchangerVertical.method_defined?(:setGroundTemperature)
     OpenStudio::EPModel::GroundHeatExchangerVertical.define_method(:setGroundTemperature) do |temperature|

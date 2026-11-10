@@ -48,7 +48,7 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 | `ElectricEquipment#setFractionLost` | Yes | `resources/model.rb` | |
 | `ElectricEquipment#setFractionRadiant` | Yes | `resources/model.rb` | |
 | `ElectricEquipment#setName` | Yes | `resources/model.rb` | |
-| `ElectricEquipment#setSchedule(schedule)` |  | `resources/model.rb`, `resources/epmodel.rb` | Shim writes the `Schedule Name` object reference. |
+| `ElectricEquipment#setSchedule(schedule)` |  | `resources/model.rb`, `resources/epmodel.rb` | Shim writes the `Schedule Name` object reference and supplies the legacy `Fractional` type limits when the schedule has none. |
 | `ElectricEquipment#setSpace(space)` |  | `resources/model.rb`, `resources/epmodel.rb` | Shim writes the `Zone or ZoneList or Space or SpaceList Name` object reference. |
 | `ElectricEquipment.new(definition)` |  | `resources/model.rb`, `resources/epmodel.rb` | Shim returns the underlying EPModel ElectricEquipment object held by the definition façade. |
 | `ElectricEquipment.new(model)` | Yes | `resources/epmodel.rb` | Creates the object held by the ElectricEquipmentDefinition façade. |
@@ -107,6 +107,7 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 | `GroundHeatExchangerVertical#setGroundThermalHeatCapacity(value)` | Yes | `resources/hvac.rb` | |
 | `GroundHeatExchangerVertical#setGroundTemperature(temperature)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim delegates to `undisturbedGroundTemperatureModel().setAverageSoilSurfaceTemperature()`. No direct EnergyPlus field; temperature is managed by undisturbed ground model. |
 | `GroundHeatExchangerVertical#setGroutThermalConductivity(value)` | Yes | `resources/hvac.rb` | |
+| `GroundHeatExchangerVertical.new(model, ground_temperature_model)` | Yes | `resources/hvac.rb`, `resources/epmodel.rb` | Constructor shim fills the associated vertical properties object's grout and pipe thermal heat capacities using the legacy ForwardTranslator defaults of 3.90E+06 and 1.77E+06 J/m3-K. EPModel does not currently initialize these required EnergyPlus fields. |
 | `GroundHeatExchangerVertical#setMaximumLengthofSimulation(value)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim silently succeeds (returns true). No direct EnergyPlus field; this is a known EPModel limitation. |
 | `GroundHeatExchangerVertical#setNumberofBoreHoles(value)` | Yes | `resources/hvac.rb` | |
 | `GroundHeatExchangerVertical#setPipeOutDiameter(value)` | Yes | `resources/hvac.rb` | |
@@ -163,6 +164,8 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 | `ModelObject#setPointer` | Yes | `resources/epmodel.rb` | Used by relationship shims. |
 | `ModelObject#to_AdditionalProperties` |  | `resources/output.rb`, `resources/meta_measure.rb`, `ReportSimulationOutput/measure.rb` | Cast is used only on the OpenStudio 3.11 path; EPModel uses a process-local `additionalProperties` adapter instead of model objects. |
 | `ModelObject#to_SpaceLoadInstance` |  | `resources/model.rb` | Used only by the OpenStudio 3.11 actuator path; EPModel exposes no SpaceLoadInstance type or cast. |
+| `PlantLoop#setGlycolConcentration` | Yes | `resources/model.rb`, `resources/epmodel.rb` | EPModel's native implementation does not successfully preserve the legacy concentration on the EnergyPlus PlantLoop. The EPModel path instead uses `setGlycolFluidType` to create glycol property objects and set `UserDefinedFluidType`, preserving the requested concentration. |
+| `PlantLoop#setGlycolFluidType(glycol_type, concentration)` |  | `resources/model.rb`, `resources/epmodel.rb` | Compatibility helper creates `FluidProperties:GlycolConcentration` and `FluidProperties:Name` and links the PlantLoop to them. The 3.11 path retains its native fluid type and concentration setters. |
 | `OptionalFoundationKiva#get` | Yes | `resources/geometry.rb` | |
 | `OptionalSchedule#get` | Yes | `resources/constructions.rb` | |
 | `OptionalScheduleRuleset#get` | Yes | `resources/constructions.rb` | |
@@ -188,6 +191,7 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 | `OtherEquipmentDefinition.new(model)` |  | `resources/model.rb`, `resources/epmodel.rb` | Creates the underlying EPModel OtherEquipment object. |
 | `Model#getOtherEquipments` | Yes | `resources/hvac.rb` | Counts existing equipment for unique names. |
 | `OutsideSurfaceConvectionAlgorithm#setAlgorithm` | Yes | `resources/simcontrols.rb` | |
+| `People#setActivityLevelSchedule(schedule)` |  | `resources/internal_gains.rb`, `resources/epmodel.rb` | Shim writes the activity schedule pointer and supplies the legacy `ActivityLevel` type limits when the schedule has none. |
 | `RunPeriod#getInt` | Yes | `resources/schedules.rb` | Generic field-index read of Begin Year. |
 | `RunPeriod#iddObject` | Yes | `resources/location.rb`, `resources/schedules.rb` | Retrieves field indices for generic RunPeriod field access. |
 | `RunPeriod#setBeginDayOfMonth` | Yes | `resources/simcontrols.rb` | |
@@ -218,11 +222,12 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 | `ScheduleRule#setEndDate` | Yes | `resources/model.rb`, `resources/schedules.rb` | |
 | `ScheduleRule#setName` | Yes | `resources/model.rb` | |
 | `ScheduleRule#setStartDate` | Yes | `resources/model.rb` | |
-| `ScheduleRule.new(schedule)` | Yes | `resources/model.rb` | |
+| `ScheduleRule.new(schedule)` | Yes | `resources/model.rb`, `resources/epmodel.rb` | Constructor shim assigns the ruleset's type limits to its day schedule when limits exist. |
 | `ScheduleRuleset#defaultDaySchedule` | Yes | `resources/model.rb` | |
 | `ScheduleRuleset#getDaySchedule(date)` | Yes | `resources/constructions.rb` | Used when `Version::UseEPModel` is true; OpenStudio 3.11 retains `getDaySchedules(date, date)[0]`. |
 | `ScheduleRuleset#name` | Yes | `resources/model.rb` | |
 | `ScheduleRuleset#setName` | Yes | `resources/model.rb` | |
+| `ScheduleRuleset#setScheduleTypeLimits` | Yes | `resources/model.rb`, `resources/epmodel.rb` | Shim propagates type limits to the default, special, and rule day schedules; native EPModel only updates the ruleset. |
 | `ScheduleRuleset.new(model)` | Yes | `resources/model.rb` | |
 | `ScheduleTypeLimits#name` | Yes | `resources/model.rb` | |
 | `ScheduleTypeLimits#setLowerLimitValue` | Yes | `resources/model.rb` | |
@@ -231,6 +236,7 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 | `ScheduleTypeLimits#setUpperLimitValue` | Yes | `resources/model.rb` | |
 | `ScheduleTypeLimits.new(model)` | Yes | `resources/model.rb` | |
 | `SetpointManagerScheduled#setSchedule(schedule)` | Yes | `resources/epmodel.rb` | Constructor compatibility shim assigns the schedule after creating the model-only object. |
+| `SetpointManagerFollowGroundTemperature#addToNode(node)` | Yes | `resources/hvac.rb`, `resources/epmodel.rb` | EPModel's native method rejects the plant supply outlet node; the shim first tries the native method, then assigns that node directly for this specific case. |
 | `SetpointManagerScheduled.new(model, schedule)` |  | `resources/waterheater.rb`, `resources/hvac.rb`, `resources/epmodel.rb` | EPModel constructor shim creates the manager with `model`, then calls `setSchedule(schedule)`; OpenStudio 3.11 uses the native overload. |
 | `ShadingSurface#additionalProperties` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim reads neighbor azimuth and distance from process-local metadata. |
 | `ShadingSurface#setVertices(vertices)` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim rewrites vertex extensible groups after transformation. |
@@ -327,8 +333,8 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 | `ThermalZone.new(model)` | Yes | `resources/geometry.rb` | |
 | `ThermostatSetpointDualSetpoint#coolingSetpointTemperatureSchedule` | Yes | `resources/constructions.rb` | |
 | `ThermostatSetpointDualSetpoint#heatingSetpointTemperatureSchedule` | Yes | `resources/constructions.rb` | |
-| `ThermostatSetpointDualSetpoint#setCoolingSetpointTemperatureSchedule` | Yes | `resources/hvac.rb` | |
-| `ThermostatSetpointDualSetpoint#setHeatingSetpointTemperatureSchedule` | Yes | `resources/hvac.rb` | |
+| `ThermostatSetpointDualSetpoint#setCoolingSetpointTemperatureSchedule` | Yes | `resources/hvac.rb`, `resources/epmodel.rb` | Shim propagates type limits inferred by the native thermostat setter to the ruleset's day schedules. |
+| `ThermostatSetpointDualSetpoint#setHeatingSetpointTemperatureSchedule` | Yes | `resources/hvac.rb`, `resources/epmodel.rb` | Shim propagates type limits inferred by the native thermostat setter to the ruleset's day schedules. |
 | `ThermostatSetpointDualSetpoint#setName` | Yes | `resources/hvac.rb` | |
 | `ThermostatSetpointDualSetpoint#setTemperatureDifferenceBetweenCutoutAndSetpoint` | Yes | `resources/hvac.rb` | |
 | `ThermostatSetpointDualSetpoint.new(model)` | Yes | `resources/hvac.rb` | |
@@ -347,4 +353,5 @@ Ruby core methods and constructors' internal `initialize` calls are omitted.
 - Maps `RoofCeiling` to EnergyPlus `Roof` or `Ceiling` based on envelope boundary conditions.
 - Maps `ZoneAveraged` to EnergyPlus `EnclosureAveraged` for People objects.
 - Adds missing EMS global declarations referenced by `EnergyManagementSystem:OutputVariable`, except when the name already belongs to a global variable or actuator.
-- Fills empty `PlantEquipmentOperationSchemes` with a default heating-load scheme for heating supply components, and adds adiabatic pipes to empty demand-side endpoint branches to match the PlantLoop inlet and outlet nodes. Cooling and uncontrolled schemes are not synthesized: EPModel `HVACComponent#componentType` currently reports `Heating` for some cooling equipment, so it is not a reliable general classifier.
+- Fills empty `PlantEquipmentOperationSchemes` with an uncontrolled scheme for vertical ground heat exchangers using the corresponding `GroundHeatExchanger:System` objects, matching the legacy ForwardTranslator; it also adds a default heating-load scheme for heating supply components.
+- Adds adiabatic pipes to empty demand-side endpoint branches to match the PlantLoop inlet and outlet nodes. Other cooling and uncontrolled schemes are not synthesized: EPModel `HVACComponent#componentType` currently reports `Heating` for some cooling equipment, so it is not a reliable general classifier.
