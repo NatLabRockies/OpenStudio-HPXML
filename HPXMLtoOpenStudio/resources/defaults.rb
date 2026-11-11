@@ -8268,8 +8268,8 @@ module Defaults
           # Catalog data from : https://www.climatemaster.com/download/18.274be999165850ccd5b5b73/1535543867815/lc377-climatemaster-commercial-tranquility-20-single-stage-ts-series-water-source-heat-pump-submittal-set.pdf
           # Using E+ rated conditions:
           # Heating: Indoor air at 70F DB; Entering water temperature: 70F
-          htg_ap.heat_cap_ft_spec = [[0.7353127278, -0.0035056759, -0.0000439615, 0.0204411095, -0.0000320781, -0.0001322685]]
-          htg_ap.heat_eir_ft_spec = [[0.6273820540, 0.0124891750, 0.0012720188, -0.0151581268, 0.0004164343, -0.0007259611]]
+          htg_ap.heat_cap_ft_spec = [[0.6861258801, -0.0015088361, -0.0000281246, 0.0190127379, -0.0000316042, -0.0000651429]]
+          htg_ap.heat_eir_ft_spec = [[0.9370179410, 0.0156894433, 0.0004180439, -0.0225952385, 0.0004411331, -0.0003907433]]
           htg_ap.heat_cap_fflow_spec = [[0.7594, 0.3642, -0.1234]]
           htg_ap.heat_eir_fflow_spec = [[2.3403, -2.3479, 1.0068]]
           htg_ap.heat_cap_fwf_spec = [[1.0, 0.0, 0.0]]
