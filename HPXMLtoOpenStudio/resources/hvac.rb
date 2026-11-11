@@ -2467,7 +2467,11 @@ module HVAC
   def self.add_fan_power_ems_program(model, fan, hvac_system)
     hvac_ap = hvac_system.additional_properties
 
-    is_hp_with_sep_backup = hvac_system.is_a?(HPXML::HeatPump) && (not hvac_system.backup_system.nil?) && (not hvac_ap.hp_min_temp.nil?)
+    is_air_source_hp = hvac_system.is_a?(HPXML::HeatPump) && [HPXML::HVACTypeHeatPumpAirToAir,
+                                                              HPXML::HVACTypeHeatPumpMiniSplit,
+                                                              HPXML::HVACTypeHeatPumpPTHP,
+                                                              HPXML::HVACTypeHeatPumpRoom].include?(hvac_system.heat_pump_type)
+    is_hp_with_sep_backup = is_air_source_hp && (not hvac_system.backup_system.nil?) && (not hvac_ap.hp_min_temp.nil?) # CompressorLockoutTemperature input does not apply to GSHPs
     is_var_speed = hvac_system.respond_to?(:compressor_type) && (hvac_system.compressor_type == HPXML::HVACCompressorTypeVariableSpeed)
 
     return unless (is_var_speed || is_hp_with_sep_backup)
