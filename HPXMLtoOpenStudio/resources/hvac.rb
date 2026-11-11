@@ -2512,6 +2512,8 @@ module HVAC
       model,
       name: "#{fan.name} power override program"
     )
+    fan_power_program.addLine("  Set #{fan_eff_actuator.name} = NULL")
+    fan_power_program.addLine("  Set #{fan_press_actuator.name} = NULL")
     if is_hp_with_sep_backup
       # Disable fan power below min HP temperature
       fan_power_program.addLine("If #{t_out_sensor.name} < #{UnitConversions.convert(hvac_ap.hp_min_temp, 'F', 'C').round(2)}")
@@ -2520,26 +2522,36 @@ module HVAC
       fan_power_program.addLine('Else')
     end
     if is_var_speed
-      # Set fan power based on fan power curve
-      curve_type, coeff = get_fan_power_curve_spec(hvac_system)
-      fan_power_program.addLine('Set FlowFraction = 0')
+      # Set fan power based on fan power curve evaluated at intermediate flow fraction
+      fan_power_program.addLine('Set RuntimeFraction = 0')
+      rtf_sensors.each do |rtf_sensor|
+        fan_power_program.addLine("Set RuntimeFraction = RuntimeFraction + #{rtf_sensor.name}")
+      end
+      fan_power_program.addLine('If RuntimeFraction >= 0.999') # Only need to override when NOT cycling on/off
+      fan_power_program.addLine('  Set FlowFraction = 0')
       rtf_sensors.each_with_index do |rtf_sensor, i|
-        fan_power_program.addLine("Set FlowFraction = FlowFraction + (#{rtf_sensor.name} * #{fan.speeds[i].flowFraction})")
+        fan_power_program.addLine("  Set FlowFraction = FlowFraction + (#{rtf_sensor.name} * #{fan.speeds[i].flowFraction})")
       end
+      curve_type, coeff = get_fan_power_curve_spec(hvac_system)
       if curve_type == 'quadratic'
-        fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*FlowFraction) + (#{coeff[2]}*(FlowFraction^2))")
+        fan_power_program.addLine("  Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*FlowFraction) + (#{coeff[2]}*(FlowFraction^2))")
       elsif curve_type == 'exponent'
-        fan_power_program.addLine("Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*(FlowFraction^#{coeff[2]}))")
+        fan_power_program.addLine("  Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*(FlowFraction^#{coeff[2]}))")
       end
-      fan_power_program.addLine("Set #{fan_eff_actuator.name} = 1")
-      fan_power_program.addLine("Set #{fan_press_actuator.name} = FanPowerFraction * #{fan.electricPowerPerUnitFlowRate} * #{fan_eff_actuator.name}")
+      # EnergyPlus calculates power with precomputed per-speed efficiencies rather than this total-efficiency override
+      # so we scale things using the power curve to get the desired power.
+      fan_power_program.addLine('  Set DiscretePowerFraction = 0')
+      power_curve = fan.electricPowerFunctionofFlowFractionCurve.get
+      rtf_sensors.each_with_index do |rtf_sensor, i|
+        power_fraction = power_curve.evaluate(fan.speeds[i].flowFraction)
+        fan_power_program.addLine("  Set DiscretePowerFraction = DiscretePowerFraction + (#{rtf_sensor.name} * #{power_fraction})")
+      end
+      fan_power_program.addLine('  If DiscretePowerFraction > 0')
+      fan_power_program.addLine("    Set #{fan_press_actuator.name} = #{fan.designPressureRise} * FanPowerFraction / DiscretePowerFraction")
+      fan_power_program.addLine('  EndIf')
+      fan_power_program.addLine('EndIf')
     end
     if is_hp_with_sep_backup
-      if not is_var_speed
-        # If above min HP temperature, use E+ calculated fan power
-        fan_power_program.addLine("  Set #{fan_eff_actuator.name} = NULL")
-        fan_power_program.addLine("  Set #{fan_press_actuator.name} = NULL")
-      end
       fan_power_program.addLine('EndIf')
     end
 
