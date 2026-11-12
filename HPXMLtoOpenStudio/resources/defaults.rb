@@ -8040,9 +8040,9 @@ module Defaults
         # Took largest GPM because it gave higher COP/EER that's closer to ANSI/AHRI/ASHRAE ISO Standard 13256 rated values)
 
         # Cooling Curves
-        clg_ap.cool_cap_curve_spec = [[-5.38687536, 7.33291459, -1.41652776, 0.24502211, 0.03743537]]
-        clg_ap.cool_power_curve_spec = [[-5.36969259, 0.41104515, 5.81927551, 0.19687101, -0.213381865]]
-        clg_ap.cool_sh_curve_spec = [[0.55429340, 18.47670932, -18.91146528, -0.13630533, 0.476339527, -0.001625478]]
+        clg_ap.cool_cap_curve_spec = [[-5.36634713, 7.32380110, -1.40959909, 0.22383509, 0.036898326]]
+        clg_ap.cool_power_curve_spec = [[-5.40652950, 0.40745867, 5.83077509, 0.23642175, -0.213329365]]
+        clg_ap.cool_sh_curve_spec = [[0.56133078, 18.22681408, -18.62059144, -0.15434638, 0.442881312, -0.000786595]]
 
         cool_cop_ratios = [1.0]
         set_hvac_degradation_coefficient(cooling_system, true)
@@ -8254,8 +8254,8 @@ module Defaults
         # EWT: 32F EAT: 70F AFR: 1200 cfm, WFR: 9.0 gpm
 
         # Heating Curves
-        htg_ap.heat_cap_curve_spec = [[-4.20183597, -2.44315495, 7.65939335, 0.211056324, 0.194786141]]
-        htg_ap.heat_power_curve_spec = [[-10.16927208, 9.73019479, 1.66504588, -0.405145781, 0.053533637]]
+        htg_ap.heat_cap_curve_spec = [[-5.10399714, -1.51272234, 7.58864297, 0.222537365, 0.192943987]]
+        htg_ap.heat_power_curve_spec = [[-6.71827091, 6.39749069, 1.71809101, -0.468791841, 0.055709297]]
         heat_cop_ratios = [1.0]
         set_hvac_degradation_coefficient(heating_system, true)
       when HPXML::GroundToAirHeatPumpModelTypeExperimental
