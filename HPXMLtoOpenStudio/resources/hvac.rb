@@ -2455,10 +2455,10 @@ module HVAC
   # Creates an EMS program to override the fan power:
   # 1. If a heat pump w/ separate backup, disable fan power below the heat pump's
   #    minimum operating temperature; the backup heating system will be operating
-  #    instead.
+  #    instead. TODO: Might be able to remove this when
+  #    https://github.com/NatLabRockies/EnergyPlus/issues/11903 is fixed.
   # 2. If a variable-speed system, work around an EnergyPlus bug. TODO: Remove
-  #    this when https://github.com/NatLabRockies/EnergyPlus/issues/11909 is fixed
-  #    and available.
+  #    this when https://github.com/NatLabRockies/EnergyPlus/issues/11909 is fixed.
   #
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param fan [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
