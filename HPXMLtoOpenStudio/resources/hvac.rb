@@ -2769,17 +2769,16 @@ module HVAC
         dp82f = datapoints.find { |dp| dp.outdoor_temperature == 82.0 }
         dp95f = datapoints.find { |dp| dp.outdoor_temperature == 95.0 }
         if dp82f.input_power < dp95f.input_power
+          # If power decreasing at lower ODB temperatures, add datapoint at 50% power (if it's greater than 40F)
           min_power = 0.5 * dp82f.input_power
           odb_at_min_power = MathTools.interp2(min_power, dp82f.input_power, dp95f.input_power, 82.0, 95.0)
 
-          # Add the power-floor breakpoint only within the required range.
-          if odb_at_min_power > min_odb &&
-             odb_at_min_power < user_odbs.min
+          if (odb_at_min_power > min_odb) && (odb_at_min_power < user_odbs.min)
             outdoor_dry_bulbs << [:min, odb_at_min_power]
           end
         end
 
-        # Always extend to the required minimum temperature when needed.
+        # Always extend to 40F temperature when needed
         if min_odb < user_odbs.min
           outdoor_dry_bulbs << [:min, min_odb, min_power]
         end
