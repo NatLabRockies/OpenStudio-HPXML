@@ -2413,7 +2413,7 @@ module HVAC
   # @param clg_coil [OpenStudio::Model::CoilCoolingXXX] Cooling coil model object
   # @param htg_supp_coil [OpenStudio::Model::CoilHeatingXXX] Heat pump backup heating coil model object
   # @return [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
-  def self.create_supply_fan(model, obj_name, fan_watts_per_cfm, fan_cfms, hvac_system, htg_coil, clg_coil, htg_supp_coil)
+  def self.create_supply_fan(model, obj_name, fan_watts_per_cfm, fan_cfms, hvac_system, htg_coil = nil, clg_coil = nil, htg_supp_coil = nil)
     max_fan_cfm = Float(fan_cfms.max) # Convert to float to prevent integer division below
     fan = Model.add_fan_system_model(
       model,
@@ -2559,7 +2559,17 @@ module HVAC
     if is_ashp_with_int_backup
       # Determine supplemental coil runtime fraction to scale fan power
       fan_power_program.addLine("If #{htg_rtf_sensor.name} == 0 && #{clg_rtf_sensor.name} == 0 && #{htg_supp_rate_sensor.name} > 0")
-      fan_power_program.addLine("  Set SuppCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{htg_supp_coil.nominalCapacity}")
+      if htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
+        # Estimate RTF based on the heating rate relative to each stage's capacity
+        htg_supp_coil.stages.each_with_index do |stage, i|
+          if_str = i == 0 ? "If" : "ElseIf"
+          fan_power_program.addLine("  #{if_str} #{htg_supp_rate_sensor.name} <= #{stage.nominalCapacity.get}")
+          fan_power_program.addLine("    Set SuppCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{stage.nominalCapacity.get}")
+        end
+        fan_power_program.addLine("  EndIf")
+      else
+        fan_power_program.addLine("  Set SuppCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{htg_supp_coil.nominalCapacity}")
+      end
       fan_power_program.addLine('EndIf')
     end
     if is_var_speed
