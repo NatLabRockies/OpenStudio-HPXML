@@ -2555,18 +2555,18 @@ module HVAC
       fan_power_program.addLine("  Set #{fan_press_actuator.name} = 0")
       fan_power_program.addLine('Else')
     end
-    fan_power_program.addLine("Set SuppCyclingRuntimeFraction = 0")
+    fan_power_program.addLine('Set SuppCyclingRuntimeFraction = 0')
     if is_ashp_with_int_backup
       # Determine supplemental coil runtime fraction to scale fan power
       fan_power_program.addLine("If #{htg_rtf_sensor.name} == 0 && #{clg_rtf_sensor.name} == 0 && #{htg_supp_rate_sensor.name} > 0")
       if htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
         # Estimate RTF based on the heating rate relative to each stage's capacity
         htg_supp_coil.stages.each_with_index do |stage, i|
-          if_str = i == 0 ? "If" : "ElseIf"
+          if_str = i == 0 ? 'If' : 'ElseIf'
           fan_power_program.addLine("  #{if_str} #{htg_supp_rate_sensor.name} <= #{stage.nominalCapacity.get}")
           fan_power_program.addLine("    Set SuppCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{stage.nominalCapacity.get}")
         end
-        fan_power_program.addLine("  EndIf")
+        fan_power_program.addLine('  EndIf')
       else
         fan_power_program.addLine("  Set SuppCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{htg_supp_coil.nominalCapacity}")
       end
@@ -2604,7 +2604,7 @@ module HVAC
     end
     if is_ashp_with_int_backup
       # Need to adjust the fan power that E+ calculated to account for supplemental coil fan cycling
-      fan_power_program.addLine("If SuppCyclingRuntimeFraction > 0")
+      fan_power_program.addLine('If SuppCyclingRuntimeFraction > 0')
       fan_power_program.addLine("    Set #{fan_press_actuator.name} = SuppCyclingRuntimeFraction * #{fan.designPressureRise}")
       fan_power_program.addLine('EndIf')
     end
