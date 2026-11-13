@@ -2546,17 +2546,17 @@ module HVAC
     fan_power_program.addLine('Set SuppOnlyCyclingRuntimeFraction = -1') # Flag indicating the timestep is not supplemental coil only operation
     if is_ashp
       if htg_supp_coil.nil?
-        fan_power_program.addLine("If #{htg_rtf_sensor.name} == 0 && #{clg_rtf_sensor.name} == 0")
+        fan_power_program.addLine("If #{htg_rtf_sensor.name} <= 0.001 && #{clg_rtf_sensor.name} <= 0.001")
         fan_power_program.addLine('  Set SuppOnlyCyclingRuntimeFraction = 0')
         fan_power_program.addLine('EndIf')
       else
         # Determine supplemental coil runtime fraction to scale fan power
-        fan_power_program.addLine("If #{htg_rtf_sensor.name} == 0 && #{clg_rtf_sensor.name} == 0 && #{htg_supp_rate_sensor.name} > 0")
+        fan_power_program.addLine("If #{htg_rtf_sensor.name} <= 0.001 && #{clg_rtf_sensor.name} <= 0.001 && #{htg_supp_rate_sensor.name} > 0")
         if htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
           # Either cycling between off and first stage, or always on
           fan_power_program.addLine("  Set SuppOnlyCyclingRuntimeFraction = @MIN (#{htg_supp_rate_sensor.name} / #{htg_supp_coil.stages[0].nominalCapacity.get}) 1")
         else
-          fan_power_program.addLine("  Set SuppOnlyCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{htg_supp_coil.nominalCapacity}")
+          fan_power_program.addLine("  Set SuppOnlyCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{htg_supp_coil.nominalCapacity.get}")
         end
         fan_power_program.addLine('EndIf')
       end
@@ -2712,7 +2712,7 @@ module HVAC
   # @param airflow_cfm [Double] Maximum airflow rate (cfm)
   # @param heating_system [HPXML::HeatingSystem or HPXML::HeatPump] The HPXML heating system or heat pump of interest
   # @param hvac_unavailable_periods [Hash] Map of htg/clg => HPXML::UnavailablePeriods for heating/cooling
-  # @return [OpenStudio::Model::AirLoopHVAC] Air loop mdeol object
+  # @return [OpenStudio::Model::AirLoopHVAC] Air loop model object
   def self.create_air_loop(model, obj_name, hvac_object, control_zone, hvac_sequential_load_fracs, airflow_cfm, heating_system, hvac_unavailable_periods)
     air_loop = OpenStudio::Model::AirLoopHVAC.new(model)
     air_loop.setAvailabilitySchedule(model.alwaysOnDiscreteSchedule)
