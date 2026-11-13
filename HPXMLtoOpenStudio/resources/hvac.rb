@@ -430,7 +430,7 @@ module HVAC
 
     # Fan
     hvac_system = cooling_system.nil? ? heating_system : cooling_system
-    fan = create_supply_fan(model, obj_name, fan_watts_per_cfm, fan_cfms, hvac_system, htg_coil, clg_coil, htg_supp_coil)
+    fan = create_supply_fan(model, obj_name, fan_watts_per_cfm, fan_cfms, hvac_system)
     if (not cooling_system.nil?) && (not heating_system.nil?) && (cooling_system == heating_system)
       add_fan_pump_disaggregation_ems_program(model, fan, htg_coil, clg_coil, htg_supp_coil, cooling_system)
     else
@@ -2409,18 +2409,21 @@ module HVAC
   # @param fan_watts_per_cfm [Double] Blower fan efficacy (W/cfm)
   # @param fan_cfms [Array<Double>] Fan airflow rates at all speeds, both heating and cooling
   # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
-  # @param htg_coil [OpenStudio::Model::CoilHeatingXXX] Heating coil model object
-  # @param clg_coil [OpenStudio::Model::CoilCoolingXXX] Cooling coil model object
-  # @param htg_supp_coil [OpenStudio::Model::CoilHeatingXXX] Heat pump backup heating coil model object
   # @return [OpenStudio::Model::FanSystemModel] OpenStudio FanSystemModel object
-  def self.create_supply_fan(model, obj_name, fan_watts_per_cfm, fan_cfms, hvac_system, htg_coil = nil, clg_coil = nil, htg_supp_coil = nil)
+  def self.create_supply_fan(model, obj_name, fan_watts_per_cfm, fan_cfms, hvac_system)
     max_fan_cfm = Float(fan_cfms.max) # Convert to float to prevent integer division below
+    if hvac_system.respond_to?(:compressor_type) && (hvac_system.compressor_type == HPXML::HVACCompressorTypeVariableSpeed)
+      control_type = EPlus::FanSpeedControlContinuous
+    else
+      control_type = EPlus::FanSpeedControlDiscrete
+    end
     fan = Model.add_fan_system_model(
       model,
       name: "#{obj_name} supply fan",
       end_use: 'supply fan',
       power_per_flow: fan_watts_per_cfm / UnitConversions.convert(1.0, 'cfm', 'm^3/s'),
-      max_flow_rate: UnitConversions.convert(max_fan_cfm, 'cfm', 'm^3/s')
+      max_flow_rate: UnitConversions.convert(max_fan_cfm, 'cfm', 'm^3/s'),
+      control_method: control_type
     )
 
     curve_type, coeff = get_fan_power_curve_spec(hvac_system)
@@ -2441,177 +2444,18 @@ module HVAC
     end
     fan.setElectricPowerFunctionofFlowFractionCurve(power_curve)
 
-    # Add discrete speeds (power will be calculated using the above curve)
-    sorted_fan_cfms = fan_cfms.sort
-    sorted_fan_cfms.each_with_index do |fan_cfm, i|
-      next if i > 0 && fan_cfm == sorted_fan_cfms[i - 1] # Avoid duplicate fan speeds (e.g., for a HP where heating capacity/airflow == cooling capacity airflow)
+    if control_type == EPlus::FanSpeedControlDiscrete
+      # Add discrete speeds (power will be calculated using the above curve)
+      sorted_fan_cfms = fan_cfms.sort
+      sorted_fan_cfms.each_with_index do |fan_cfm, i|
+        next if i > 0 && fan_cfm == sorted_fan_cfms[i - 1] # Avoid duplicate fan speeds (e.g., for a HP where heating capacity/airflow == cooling capacity airflow)
 
-      fan_ratio = fan_cfm / max_fan_cfm
-      fan.addSpeed(fan_ratio.round(5))
+        fan_ratio = fan_cfm / max_fan_cfm
+        fan.addSpeed(fan_ratio.round(5))
+      end
     end
-
-    add_fan_power_ems_program(model, fan, hvac_system, htg_coil, clg_coil, htg_supp_coil)
 
     return fan
-  end
-
-  # Creates an EMS program to override the fan power:
-  # 1. If a heat pump, work around an EnergyPlus bug where the fan RTF=1 even if
-  #    there's no supplemental coil or the supplemental coil is cycling. TODO: Remove
-  #    this when https://github.com/NatLabRockies/EnergyPlus/issues/11903 is fixed.
-  # 2. If a variable-speed system, work around an EnergyPlus bug. TODO: Remove
-  #    this when https://github.com/NatLabRockies/EnergyPlus/issues/11909 is fixed.
-  #
-  # @param model [OpenStudio::Model::Model] OpenStudio Model object
-  # @param fan [OpenStudio::Model::FanSystemModel] HVAC supply fan model object
-  # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
-  # @param htg_coil [OpenStudio::Model::CoilHeatingXXX] Heating coil model object
-  # @param clg_coil [OpenStudio::Model::CoilCoolingXXX] Cooling coil model object
-  # @param htg_supp_coil [OpenStudio::Model::CoilHeatingXXX] Heat pump backup heating coil model object
-  # @return [nil]
-  def self.add_fan_power_ems_program(model, fan, hvac_system, htg_coil, clg_coil, htg_supp_coil)
-    is_ashp = hvac_system.is_a?(HPXML::HeatPump) && [HPXML::HVACTypeHeatPumpAirToAir,
-                                                     HPXML::HVACTypeHeatPumpMiniSplit,
-                                                     HPXML::HVACTypeHeatPumpPTHP,
-                                                     HPXML::HVACTypeHeatPumpRoom].include?(hvac_system.heat_pump_type)
-    is_var_speed = hvac_system.respond_to?(:compressor_type) && (hvac_system.compressor_type == HPXML::HVACCompressorTypeVariableSpeed)
-
-    return unless (is_var_speed || is_ashp)
-
-    # Sensors
-    if is_var_speed
-      # Fan runtime fraction for each speed
-      # TODO: Switch to the single RTF output variable when https://github.com/NatLabRockies/EnergyPlus/issues/11577 is available
-      fan_rtf_sensors = []
-      for i in 1..fan.numberofSpeeds
-        if fan.numberofSpeeds == 1
-          var_name = 'Fan Runtime Fraction'
-        else
-          var_name = "Fan Runtime Fraction Speed #{i}"
-        end
-        fan_rtf_sensors << Model.add_ems_sensor(
-          model,
-          name: "#{fan.name} rtf s",
-          output_var_or_meter_name: var_name,
-          key_name: fan.name
-        )
-      end
-    end
-    if is_ashp
-      htg_rtf_sensor = Model.add_ems_sensor(
-        model,
-        name: "#{htg_coil.name} rtf s",
-        output_var_or_meter_name: 'Heating Coil Runtime Fraction',
-        key_name: htg_coil.name
-      )
-      clg_rtf_sensor = Model.add_ems_sensor(
-        model,
-        name: "#{clg_coil.name} rtf s",
-        output_var_or_meter_name: 'Cooling Coil Runtime Fraction',
-        key_name: clg_coil.name
-      )
-      if not htg_supp_coil.nil?
-        # RTF not available for electric coils, so we use heating rate instead
-        htg_supp_rate_sensor = Model.add_ems_sensor(
-          model,
-          name: "#{htg_supp_coil.name} htg rate s",
-          output_var_or_meter_name: 'Heating Coil Heating Rate',
-          key_name: htg_supp_coil.name
-        )
-      end
-    end
-
-    # Actuators for fan efficiency and pressure rise
-    fan_eff_actuator = Model.add_ems_actuator(
-      name: "#{fan.name} total efficiency act",
-      model_object: fan,
-      comp_type_and_control: EPlus::EMSActuatorFanTotalEfficiency
-    )
-    fan_press_actuator = Model.add_ems_actuator(
-      name: "#{fan.name} pressure rise act",
-      model_object: fan,
-      comp_type_and_control: EPlus::EMSActuatorFanPressureRise
-    )
-
-    # Program
-    fan_power_program = Model.add_ems_program(
-      model,
-      name: "#{fan.name} power override program"
-    )
-    fan_power_program.addLine("  Set #{fan_eff_actuator.name} = NULL")
-    fan_power_program.addLine("  Set #{fan_press_actuator.name} = NULL")
-
-    # Determine whether we need to override the fan power due to supplemental
-    # coil cycling or absence of a supplemental coil
-    fan_power_program.addLine('Set SuppCyclingRuntimeFraction = -1')
-    if is_ashp
-      if htg_supp_coil.nil?
-        fan_power_program.addLine("If #{htg_rtf_sensor.name} == 0 && #{clg_rtf_sensor.name} == 0")
-        fan_power_program.addLine('  Set SuppCyclingRuntimeFraction = 0')
-        fan_power_program.addLine('EndIf')
-      else
-        # Determine supplemental coil runtime fraction to scale fan power
-        fan_power_program.addLine("If #{htg_rtf_sensor.name} == 0 && #{clg_rtf_sensor.name} == 0 && #{htg_supp_rate_sensor.name} > 0")
-        if htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
-          # Estimate RTF based on the heating rate relative to each stage's capacity
-          htg_supp_coil.stages.each_with_index do |stage, i|
-            if_str = i == 0 ? 'If' : 'ElseIf'
-            fan_power_program.addLine("  #{if_str} #{htg_supp_rate_sensor.name} <= #{stage.nominalCapacity.get}")
-            fan_power_program.addLine("    Set SuppCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{stage.nominalCapacity.get}")
-          end
-          fan_power_program.addLine('  EndIf')
-        else
-          fan_power_program.addLine("  Set SuppCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{htg_supp_coil.nominalCapacity}")
-        end
-        fan_power_program.addLine('EndIf')
-      end
-    end
-
-    if is_var_speed
-      # Set fan power based on fan power curve evaluated at intermediate flow fraction
-      fan_power_program.addLine('Set RuntimeFraction = 0')
-      fan_rtf_sensors.each do |fan_rtf_sensor|
-        fan_power_program.addLine("Set RuntimeFraction = RuntimeFraction + #{fan_rtf_sensor.name}")
-      end
-      fan_power_program.addLine('If (RuntimeFraction >= 0.999) && (SuppCyclingRuntimeFraction <= 0)') # Only need to override when NOT cycling on/off
-      fan_power_program.addLine('  Set FlowFraction = 0')
-      fan_rtf_sensors.each_with_index do |fan_rtf_sensor, i|
-        fan_power_program.addLine("  Set FlowFraction = FlowFraction + (#{fan_rtf_sensor.name} * #{fan.speeds[i].flowFraction})")
-      end
-      curve_type, coeff = get_fan_power_curve_spec(hvac_system)
-      if curve_type == 'quadratic'
-        fan_power_program.addLine("  Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*FlowFraction) + (#{coeff[2]}*(FlowFraction^2))")
-      elsif curve_type == 'exponent'
-        fan_power_program.addLine("  Set FanPowerFraction = #{coeff[0]} + (#{coeff[1]}*(FlowFraction^#{coeff[2]}))")
-      end
-      # EnergyPlus calculates power with precomputed per-speed efficiencies rather than this total-efficiency override
-      # so we scale things using the power curve to get the desired power.
-      fan_power_program.addLine('  Set DiscretePowerFraction = 0')
-      power_curve = fan.electricPowerFunctionofFlowFractionCurve.get
-      fan_rtf_sensors.each_with_index do |fan_rtf_sensor, i|
-        power_fraction = power_curve.evaluate(fan.speeds[i].flowFraction)
-        fan_power_program.addLine("  Set DiscretePowerFraction = DiscretePowerFraction + (#{fan_rtf_sensor.name} * #{power_fraction})")
-      end
-      fan_power_program.addLine('  If DiscretePowerFraction > 0')
-      fan_power_program.addLine("    Set #{fan_press_actuator.name} = #{fan.designPressureRise} * FanPowerFraction / DiscretePowerFraction")
-      fan_power_program.addLine('  EndIf')
-      fan_power_program.addLine('EndIf')
-    end
-
-    if is_ashp
-      # Need to adjust the fan power that E+ calculated to account for supplemental coil fan cycling
-      fan_power_program.addLine('If SuppCyclingRuntimeFraction >= 0')
-      fan_power_program.addLine("    Set #{fan_press_actuator.name} = SuppCyclingRuntimeFraction * #{fan.designPressureRise}")
-      fan_power_program.addLine('EndIf')
-    end
-
-    # Calling manager
-    Model.add_ems_program_calling_manager(
-      model,
-      name: "#{fan_power_program.name} manager",
-      calling_point: 'InsideHVACSystemIterationLoop',
-      ems_programs: [fan_power_program]
-    )
   end
 
   # Calculates fan power at any speed given the fan power at max speed and a fan speed ratio.

@@ -400,18 +400,20 @@ module Model
   # @param end_use [String] Name of the end use subcategory for output processing
   # @param power_per_flow [Double] Electric power per flow rate (W/(m^3/s))
   # @param max_flow_rate [Double] Design volume flow rate (m^3/s)
+  # @param control_method [String] Whether the fan operates at discrete speeds or not (EPlus::FanSpeedControlXXX)
   # @return [OpenStudio::Model::FanSystemModel] The model object
-  def self.add_fan_system_model(model, name:, end_use:, power_per_flow:, max_flow_rate:)
+  def self.add_fan_system_model(model, name:, end_use:, power_per_flow:, max_flow_rate:, control_method:)
     fan = OpenStudio::Model::FanSystemModel.new(model)
     fan.setName(name)
     fan.setEndUseSubcategory(end_use)
-    fan.setSpeedControlMethod('Discrete')
+    fan.setSpeedControlMethod(control_method)
     fan.setDesignPowerSizingMethod('PowerPerFlow')
     fan.setElectricPowerPerUnitFlowRate([power_per_flow, 0.000001].max)
     fan.setAvailabilitySchedule(model.alwaysOnDiscreteSchedule)
     fan.setMotorEfficiency(1.0)
     fan.setMotorInAirStreamFraction(1.0)
     fan.setDesignMaximumAirFlowRate(max_flow_rate)
+    fan.setElectricPowerMinimumFlowRateFraction(0.0)
     return fan
   end
 
