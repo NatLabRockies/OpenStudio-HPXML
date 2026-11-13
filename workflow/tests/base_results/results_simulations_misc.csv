@@ -229,7 +229,7 @@ base-hvac-air-to-air-heat-pump-1-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942
 base-hvac-air-to-air-heat-pump-2-speed-detailed-performance.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8870.8,4097.3,8870.8,8870.8,4097.3,8870.8,30764.0,26314.0,0.0
 base-hvac-air-to-air-heat-pump-2-speed-fan-motor-type.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8900.7,3856.7,8900.7,8900.7,3856.7,8900.7,30744.0,26547.0,0.0
 base-hvac-air-to-air-heat-pump-2-speed-research-features.xml,292.3,0.0,0.0,1286.4,890.5,12241.8,4208.1,20443.6,8273.3,20443.6,20443.6,8273.3,20443.6,61515.0,23998.0,0.0
-base-hvac-air-to-air-heat-pump-2-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8908.9,3879.2,8908.9,8908.9,3879.2,8908.9,30736.0,26540.0,0.0
+base-hvac-air-to-air-heat-pump-2-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,8908.8,3879.2,8908.8,8908.8,3879.2,8908.8,30736.0,26540.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-autosize-acca.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7270.9,3698.7,7270.9,7270.9,3698.7,7270.9,30030.0,25505.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-autosize-hers.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7248.5,3692.8,7248.5,7248.5,3692.8,7248.5,30009.0,25489.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-autosize-maxload-supplemental-backup.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,6122.8,3290.0,6122.8,6122.8,3290.0,6122.8,28737.0,24619.0,0.0
@@ -237,7 +237,7 @@ base-hvac-air-to-air-heat-pump-var-speed-backup-boiler-hvac-seasons.xml,3.0,13.0
 base-hvac-air-to-air-heat-pump-var-speed-backup-boiler-switchover-temperature.xml,118.0,13.0,0.0,1286.4,890.5,11468.6,3942.3,4196.4,3930.6,4196.4,4196.4,3930.6,4196.4,33730.0,23839.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-backup-boiler.xml,3.0,13.0,0.0,1286.4,890.5,11468.6,3942.3,3147.0,3878.8,3878.8,3147.0,3878.8,3878.8,26616.0,23839.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-backup-furnace-autosize-factor.xml,3.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,2931.6,3601.0,3601.0,2931.6,3601.0,3601.0,34556.0,24240.0,0.0
-base-hvac-air-to-air-heat-pump-var-speed-backup-furnace.xml,3.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,3034.8,3809.6,3809.6,3034.8,3809.6,3809.6,30597.0,23071.0,0.0
+base-hvac-air-to-air-heat-pump-var-speed-backup-furnace.xml,3.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,3035.1,3809.6,3809.6,3035.1,3809.6,3809.6,30597.0,23071.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-detailed-performance-autosize.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7287.2,4778.7,7287.2,7287.2,4778.7,7287.2,30350.0,25718.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-detailed-performance-normalized-capacities.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7634.6,4937.5,7634.6,7634.6,4937.5,7634.6,30691.0,25957.0,0.0
 base-hvac-air-to-air-heat-pump-var-speed-detailed-performance.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,7652.2,4931.1,7652.2,7652.2,4931.1,7652.2,30690.0,25955.0,0.0
@@ -275,7 +275,7 @@ base-hvac-dse.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,2271.1,3677.8,3677.8,2
 base-hvac-dual-fuel-air-to-air-heat-pump-1-speed-lockout-temperatures.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,4399.7,4218.2,4399.7,4399.7,4218.2,4399.7,30959.0,24524.0,0.0
 base-hvac-dual-fuel-air-to-air-heat-pump-1-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,4388.3,4218.2,4388.3,4388.3,4218.2,4388.3,30957.0,24524.0,0.0
 base-hvac-dual-fuel-air-to-air-heat-pump-2-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,3862.5,3879.2,3879.2,3862.5,3879.2,3879.2,30953.0,26540.0,0.0
-base-hvac-dual-fuel-air-to-air-heat-pump-var-speed-dse.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,3053.3,2942.6,3053.3,3053.3,2942.6,3053.3,16687.0,13114.0,0.0
+base-hvac-dual-fuel-air-to-air-heat-pump-var-speed-dse.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,3004.4,2942.6,3004.4,3004.4,2942.6,3004.4,16687.0,13114.0,0.0
 base-hvac-dual-fuel-air-to-air-heat-pump-var-speed.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,3786.7,3773.7,3786.7,3786.7,3773.7,3786.7,30545.0,25709.0,0.0
 base-hvac-dual-fuel-mini-split-heat-pump-ducted.xml,0.0,0.0,0.0,1286.4,890.5,11468.5,3942.3,2965.7,2815.6,2965.7,2965.7,2815.6,2965.7,19223.0,15341.0,0.0
 base-hvac-ducts-area-multipliers.xml,0.0,2.0,0.0,1286.4,890.5,11468.5,3942.3,2288.4,3776.2,3776.2,2288.4,3776.2,3776.2,28009.0,21844.0,0.0
