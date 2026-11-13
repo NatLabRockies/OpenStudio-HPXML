@@ -27,6 +27,7 @@ __Bugfixes__
 - **Breaking change**: Water heater `HotWaterTemperature` must now be >= 105F (previously > 0F).
 - **Breaking change**: HVAC efficiencies must be paired by generation, i.e., SEER2 with EER2/HSPF2 or SEER with EER/HSPF; a mixed pair previously passed validation and could cause an EnergyPlus error.
 - Fixes heat pump water heater modeled COP (derived from EF/UEF).
+- Fixes fan energy for variable-speed air conditioners and heat pumps; now uses continuous speed control (except when cycling on/off).
 - Fixes possibility of MaxLoad heat pump sizing methodology producing autosized capacities that were too large.
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
 - Runs EnergyPlus without an intermediate shell when using run_simulation.rb or meta_measure.rb.
