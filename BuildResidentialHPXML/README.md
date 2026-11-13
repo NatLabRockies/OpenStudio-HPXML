@@ -497,10 +497,10 @@ The type and insulation level of the roof.
 
 - **Required:** ``true``
 
-- **Choices:** <br/>  - `Uninsulated`<br/>  - `R-7`<br/>  - `R-13`<br/>  - `R-19`<br/>  - `R-30`<br/>  - `R-38`<br/>  - `R-49`<br/>  - `IECC U-0.035`<br/>  - `IECC U-0.030`<br/>  - `IECC U-0.026`<br/>  - `IECC U-0.024`<br/>  - `ASHRAE 140 Tests: Uninsulated`
+- **Choices:** <br/>  - `Wood Frame, Uninsulated`<br/>  - `Wood Frame, R-7`<br/>  - `Wood Frame, R-13`<br/>  - `Wood Frame, R-19`<br/>  - `Wood Frame, R-30`<br/>  - `Wood Frame, R-38`<br/>  - `Wood Frame, R-49`<br/>  - `Wood Frame, IECC U-0.035`<br/>  - `Wood Frame, IECC U-0.030`<br/>  - `Wood Frame, IECC U-0.026`<br/>  - `Wood Frame, IECC U-0.024`<br/>  - `ASHRAE 140 Tests: Wood Frame, Uninsulated`
 
 
-- **Default:** `Uninsulated`
+- **Default:** `Wood Frame, Uninsulated`
 
 
 **Enclosure: Roof Material**

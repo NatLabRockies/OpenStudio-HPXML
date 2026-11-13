@@ -259,7 +259,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('enclosure_roof', choices[:enclosure_roof], true)
     arg.setDisplayName('Enclosure: Roof')
     arg.setDescription('The type and insulation level of the roof.')
-    arg.setDefaultValue('Uninsulated')
+    arg.setDefaultValue('Wood Frame, Uninsulated')
     args << arg
 
     arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('enclosure_roof_material', choices[:enclosure_roof_material], false)
@@ -1676,6 +1676,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                            interior_adjacent_to: Geometry.get_surface_adjacent_to(surface),
                            azimuth: azimuth,
                            area: UnitConversions.convert(surface.grossArea, 'm^2', 'ft^2'),
+                           roof_type: args[:enclosure_roof_type],
                            roof_material: args[:enclosure_roof_material_type],
                            roof_color: args[:enclosure_roof_material_color],
                            solar_absorptance: args[:enclosure_roof_material_solar_absorptance],

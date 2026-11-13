@@ -945,6 +945,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
       hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
                            interior_adjacent_to: HPXML::LocationAtticUnvented,
                            area: 504,
+                           roof_type: hpxml_bldg.roofs[0].roof_type,
                            roof_material: hpxml_bldg.roofs[0].roof_material,
                            pitch: hpxml_bldg.roofs[0].pitch,
                            roof_color: hpxml_bldg.roofs[0].roof_color,
@@ -1623,6 +1624,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
         hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
                              interior_adjacent_to: HPXML::LocationAtticUnvented,
                              area: 1509.3 / roof_properties.size,
+                             roof_type: HPXML::RoofTypeWoodFrame,
                              roof_material: roof_property[0],
                              roof_color: roof_property[1],
                              pitch: 6,
@@ -1632,6 +1634,34 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                              insulation_assembly_r_value: roof_property[0] == HPXML::RoofMaterialEPS ? 7.0 : 2.3)
         hpxml_bldg.attics[0].attached_to_roof_idrefs << hpxml_bldg.roofs[-1].id
       end
+    elsif ['base-enclosure-rooftypes.xml'].include? hpxml_file
+      hpxml_bldg.roofs.reverse_each do |roof|
+        roof.delete
+      end
+      roofs_map = { HPXML::RoofTypeWoodFrame => 26.1,
+                    HPXML::RoofTypeSIP => 16.1,
+                    HPXML::RoofTypeConcrete => 3.2,
+                    HPXML::RoofTypeSteelFrame => 8.1 }
+      roofs_map.each_with_index do |(roof_type, assembly_r), _i|
+        hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
+                             interior_adjacent_to: HPXML::LocationAtticUnvented,
+                             area: (1509.3 / (roofs_map.size + 1)).round(1),
+                             roof_type: roof_type,
+                             pitch: 6,
+                             insulation_assembly_r_value: assembly_r)
+        hpxml_bldg.attics[0].attached_to_roof_idrefs << hpxml_bldg.roofs[-1].id
+      end
+      # closed cavity steel frame test
+      hpxml_bldg.roofs.add(id: "Roof#{hpxml_bldg.roofs.size + 1}",
+                           interior_adjacent_to: HPXML::LocationAtticUnvented,
+                           area: (1509.3 / (roofs_map.size + 1)).round(1),
+                           roof_type: HPXML::RoofTypeSteelFrame,
+                           pitch: 6,
+                           radiant_barrier: true,
+                           interior_finish_type: HPXML::InteriorFinishGypsumBoard,
+                           interior_finish_thickness: 0.5,
+                           insulation_assembly_r_value: 10.0)
+      hpxml_bldg.attics[0].attached_to_roof_idrefs << hpxml_bldg.roofs[-1].id
     elsif ['base-enclosure-overhangs.xml'].include? hpxml_file
       # Test relaxed overhangs validation; https://github.com/NatLabRockies/OpenStudio-HPXML/issues/866
       hpxml_bldg.windows.each do |window|

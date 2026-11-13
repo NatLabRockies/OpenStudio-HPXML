@@ -109,6 +109,9 @@
             <SystemIdentifier id='Roof1'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
             <Area>215.6142857142857</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>slate or tile shingles</RoofMaterial>
             <RoofColor>light</RoofColor>
             <InteriorFinish>
@@ -126,6 +129,9 @@
             <SystemIdentifier id='Roof2'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
             <Area>215.6142857142857</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>metal surfacing</RoofMaterial>
             <RoofColor>reflective</RoofColor>
             <InteriorFinish>
@@ -143,6 +149,9 @@
             <SystemIdentifier id='Roof3'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
             <Area>215.6142857142857</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>wood shingles or shakes</RoofMaterial>
             <RoofColor>dark</RoofColor>
             <InteriorFinish>
@@ -160,6 +169,9 @@
             <SystemIdentifier id='Roof4'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
             <Area>215.6142857142857</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>shingles</RoofMaterial>
             <RoofColor>medium dark</RoofColor>
             <InteriorFinish>
@@ -177,6 +189,9 @@
             <SystemIdentifier id='Roof5'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
             <Area>215.6142857142857</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>plastic/rubber/synthetic sheeting</RoofMaterial>
             <RoofColor>medium light</RoofColor>
             <InteriorFinish>
@@ -194,6 +209,9 @@
             <SystemIdentifier id='Roof6'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
             <Area>215.6142857142857</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>expanded polystyrene sheathing</RoofMaterial>
             <RoofColor>medium</RoofColor>
             <InteriorFinish>
@@ -211,6 +229,9 @@
             <SystemIdentifier id='Roof7'/>
             <InteriorAdjacentTo>attic - unvented</InteriorAdjacentTo>
             <Area>215.6142857142857</Area>
+            <RoofType>
+              <WoodFrame/>
+            </RoofType>
             <RoofMaterial>concrete tiles</RoofMaterial>
             <RoofColor>white</RoofColor>
             <InteriorFinish>
