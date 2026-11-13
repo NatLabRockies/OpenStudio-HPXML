@@ -2543,25 +2543,20 @@ module HVAC
 
     # Determine whether we need to override the fan power due to supplemental
     # coil cycling or absence of a supplemental coil
-    fan_power_program.addLine('Set SuppCyclingRuntimeFraction = -1')
+    fan_power_program.addLine('Set SuppOnlyCyclingRuntimeFraction = -1') # Flag indicating the timestep is not supplemental coil only operation
     if is_ashp
       if htg_supp_coil.nil?
         fan_power_program.addLine("If #{htg_rtf_sensor.name} == 0 && #{clg_rtf_sensor.name} == 0")
-        fan_power_program.addLine('  Set SuppCyclingRuntimeFraction = 0')
+        fan_power_program.addLine('  Set SuppOnlyCyclingRuntimeFraction = 0')
         fan_power_program.addLine('EndIf')
       else
         # Determine supplemental coil runtime fraction to scale fan power
         fan_power_program.addLine("If #{htg_rtf_sensor.name} == 0 && #{clg_rtf_sensor.name} == 0 && #{htg_supp_rate_sensor.name} > 0")
         if htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
-          # Estimate RTF based on the heating rate relative to each stage's capacity
-          htg_supp_coil.stages.each_with_index do |stage, i|
-            if_str = i == 0 ? 'If' : 'ElseIf'
-            fan_power_program.addLine("  #{if_str} #{htg_supp_rate_sensor.name} <= #{stage.nominalCapacity.get}")
-            fan_power_program.addLine("    Set SuppCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{stage.nominalCapacity.get}")
-          end
-          fan_power_program.addLine('  EndIf')
+          # Either cycling between off and first stage, or always on
+          fan_power_program.addLine("  Set SuppOnlyCyclingRuntimeFraction = @MIN (#{htg_supp_rate_sensor.name} / #{htg_supp_coil.stages[0].nominalCapacity.get}) 1")
         else
-          fan_power_program.addLine("  Set SuppCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{htg_supp_coil.nominalCapacity}")
+          fan_power_program.addLine("  Set SuppOnlyCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{htg_supp_coil.nominalCapacity}")
         end
         fan_power_program.addLine('EndIf')
       end
@@ -2569,11 +2564,12 @@ module HVAC
 
     if is_var_speed
       # Set fan power based on fan power curve evaluated at intermediate flow fraction
-      fan_power_program.addLine('Set RuntimeFraction = 0')
+      fan_power_program.addLine('Set FanRuntimeFraction = 0')
       fan_rtf_sensors.each do |fan_rtf_sensor|
-        fan_power_program.addLine("Set RuntimeFraction = RuntimeFraction + #{fan_rtf_sensor.name}")
+        fan_power_program.addLine("Set FanRuntimeFraction = FanRuntimeFraction + #{fan_rtf_sensor.name}")
       end
-      fan_power_program.addLine('If (RuntimeFraction >= 0.999) && (SuppCyclingRuntimeFraction <= 0)') # Only need to override when NOT cycling on/off
+      # Only need to override when fan running between min/max speeds (RTF=1) and not supplemental coil only operation
+      fan_power_program.addLine('If (FanRuntimeFraction >= 0.999) && (SuppOnlyCyclingRuntimeFraction <= 0)')
       fan_power_program.addLine('  Set FlowFraction = 0')
       fan_rtf_sensors.each_with_index do |fan_rtf_sensor, i|
         fan_power_program.addLine("  Set FlowFraction = FlowFraction + (#{fan_rtf_sensor.name} * #{fan.speeds[i].flowFraction})")
@@ -2600,8 +2596,8 @@ module HVAC
 
     if is_ashp
       # Need to adjust the fan power that E+ calculated to account for supplemental coil fan cycling
-      fan_power_program.addLine('If SuppCyclingRuntimeFraction >= 0')
-      fan_power_program.addLine("    Set #{fan_press_actuator.name} = SuppCyclingRuntimeFraction * #{fan.designPressureRise}")
+      fan_power_program.addLine('If (SuppOnlyCyclingRuntimeFraction >= 0) && (SuppOnlyCyclingRuntimeFraction < 1)')
+      fan_power_program.addLine("    Set #{fan_press_actuator.name} = SuppOnlyCyclingRuntimeFraction * #{fan.designPressureRise}")
       fan_power_program.addLine('EndIf')
     end
 
