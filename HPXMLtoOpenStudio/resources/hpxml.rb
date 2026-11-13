@@ -173,10 +173,10 @@ class HPXML < Object
   FoundationWallTypeWood = 'wood'
   FloorOrCeilingCeiling = 'ceiling'
   FloorOrCeilingFloor = 'floor'
-  FloorRoofTypeWoodFrame = 'WoodFrame'
-  FloorRoofTypeSIP = 'StructuralInsulatedPanel'
-  FloorRoofTypeSteelFrame = 'SteelFrame'
-  FloorRoofTypeConcrete = 'SolidConcrete'
+  FloorTypeWoodFrame = 'WoodFrame'
+  FloorTypeSIP = 'StructuralInsulatedPanel'
+  FloorTypeSteelFrame = 'SteelFrame'
+  FloorTypeConcrete = 'SolidConcrete'
   FuelLoadTypeFireplace = 'fireplace'
   FuelLoadTypeGrill = 'grill'
   FuelLoadTypeLighting = 'lighting'
@@ -387,6 +387,10 @@ class HPXML < Object
   RoofMaterialPlasticRubber = 'plastic/rubber/synthetic sheeting'
   RoofMaterialShingles = 'shingles'
   RoofMaterialWoodShingles = 'wood shingles or shakes'
+  RoofTypeWoodFrame = 'WoodFrame'
+  RoofTypeSIP = 'StructuralInsulatedPanel'
+  RoofTypeSteelFrame = 'SteelFrame'
+  RoofTypeConcrete = 'SolidConcrete'
   ScheduleRegular = 'regular schedule'
   ScheduleAvailable = 'always available'
   ScheduleUnavailable = 'always unavailable'
@@ -3904,7 +3908,7 @@ class HPXML < Object
              :area,                           # [Double] Area (ft2)
              :orientation,                    # [String] Orientation (HPXML::OrientationXXX)
              :azimuth,                        # [Integer] Azimuth (deg)
-             :roof_type,                      # [String] RoofType/* (HPXML::FloorRoofTypeXXX)
+             :roof_type,                      # [String] RoofType/* (HPXML::RoofTypeXXX)
              :roof_material,                  # [String] RoofMaterial (HPXML::RoofMaterialXXX)
              :cool_roof,                      # [Boolean] CoolRoof
              :roof_color,                     # [String] RoofColor (HPXML::ColorXXX)
@@ -5005,7 +5009,7 @@ class HPXML < Object
              :exterior_adjacent_to,           # [String] ExteriorAdjacentTo (HPXML::LocationXXX)
              :interior_adjacent_to,           # [String] InteriorAdjacentTo (HPXML::LocationXXX)
              :floor_or_ceiling,               # [String] FloorOrCeiling (HPXML::FloorOrCeilingXXX)
-             :floor_type,                     # [String] FloorType/* (HPXML::FloorRoofTypeXXX)
+             :floor_type,                     # [String] FloorType/* (HPXML::FloorTypeXXX)
              :framing_size,                   # [String] FloorJoists/Size
              :framing_spacing,                # [Double] FloorJoists/Spacing (in)
              :framing_factor,                 # [Double] FloorJoists/FramingFactor (frac)

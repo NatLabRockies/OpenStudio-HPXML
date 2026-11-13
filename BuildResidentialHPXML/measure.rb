@@ -259,7 +259,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('enclosure_roof', choices[:enclosure_roof], true)
     arg.setDisplayName('Enclosure: Roof')
     arg.setDescription('The type and insulation level of the roof.')
-    arg.setDefaultValue('Uninsulated')
+    arg.setDefaultValue('Wood Frame, Uninsulated')
     args << arg
 
     arg = OpenStudio::Measure::OSArgument.makeChoiceArgument('enclosure_roof_material', choices[:enclosure_roof_material], false)
@@ -1676,7 +1676,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
                            interior_adjacent_to: Geometry.get_surface_adjacent_to(surface),
                            azimuth: azimuth,
                            area: UnitConversions.convert(surface.grossArea, 'm^2', 'ft^2'),
-                           roof_type: HPXML::FloorRoofTypeWoodFrame, # May be overridden below
+                           roof_type: args[:enclosure_roof_type],
                            roof_material: args[:enclosure_roof_material_type],
                            roof_color: args[:enclosure_roof_material_color],
                            solar_absorptance: args[:enclosure_roof_material_solar_absorptance],
@@ -1994,7 +1994,7 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
       hpxml_bldg.floors.add(id: "Floor#{hpxml_bldg.floors.size + 1}",
                             exterior_adjacent_to: exterior_adjacent_to,
                             interior_adjacent_to: interior_adjacent_to,
-                            floor_type: HPXML::FloorRoofTypeWoodFrame, # May be overridden below
+                            floor_type: HPXML::FloorTypeWoodFrame, # May be overridden below
                             area: UnitConversions.convert(surface.grossArea, 'm^2', 'ft^2'),
                             floor_or_ceiling: floor_or_ceiling)
       hpxml_floor = hpxml_bldg.floors[-1]

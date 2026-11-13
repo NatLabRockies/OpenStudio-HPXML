@@ -33,12 +33,12 @@ module Constructions
     assembly_r = roof.insulation_assembly_r_value
 
     case roof.roof_type
-    when HPXML::FloorRoofTypeWoodFrame, HPXML::FloorRoofTypeSteelFrame # Frame roofs
+    when HPXML::RoofTypeWoodFrame, HPXML::RoofTypeSteelFrame # Frame roofs
       if not mat_int_finish.nil?
         # Closed cavity
         framing_factor = nil
         corr_factor = nil
-        if roof.roof_type == HPXML::FloorRoofTypeWoodFrame
+        if roof.roof_type == HPXML::RoofTypeWoodFrame
           wood_frame_constr_sets = [
             WoodStudConstructionSet.new(Material.Stud2x(8), 0.07, 20.0, 0.0, mat_int_finish, mat_ext_finish),         # 2x8, 24" o.c. + R20
             WoodStudConstructionSet.new(Material.Stud2x(8), 0.07, 10.0, 0.0, mat_int_finish, mat_ext_finish),         # 2x8, 24" o.c. + R10
@@ -99,7 +99,7 @@ module Constructions
                                      interior_film, exterior_film, radiant_barrier_grade,
                                      roof.solar_absorptance, roof.emittance, framing_factor)
       end
-    when HPXML::FloorRoofTypeSIP
+    when HPXML::RoofTypeSIP
       osb_thick_in = 0.5
       sheath_thick_in = 0.44
       constr_sets = [
@@ -116,7 +116,7 @@ module Constructions
                      has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade,
                      roof.solar_absorptance, roof.emittance)
 
-    when HPXML::FloorRoofTypeConcrete
+    when HPXML::RoofTypeConcrete
       constr_sets = [
         GenericConstructionSet.new(20.0, 0.0, mat_int_finish, mat_ext_finish), # w/R-20 rigid
         GenericConstructionSet.new(10.0, 0.0, mat_int_finish, mat_ext_finish), # w/R-10 rigid
@@ -1345,7 +1345,7 @@ module Constructions
 
     # Set paths
     ins_gap_frac = get_install_grade_gap_fraction(install_grade, cavity_r > 0)
-    if roof_type == HPXML::FloorRoofTypeWoodFrame
+    if roof_type == HPXML::RoofTypeWoodFrame
       if (cavity_ins_thick_in > framing_thick_in) && (framing_thick_in > 0)
         wood_k = BaseMaterial.Wood.k_in * cavity_ins_thick_in / framing_thick_in
       else
@@ -1355,7 +1355,7 @@ module Constructions
       ins_factor = 1 - framing_factor
       path_fracs = [framing_factor, ins_factor * (1 - ins_gap_frac), ins_factor * ins_gap_frac]
       stud_cavity_layers = [mat_framing, mat_cavity, mat_gap]
-    elsif roof_type == HPXML::FloorRoofTypeSteelFrame
+    elsif roof_type == HPXML::RoofTypeSteelFrame
       path_fracs = [(1 - ins_gap_frac), ins_gap_frac]
       stud_cavity_layers = [mat_cavity, mat_gap]
     else
@@ -1451,12 +1451,12 @@ module Constructions
 
     # Set paths
     ins_gap_frac = get_install_grade_gap_fraction(install_grade, cavity_r > 0)
-    if roof_type == HPXML::FloorRoofTypeWoodFrame
+    if roof_type == HPXML::RoofTypeWoodFrame
       mat_framing = Material.new(thick_in: cavity_depth_in, mat_base: BaseMaterial.Wood)
       ins_factor = 1 - framing_factor
       path_fracs = [framing_factor, ins_factor * (1 - ins_gap_frac), ins_factor * ins_gap_frac]
       stud_cavity_layers = [mat_framing, mat_cavity, mat_gap]
-    elsif roof_type == HPXML::FloorRoofTypeSteelFrame
+    elsif roof_type == HPXML::RoofTypeSteelFrame
       path_fracs = [(1 - ins_gap_frac), ins_gap_frac]
       stud_cavity_layers = [mat_cavity, mat_gap]
     else
@@ -2881,7 +2881,7 @@ module Constructions
     osb_thick_in = (is_ceiling ? 0.0 : 0.75)
 
     case floor_type
-    when HPXML::FloorRoofTypeWoodFrame
+    when HPXML::FloorTypeWoodFrame
       install_grade = 1
       constr_sets = [
         WoodStudConstructionSet.new(Material.Stud2x(6), 0.10, 50.0, osb_thick_in, mat_int_finish_or_covering, nil), # 2x6, 24" o.c. + R50
@@ -2901,7 +2901,7 @@ module Constructions
                                      constr_set.osb_thick_in, constr_set.rigid_r, constr_int_finish_or_covering,
                                      has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade)
 
-    when HPXML::FloorRoofTypeSteelFrame
+    when HPXML::FloorTypeSteelFrame
       install_grade = 1
       corr_factor = 0.82
       osb_thick_in = (is_ceiling ? 0.0 : 0.75)
@@ -2922,7 +2922,7 @@ module Constructions
                                       constr_set.rigid_r, constr_int_finish_or_covering, has_radiant_barrier, interior_film,
                                       exterior_film, radiant_barrier_grade)
 
-    when HPXML::FloorRoofTypeSIP
+    when HPXML::FloorTypeSIP
       sheath_thick_in = 0.44
       osb_thick_in = 0.5
       constr_sets = [
@@ -2938,7 +2938,7 @@ module Constructions
                               constr_set.mat_int_finish, constr_set.osb_thick_in, constr_set.rigid_r, constr_set.mat_ext_finish,
                               has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade)
 
-    when HPXML::FloorRoofTypeConcrete
+    when HPXML::FloorTypeConcrete
       constr_sets = [
         GenericConstructionSet.new(20.0, osb_thick_in, mat_int_finish_or_covering, nil), # w/R-20 rigid
         GenericConstructionSet.new(10.0, osb_thick_in, mat_int_finish_or_covering, nil), # w/R-10 rigid
@@ -2993,7 +2993,7 @@ module Constructions
                                      0, 1, 0.07, 5.5, 0.75, 99, Material.CoveringBare, false,
                                      Material.AirFilmIndoorFloorAverage, Material.AirFilmIndoorFloorAverage, nil)
     elsif type == 'roof'
-      apply_open_cavity_frame_roof(model, surfaces, 'AdiabaticRoofConstruction', HPXML::FloorRoofTypeWoodFrame,
+      apply_open_cavity_frame_roof(model, surfaces, 'AdiabaticRoofConstruction', HPXML::RoofTypeWoodFrame,
                                    0, 1, 7.25, 7.25, 0.0, 99,
                                    Material.RoofMaterialAndSheathing(HPXML::RoofMaterialAsphaltShingles),
                                    false, Material.AirFilmIndoorRoof(UnitConversions.convert(surfaces[0].tilt, 'rad', 'deg')),
