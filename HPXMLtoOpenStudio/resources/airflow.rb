@@ -60,7 +60,7 @@ module Airflow
 
     # Initialization
     cfis_data = initialize_cfis(model, vent_fans, airloop_map, hpxml_header.unavailable_periods)
-    fan_data = { rtf_var: {}, max_airflow_m3s: {}, rtf_sensor: {} }
+    fan_data = { rtf_var: {}, max_airflow_m3s: {}, rtf_sensor: {}, supply_fan: {} }
     model.getAirLoopHVACs.each do |air_loop|
       initialize_fan(model, air_loop, fan_data)
     end
@@ -743,6 +743,8 @@ module Airflow
     else
       fail 'Unexpected object type.'
     end
+
+    fan_data[:supply_fan][object] = supply_fan
 
     fan_data[:rtf_var][object] = Model.add_ems_global_var(
       model,
@@ -1496,6 +1498,21 @@ module Airflow
     fan_data[:rtf_sensor][object].each do |rtf_sensor|
       duct_program.addLine("Set #{fan_data[:rtf_var][object].name} = #{fan_data[:rtf_var][object].name} + #{rtf_sensor.name}")
     end
+
+    # If a heat pump, work around an EnergyPlus bug where the fan RTF=1 even if
+    # there's no supplemental coil or the supplemental coil is cycling. TODO: Remove
+    # this when https://github.com/NatLabRockies/EnergyPlus/issues/11903 is fixed.
+    supply_fan = fan_data[:supply_fan][object]
+    if not supply_fan.nil?
+      global_var_supp_only_cyc_rtf = model.getEnergyManagementSystemGlobalVariables.find { |var| var.name.get.include? Model.ems_friendly_name("#{supply_fan.name} supp only cycl rtf global") }
+      if not global_var_supp_only_cyc_rtf.nil?
+        # Need to adjust E+ fan RTF to account for supplemental coil fan cycling
+        duct_program.addLine("If (#{global_var_supp_only_cyc_rtf.name} >= 0) && (#{global_var_supp_only_cyc_rtf.name} < 1)")
+        duct_program.addLine("  Set #{fan_data[:rtf_var][object].name} = #{fan_data[:rtf_var][object].name} * #{global_var_supp_only_cyc_rtf.name}")
+        duct_program.addLine('EndIf')
+      end
+    end
+
     duct_program.addLine("Set #{ah_vfr_var.name} = #{ah_vfr_sensor.name}")
     duct_program.addLine("Set #{ah_tout_var.name} = #{ah_tout_sensor.name}")
     duct_program.addLine("Set #{ah_wout_var.name} = #{ah_wout_sensor.name}")
