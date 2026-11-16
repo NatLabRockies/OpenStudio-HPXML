@@ -2533,6 +2533,12 @@ module HVAC
       comp_type_and_control: EPlus::EMSActuatorFanPressureRise
     )
 
+    # Global variable (to reuse in duct EMS program)
+    global_var_supp_only_cyc_rtf = Model.add_ems_global_var(
+      model,
+      var_name: "#{fan.name} supp only cycl rtf global"
+    )
+
     # Program
     fan_power_program = Model.add_ems_program(
       model,
@@ -2600,6 +2606,8 @@ module HVAC
       fan_power_program.addLine("    Set #{fan_press_actuator.name} = SuppOnlyCyclingRuntimeFraction * #{fan.designPressureRise}")
       fan_power_program.addLine('EndIf')
     end
+
+    fan_power_program.addLine("Set #{global_var_supp_only_cyc_rtf.name} = SuppOnlyCyclingRuntimeFraction")
 
     # Calling manager
     Model.add_ems_program_calling_manager(
