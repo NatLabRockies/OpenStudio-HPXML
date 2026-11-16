@@ -7923,31 +7923,31 @@ module Defaults
   # Sets the degradation coefficient and Part Load Factor (PLF) curve for the HVAC system.
   #
   # @param hvac_system [HPXML::HeatingSystem or HPXML::CoolingSystem or HPXML::HeatPump] The HPXML HVAC system of interest
-  # @param single_speed_coil [Boolean] Whether it's a simplified model where the first speed is not explicitly modeled
+  # @param simplified_speed_model [Boolean] Whether it's a simplified model where the first speed is not explicitly modeled
   # @return [nil]
-  def self.set_hvac_degradation_coefficient(hvac_system, single_speed_coil = false)
+  def self.set_hvac_degradation_coefficient(hvac_system, simplified_speed_model = false)
     hvac_ap = hvac_system.additional_properties
 
     # Degradation coefficient
     if HVAC.is_room_dx_hvac_system(hvac_system)
       hvac_ap.c_d = 0.22
-      adj_factor_single_speed_coil = 1.0
+      speed_model_adjustment_factor = 1.0
     else
       # Per RESNET HERS Addendum 82
       case hvac_system.compressor_type
       when HPXML::HVACCompressorTypeSingleStage, HPXML::HVACCompressorTypeTwoStage
         hvac_ap.c_d = 0.08
         # reaching first speed at 50%
-        adj_factor_single_speed_coil = single_speed_coil ? 0.5 : 1.0
+        speed_model_adjustment_factor = simplified_speed_model ? 0.5 : 1.0
       when HPXML::HVACCompressorTypeVariableSpeed
         hvac_ap.c_d = 0.40
         # reaching first speed at 30%
-        adj_factor_single_speed_coil = single_speed_coil ? 0.3 : 1.0
+        speed_model_adjustment_factor = simplified_speed_model ? 0.3 : 1.0
       end
     end
 
     # PLF curve (linear part load model)
-    hvac_ap.plf_fplr_spec = [(1.0 - hvac_ap.c_d), hvac_ap.c_d / adj_factor_single_speed_coil, 0.0]
+    hvac_ap.plf_fplr_spec = [(1.0 - hvac_ap.c_d), hvac_ap.c_d / speed_model_adjustment_factor, 0.0]
   end
 
   # Sets the ground-to-air heat pump gross rated heating/cooling cops based on COP ratios from spec sheets.
