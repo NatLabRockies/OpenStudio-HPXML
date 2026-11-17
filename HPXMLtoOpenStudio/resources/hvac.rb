@@ -4311,9 +4311,15 @@ module HVAC
       key_name: fan.name
     )
 
-    # No way to retrieve this node name from the model, it's
-    # created automatically during FT
-    clg_coil_inlet_node_name = "#{air_loop_unitary.name} Fan - Cooling Coil Node"
+    if Version::UseEPModel
+      fan_outlet_node = fan.outletModelObject
+      raise "Could not find outlet node for fan '#{fan.name}'." unless fan_outlet_node.is_initialized
+      fan_outlet_node = fan_outlet_node.get.to_Node
+      raise "Could not find outlet node for fan '#{fan.name}'." unless fan_outlet_node.is_initialized
+      clg_coil_inlet_node_name = fan_outlet_node.get.name.to_s
+    else
+      clg_coil_inlet_node_name = "#{air_loop_unitary.name} Fan - Cooling Coil Node"
+    end
 
     vfr_sensor = Model.add_ems_sensor(
       model,
