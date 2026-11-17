@@ -37,6 +37,222 @@ if Version::UseEPModel
       return water_use_equipments
     end
 
+    class MultiSpeedCoilStageData
+      def initialize(model, *curves)
+        raise 'Expected 6 performance curves for multi-speed coil stage.' unless curves.size == 6
+
+        @curve_names = curves.map { |curve| curve.name.to_s }
+      end
+
+      def curve_names
+        @curve_names
+      end
+    end
+
+    class CoilCoolingDXMultiSpeedStageData < MultiSpeedCoilStageData
+      def setGrossRatedCoolingCOP(value)
+        @cop = value
+      end
+
+      def setGrossRatedSensibleHeatRatio(value)
+        @sensible_heat_ratio = value
+      end
+
+      def setNominalTimeforCondensateRemovaltoBegin(value)
+        @condensate_removal_time = value
+      end
+
+      def setRatioofInitialMoistureEvaporationRateandSteadyStateLatentCapacity(value)
+        @initial_moisture_evaporation_ratio = value
+      end
+
+      def setRatedWasteHeatFractionofPowerInput(value)
+        @waste_heat_fraction = value
+      end
+
+      def setMaximumCyclingRate(value)
+        @maximum_cycling_rate = value
+      end
+
+      def setLatentCapacityTimeConstant(value)
+        @latent_capacity_time_constant = value
+      end
+
+      def setGrossRatedTotalCoolingCapacity(value)
+        @capacity = value
+      end
+
+      def setRatedAirFlowRate(value)
+        @airflow = value
+      end
+
+      def grossRatedTotalCoolingCapacity
+        OpenStudio::OptionalDouble.new(@capacity)
+      end
+
+      def ratedAirFlowRate
+        OpenStudio::OptionalDouble.new(@airflow)
+      end
+
+      def idf_fields
+        [
+          @capacity,
+          @sensible_heat_ratio,
+          @cop,
+          @airflow,
+          773.3,
+          934.4
+        ] + curve_names[0, 5] + [
+          @condensate_removal_time,
+          @initial_moisture_evaporation_ratio,
+          @maximum_cycling_rate,
+          @latent_capacity_time_constant,
+          @waste_heat_fraction,
+          curve_names[5],
+          0.9,
+          'Autosize',
+          'Autosize'
+        ]
+      end
+    end
+
+    class CoilHeatingDXMultiSpeedStageData < MultiSpeedCoilStageData
+      def setGrossRatedHeatingCOP(value)
+        @cop = value
+      end
+
+      def setRatedWasteHeatFractionofPowerInput(value)
+        @waste_heat_fraction = value
+      end
+
+      def setGrossRatedHeatingCapacity(value)
+        @capacity = value
+      end
+
+      def setRatedAirFlowRate(value)
+        @airflow = value
+      end
+
+      def grossRatedHeatingCapacity
+        OpenStudio::OptionalDouble.new(@capacity)
+      end
+
+      def ratedAirFlowRate
+        OpenStudio::OptionalDouble.new(@airflow)
+      end
+
+      def idf_fields
+        [
+          @capacity,
+          @cop,
+          @airflow,
+          773.3,
+          934.4
+        ] + curve_names[0, 5] + [
+          @waste_heat_fraction,
+          curve_names[5]
+        ]
+      end
+    end
+
+    def self.add_multispeed_coil_stage(coil, stage_fields)
+      group = coil.pushExtensibleGroup
+      stage_fields.each_with_index do |value, index|
+        if value.is_a?(String)
+          field_set = group.setString(index, value)
+        else
+          field_set = group.setDouble(index, value)
+        end
+        raise "Could not set stage field #{index} for coil '#{coil.name}'." unless field_set
+      end
+
+      number_of_speeds_field = coil.iddObject.getFieldIndex('Number of Speeds')
+      raise "Could not find Number of Speeds field for coil '#{coil.name}'." unless number_of_speeds_field.is_initialized
+      number_of_speeds = coil.numExtensibleGroups
+      if number_of_speeds > 1
+        unless coil.setInt(number_of_speeds_field.get, number_of_speeds)
+          raise "Could not set Number of Speeds for coil '#{coil.name}'."
+        end
+      end
+    end
+
+    def self.record_multispeed_coil_stage(coil, stage)
+      if @multispeed_coil_stages_by_handle.nil?
+        @multispeed_coil_stages_by_handle = {}
+      end
+
+      stages = @multispeed_coil_stages_by_handle[coil.handle.to_s]
+      if stages.nil?
+        stages = []
+        @multispeed_coil_stages_by_handle[coil.handle.to_s] = stages
+      end
+      stages << stage
+    end
+
+    def self.multispeed_coil_stages(coil)
+      return [] if @multispeed_coil_stages_by_handle.nil?
+
+      stages = @multispeed_coil_stages_by_handle[coil.handle.to_s]
+      return [] if stages.nil?
+
+      stages.dup
+    end
+
+    def self.add_cooling_dx_multispeed_stage(coil, stage)
+      unless stage.is_a?(CoilCoolingDXMultiSpeedStageData)
+        raise "Expected CoilCoolingDXMultiSpeedStageData for coil '#{coil.name}'."
+      end
+
+      add_multispeed_coil_stage(coil, stage.idf_fields)
+      record_multispeed_coil_stage(coil, stage)
+    end
+
+    def self.add_heating_dx_multispeed_stage(coil, stage)
+      unless stage.is_a?(CoilHeatingDXMultiSpeedStageData)
+        raise "Expected CoilHeatingDXMultiSpeedStageData for coil '#{coil.name}'."
+      end
+
+      add_multispeed_coil_stage(coil, stage.idf_fields)
+      record_multispeed_coil_stage(coil, stage)
+    end
+
+    unless OpenStudio::Model.const_defined?(:CoilCoolingDXMultiSpeedStageData, false)
+      OpenStudio::Model.const_set(:CoilCoolingDXMultiSpeedStageData, CoilCoolingDXMultiSpeedStageData)
+    end
+    unless OpenStudio::Model.const_defined?(:CoilHeatingDXMultiSpeedStageData, false)
+      OpenStudio::Model.const_set(:CoilHeatingDXMultiSpeedStageData, CoilHeatingDXMultiSpeedStageData)
+    end
+
+    unless OpenStudio::Model::CoilCoolingDXMultiSpeed.method_defined?(:addStage)
+      OpenStudio::Model::CoilCoolingDXMultiSpeed.class_eval do
+        def addStage(stage)
+          EPModelCompatibility.add_cooling_dx_multispeed_stage(self, stage)
+        end
+      end
+    end
+    unless OpenStudio::Model::CoilHeatingDXMultiSpeed.method_defined?(:addStage)
+      OpenStudio::Model::CoilHeatingDXMultiSpeed.class_eval do
+        def addStage(stage)
+          EPModelCompatibility.add_heating_dx_multispeed_stage(self, stage)
+        end
+      end
+    end
+
+    unless OpenStudio::Model::CoilCoolingDXMultiSpeed.method_defined?(:stages)
+      OpenStudio::Model::CoilCoolingDXMultiSpeed.class_eval do
+        def stages
+          EPModelCompatibility.multispeed_coil_stages(self)
+        end
+      end
+    end
+    unless OpenStudio::Model::CoilHeatingDXMultiSpeed.method_defined?(:stages)
+      OpenStudio::Model::CoilHeatingDXMultiSpeed.class_eval do
+        def stages
+          EPModelCompatibility.multispeed_coil_stages(self)
+        end
+      end
+    end
+
     def self.get_scheduled_setpoint_managers(node)
       node.model.getModelObjects.select do |object|
         next false unless object.iddObject.name.to_s == 'SetpointManager:Scheduled'
@@ -1190,9 +1406,10 @@ if Version::UseEPModel
   unless OpenStudio::EPModel::OutputTableMonthly.method_defined?(:getMonthlyVariableGroup)
     OpenStudio::EPModel::OutputTableMonthly.define_method(:getMonthlyVariableGroup) do |index|
       groups = extensibleGroups
-      group = if index >= 0 && index < groups.length
-                EPModelCompatibility::MonthlyVariableGroup.new(groups[index])
-              end
+      group = nil
+      if index >= 0 && index < groups.length
+        group = EPModelCompatibility::MonthlyVariableGroup.new(groups[index])
+      end
       EPModelCompatibility::OptionalMonthlyVariableGroup.new(group)
     end
   end

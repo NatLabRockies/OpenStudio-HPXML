@@ -4,7 +4,7 @@
 When false, retain the OpenStudio 3.11 workflow.
 A shim is Ruby compatibility code that lets existing resource code work around an EPModel API gap using available EPModel APIs.
 Record each EPModel API gap and its current workaround in the relevant section of this TODO.
-Keep shims in `resources/epmodel.rb`. Prefer class-level overrides when they preserve an existing resource call and behavior; use resource-level `Version::UseEPModel` switches when the EPModel path requires a different algorithm or call sequence.
+Keep shims in `resources/epmodel.rb` and preserve existing resource calls whenever possible. When EPModel lacks a constructor, provide a compatible class-level `.new` implementation under the expected namespace; if the returned object needs downstream behavior EPModel also lacks, override that method there as well. Do not add a resource-level `Version::UseEPModel` switch merely to work around a missing API. Use resource-level switches only when EPModel requires a genuinely different algorithm or call sequence.
 A workaround does not resolve the underlying SDK gap; track current handling separately from remaining work.
 
 ## Baseline Checks
@@ -51,6 +51,12 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `AirLoopHVAC#addBranchForZone(zone, terminal)` | Yes | `resources/epmodel.rb` | Native EPModel branch operation delegated to by the legacy-name shim. |
 | `AirLoopHVAC#multiAddBranchForZone(zone, terminal)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim delegates to EPModel's `addBranchForZone(zone, terminal)`, matching the legacy overload's zone/terminal branch attachment. |
 | `BoilerHotWater#plantLoop` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | The EPModel optional is empty for the indirect-DHW boiler. EPModel resolves its plant loop by searching plant-loop supply components; OpenStudio 3.11 retains the native relationship. |
+| `CoilCoolingDXMultiSpeed#addStage(stage)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level shim writes the cooling stage fields to an extensible group and updates `Number of Speeds` once the second stage is added, as required by the IDD minimum. |
+| `CoilCoolingDXMultiSpeed#stages` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level shim returns the cooling StageData façades recorded by `addStage`; this supports latent-degradation EMS and airflow checks. The list is process-local and is not reconstructed after model reload or clone. |
+| `CoilCoolingDXMultiSpeedStageData.new(model, ...)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | EPModel lacks the cooling StageData class; a compatibility class under the legacy namespace collects the existing setter calls for the `addStage` shim. |
+| `CoilHeatingDXMultiSpeed#addStage(stage)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level shim writes the heating stage fields to an extensible group and updates `Number of Speeds` once the second stage is added, as required by the IDD minimum. |
+| `CoilHeatingDXMultiSpeed#stages` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level shim returns the heating StageData façades recorded by `addStage`; this supports backup staging and airflow checks. The list is process-local and is not reconstructed after model reload or clone. |
+| `CoilHeatingDXMultiSpeedStageData.new(model, ...)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | EPModel lacks the heating StageData class; a compatibility class under the legacy namespace collects the existing setter calls for the `addStage` shim. |
 | `Construction#setLayers` | Yes | `resources/model.rb` | |
 | `Construction#setName` | Yes | `resources/model.rb` | |
 | `Construction.new(model)` | Yes | `resources/model.rb` | |
@@ -362,6 +368,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ThermostatSetpointDualSetpoint#setTemperatureDifferenceBetweenCutoutAndSetpoint` | Yes | `resources/hvac.rb` | |
 | `ThermostatSetpointDualSetpoint.new(model)` | Yes | `resources/hvac.rb` | |
 | `Timestep#setNumberOfTimestepsPerHour` | Yes | `resources/simcontrols.rb` | |
+| `UnitarySystemPerformanceMultispeed.new(model)` |  | `resources/hvac.rb` | EPModel lacks this class. Temporarily skipping it causes EnergyPlus severe errors and fatal termination because the multispeed unitary system requires a valid performance object; a class-level shim is needed. |
 | `WaterUseConnections#waterUseEquipment` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel returns a vector that is not iterable from Ruby; a class-level override resolves equipment references from extensible groups and preserves the shared resource call. |
 | `WeatherFile.setWeatherFile(model, epw_file)` |  | `resources/location.rb` | Called only when `Version::UseEPModel` is false. For EPModel, `meta_measure.rb` retains the EPW path through runner reset and passes it to EnergyPlus with `-w`. |
 | `YearDescription#assumedYear` |  | `resources/schedules.rb` | Used only on the OpenStudio 3.11 branch; EPModel reads RunPeriod Begin Year instead. |
