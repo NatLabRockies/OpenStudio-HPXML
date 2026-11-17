@@ -11,8 +11,8 @@ class Material
   # @param cp [Double] Specific heat (Btu/lb-F)
   # @param tAbs [Double] Thermal absorptance (emittance); 0.9 is EnergyPlus default
   # @param sAbs [Double] Solar absorptance; 0.7 is EnergyPlus default
-  # @param roughness_idx [Integer] Roughness index from 1 (very rough) to 6 (very smooth)
-  def initialize(name: nil, thick_in: nil, mat_base: nil, k_in: nil, rho: nil, cp: nil, tAbs: 0.9, sAbs: 0.7, roughness_idx: 2)
+  # @param roughness_num [Integer] Roughness number from 1 (very rough) to 6 (very smooth)
+  def initialize(name: nil, thick_in: nil, mat_base: nil, k_in: nil, rho: nil, cp: nil, tAbs: 0.9, sAbs: 0.7, roughness_num: 2)
     @name = name
 
     if not thick_in.nil?
@@ -50,7 +50,8 @@ class Material
 
     @tAbs = tAbs
     @sAbs = sAbs
-    @roughness_idx = roughness_idx
+    @roughness_num = roughness_num
+    @roughness = ['VeryRough', 'Rough', 'MediumRough', 'MediumSmooth', 'Smooth', 'VerySmooth'][roughness_num - 1]
 
     # Calculate R-value
     if not rvalue.nil?
@@ -75,18 +76,11 @@ class Material
     thick_in = mat2.thick_in + mat1.thick_in
     rho = (mat2.rho * mat2.thick_in + mat1.rho * mat1.thick_in) / thick_in
     cp = (mat2.cp * mat2.rho * mat2.thick_in + mat1.cp * mat1.rho * mat1.thick_in) / (rho * thick_in)
-    if (not mat1.roughness_idx.nil?) && (not mat2.roughness_idx.nil?)
-      fail 'Unhandled situation.'
-    elsif not mat1.roughness_idx.nil?
-      roughness_idx = mat1.roughness_idx
-    else
-      roughness_idx = mat2.roughness_idx
-    end
-
-    return new(name: new_name, thick_in: thick_in, k_in: thick_in / rvalue, rho: rho, cp: cp, roughness_idx: roughness_idx)
+    roughness_num = mat1.roughness_num
+    return new(name: new_name, thick_in: thick_in, k_in: thick_in / rvalue, rho: rho, cp: cp, roughness_num: roughness_num)
   end
 
-  attr_accessor :name, :thick, :thick_in, :k, :k_in, :rho, :cp, :rvalue, :tAbs, :sAbs
+  attr_accessor :name, :thick, :thick_in, :k, :k_in, :rho, :cp, :rvalue, :tAbs, :sAbs, :roughness_num, :roughness
 
   # Creates a material associated with a closed air cavity (e.g.,
   # inside an uninsulated wood stud wall).
@@ -217,37 +211,39 @@ class Material
       return
     end
 
+    # Roughness numbers generally sourced from DOE-2
+
     case type
     when HPXML::SidingTypeAsbestos
       thick_in = 0.25 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 4.20, rho: 118.6, cp: 0.24, roughness_idx: 3)
+      return new(name: type, thick_in: thick_in, k_in: 4.20, rho: 118.6, cp: 0.24, roughness_num: 3)
     when HPXML::SidingTypeBrick
       thick_in = 4.0 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Brick, roughness_idx: 2)
+      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Brick, roughness_num: 2)
     when HPXML::SidingTypeStone
       thick_in = 1.0 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Stone, roughness_idx: 2)
+      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Stone, roughness_num: 2)
     when HPXML::SidingTypeCompositeShingle
       thick_in = 0.25 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 1.128, rho: 70.0, cp: 0.35, roughness_idx: 2)
+      return new(name: type, thick_in: thick_in, k_in: 1.128, rho: 70.0, cp: 0.35, roughness_num: 2)
     when HPXML::SidingTypeFiberCement
       thick_in = 0.375 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 1.79, rho: 21.7, cp: 0.24, roughness_idx: 3)
+      return new(name: type, thick_in: thick_in, k_in: 1.79, rho: 21.7, cp: 0.24, roughness_num: 3)
     when HPXML::SidingTypeMasonite # Masonite hardboard
       thick_in = 0.5 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 0.69, rho: 46.8, cp: 0.39, roughness_idx: 3)
+      return new(name: type, thick_in: thick_in, k_in: 0.69, rho: 46.8, cp: 0.39, roughness_num: 3)
     when HPXML::SidingTypeStucco
       thick_in = 1.0 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Stucco, roughness_idx: 1)
+      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Stucco, roughness_num: 1)
     when HPXML::SidingTypeSyntheticStucco # EIFS
       thick_in = 1.0 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.InsulationRigid, roughness_idx: 1)
+      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.InsulationRigid, roughness_num: 1)
     when HPXML::SidingTypeVinyl, HPXML::SidingTypeAluminum
       thick_in = 0.375 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Vinyl, roughness_idx: 5)
+      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Vinyl, roughness_num: 5)
     when HPXML::SidingTypeWood
       thick_in = 0.75 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 0.71, rho: 34.0, cp: 0.28, roughness_idx: 4)
+      return new(name: type, thick_in: thick_in, k_in: 0.71, rho: 34.0, cp: 0.28, roughness_num: 4)
     end
 
     fail "Unexpected type: #{type}."
@@ -376,20 +372,22 @@ class Material
     # outer surface to achieve very high levels."
     #
     # In the case of an attic roof, the outer most material can see significant solar radiation.
+    #
+    # Roughness numbers generally sourced from DOE-2
     mat_osb = OSBSheathing(osb_thick_in)
     case roof_type
     when HPXML::RoofTypeMetal
-      mat_roof = new(name: roof_type, thick_in: 0.02, k_in: 346.9, rho: 487.0, cp: 0.11, roughness_idx: 5)
+      mat_roof = new(name: roof_type, thick_in: 0.02, k_in: 346.9, rho: 487.0, cp: 0.11, roughness_num: 5)
     when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeShingles
-      mat_roof = new(name: roof_type, thick_in: 0.25, k_in: 1.128, rho: 70.0, cp: 0.35, roughness_idx: 3)
+      mat_roof = new(name: roof_type, thick_in: 0.25, k_in: 1.128, rho: 70.0, cp: 0.35, roughness_num: 3)
     when HPXML::RoofTypeConcrete
-      mat_roof = new(name: roof_type, thick_in: 0.75, k_in: 7.63, rho: 131.1, cp: 0.199, roughness_idx: 1)
+      mat_roof = new(name: roof_type, thick_in: 0.75, k_in: 7.63, rho: 131.1, cp: 0.199, roughness_num: 1)
     when HPXML::RoofTypeClayTile
-      mat_roof = new(name: roof_type, thick_in: 0.75, k_in: 5.83, rho: 118.6, cp: 0.191, roughness_idx: 4)
+      mat_roof = new(name: roof_type, thick_in: 0.75, k_in: 5.83, rho: 118.6, cp: 0.191, roughness_num: 4)
     when HPXML::RoofTypeEPS
       mat_roof = new(name: roof_type, thick_in: 1.0, mat_base: BaseMaterial.InsulationRigid)
     when HPXML::RoofTypePlasticRubber
-      mat_roof = new(name: roof_type, thick_in: 0.25, k_in: 2.78, rho: 110.8, cp: 0.36, roughness_idx: 4)
+      mat_roof = new(name: roof_type, thick_in: 0.25, k_in: 2.78, rho: 110.8, cp: 0.36, roughness_num: 4)
     else
       fail "Unexpected roof type: #{roof_type}."
     end
