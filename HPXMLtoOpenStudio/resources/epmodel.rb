@@ -155,6 +155,51 @@ if Version::UseEPModel
       end
     end
 
+    class SupplyAirflowRatioField
+      attr_reader :heating_ratio, :cooling_ratio
+
+      def initialize(heating_ratio = nil, cooling_ratio = nil)
+        @heating_ratio = heating_ratio
+        @cooling_ratio = cooling_ratio
+      end
+
+      def self.fromHeatingRatio(heating_ratio)
+        new(heating_ratio)
+      end
+
+      def self.fromCoolingRatio(cooling_ratio)
+        new(nil, cooling_ratio)
+      end
+    end
+
+    class UnitarySystemPerformanceMultispeed
+      attr_reader :model, :supply_airflow_ratio_fields
+
+      def initialize(model)
+        @model = model
+        @supply_airflow_ratio_fields = []
+        @single_mode_operation = false
+      end
+
+      def setSingleModeOperation(single_mode_operation)
+        @single_mode_operation = single_mode_operation
+        true
+      end
+
+      def addSupplyAirflowRatioField(ratio_field)
+        unless ratio_field.is_a?(SupplyAirflowRatioField)
+          raise 'Expected SupplyAirflowRatioField.'
+        end
+
+        @supply_airflow_ratio_fields << ratio_field
+        true
+      end
+
+      def single_mode_operation
+        @single_mode_operation
+      end
+    end
+
     def self.add_multispeed_coil_stage(coil, stage_fields)
       group = coil.pushExtensibleGroup
       stage_fields.each_with_index do |value, index|
@@ -198,6 +243,67 @@ if Version::UseEPModel
       stages.dup
     end
 
+    def self.add_unitary_system_performance_multispeed(unitary, performance)
+      ratio_fields = performance.supply_airflow_ratio_fields
+      raise "Unitary system '#{unitary.name}' has no supply airflow ratios." if ratio_fields.empty?
+
+      heating_speed_count = ratio_fields.count { |ratio_field| !ratio_field.heating_ratio.nil? }
+      heating_speed_count = 1 if heating_speed_count == 0
+      cooling_speed_count = ratio_fields.count { |ratio_field| !ratio_field.cooling_ratio.nil? }
+      cooling_speed_count = 1 if cooling_speed_count == 0
+
+      performance_idd_type = OpenStudio::IddObjectType.new('UnitarySystemPerformance_Multispeed')
+      performance_object = OpenStudio::IdfObject.new(performance_idd_type)
+      performance_name = "#{unitary.name} Unitary System Performance"
+      unless performance_object.setName(performance_name).is_initialized
+        raise "Could not name UnitarySystemPerformance:Multispeed for '#{unitary.name}'."
+      end
+
+      fields = {
+        'Number of Speeds for Heating' => heating_speed_count,
+        'Number of Speeds for Cooling' => cooling_speed_count,
+        'Single Mode Operation' => performance.single_mode_operation ? 'Yes' : 'No',
+        'No Load Supply Air Flow Rate Ratio' => 1.0
+      }
+      fields.each do |field_name, value|
+        field_index = performance_object.iddObject.getFieldIndex(field_name)
+        raise "Could not find '#{field_name}' field for '#{performance_name}'." unless field_index.is_initialized
+
+        if value.is_a?(Integer)
+          field_set = performance_object.setInt(field_index.get, value)
+        elsif value.is_a?(Numeric)
+          field_set = performance_object.setDouble(field_index.get, value)
+        else
+          field_set = performance_object.setString(field_index.get, value)
+        end
+        raise "Could not set '#{field_name}' for '#{performance_name}'." unless field_set
+      end
+
+      ratio_fields.each do |ratio_field|
+        group = performance_object.pushExtensibleGroup
+        [ratio_field.heating_ratio, ratio_field.cooling_ratio].each_with_index do |ratio, index|
+          if ratio.nil?
+            field_set = group.setString(index, 'Autosize')
+          else
+            field_set = group.setDouble(index, ratio)
+          end
+          raise "Could not set supply airflow ratio #{index} for '#{performance_name}'." unless field_set
+        end
+      end
+
+      performance_object = performance.model.addObject(performance_object)
+      raise "Could not add '#{performance_name}' to the model." unless performance_object.is_initialized
+
+      type_field = unitary.iddObject.getFieldIndex('Design Specification Multispeed Object Type')
+      raise "Could not find Design Specification Multispeed Object Type field for '#{unitary.name}'." unless type_field.is_initialized
+      unless unitary.setString(type_field.get, 'UnitarySystemPerformance:Multispeed')
+        raise "Could not set Design Specification Multispeed Object Type for '#{unitary.name}'."
+      end
+      unless set_pointer(unitary, 'Design Specification Multispeed Object Name', performance_object.get)
+        raise "Could not set Design Specification Multispeed Object Name for '#{unitary.name}'."
+      end
+    end
+
     def self.add_cooling_dx_multispeed_stage(coil, stage)
       unless stage.is_a?(CoilCoolingDXMultiSpeedStageData)
         raise "Expected CoilCoolingDXMultiSpeedStageData for coil '#{coil.name}'."
@@ -221,6 +327,12 @@ if Version::UseEPModel
     end
     unless OpenStudio::Model.const_defined?(:CoilHeatingDXMultiSpeedStageData, false)
       OpenStudio::Model.const_set(:CoilHeatingDXMultiSpeedStageData, CoilHeatingDXMultiSpeedStageData)
+    end
+    unless OpenStudio::Model.const_defined?(:SupplyAirflowRatioField, false)
+      OpenStudio::Model.const_set(:SupplyAirflowRatioField, SupplyAirflowRatioField)
+    end
+    unless OpenStudio::Model.const_defined?(:UnitarySystemPerformanceMultispeed, false)
+      OpenStudio::Model.const_set(:UnitarySystemPerformanceMultispeed, UnitarySystemPerformanceMultispeed)
     end
 
     unless OpenStudio::Model::CoilCoolingDXMultiSpeed.method_defined?(:addStage)
@@ -249,6 +361,18 @@ if Version::UseEPModel
       OpenStudio::Model::CoilHeatingDXMultiSpeed.class_eval do
         def stages
           EPModelCompatibility.multispeed_coil_stages(self)
+        end
+      end
+    end
+    unless OpenStudio::Model::AirLoopHVACUnitarySystem.method_defined?(:setDesignSpecificationMultispeedObject)
+      OpenStudio::Model::AirLoopHVACUnitarySystem.class_eval do
+        def setDesignSpecificationMultispeedObject(performance)
+          unless performance.is_a?(EPModelCompatibility::UnitarySystemPerformanceMultispeed)
+            raise 'Expected UnitarySystemPerformanceMultispeed.'
+          end
+
+          EPModelCompatibility.add_unitary_system_performance_multispeed(self, performance)
+          true
         end
       end
     end

@@ -368,7 +368,12 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ThermostatSetpointDualSetpoint#setTemperatureDifferenceBetweenCutoutAndSetpoint` | Yes | `resources/hvac.rb` | |
 | `ThermostatSetpointDualSetpoint.new(model)` | Yes | `resources/hvac.rb` | |
 | `Timestep#setNumberOfTimestepsPerHour` | Yes | `resources/simcontrols.rb` | |
-| `UnitarySystemPerformanceMultispeed.new(model)` |  | `resources/hvac.rb` | EPModel lacks this class. Temporarily skipping it causes EnergyPlus severe errors and fatal termination because the multispeed unitary system requires a valid performance object; a class-level shim is needed. |
+| `SupplyAirflowRatioField.new(heating_ratio, cooling_ratio)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Compatibility façade stores the optional heating and cooling ratios for the unitary performance shim. |
+| `SupplyAirflowRatioField.fromCoolingRatio(cooling_ratio)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Compatibility façade stores the cooling ratio and leaves the heating ratio for that speed as `Autosize`. |
+| `UnitarySystemPerformanceMultispeed.new(model)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Compatibility façade stores the mode and supply-airflow ratio fields; EPModel lacks this class. |
+| `UnitarySystemPerformanceMultispeed#setSingleModeOperation(value)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Compatibility façade stores the setting for serialization into the EnergyPlus object. |
+| `UnitarySystemPerformanceMultispeed#addSupplyAirflowRatioField(field)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Compatibility façade collects per-speed ratios for serialization into extensible groups. |
+| `AirLoopHVACUnitarySystem#setDesignSpecificationMultispeedObject(performance)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level override creates an EnergyPlus `UnitarySystemPerformance:Multispeed` object with speed counts, mode, no-load ratio, and per-speed ratios, then sets the unitary's object type and name references. Missing per-speed ratios are written as `Autosize`. |
 | `WaterUseConnections#waterUseEquipment` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel returns a vector that is not iterable from Ruby; a class-level override resolves equipment references from extensible groups and preserves the shared resource call. |
 | `WeatherFile.setWeatherFile(model, epw_file)` |  | `resources/location.rb` | Called only when `Version::UseEPModel` is false. For EPModel, `meta_measure.rb` retains the EPW path through runner reset and passes it to EnergyPlus with `-w`. |
 | `YearDescription#assumedYear` |  | `resources/schedules.rb` | Used only on the OpenStudio 3.11 branch; EPModel reads RunPeriod Begin Year instead. |
