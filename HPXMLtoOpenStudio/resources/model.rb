@@ -46,7 +46,7 @@ module Model
   # @param solar_abs [Double] Solar absorptance
   # @param roughness [String] Roughness for convection (Rough, Smooth, etc.)
   # @return [OpenStudio::Model::StandardOpaqueMaterial] The model object
-  def self.add_opaque_material(model, name:, thickness:, conductivity:, density:, specific_heat:, thermal_abs: nil, solar_abs: nil, roughness: 'Rough')
+  def self.add_opaque_material(model, name:, thickness:, conductivity:, density:, specific_heat:, thermal_abs: nil, solar_abs: nil, roughness: 'MediumRough')
     # Material already exists?
     tolerance = 0.0001
     model.getStandardOpaqueMaterials.each do |mat|
@@ -92,7 +92,7 @@ module Model
   # @param solar_abs [Double] Solar absorptance
   # @param roughness [String] Roughness for convection (Rough, Smooth, etc.)
   # @return [OpenStudio::Model::MasslessOpaqueMaterial] The model object
-  def self.add_massless_material(model, name:, rvalue:, thermal_abs: nil, solar_abs: nil, roughness: 'Rough')
+  def self.add_massless_material(model, name:, rvalue:, thermal_abs: nil, solar_abs: nil, roughness: 'MediumRough')
     # Material already exists?
     tolerance = 0.0001
     model.getStandardOpaqueMaterials.each do |mat|

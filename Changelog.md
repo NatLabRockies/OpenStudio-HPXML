@@ -20,6 +20,7 @@ __Features__
 - Reverts E+ radiant exchange algorithm from CarrollMRT to ScriptF.
 - Adds min/max value warnings for clothes washer and dishwasher label inputs (e.g., `LabelElectricRate` and `LabelGasRate`).
 - HPXMLtoOpenStudio measure: Allow output files to be individually skipped from being written.
+- Adds wall/roof roughness to EnergyPlus materials depending on wall exterior finish and roofing material.
 
 __Bugfixes__
 - **Breaking change**: Prevent possible error if heat pump water heater in confined space with very small containment volume; minimum allowed volume now 32 ft3.

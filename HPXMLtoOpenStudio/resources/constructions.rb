@@ -3329,6 +3329,14 @@ class Construction
         shgc: material.shgc
       )
     else
+      roughness = {
+        1 => 'VeryRough',
+        2 => 'Rough',
+        3 => 'MediumRough',
+        4 => 'MediumSmooth',
+        5 => 'Smooth',
+        6 => 'VerySmooth'
+      }[material.roughness_idx]
       mat = Model.add_opaque_material(
         model,
         name: material.name,
@@ -3337,7 +3345,8 @@ class Construction
         density: UnitConversions.convert(material.rho, 'lbm/ft^3', 'kg/m^3'),
         specific_heat: UnitConversions.convert(material.cp, 'Btu/(lbm*R)', 'J/(kg*K)'),
         thermal_abs: material.tAbs,
-        solar_abs: material.sAbs
+        solar_abs: material.sAbs,
+        roughness: material.roughness_idx
       )
     end
     return mat
