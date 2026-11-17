@@ -11,6 +11,154 @@ if Version::UseEPModel
       field_index.is_initialized && object.setPointer(field_index.get, target.handle)
     end
 
+    def self.get_boiler_hot_waters(model)
+      model.getModelObjects.select do |object|
+        object.iddObject.name.to_s == 'Boiler:HotWater'
+      end.map do |object|
+        object.to_BoilerHotWater.get
+      end
+    end
+
+    def self.get_water_use_equipments(water_use_connections)
+      field_index = water_use_connections.iddObject.getFieldIndex('Water Use Equipment Name')
+      raise "Could not find Water Use Equipment Name field for '#{water_use_connections.name}'." unless field_index.is_initialized
+
+      water_use_equipments = []
+      water_use_connections.numExtensibleGroups.times do |index|
+        group = water_use_connections.getExtensibleGroup(index).to_WorkspaceExtensibleGroup
+        next unless group.is_initialized
+
+        target = group.get.getTarget(field_index.get)
+        next unless target.is_initialized
+
+        water_use_equipment = target.get.to_WaterUseEquipment
+        water_use_equipments << water_use_equipment.get if water_use_equipment.is_initialized
+      end
+      return water_use_equipments
+    end
+
+    def self.get_scheduled_setpoint_managers(node)
+      node.model.getModelObjects.select do |object|
+        next false unless object.iddObject.name.to_s == 'SetpointManager:Scheduled'
+
+        setpoint_manager = object.to_SetpointManagerScheduled
+        next false unless setpoint_manager.is_initialized
+
+        setpoint_node = setpoint_manager.get.setpointNode
+        setpoint_node.is_initialized && setpoint_node.get.handle.to_s == node.handle.to_s
+      end.map do |object|
+        object.to_SetpointManagerScheduled.get
+      end
+    end
+
+    def self.get_boiler_plant_loop(model, boiler)
+      model.getPlantLoops.find do |candidate|
+        candidate.supplyComponents.any? { |component| component.handle.to_s == boiler.handle.to_s }
+      end || fail("Could not find PlantLoop for boiler '#{boiler.name}'.")
+    end
+
+    def self.build_boiler_plant_loop_copy(model, plant_loop)
+      boiler = plant_loop.supplyComponents.find { |component| component.to_BoilerHotWater.is_initialized }
+      raise "Could not find BoilerHotWater on PlantLoop '#{plant_loop.name}'." if boiler.nil?
+      boiler = clone_model_object(boiler.to_BoilerHotWater.get, model).to_BoilerHotWater
+      raise "Could not clone BoilerHotWater on PlantLoop '#{plant_loop.name}'." unless boiler.is_initialized
+      boiler = boiler.get
+
+      plant_loop_copy = OpenStudio::Model::PlantLoop.new(model)
+      raise "Could not name copied boiler PlantLoop '#{plant_loop.name}'." unless plant_loop_copy.setName("#{plant_loop.name} DHW")
+      copy_boiler_plant_loop_properties(plant_loop, plant_loop_copy)
+
+      pump = plant_loop.supplyComponents.find { |component| component.to_PumpVariableSpeed.is_initialized }
+      unless pump.nil?
+        source_pump = pump.to_PumpVariableSpeed.get
+        pump = clone_model_object(source_pump, model).to_PumpVariableSpeed
+        raise "Could not clone pump on PlantLoop '#{plant_loop.name}'." unless pump.is_initialized
+        pump = pump.get
+        pump_name_number = 1
+        pump_name = "#{source_pump.name} #{pump_name_number}"
+        while model.getModelObjects.any? { |object| object.name.to_s.casecmp(pump_name).zero? }
+          pump_name_number += 1
+          pump_name = "#{source_pump.name} #{pump_name_number}"
+        end
+        raise "Could not name cloned pump on PlantLoop '#{plant_loop_copy.name}'." unless pump.setName(pump_name)
+        raise "Could not attach cloned pump to PlantLoop '#{plant_loop_copy.name}'." unless pump.addToNode(plant_loop_copy.supplyInletNode)
+      end
+      raise "Could not attach cloned boiler to PlantLoop '#{plant_loop_copy.name}'." unless plant_loop_copy.addSupplyBranchForComponent(boiler)
+
+      supply_bypass = Model.add_pipe_adiabatic(model)
+      raise "Could not add supply bypass to PlantLoop '#{plant_loop_copy.name}'." unless plant_loop_copy.addSupplyBranchForComponent(supply_bypass)
+      supply_outlet_pipe = Model.add_pipe_adiabatic(model)
+      raise "Could not add supply outlet pipe to PlantLoop '#{plant_loop_copy.name}'." unless supply_outlet_pipe.addToNode(plant_loop_copy.supplyOutletNode)
+      demand_bypass = Model.add_pipe_adiabatic(model)
+      raise "Could not add demand bypass to PlantLoop '#{plant_loop_copy.name}'." unless plant_loop_copy.addDemandBranchForComponent(demand_bypass)
+      demand_inlet_pipe = Model.add_pipe_adiabatic(model)
+      raise "Could not add demand inlet pipe to PlantLoop '#{plant_loop_copy.name}'." unless demand_inlet_pipe.addToNode(plant_loop_copy.demandInletNode)
+      demand_outlet_pipe = Model.add_pipe_adiabatic(model)
+      raise "Could not add demand outlet pipe to PlantLoop '#{plant_loop_copy.name}'." unless demand_outlet_pipe.addToNode(plant_loop_copy.demandOutletNode)
+
+      sizing_plant = plant_loop_copy.sizingPlant
+      setpoint_schedule = Model.add_schedule_constant(
+        model,
+        name: "#{plant_loop_copy.name} setpoint",
+        value: sizing_plant.designLoopExitTemperature,
+        limits: EPlus::ScheduleTypeLimitsTemperature
+      )
+      setpoint_manager = OpenStudio::Model::SetpointManagerScheduled.new(model, setpoint_schedule)
+      raise "Could not add setpoint manager to PlantLoop '#{plant_loop_copy.name}'." unless setpoint_manager.addToNode(plant_loop_copy.supplyOutletNode)
+
+      return plant_loop_copy
+    end
+
+    def self.add_baseboard_coil_to_plant_loop(plant_loop, baseboard, thermal_zone)
+      raise "Could not add baseboard '#{baseboard.name}' to ThermalZone '#{thermal_zone.name}'." unless baseboard.addToThermalZone(thermal_zone)
+
+      heating_coil = baseboard.heatingCoil.to_CoilHeatingWaterBaseboard
+      raise "Could not find heating coil for baseboard '#{baseboard.name}'." unless heating_coil.is_initialized
+      raise "Could not add baseboard coil for '#{baseboard.name}' to PlantLoop '#{plant_loop.name}'." unless plant_loop.addDemandBranchForComponent(heating_coil.get)
+    end
+
+    def self.copy_boiler_plant_loop_properties(source, target)
+      target.setLoadDistributionScheme(source.loadDistributionScheme)
+      target.setFluidType(source.fluidType)
+      target.setGlycolConcentration(source.glycolConcentration) if source.fluidType == EPlus::FluidPropyleneGlycol
+      target.setMaximumLoopTemperature(source.maximumLoopTemperature)
+      target.setMinimumLoopTemperature(source.minimumLoopTemperature)
+      if source.isMaximumLoopFlowRateAutosized
+        target.autosizeMaximumLoopFlowRate
+      elsif source.maximumLoopFlowRate.is_initialized
+        target.setMaximumLoopFlowRate(source.maximumLoopFlowRate.get)
+      end
+      if source.isMinimumLoopFlowRateAutosized
+        target.autosizeMinimumLoopFlowRate
+      elsif source.minimumLoopFlowRate.is_initialized
+        target.setMinimumLoopFlowRate(source.minimumLoopFlowRate.get)
+      end
+      if source.isPlantLoopVolumeAutocalculated
+        target.autocalculatePlantLoopVolume
+      elsif source.plantLoopVolume.is_initialized
+        target.setPlantLoopVolume(source.plantLoopVolume.get)
+      end
+      target.setCommonPipeSimulation(source.commonPipeSimulation) unless source.isCommonPipeSimulationDefaulted
+
+      source_sizing = source.sizingPlant
+      target_sizing = target.sizingPlant
+      target_sizing.setLoopType(source_sizing.loopType)
+      target_sizing.setDesignLoopExitTemperature(source_sizing.designLoopExitTemperature)
+      target_sizing.setLoopDesignTemperatureDifference(source_sizing.loopDesignTemperatureDifference)
+      target_sizing.setSizingOption(source_sizing.sizingOption)
+      target_sizing.setZoneTimestepsinAveragingWindow(source_sizing.zoneTimestepsinAveragingWindow)
+      target_sizing.setCoincidentSizingFactorMode(source_sizing.coincidentSizingFactorMode)
+
+      raise "Could not copy availability managers for PlantLoop '#{target.name}'." unless target.setAvailabilityManagers(source.availabilityManagers)
+    end
+
+    def self.clone_model_object(object, model)
+      cloned_object = model.addObject(object.idfObject.clone(false))
+      raise "Could not clone #{object.iddObject.name} '#{object.name}'." unless cloned_object.is_initialized
+
+      return cloned_object.get
+    end
+
     def self.set_default_schedule_type_limits(schedule, limits_name)
       return if schedule.scheduleTypeLimits.is_initialized
 

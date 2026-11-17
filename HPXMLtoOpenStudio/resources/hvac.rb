@@ -1272,12 +1272,18 @@ module HVAC
         ua_value: bb_ua,
         max_flow_rate: max_water_flow
       )
-      plant_loop.addDemandBranchForComponent(htg_coil)
+      unless Version::UseEPModel
+        plant_loop.addDemandBranchForComponent(htg_coil)
+      end
 
       # Baseboard
       zone_hvac = OpenStudio::Model::ZoneHVACBaseboardConvectiveWater.new(model, model.alwaysOnDiscreteSchedule, htg_coil)
       zone_hvac.setName(obj_name + ' baseboard')
-      zone_hvac.addToThermalZone(control_zone)
+      if Version::UseEPModel
+        EPModelCompatibility.add_baseboard_coil_to_plant_loop(plant_loop, zone_hvac, control_zone)
+      else
+        zone_hvac.addToThermalZone(control_zone)
+      end
       zone_hvac.additionalProperties.setFeature('IsHeatPumpBackup', heating_system.is_heat_pump_backup_system) # Used by reporting measure
       if heating_system.is_heat_pump_backup_system
         add_fan_pump_disaggregation_ems_program(model, pump, nil, nil, zone_hvac, heating_system)
