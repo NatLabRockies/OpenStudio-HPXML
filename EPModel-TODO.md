@@ -22,9 +22,13 @@ diff -u 1/run/eplusout.err 2/run/eplusout.err
 
 Review warning, severe, and fatal message differences. Do not require byte-for-byte equality because the OpenStudio builds may use different EnergyPlus versions.
 
-For `workflow/sample_files/base-dhw-indirect.xml`, both the OpenStudio 3.11 and EPModel runs completed with 8 warnings and 0 severe errors. Their warning, severe, and fatal messages match; remaining `eplusout.err` differences include EnergyPlus-version-specific formatting and an unused-schedule summary in the EPModel run.
+## Ongoing Base Sample Sweep
 
-### Observed EPModel Messages
+Run `workflow/sample_files/base*.xml` in filename order with both builds, using output folders `1` for OpenStudio 3.11 and `2` for EPModel. Compare each pair's `eplusout.err` files; continue only when both runs complete and there are no new warning, severe, or fatal message differences. Stop at an EPModel API gap or unexpected diagnostic difference, record the current sample here, and resume by rerunning that sample after addressing the issue. The known EPModel-only VAV terminal warning that fixed minimum airflow is ignored has appeared on successful samples; this known warning is not a new mismatch.
+
+**Current stop point: `workflow/sample_files/base-atticroof-vented.xml`.** The OpenStudio 3.11 run completes, but EPModel input creation fails because `SpaceInfiltrationEffectiveLeakageArea#setSpace` is unavailable. The call occurs in `resources/model.rb` while applying infiltration to a vented attic; no EPModel `eplusout.err` is produced. Resume the sweep with this sample after resolving the API gap.
+
+## Observed EPModel Messages
 
 Successful EPModel base runs emit these nonfatal OpenStudio messages:
 
