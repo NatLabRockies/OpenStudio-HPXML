@@ -51,6 +51,36 @@ if Version::UseEPModel
       end
     end
 
+    def self.workspace_field_string(object, field_name)
+      field_index = object.iddObject.getFieldIndex(field_name)
+      return nil unless field_index.is_initialized
+
+      value = object.getString(field_index.get)
+      value.is_initialized ? value.get : nil
+    end
+
+    def self.remove_unused_schedule_constants(workspace)
+      ems_schedule_names = []
+      {
+        'EnergyManagementSystem:Sensor' => 'Output:Variable or Output:Meter Index Key Name',
+        'EnergyManagementSystem:Actuator' => 'Actuated Component Unique Name'
+      }.each do |object_type, field_name|
+        workspace.getObjectsByType(object_type.to_IddObjectType).each do |object|
+          schedule_name = self.workspace_field_string(object, field_name)
+          ems_schedule_names << schedule_name.downcase unless schedule_name.nil?
+        end
+      end
+
+      workspace.getObjectsByType('Schedule_Constant'.to_IddObjectType).each do |schedule|
+        schedule_name = self.workspace_field_string(schedule, 'Name')
+        next unless schedule.sources.empty?
+        next if schedule_name.nil?
+        next if ems_schedule_names.include?(schedule_name.downcase)
+
+        raise "Could not remove unused Schedule:Constant '#{schedule_name}'." unless schedule.remove
+      end
+    end
+
     def self.get_boiler_plant_loop(model, boiler)
       model.getPlantLoops.find do |candidate|
         candidate.supplyComponents.any? { |component| component.handle.to_s == boiler.handle.to_s }
@@ -1250,6 +1280,42 @@ if Version::UseEPModel
         to_a
       end
     end
+  end
+
+  unless OpenStudio::EPModel::FoundationKiva.method_defined?(:setExteriorHorizontalInsulationMaterial)
+    OpenStudio::EPModel::FoundationKiva.define_method(:setExteriorHorizontalInsulationMaterial) do |material|
+      EPModelCompatibility.set_pointer(self, 'Exterior Horizontal Insulation Material Name', material)
+    end
+  end
+
+  unless OpenStudio::EPModel::FoundationKiva.method_defined?(:setExteriorVerticalInsulationMaterial)
+    OpenStudio::EPModel::FoundationKiva.define_method(:setExteriorVerticalInsulationMaterial) do |material|
+      EPModelCompatibility.set_pointer(self, 'Exterior Vertical Insulation Material Name', material)
+    end
+  end
+
+  unless OpenStudio::EPModel::FoundationKiva.method_defined?(:setInteriorHorizontalInsulationMaterial)
+    OpenStudio::EPModel::FoundationKiva.define_method(:setInteriorHorizontalInsulationMaterial) do |material|
+      EPModelCompatibility.set_pointer(self, 'Interior Horizontal Insulation Material Name', material)
+    end
+  end
+
+  unless OpenStudio::EPModel::FoundationKiva.method_defined?(:setInteriorVerticalInsulationMaterial)
+    OpenStudio::EPModel::FoundationKiva.define_method(:setInteriorVerticalInsulationMaterial) do |material|
+      EPModelCompatibility.set_pointer(self, 'Interior Vertical Insulation Material Name', material)
+    end
+  end
+
+  OpenStudio::EPModel::ZoneHVACDehumidifierDX.define_method(:setAvailabilitySchedule) do |schedule|
+    EPModelCompatibility.set_pointer(self, 'Availability Schedule Name', schedule)
+  end
+
+  OpenStudio::EPModel::WaterUseConnections.define_method(:waterUseEquipment) do
+    EPModelCompatibility.get_water_use_equipments(self)
+  end
+
+  OpenStudio::EPModel::Model.define_method(:getBoilerHotWaters) do
+    EPModelCompatibility.get_boiler_hot_waters(self)
   end
 
   if not OpenStudio::EPModel::FoundationKiva.method_defined?(:addCustomBlock)

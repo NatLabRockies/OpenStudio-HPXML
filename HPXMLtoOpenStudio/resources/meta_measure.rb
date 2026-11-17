@@ -72,7 +72,9 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
   end
 
   # Remove unused objects automatically added by OpenStudio?
-  unless Version::UseEPModel
+  if Version::UseEPModel
+    EPModelCompatibility.remove_unused_schedule_constants(workspace)
+  else
     [model.alwaysOnContinuousSchedule,
      model.alwaysOnDiscreteSchedule,
      model.alwaysOffDiscreteSchedule].each do |sch|

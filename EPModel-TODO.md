@@ -4,7 +4,7 @@
 When false, retain the OpenStudio 3.11 workflow.
 A shim is Ruby compatibility code that lets existing resource code work around an EPModel API gap using available EPModel APIs.
 Record each EPModel API gap and its current workaround in the relevant section of this TODO.
-Keep shims in `resources/epmodel.rb` and use explicit `Version::UseEPModel` switches at resource call sites that invoke them.
+Keep shims in `resources/epmodel.rb`. Prefer class-level overrides when they preserve an existing resource call and behavior; use resource-level `Version::UseEPModel` switches when the EPModel path requires a different algorithm or call sequence.
 A workaround does not resolve the underlying SDK gap; track current handling separately from remaining work.
 
 ## Baseline Checks
@@ -82,6 +82,10 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `EnergyManagementSystemSubroutine#addLine(line)` |  | `resources/airflow.rb`, `resources/epmodel.rb` | Shim appends a `ProgramLine` group, removes CR/LF and commas from program text, and stores `!` comments as field comments. |
 | `FanSystemModel#numberofSpeeds` | Yes | `resources/epmodel.rb` | EPModel returns zero when `Number of Speeds` is blank; shim returns the legacy default of one and preserves explicit counts. |
 | `FoundationKiva#addCustomBlock(material, depth, x, z)` |  | `resources/constructions.rb` | Implemented with extensible-group field writes in `epmodel.rb`. |
+| `FoundationKiva#setExteriorHorizontalInsulationMaterial(material)` |  | `resources/constructions.rb`, `resources/epmodel.rb` | EPModel lacks the typed material setter; a class-level override writes the material pointer to the corresponding `Foundation:Kiva` field. |
+| `FoundationKiva#setExteriorVerticalInsulationMaterial(material)` |  | `resources/constructions.rb`, `resources/epmodel.rb` | EPModel lacks the typed material setter; a class-level override writes the material pointer to the corresponding `Foundation:Kiva` field. |
+| `FoundationKiva#setInteriorHorizontalInsulationMaterial(material)` |  | `resources/constructions.rb`, `resources/epmodel.rb` | EPModel lacks the typed material setter; a class-level override writes the material pointer to the corresponding `Foundation:Kiva` field. |
+| `FoundationKiva#setInteriorVerticalInsulationMaterial(material)` |  | `resources/constructions.rb`, `resources/epmodel.rb` | EPModel lacks the typed material setter; a class-level override writes the material pointer to the corresponding `Foundation:Kiva` field. |
 | `FoundationKiva#numExtensibleGroups` | Yes | `resources/epmodel.rb` | Used to enforce the ten-group limit. |
 | `FoundationKiva#pushExtensibleGroup` | Yes | `resources/epmodel.rb` | Used by the `addCustomBlock` shim. |
 | `FoundationKiva#setInitialIndoorAirTemperature` | Yes | `resources/constructions.rb` | |
@@ -146,8 +150,8 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `InternalMassDefinition#setSurfaceArea` |  | `resources/model.rb` | Delegates to `InteriorPartitionSurface#setSurfaceArea`. |
 | `InternalMassDefinition.new(model)` |  | `resources/model.rb` | Creates an `InteriorPartitionSurface` with placeholder vertices, then sets its explicit area. |
 | `MeterCustom#addKeyVarGroup(key, output_variable_or_meter)` |  | `resources/model.rb`, `resources/epmodel.rb` | Shim appends a group with `Key Name` and `Output Variable or Meter Name` fields. |
-| `Model#alwaysOffDiscreteSchedule` |  | `resources/meta_measure.rb` | Called only for OpenStudio 3.11 cleanup; EPModel skips synthesizing the unused schedule. |
-| `Model#getBoilerHotWaters` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's typed collection getter evaluates unset baseboard-coil sizing fields and triggers native assertions. EPModel filters model objects by IDD type before casting; OpenStudio 3.11 retains its native getter. |
+| `Model#alwaysOffDiscreteSchedule` |  | `resources/meta_measure.rb` | Part of the OpenStudio 3.11 unused-global-schedule cleanup. EPModel removes unreferenced `Schedule:Constant` objects from the translated workspace while preserving schedule names referenced by EMS sensors and actuators. |
+| `Model#getBoilerHotWaters` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's typed collection getter evaluates unset baseboard-coil sizing fields and triggers native assertions. A class-level override filters model objects by IDD type before casting, preserving the shared resource call. |
 | `Model#addObject(idf_object)` | Yes | `resources/epmodel.rb` | Adds the cloned boiler and pump IDF objects used by the indirect-DHW loop rebuild. |
 | `Model#getConvergenceLimits` | Yes | `resources/simcontrols.rb` | |
 | `Model#getFoundationKivas` | Yes | `resources/epmodel.rb` | Resolves the typed target for `adjacentFoundation`. |
@@ -180,7 +184,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ModelObject#setPointer` | Yes | `resources/epmodel.rb` | Used by relationship shims. |
 | `ModelObject#to_AdditionalProperties` |  | `resources/output.rb`, `resources/meta_measure.rb`, `ReportSimulationOutput/measure.rb` | Cast is used only on the OpenStudio 3.11 path; EPModel uses a process-local `additionalProperties` adapter instead of model objects. |
 | `ModelObject#to_SpaceLoadInstance` |  | `resources/model.rb` | Used only by the OpenStudio 3.11 actuator path; EPModel exposes no SpaceLoadInstance type or cast. |
-| `Node#setpointManagers` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel returns a vector that is not iterable from Ruby; the EPModel resource branch finds scheduled setpoint managers by their target node. |
+| `Node#setpointManagers` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel returns a vector that is not iterable from Ruby; the EPModel resource branch finds scheduled setpoint managers by their target node. The helper is intentionally narrower than the general getter, so a class-level override would change its semantics. |
 | `PlantLoop#clone(model)` |  | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's `Loop::clone` currently returns an empty Catchall object. The indirect-DHW path rebuilds a dedicated boiler loop in the EPModel compatibility layer by copying loop/sizing settings and recreating boiler-side components; general loop cloning remains an SDK gap. |
 | `PlantLoop#setGlycolConcentration` | Yes | `resources/model.rb`, `resources/epmodel.rb` | EPModel's native implementation does not successfully preserve the legacy concentration on the EnergyPlus PlantLoop. The EPModel path instead uses `setGlycolFluidType` to create glycol property objects and set `UserDefinedFluidType`, preserving the requested concentration. |
 | `PlantLoop#setGlycolFluidType(glycol_type, concentration)` |  | `resources/model.rb`, `resources/epmodel.rb` | Compatibility helper creates `FluidProperties:GlycolConcentration` and `FluidProperties:Name` and links the PlantLoop to them. The 3.11 path retains its native fluid type and concentration setters. |
@@ -242,7 +246,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ScheduleRule#setStartDate` | Yes | `resources/model.rb` | |
 | `ScheduleRule.new(schedule)` | Yes | `resources/model.rb`, `resources/epmodel.rb` | Constructor shim assigns the ruleset's type limits to its day schedule when limits exist. |
 | `ScheduleRuleset#defaultDaySchedule` | Yes | `resources/model.rb` | |
-| `ScheduleRuleset#getDaySchedule(date)` | Yes | `resources/constructions.rb` | Used when `Version::UseEPModel` is true; OpenStudio 3.11 retains `getDaySchedules(date, date)[0]`. |
+| `ScheduleRuleset#getDaySchedule(date)` | Yes | `resources/constructions.rb` | EPModel provides a single-date getter; OpenStudio 3.11 uses a date-range getter returning a collection. The resource branch keeps the API shapes explicit instead of adding a partial range-method override. |
 | `ScheduleRuleset#name` | Yes | `resources/model.rb` | |
 | `ScheduleRuleset#setName` | Yes | `resources/model.rb` | |
 | `ScheduleRuleset#setScheduleTypeLimits` | Yes | `resources/model.rb`, `resources/epmodel.rb` | Shim propagates type limits to the default, special, and rule day schedules; native EPModel only updates the ruleset. |
@@ -357,13 +361,14 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ThermostatSetpointDualSetpoint#setTemperatureDifferenceBetweenCutoutAndSetpoint` | Yes | `resources/hvac.rb` | |
 | `ThermostatSetpointDualSetpoint.new(model)` | Yes | `resources/hvac.rb` | |
 | `Timestep#setNumberOfTimestepsPerHour` | Yes | `resources/simcontrols.rb` | |
-| `WaterUseConnections#waterUseEquipment` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel returns a vector that is not iterable from Ruby; the EPModel resource branch resolves equipment references from extensible groups instead. |
+| `WaterUseConnections#waterUseEquipment` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel returns a vector that is not iterable from Ruby; a class-level override resolves equipment references from extensible groups and preserves the shared resource call. |
 | `WeatherFile.setWeatherFile(model, epw_file)` |  | `resources/location.rb` | Called only when `Version::UseEPModel` is false. For EPModel, `meta_measure.rb` retains the EPW path through runner reset and passes it to EnergyPlus with `-w`. |
 | `YearDescription#assumedYear` |  | `resources/schedules.rb` | Used only on the OpenStudio 3.11 branch; EPModel reads RunPeriod Begin Year instead. |
 | `YearDescription#setCalendarYear` |  | `resources/location.rb` | Used only on the OpenStudio 3.11 branch; EPModel writes RunPeriod year fields instead. |
 | `ZoneCapacitanceMultiplierResearchSpecial#setHumidityCapacityMultiplier` | Yes | `resources/simcontrols.rb` | |
 | `ZoneCapacitanceMultiplierResearchSpecial#setTemperatureCapacityMultiplier` | Yes | `resources/simcontrols.rb` | |
 | `ZoneHVACBaseboardConvectiveWater#heatingCoil` | Yes | `resources/hvac.rb`, `resources/epmodel.rb` | EPModel stores the baseboard coil as a transient child, so the EPModel branch attaches the baseboard to the zone before adding its child coil to the plant loop. The legacy branch continues attaching the original coil object. |
+| `ZoneHVACDehumidifierDX#setAvailabilitySchedule(schedule)` | Yes | `resources/hvac.rb`, `resources/epmodel.rb` | EPModel's native setter does not preserve the schedule pointer; a class-level override writes the `Availability Schedule Name` pointer directly. |
 
 ## Direct IDF Export Normalization
 

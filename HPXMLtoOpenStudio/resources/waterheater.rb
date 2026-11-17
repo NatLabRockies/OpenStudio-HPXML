@@ -488,12 +488,7 @@ module Waterheater
         next unless c.to_WaterUseConnections.is_initialized
 
         wuc = c.to_WaterUseConnections.get
-        if Version::UseEPModel
-          water_use_equipments = EPModelCompatibility.get_water_use_equipments(wuc)
-        else
-          water_use_equipments = wuc.waterUseEquipment
-        end
-        water_use_equipments.each do |wu|
+        wuc.waterUseEquipment.each do |wu|
           # water use equipment peak mass flow rate
           wu_peak = wu.waterUseEquipmentDefinition.peakFlowRate
           equipment_peaks[wu.name.to_s] = wu_peak
@@ -1476,12 +1471,7 @@ module Waterheater
     # Search for the right boiler OS object
     boiler_hw = nil
     plant_loop_hw = nil
-    if Version::UseEPModel
-      boilers = EPModelCompatibility.get_boiler_hot_waters(model)
-    else
-      boilers = model.getBoilerHotWaters
-    end
-    boilers.each do |bhw|
+    model.getBoilerHotWaters.each do |bhw|
       sys_id = bhw.additionalProperties.getFeatureAsString('HPXML_ID')
       next unless sys_id.is_initialized && sys_id.get == heating_source_id
 
