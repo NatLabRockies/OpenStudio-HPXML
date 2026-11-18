@@ -125,6 +125,28 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     assert_equal(custom.handle, activity.scheduleTypeLimits.get.handle)
   end
 
+  def test_water_use_connection_equipment_and_schedules
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    connection = OpenStudio::Model::WaterUseConnections.new(model)
+    fixture_flow = Model.add_schedule_constant(model, name: 'Fixture Flow Fraction', value: 0.5)
+    washer_flow = Model.add_schedule_constant(model, name: 'Washer Flow Fraction', value: 0.25)
+    target_temp = Model.add_schedule_constant(model, name: 'Fixture Target Temperature', value: 40.0)
+
+    fixture = Model.add_water_use_equipment(model, name: 'Fixture', end_use: nil, peak_flow_rate: 1.0e-6,
+                                           flow_rate_schedule: fixture_flow, water_use_connections: connection, target_temperature_schedule: target_temp)
+    washer = Model.add_water_use_equipment(model, name: 'Washer', end_use: nil, peak_flow_rate: 2.0e-6,
+                                          flow_rate_schedule: washer_flow, water_use_connections: connection, target_temperature_schedule: nil)
+
+    equipment = connection.waterUseEquipment
+    assert_equal([fixture.handle, washer.handle], equipment.map(&:handle))
+    assert_equal(fixture_flow.handle, equipment[0].flowRateFractionSchedule.get.handle)
+    assert_equal(washer_flow.handle, equipment[1].flowRateFractionSchedule.get.handle)
+    assert_equal(target_temp.handle, equipment[0].waterUseEquipmentDefinition.targetTemperatureSchedule.get.handle)
+    refute(equipment[1].waterUseEquipmentDefinition.targetTemperatureSchedule.is_initialized)
+  end
+
   def test_ground_heat_exchanger_and_glycol
     return unless Version::UseEPModel
 

@@ -11,6 +11,16 @@ if Version::UseEPModel
       field_index.is_initialized && object.setPointer(field_index.get, target.handle)
     end
 
+    def self.get_schedule(object, field_name)
+      field_index = object.iddObject.getFieldIndex(field_name)
+      return OpenStudio::EPModel::OptionalSchedule.new unless field_index.is_initialized
+
+      target = object.getTarget(field_index.get)
+      return OpenStudio::EPModel::OptionalSchedule.new unless target.is_initialized
+
+      target.get.to_Schedule
+    end
+
     def self.get_boiler_hot_waters(model)
       model.getModelObjects.select do |object|
         object.iddObject.name.to_s == 'Boiler:HotWater'
@@ -28,7 +38,8 @@ if Version::UseEPModel
         group = water_use_connections.getExtensibleGroup(index).to_WorkspaceExtensibleGroup
         next unless group.is_initialized
 
-        target = group.get.getTarget(field_index.get)
+        # Extensible-group fields use local indices, unlike the parent object's field index.
+        target = group.get.getTarget(0)
         next unless target.is_initialized
 
         water_use_equipment = target.get.to_WaterUseEquipment
@@ -1337,6 +1348,18 @@ if Version::UseEPModel
   end
 
   unless OpenStudio::EPModel::People.method_defined?(:setSpace)
+  unless OpenStudio::EPModel::WaterUseEquipment.method_defined?(:flowRateFractionSchedule)
+    OpenStudio::EPModel::WaterUseEquipment.define_method(:flowRateFractionSchedule) do
+      EPModelCompatibility.get_schedule(self, 'Flow Rate Fraction Schedule Name')
+    end
+  end
+
+  unless OpenStudio::EPModel::WaterUseEquipment.method_defined?(:targetTemperatureSchedule)
+    OpenStudio::EPModel::WaterUseEquipment.define_method(:targetTemperatureSchedule) do
+      EPModelCompatibility.get_schedule(self, 'Target Temperature Schedule Name')
+    end
+  end
+
     OpenStudio::EPModel::People.define_method(:setSpace) do |space|
       EPModelCompatibility.set_pointer(self, 'Zone or ZoneList or Space or SpaceList Name', space)
     end
