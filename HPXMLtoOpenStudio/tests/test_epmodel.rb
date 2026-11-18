@@ -321,6 +321,38 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     assert_raises(ArgumentError) { other_loop.setGlycolFluidType('PropyleneGlycol', 101) }
   end
 
+  def test_wrapped_hpwh_plant_export
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    plant_loop = OpenStudio::Model::PlantLoop.new(model)
+    tank = OpenStudio::Model::WaterHeaterStratified.new(model)
+    tank.heater1SetpointTemperatureSchedule.remove
+    tank.heater2SetpointTemperatureSchedule.remove
+    setpoint = Model.add_schedule_constant(model, name: 'HPWH Setpoint', value: 55.0)
+    assert(tank.setHeater1SetpointTemperatureSchedule(setpoint))
+    assert(tank.setHeater2SetpointTemperatureSchedule(setpoint))
+    assert(plant_loop.addSupplyBranchForComponent(tank))
+    coil = OpenStudio::Model::CoilWaterHeatingAirToWaterHeatPumpWrapped.new(model)
+    fan = OpenStudio::Model::FanSystemModel.new(model)
+    hpwh = OpenStudio::Model::WaterHeaterHeatPumpWrappedCondenser.new(model, coil, tank, fan, setpoint, model.alwaysOnDiscreteSchedule)
+
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    EPModelCompatibility.normalize_workspace(workspace, model)
+    branch_group = workspace.getObjectsByType('Branch'.to_IddObjectType).flat_map(&:extensibleGroups).find do |group|
+      group.getString(1).to_s == hpwh.name.to_s
+    end
+    refute_nil(branch_group)
+    assert_equal('WaterHeater:HeatPump:WrappedCondenser', branch_group.getString(0).get)
+    exported_hpwh = workspace.getObjectByTypeAndName('WaterHeater:HeatPump:WrappedCondenser'.to_IddObjectType, hpwh.name.to_s).get
+    fields = ['Tank Name', 'DX Coil Name', 'Fan Name', 'Compressor Setpoint Temperature Schedule Name']
+    assert_equal([tank, coil, fan, setpoint].map { |object| object.name.to_s },
+                 fields.map { |field| exported_hpwh.getString(exported_hpwh.iddObject.getFieldIndex(field).get).get })
+    equipment_groups = workspace.getObjectsByType('PlantEquipmentList'.to_IddObjectType).flat_map(&:extensibleGroups)
+    assert_includes(equipment_groups.map { |group| [group.getString(0).to_s, group.getString(1).to_s] },
+                    ['WaterHeater:HeatPump:WrappedCondenser', hpwh.name.to_s])
+  end
+
   def test_ground_heat_exchanger_uncontrolled_operation
     return unless Version::UseEPModel
 

@@ -26,9 +26,12 @@ Review warning, severe, and fatal message differences. Do not require byte-for-b
 
 Run `workflow/sample_files/base*.xml` in filename order with both builds, using output folder `1` for OpenStudio 3.11 and `2` for EPModel. Compare each pair's `eplusout.err` files. Stop at an EPModel API gap or an unexpected warning, severe error, or fatal error difference, and rerun that sample after addressing the issue.
 
-The EPModel-only EnergyPlus warning that fixed minimum airflow is ignored on VAV terminals is expected and does not stop the sweep.
+Expected EnergyPlus warning differences that do not stop the sweep:
 
-**Current stop point:** `workflow/sample_files/base-bldgtype-mf-unit-shared-boiler-only-fan-coil-fireplace-elec.xml` — next untested sample; no known blocker.
+- **EPModel only:** Fixed minimum airflow is ignored on VAV terminals.
+- **Legacy only, shared ground-loop sample:** Water-to-air heat pump coil airflow is below 25% of rated airflow. EnergyPlus 26.2 adjusts airflow for cycling-fan runtime before checking the threshold; the warning also disappears when the transitioned legacy IDF is run on 26.2.
+
+**Current stop point:** `workflow/sample_files/base-bldgtype-mf-unit-shared-water-heater-recirc.xml` — next sample to compare.
 
 ## Observed EPModel Messages
 
@@ -49,6 +52,7 @@ Successful EPModel base runs emit these nonfatal OpenStudio messages:
 - Adds missing EMS global declarations referenced by `EnergyManagementSystem:OutputVariable`, except when the name already belongs to a global variable or actuator.
 - Fills empty `PlantEquipmentOperationSchemes` with an uncontrolled scheme for vertical ground heat exchangers using the corresponding `GroundHeatExchanger:System` objects, matching the legacy ForwardTranslator; it also adds a default heating-load scheme for heating supply components.
 - Adds adiabatic pipes to empty demand-side endpoint branches to match the PlantLoop inlet and outlet nodes. Other cooling and uncontrolled schemes are not synthesized: EPModel `HVACComponent#componentType` currently reports `Heating` for some cooling equipment, so it is not a reliable general classifier.
+- Replaces a wrapped heat-pump water heater's tank reference with the wrapper in plant branches and equipment lists, preserving the tank's plant node connections.
 
 ## EPModel API Calls
 
@@ -416,6 +420,9 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `UnitarySystemPerformanceMultispeed#setSingleModeOperation(value)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Compatibility façade stores the setting for serialization into the EnergyPlus object. |
 | `UnitarySystemPerformanceMultispeed#addSupplyAirflowRatioField(field)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Compatibility façade collects per-speed ratios for serialization into extensible groups. |
 | `AirLoopHVACUnitarySystem#setDesignSpecificationMultispeedObject(performance)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level override creates an EnergyPlus `UnitarySystemPerformance:Multispeed` object with speed counts, mode, no-load ratio, and per-speed ratios, then sets the unitary's object type and name references. Missing per-speed ratios are written as `Autosize`. |
+| `WaterHeaterHeatPumpWrappedCondenser.new(model, coil, tank, fan, setpoint_schedule, availability_schedule)` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim creates the wrapper and attaches the supplied components and schedules without constructing unused defaults. |
+| `WaterHeaterStratified#heater1SetpointTemperatureSchedule` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim unwraps the native optional to match the legacy schedule getter. |
+| `WaterHeaterStratified#heater2SetpointTemperatureSchedule` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim unwraps the native optional to match the legacy schedule getter. |
 | `WaterUseConnections#waterUseEquipment` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | The native vector is not iterable from Ruby. The override resolves each equipment reference at group-local field index 0, not the parent field index, so the combi source-pump EMS includes water draws. |
 | `WaterUseEquipment#flowRateFractionSchedule` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim resolves the flow-rate fraction schedule pointer and returns an optional schedule. |
 | `WaterUseEquipment#targetTemperatureSchedule` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim resolves the target-temperature schedule pointer. An unset pointer returns an empty optional, preserving the combi EMS fallback to the heater setpoint schedule. |

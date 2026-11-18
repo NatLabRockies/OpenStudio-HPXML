@@ -965,6 +965,37 @@ if Version::UseEPModel
       repair_demand_branch_endpoints(workspace)
       add_ground_heat_exchanger_plant_schemes(workspace, model)
       add_default_heating_plant_schemes(workspace, model)
+      normalize_wrapped_hpwh_plant_references(workspace)
+    end
+
+    def self.normalize_wrapped_hpwh_plant_references(workspace)
+      hpwh_type = 'WaterHeater:HeatPump:WrappedCondenser'
+      tank_type = 'WaterHeater:Stratified'
+      wrappers_by_tank = {}
+      workspace.getObjectsByType(hpwh_type.to_IddObjectType).each do |hpwh|
+        tank_name = hpwh.getString(hpwh.iddObject.getFieldIndex('Tank Name').get).get
+        wrappers_by_tank[tank_name.downcase] = hpwh.name.to_s
+      end
+      return if wrappers_by_tank.empty?
+
+      # The model connects the tank to the loop, but EnergyPlus dispatches the wrapper.
+      ['Branch', 'PlantEquipmentList'].each do |object_type|
+        workspace.getObjectsByType(object_type.to_IddObjectType).each do |object|
+          object.extensibleGroups.each do |group|
+            component_type = group.getString(0)
+            component_name = group.getString(1)
+            next unless component_type.is_initialized && component_type.get.casecmp(tank_type).zero?
+            next unless component_name.is_initialized
+
+            wrapper_name = wrappers_by_tank[component_name.get.downcase]
+            next if wrapper_name.nil?
+
+            unless group.setString(0, hpwh_type) && group.setString(1, wrapper_name)
+              raise "Could not substitute wrapped heat pump water heater '#{wrapper_name}' in '#{object.name}'."
+            end
+          end
+        end
+      end
     end
 
     def self.add_global_geometry_rules(workspace)
@@ -1589,6 +1620,36 @@ if Version::UseEPModel
       meter_type = OpenStudio::IddObjectType.new('Output_Meter')
       getObjectsByType(meter_type).map { |object| EPModelCompatibility::OutputMeter.new(object) }
     end
+  end
+
+  [:heater1SetpointTemperatureSchedule, :heater2SetpointTemperatureSchedule].each do |method_name|
+    native_getter = OpenStudio::EPModel::WaterHeaterStratified.instance_method(method_name)
+    OpenStudio::EPModel::WaterHeaterStratified.define_method(method_name) do
+      native_getter.bind(self).call.get
+    end
+  end
+
+  native_wrapped_hpwh_new = OpenStudio::EPModel::WaterHeaterHeatPumpWrappedCondenser.method(:new)
+  OpenStudio::EPModel::WaterHeaterHeatPumpWrappedCondenser.define_singleton_method(:new) do |*args|
+    if args.length != 6
+      return native_wrapped_hpwh_new.call(*args)
+    end
+
+    model, coil, tank, fan, setpoint_schedule, availability_schedule = args
+    # Avoid creating the model-only constructor's default components.
+    idf_object = OpenStudio::IdfObject.new('WaterHeater:HeatPump:WrappedCondenser'.to_IddObjectType)
+    hpwh = model.addObject(idf_object).get.to_WaterHeaterHeatPumpWrappedCondenser.get
+    unless hpwh.setInletAirConfiguration('Schedule') &&
+           hpwh.setDXCoil(coil) &&
+           hpwh.setTank(tank) &&
+           hpwh.setFan(fan) &&
+           hpwh.setCompressorSetpointTemperatureSchedule(setpoint_schedule) &&
+           hpwh.setAvailabilitySchedule(availability_schedule)
+      hpwh.remove
+      raise 'Failed to initialize WaterHeaterHeatPumpWrappedCondenser.'
+    end
+
+    return hpwh
   end
 
   native_fan_add_speed = OpenStudio::EPModel::FanSystemModel.instance_method(:addSpeed)
