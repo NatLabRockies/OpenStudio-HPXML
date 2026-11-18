@@ -29,9 +29,10 @@ Run `workflow/sample_files/base*.xml` in filename order with both builds, using 
 Expected EnergyPlus warning differences that do not stop the sweep:
 
 - **EPModel only:** Fixed minimum airflow is ignored on VAV terminals.
-- **Legacy only, shared ground-loop sample:** Water-to-air heat pump coil airflow is below 25% of rated airflow. EnergyPlus 26.2 adjusts airflow for cycling-fan runtime before checking the threshold; the warning also disappears when the transitioned legacy IDF is run on 26.2.
+- **Legacy only, shared ground-loop and ground-source desuperheater samples:** Water-to-air heat pump coil airflow is below 25% of rated airflow. EnergyPlus 26.2 adjusts airflow for cycling-fan runtime before checking the threshold; the warning also disappears when the transitioned legacy IDFs are run on 26.2.
+- **EnergyPlus 26.2 only, ground-source desuperheater sample:** Low-temperature viscosity warning for 20% propylene glycol. The loop goes below the 0°C property-table limit in both versions, but 25.2 reverses the high- and low-temperature viscosity warning checks. The transitioned legacy IDF produces the same 152 viscosity warning occurrences on 26.2.
 
-**Current stop point:** `workflow/sample_files/base-bldgtype-mf-unit-shared-water-heater-recirc.xml` — next sample to compare.
+**Next sample:** `workflow/sample_files/base-dhw-indirect-detailed-setpoints.xml`.
 
 ## Observed EPModel Messages
 
@@ -52,6 +53,8 @@ Successful EPModel base runs emit these nonfatal OpenStudio messages:
 - Adds missing EMS global declarations referenced by `EnergyManagementSystem:OutputVariable`, except when the name already belongs to a global variable or actuator.
 - Fills empty `PlantEquipmentOperationSchemes` with an uncontrolled scheme for vertical ground heat exchangers using the corresponding `GroundHeatExchanger:System` objects, matching the legacy ForwardTranslator; it also adds a default heating-load scheme for heating supply components.
 - Adds adiabatic pipes to empty demand-side endpoint branches to match the PlantLoop inlet and outlet nodes. Other cooling and uncontrolled schemes are not synthesized: EPModel `HVACComponent#componentType` currently reports `Heating` for some cooling equipment, so it is not a reliable general classifier.
+- Sets blank load distribution schemes to `Optimal` on boiler loops serving water baseboards or heating coils. Preserves explicit schemes and leaves dedicated DHW loops unchanged.
+- Synchronizes the desuperheater preheat tank's use-side outlet with its plant branch after the main tank is inserted downstream.
 - Replaces a wrapped heat-pump water heater's tank reference with the wrapper in plant branches and equipment lists, preserving the tank's plant node connections.
 
 ## EPModel API Calls
@@ -69,16 +72,20 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `AdditionalProperties#getFeatureAsInteger` |  |  | `resources/epmodel.rb` | Process-local metadata adapter. |
 | `AdditionalProperties#getFeatureAsString` |  |  | `resources/epmodel.rb` | Process-local metadata adapter. |
 | `AdditionalProperties#setFeature` |  |  | `resources/epmodel.rb` | Process-local, handle-keyed metadata; not serialized, and clone/merge isolation and handle remapping are not implemented. Reused handles can share metadata. |
-| `AirTerminalSingleDuctUncontrolled.new(model, schedule)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim returns `AirTerminalSingleDuctVAVNoReheat` with minimum flow fraction and fixed minimum flow set to zero. This is a supported substitute, but may differ from the 3.11 uncontrolled terminal behavior. |
+| `AirTerminalSingleDuctUncontrolled.new(model, schedule)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim returns the native `AirTerminalSingleDuctConstantVolumeNoReheat`, matching the legacy IDF. The previous VAV substitute caused HVAC iteration-limit warnings and increased unmet cooling in the variable-speed desuperheater sample. Explicit VAV terminals are unchanged. |
 | `AirLoopHVAC#addBranchForZone(zone, terminal)` | Yes | Yes | `resources/epmodel.rb` | Native EPModel branch operation delegated to by the legacy-name shim. |
 | `AirLoopHVAC#multiAddBranchForZone(zone, terminal)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim delegates to EPModel's `addBranchForZone(zone, terminal)`, matching the legacy overload's zone/terminal branch attachment. |
 | `BoilerHotWater#plantLoop` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | The EPModel optional is empty for the indirect-DHW boiler. EPModel resolves its plant loop by searching plant-loop supply components; OpenStudio 3.11 retains the native relationship. |
 | `CoilCoolingDXMultiSpeed#addStage(stage)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level shim writes the cooling stage fields to an extensible group and updates `Number of Speeds` once the second stage is added, as required by the IDD minimum. |
 | `CoilCoolingDXMultiSpeed#stages` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level shim returns the cooling StageData façades recorded by `addStage`; this supports latent-degradation EMS and airflow checks. The list is process-local and is not reconstructed after model reload or clone. |
 | `CoilCoolingDXMultiSpeedStageData.new(model, ...)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | EPModel lacks the cooling StageData class; a compatibility class under the legacy namespace collects the existing setter calls for the `addStage` shim. |
+| `CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFit#speeds` | Yes |  | `resources/hvac.rb`, `resources/epmodel.rb` | Uses the same ordered, read-only IDF group access as the heating coil override for rated flows and airflow curves. |
 | `CoilHeatingDXMultiSpeed#addStage(stage)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level shim writes the heating stage fields to an extensible group and updates `Number of Speeds` once the second stage is added, as required by the IDD minimum. |
 | `CoilHeatingDXMultiSpeed#stages` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level shim returns the heating StageData façades recorded by `addStage`; this supports backup staging and airflow checks. The list is process-local and is not reconstructed after model reload or clone. |
 | `CoilHeatingDXMultiSpeedStageData.new(model, ...)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | EPModel lacks the heating StageData class; a compatibility class under the legacy namespace collects the existing setter calls for the `addStage` shim. |
+| `CoilHeatingWaterToAirHeatPumpVariableSpeedEquationFit#speeds` | Yes |  | `resources/hvac.rb`, `resources/epmodel.rb` | Native getter segfaults during ground-loop pump EMS setup. The override reads rated flows and airflow curve references directly from the ordered IDF groups instead of materializing transient SpeedData objects. |
+| `CoilWaterHeatingDesuperheater#addToHeatRejectionTarget(tank)` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim attaches the tank and connects a pair of nodes between the coil and the tank's source side. |
+| `CoilWaterHeatingDesuperheater#setHeatingSource(coil)` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Native setter writes the source pointer; shim also sets the EnergyPlus object type. |
 | `Construction#setLayers` | Yes | Yes | `resources/model.rb` | |
 | `Construction#setName` | Yes | Yes | `resources/model.rb` | |
 | `Construction.new(model)` | Yes | Yes | `resources/model.rb` | |
@@ -197,6 +204,10 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Model#alwaysOffDiscreteSchedule` |  |  | `resources/hvac.rb`, `resources/meta_measure.rb`, `resources/epmodel.rb` | Shim creates or reuses a zero-valued constant schedule with discrete type limits. EPModel removes unreferenced `Schedule:Constant` objects from the translated workspace while preserving schedule names referenced by EMS sensors and actuators. |
 | `Model#getBoilerHotWaters` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's typed collection getter evaluates unset baseboard-coil sizing fields and triggers native assertions. A class-level override filters model objects by IDD type before casting, preserving the shared resource call. |
 | `Model#addObject(idf_object)` | Yes | Yes | `resources/epmodel.rb` | Adds the cloned boiler and pump IDF objects used by the indirect-DHW loop rebuild. |
+| `Model#getCoilCoolingDXMultiSpeeds` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Uses the same IDD-filtered lookup as the single-speed collection override. |
+| `Model#getCoilCoolingDXSingleSpeeds` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Native getter crashes during desuperheater setup; override filters by IDD type before casting. |
+| `Model#getCoilCoolingWaterToAirHeatPumpEquationFits` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Uses the same IDD-filtered lookup as the single-speed collection override. |
+| `Model#getCoilCoolingWaterToAirHeatPumpVariableSpeedEquationFits` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Uses the same IDD-filtered lookup as the single-speed collection override. |
 | `Model#getConvergenceLimits` | Yes | Yes | `resources/simcontrols.rb` | |
 | `Model#getElectricLoadCenterDistributions` | Yes |  | `resources/output.rb`, `resources/epmodel.rb` | Native collection getter crashes on the generator sample; the override finds load centers by IDD type before casting. |
 | `Model#getFoundationKivas` | Yes | Yes | `resources/epmodel.rb` | Resolves the typed target for `adjacentFoundation`. |
@@ -234,6 +245,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `PlantLoop#clone(model)` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's `Loop::clone` currently returns an empty Catchall object. The indirect-DHW path rebuilds a dedicated boiler loop in the EPModel compatibility layer by copying loop/sizing settings and recreating boiler-side components; general loop cloning remains an SDK gap. |
 | `PlantLoop#setGlycolConcentration` | Yes |  | `resources/model.rb`, `resources/epmodel.rb` | EPModel's native implementation does not successfully preserve the legacy concentration on the EnergyPlus PlantLoop. The EPModel path instead uses `setGlycolFluidType` to create glycol property objects and set `UserDefinedFluidType`, preserving the requested concentration. |
 | `PlantLoop#setGlycolFluidType(glycol_type, concentration)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Compatibility helper creates `FluidProperties:GlycolConcentration` and `FluidProperties:Name` and links the PlantLoop to them. The 3.11 path retains its native fluid type and concentration setters. |
+| `PlantLoop#setLoadDistributionScheme(scheme)` | Yes | Yes | `resources/epmodel.rb` | Copies the source loop's setting when rebuilding the dedicated indirect-DHW loop. See [Direct IDF Export Normalization](#direct-idf-export-normalization) for space-heating boiler loops. |
 | `OptionalFoundationKiva#get` | Yes | Yes | `resources/geometry.rb` | |
 | `OptionalSchedule#get` | Yes | Yes | `resources/constructions.rb` | |
 | `OptionalScheduleRuleset#get` | Yes | Yes | `resources/constructions.rb` | |
@@ -421,6 +433,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `UnitarySystemPerformanceMultispeed#addSupplyAirflowRatioField(field)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Compatibility façade collects per-speed ratios for serialization into extensible groups. |
 | `AirLoopHVACUnitarySystem#setDesignSpecificationMultispeedObject(performance)` |  |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level override creates an EnergyPlus `UnitarySystemPerformance:Multispeed` object with speed counts, mode, no-load ratio, and per-speed ratios, then sets the unitary's object type and name references. Missing per-speed ratios are written as `Autosize`. |
 | `WaterHeaterHeatPumpWrappedCondenser.new(model, coil, tank, fan, setpoint_schedule, availability_schedule)` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim creates the wrapper and attaches the supplied components and schedules without constructing unused defaults. |
+| `WaterHeaterMixed#addToNode(node)` / `WaterHeaterStratified#addToNode(node)` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | When moving a tank from its own supply branch to another tank's outlet on the same loop, the shim removes the original branch before native insertion so no empty branch remains. Export normalization then synchronizes the preheat tank's outlet with the branch. |
 | `WaterHeaterStratified#heater1SetpointTemperatureSchedule` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim unwraps the native optional to match the legacy schedule getter. |
 | `WaterHeaterStratified#heater2SetpointTemperatureSchedule` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim unwraps the native optional to match the legacy schedule getter. |
 | `WaterUseConnections#waterUseEquipment` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | The native vector is not iterable from Ruby. The override resolves each equipment reference at group-local field index 0, not the parent field index, so the combi source-pump EMS includes water draws. |
