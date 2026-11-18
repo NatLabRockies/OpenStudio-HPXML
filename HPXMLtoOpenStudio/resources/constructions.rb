@@ -1967,8 +1967,7 @@ module Constructions
     # Asphalt/wood shingles
     [HPXML::RoofMaterialAsphaltShingles,
      HPXML::RoofMaterialWoodShingles,
-     HPXML::RoofMaterialShingles,
-     HPXML::RoofMaterialEPS].each do |roof_material|
+     HPXML::RoofMaterialShingles].each do |roof_material|
       map[[HPXML::ColorDark, roof_material]] = 0.92 # ASHRAE HOF
       map[[HPXML::ColorMediumDark, roof_material]] = 0.89 # Average of dark & medium
       map[[HPXML::ColorMedium, roof_material]] = 0.85 # ASHRAE HOF

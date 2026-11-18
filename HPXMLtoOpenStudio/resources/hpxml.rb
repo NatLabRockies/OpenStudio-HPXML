@@ -382,7 +382,6 @@ class HPXML < Object
   RoofMaterialAsphaltShingles = 'asphalt or fiberglass shingles'
   RoofMaterialConcrete = 'concrete tiles'
   RoofMaterialClayTile = 'slate or tile shingles'
-  RoofMaterialEPS = 'expanded polystyrene sheathing'
   RoofMaterialMetal = 'metal surfacing'
   RoofMaterialPlasticRubber = 'plastic/rubber/synthetic sheeting'
   RoofMaterialShingles = 'shingles'

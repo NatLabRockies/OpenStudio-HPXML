@@ -1278,7 +1278,7 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
   .. [#] Orientation choices are "northeast", "east", "southeast", "south", "southwest", "west", "northwest", or "north"
   .. [#] If neither Azimuth nor Orientation provided, and it's a *pitched* roof, modeled as four surfaces of equal area facing every direction.
          Azimuth/Orientation is irrelevant for *flat* roofs.
-  .. [#] RoofMaterial choices are "asphalt or fiberglass shingles", "wood shingles or shakes", "shingles", "slate or tile shingles", "metal surfacing", "plastic/rubber/synthetic sheeting", "expanded polystyrene sheathing", or "concrete tiles".
+  .. [#] RoofMaterial choices are "asphalt or fiberglass shingles", "wood shingles or shakes", "shingles", "slate or tile shingles", "metal surfacing", "plastic/rubber/synthetic sheeting", or "concrete tiles".
   .. [#] RoofColor choices are "dark", "medium dark", "medium", "medium light", "light", "white", or "reflective".
   .. [#] If SolarAbsorptance not provided, defaults based on RoofMaterial and RoofColor:
 
@@ -1293,8 +1293,6 @@ For a multifamily building where the dwelling unit has another dwelling unit abo
          \- **metal surfacing**: dark=0.90, medium dark=0.80, medium=0.70, medium light=0.60, light=0.50, white=0.35, reflective=0.25
 
          \- **plastic/rubber/synthetic sheeting**: dark=0.90, medium dark=0.78, medium=0.65, medium light=0.53, light=0.40, white=0.30, reflective=0.25
-
-         \- **expanded polystyrene sheathing**: dark=0.92, medium dark=0.89, medium=0.85, medium light=0.80, light=0.75, white=0.75, reflective=0.25
 
          \- **concrete tiles**: dark=0.85, medium dark=0.80, medium=0.75, medium light=0.65, light=0.40, white=0.30, reflective=0.25
 

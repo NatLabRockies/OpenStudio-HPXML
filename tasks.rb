@@ -1614,7 +1614,6 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                          [HPXML::RoofMaterialWoodShingles, HPXML::ColorDark],
                          [HPXML::RoofMaterialShingles, HPXML::ColorMediumDark],
                          [HPXML::RoofMaterialPlasticRubber, HPXML::ColorMediumLight],
-                         [HPXML::RoofMaterialEPS, HPXML::ColorMedium],
                          [HPXML::RoofMaterialConcrete, HPXML::ColorWhite]]
       int_finish_types = [[HPXML::InteriorFinishGypsumBoard, 0.5],
                           [HPXML::InteriorFinishPlaster, 0.5],
@@ -1629,7 +1628,7 @@ def apply_hpxml_modification_sample_files(hpxml_path, hpxml)
                              radiant_barrier: false,
                              interior_finish_type: int_finish_types[i % int_finish_types.size][0],
                              interior_finish_thickness: int_finish_types[i % int_finish_types.size][1],
-                             insulation_assembly_r_value: roof_property[0] == HPXML::RoofMaterialEPS ? 7.0 : 2.3)
+                             insulation_assembly_r_value: 2.3)
         hpxml_bldg.attics[0].attached_to_roof_idrefs << hpxml_bldg.roofs[-1].id
       end
     elsif ['base-enclosure-overhangs.xml'].include? hpxml_file

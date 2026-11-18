@@ -79,14 +79,10 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
       [{ assembly_r: 0.1, layer_names: ['plastic/rubber/synthetic sheeting + osb', 'roof stud and cavity', 'plaster'] },
        { assembly_r: 5.0, layer_names: ['plastic/rubber/synthetic sheeting + osb', 'roof stud and cavity', 'plaster'] },
        { assembly_r: 20.0, layer_names: ['plastic/rubber/synthetic sheeting + osb', 'roof rigid ins', 'roof stud and cavity', 'plaster'] }],
-      # EPS
-      [{ assembly_r: 0.1, layer_names: ['expanded polystyrene sheathing + osb', 'roof stud and cavity', 'wood'] },
-       { assembly_r: 5.0, layer_names: ['expanded polystyrene sheathing + osb', 'roof stud and cavity', 'wood'] },
-       { assembly_r: 20.0, layer_names: ['expanded polystyrene sheathing + osb', 'roof rigid ins', 'roof stud and cavity', 'wood'] }],
       # Concrete
-      [{ assembly_r: 0.1, layer_names: ['concrete tiles + osb', 'roof stud and cavity', 'gypsum board'] },
-       { assembly_r: 5.0, layer_names: ['concrete tiles + osb', 'roof stud and cavity', 'gypsum board'] },
-       { assembly_r: 20.0, layer_names: ['concrete tiles + osb', 'roof rigid ins', 'roof stud and cavity', 'gypsum board'] }],
+      [{ assembly_r: 0.1, layer_names: ['concrete tiles + osb', 'roof stud and cavity', 'wood'] },
+       { assembly_r: 5.0, layer_names: ['concrete tiles + osb', 'roof stud and cavity', 'wood'] },
+       { assembly_r: 20.0, layer_names: ['concrete tiles + osb', 'roof rigid ins', 'roof stud and cavity', 'wood'] }],
     ]
 
     hpxml, hpxml_bldg = _create_hpxml('base-enclosure-roofmaterials.xml')

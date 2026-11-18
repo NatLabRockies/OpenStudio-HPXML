@@ -377,8 +377,6 @@ class Material
       mat_roof = new(name: roof_material, thick_in: 0.75, k_in: 7.63, rho: 131.1, cp: 0.199)
     when HPXML::RoofMaterialClayTile
       mat_roof = new(name: roof_material, thick_in: 0.75, k_in: 5.83, rho: 118.6, cp: 0.191)
-    when HPXML::RoofMaterialEPS
-      mat_roof = new(name: roof_material, thick_in: 1.0, mat_base: BaseMaterial.InsulationRigid)
     when HPXML::RoofMaterialPlasticRubber
       mat_roof = new(name: roof_material, thick_in: 0.25, k_in: 2.78, rho: 110.8, cp: 0.36)
     else

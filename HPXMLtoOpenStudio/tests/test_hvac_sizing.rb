@@ -1815,19 +1815,15 @@ class HPXMLtoOpenStudioHVACSizingTest < Minitest::Test
     # Added roof material in the same category is sized the same as existing roof material in the same category
     assert_equal(test_hpxml_bldg_1.cooling_systems[0].cooling_capacity, test_hpxml_bldg_2.cooling_systems[0].cooling_capacity)
 
-    # Metal, PlasticRubber, EPS
+    # Metal, PlasticRubber
     hpxml_bldg.roofs[0].roof_material = HPXML::RoofMaterialMetal
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _model_mult, _base_hpxml, test_hpxml_bldg_1 = _test_measure(args_hash)
     hpxml_bldg.roofs[0].roof_material = HPXML::RoofMaterialPlasticRubber
     XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
     _model_mult, _base_hpxml, test_hpxml_bldg_2 = _test_measure(args_hash)
-    hpxml_bldg.roofs[0].roof_material = HPXML::RoofMaterialEPS
-    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
-    _model_mult, _base_hpxml, test_hpxml_bldg_3 = _test_measure(args_hash)
     # Added roof material in the same category is sized the same as existing roof material in the same category
     assert_equal(test_hpxml_bldg_1.cooling_systems[0].cooling_capacity, test_hpxml_bldg_2.cooling_systems[0].cooling_capacity)
-    assert_equal(test_hpxml_bldg_1.cooling_systems[0].cooling_capacity, test_hpxml_bldg_3.cooling_systems[0].cooling_capacity)
 
     # AsphaltShingles, Shingles
     hpxml_bldg.roofs[0].roof_material = HPXML::RoofMaterialAsphaltShingles
