@@ -7927,15 +7927,17 @@ module Defaults
   # @return [nil]
   def self.set_hvac_degradation_coefficient(hvac_system, simplified_speed_model = false)
     hvac_ap = hvac_system.additional_properties
+    speed_model_adjustment_factor = 1.0
 
     # Degradation coefficient
     if HVAC.is_room_dx_hvac_system(hvac_system)
       hvac_ap.c_d = 0.22
-      speed_model_adjustment_factor = 1.0
     else
       # Per RESNET HERS Addendum 82
       case hvac_system.compressor_type
-      when HPXML::HVACCompressorTypeSingleStage, HPXML::HVACCompressorTypeTwoStage
+      when HPXML::HVACCompressorTypeSingleStage
+        hvac_ap.c_d = 0.08
+      when HPXML::HVACCompressorTypeTwoStage
         hvac_ap.c_d = 0.08
         # reaching first speed at 50%
         speed_model_adjustment_factor = simplified_speed_model ? 0.5 : 1.0
