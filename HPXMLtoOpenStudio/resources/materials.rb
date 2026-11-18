@@ -206,13 +206,13 @@ class Material
     return new(name: "concrete #{thick_in} in.", thick_in: thick_in, mat_base: BaseMaterial.Concrete, tAbs: 0.9)
   end
 
-  # Creates a material for the wall exterior finish (siding) material.
+  # Creates a material for the wall exterior finish (siding).
   #
   # @param type [HPXML::SidingTypeXXX] Type of siding
   # @param thick_in [Double] Thickness of the siding (in)
   # @param apply_ashrae140_assumptions [Boolean] True if an ASHRAE 140 test case where we want to override our normal assumptions
   # @return [Material] The material object
-  def self.ExteriorFinishMaterial(type, thick_in = nil, apply_ashrae140_assumptions = nil)
+  def self.ExteriorFinish(type, thick_in = nil, apply_ashrae140_assumptions = nil)
     if (type == HPXML::SidingTypeNotPresent) || (!thick_in.nil? && thick_in <= 0)
       return
     end
@@ -266,7 +266,7 @@ class Material
   # @param type [FoundationWallTypeXXX] Type of foundation wall
   # @param thick_in [Double] Thickness of the siding (in)
   # @return [Material] The material object
-  def self.FoundationWallMaterial(type, thick_in)
+  def self.FoundationWall(type, thick_in)
     case type
     when HPXML::FoundationWallTypeSolidConcrete
       return Material.Concrete(thick_in)
@@ -298,7 +298,7 @@ class Material
   # @param type [HPXML::InteriorFinishXXX] Type of interior finish
   # @param thick_in [Double] Thickness of the siding (in)
   # @return [Material] The material object
-  def self.InteriorFinishMaterial(type, thick_in = nil)
+  def self.InteriorFinish(type, thick_in = nil)
     if (type == HPXML::InteriorFinishNotPresent) || (!thick_in.nil? && thick_in <= 0)
       return
     else
@@ -371,10 +371,9 @@ class Material
   # Creates a material for the roof exterior layers (e.g. shingles + osb sheathing).
   #
   # @param roof_type [HPXML::RoofTypeXXX] Type of roof material
-  # @param osb_thick_in [Double] Thickness of the OSB sheathing (in)
   # @param apply_ashrae140_assumptions [Boolean] True if an ASHRAE 140 test case where we want to override our normal assumptions
   # @return [Material] The material object
-  def self.RoofMaterialAndSheathing(roof_type, osb_thick_in = 0.625, apply_ashrae140_assumptions = nil)
+  def self.RoofMaterialAndSheathing(roof_type, apply_ashrae140_assumptions = nil)
     # Note: We include OSB sheathing in the same material layer to prevent possible attic
     # temperature out of bounds errors in E+.
     #
@@ -387,6 +386,7 @@ class Material
     # In the case of an attic roof, the outer most material can see significant solar radiation.
     #
     # Roughness numbers generally sourced from DOE-2
+    osb_thick_in = apply_ashrae140_assumptions ? 0.5 : 0.625
     mat_osb = OSBSheathing(osb_thick_in)
     case roof_type
     when HPXML::RoofTypeMetal
