@@ -24,18 +24,20 @@ Review warning, severe, and fatal message differences. Do not require byte-for-b
 
 ## Ongoing Base Sample Sweep
 
+Run `workflow/sample_files/base*.xml` in filename order with both builds, using output folder `1` for OpenStudio 3.11 and `2` for EPModel. Compare each pair's `eplusout.err` files. Stop at an EPModel API gap or an unexpected warning, severe error, or fatal error difference, and rerun that sample after addressing the issue.
+
+The EPModel-only EnergyPlus warning that fixed minimum airflow is ignored on VAV terminals is expected and does not stop the sweep.
+
 **Current stop point:** `workflow/sample_files/base-bldgtype-mf-unit-shared-boiler-only-fan-coil-fireplace-elec.xml` — next untested sample; no known blocker.
 
 ## Observed EPModel Messages
 
 Successful EPModel base runs emit these nonfatal OpenStudio messages:
 
-- The combi-tankless baseboard sample logs `BOOST_ASSERT` for unset `CoilHeatingWaterBaseboard` capacity-per-floor-area and autosized-capacity-fraction fields. These assertions occur during input creation; the EnergyPlus run completes with no severe errors.
+- Both shared-boiler water-baseboard samples (with and without combi-tankless DHW) log `BOOST_ASSERT` during OpenStudio input creation when `CoilHeatingWaterBaseboard` getters read unset capacity-per-floor-area and autosized-capacity-fraction fields. These are console diagnostics, not EnergyPlus warnings in `eplusout.err`; both simulations complete with no severe errors.
 - A `ZoneHVAC:EquipmentConnections` object has no name, and automatic naming fails. Its origin and impact remain unexplained.
 - Plant-side and demand-side branch lists have one branch; EPModel treats it as the equipment branch and adds inlet/outlet branches.
 - PlantLoop connector port counts differ from the branch lists; EPModel rebuilds the ports from branch order.
-
-The EnergyPlus warning that fixed minimum airflow is ignored on VAV terminals is a known EPModel-only warning, not a new sweep mismatch.
 
 ## EPModel API Calls
 
