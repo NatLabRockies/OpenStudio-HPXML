@@ -125,6 +125,29 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     assert_equal(custom.handle, activity.scheduleTypeLimits.get.handle)
   end
 
+  def test_always_off_discrete_schedule
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    schedule = model.alwaysOffDiscreteSchedule
+    assert_equal('Always Off Discrete', schedule.name.to_s)
+    assert_equal(0.0, schedule.value)
+    assert_equal('Discrete', schedule.scheduleTypeLimits.get.numericType.get)
+    assert_equal(schedule.handle, model.alwaysOffDiscreteSchedule.handle)
+    assert_equal(1, model.getScheduleConstants.count { |candidate| candidate.name.to_s == 'Always Off Discrete' })
+
+    coil = OpenStudio::Model::CoilCoolingWater.new(model, schedule)
+    assert_equal(schedule.handle, coil.availabilitySchedule.handle)
+    other_model = OpenStudio::Model::Model.new
+    refute_equal(schedule.handle, other_model.alwaysOffDiscreteSchedule.handle)
+
+    schedule.setValue(1.0)
+    assert_raises(RuntimeError) { model.alwaysOffDiscreteSchedule }
+    schedule.setValue(0.0)
+    schedule.resetScheduleTypeLimits
+    assert_raises(RuntimeError) { model.alwaysOffDiscreteSchedule }
+  end
+
   def test_water_use_connection_equipment_and_schedules
     return unless Version::UseEPModel
 
@@ -145,6 +168,23 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     assert_equal(washer_flow.handle, equipment[1].flowRateFractionSchedule.get.handle)
     assert_equal(target_temp.handle, equipment[0].waterUseEquipmentDefinition.targetTemperatureSchedule.get.handle)
     refute(equipment[1].waterUseEquipmentDefinition.targetTemperatureSchedule.is_initialized)
+  end
+
+  def test_zone_hvac_four_pipe_fan_coil_constructor
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    schedule = model.alwaysOnDiscreteSchedule
+    fan = OpenStudio::Model::FanConstantVolume.new(model, schedule)
+    cooling_coil = OpenStudio::Model::CoilCoolingWater.new(model, schedule)
+    heating_coil = OpenStudio::Model::CoilHeatingWater.new(model)
+
+    fan_coil = OpenStudio::Model::ZoneHVACFourPipeFanCoil.new(model, schedule, fan, cooling_coil, heating_coil)
+
+    assert_equal(schedule.handle, fan_coil.availabilitySchedule.handle)
+    assert_equal(fan.handle, fan_coil.supplyAirFan.handle)
+    assert_equal(cooling_coil.handle, fan_coil.coolingCoil.handle)
+    assert_equal(heating_coil.handle, fan_coil.heatingCoil.handle)
   end
 
   def test_ground_heat_exchanger_and_glycol

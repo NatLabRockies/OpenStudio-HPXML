@@ -161,7 +161,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `InternalMassDefinition#setSurfaceArea` |  | `resources/model.rb` | Delegates to `InteriorPartitionSurface#setSurfaceArea`. |
 | `InternalMassDefinition.new(model)` |  | `resources/model.rb` | Creates an `InteriorPartitionSurface` with placeholder vertices, then sets its explicit area. |
 | `MeterCustom#addKeyVarGroup(key, output_variable_or_meter)` |  | `resources/model.rb`, `resources/epmodel.rb` | Shim appends a group with `Key Name` and `Output Variable or Meter Name` fields. |
-| `Model#alwaysOffDiscreteSchedule` |  | `resources/meta_measure.rb` | Part of the OpenStudio 3.11 unused-global-schedule cleanup. EPModel removes unreferenced `Schedule:Constant` objects from the translated workspace while preserving schedule names referenced by EMS sensors and actuators. |
+| `Model#alwaysOffDiscreteSchedule` |  | `resources/hvac.rb`, `resources/meta_measure.rb`, `resources/epmodel.rb` | Shim creates or reuses a zero-valued constant schedule with discrete type limits. EPModel removes unreferenced `Schedule:Constant` objects from the translated workspace while preserving schedule names referenced by EMS sensors and actuators. |
 | `Model#getBoilerHotWaters` | Yes | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's typed collection getter evaluates unset baseboard-coil sizing fields and triggers native assertions. A class-level override filters model objects by IDD type before casting, preserving the shared resource call. |
 | `Model#addObject(idf_object)` | Yes | `resources/epmodel.rb` | Adds the cloned boiler and pump IDF objects used by the indirect-DHW loop rebuild. |
 | `Model#getConvergenceLimits` | Yes | `resources/simcontrols.rb` | |
@@ -186,6 +186,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Model#getTimestep` | Yes | `resources/simcontrols.rb` | |
 | `Model#toIdfFile` | Yes | `resources/epmodel.rb`, `resources/meta_measure.rb` | Used for direct EPModel export because the legacy ForwardTranslator accepts only OpenStudio Model. See Direct IDF Export Normalization below. |
 | `Model#getYearDescription` |  | `resources/location.rb`, `resources/schedules.rb` | Called only when `Version::UseEPModel` is false; EPModel reads/writes year fields through `RunPeriod`. |
+| `Model#workflowJSON` |  | `resources/model.rb` | Missing EPModel API; `add_schedule_file` uses `workflowJSON.filePaths` and `addFilePath` to register schedule-file directories. |
 | `Model#getZoneCapacitanceMultiplierResearchSpecial` | Yes | `resources/simcontrols.rb` | |
 | `Model#objects` | Yes | `resources/model.rb`, `resources/meta_measure.rb` | |
 | `Model.new` | Yes | `resources/meta_measure.rb` | |
@@ -275,6 +276,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ShadingSurface#setVertices(vertices)` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim rewrites vertex extensible groups after transformation. |
 | `ShadingSurface#vertices` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim reads vertex extensible groups. |
 | `ShadingSurfaceGroup#name` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim returns the generic group's name string. |
+| `ShadingSurface.new(vertices, model)` |  | `resources/geometry.rb`, `resources/waterheater.rb` | EPModel lacks `ShadingSurface`; neighbor shading cannot be created. |
 | `ShadingSurfaceGroup#shadingSurfaces` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim resolves surfaces whose group-name pointer matches this group. |
 | `ShadowCalculation#setMaximumFiguresInShadowOverlapCalculations` | Yes | `resources/simcontrols.rb` | |
 | `ShadowCalculation#setShadingCalculationUpdateFrequency` | Yes | `resources/simcontrols.rb` | |
@@ -302,6 +304,9 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Space#thermalZone` | Yes | `resources/constructions.rb`, `resources/geometry.rb`, `resources/hvac.rb` | |
 | `Space.new(model)` | Yes | `resources/geometry.rb` | |
 | `StandardOpaqueMaterial#conductivity` | Yes | `resources/model.rb` | |
+| `SpaceInfiltrationEffectiveLeakageArea#setSchedule(schedule)` |  | `resources/model.rb`, `resources/epmodel.rb` | Class-level shim writes the `Schedule Name` pointer. |
+| `SpaceInfiltrationEffectiveLeakageArea#setSpace(space)` |  | `resources/model.rb`, `resources/epmodel.rb` | Class-level shim writes the space pointer to the `Zone or Space Name` field. |
+| `SpaceInfiltrationEffectiveLeakageArea.new(model)` | Yes | `resources/model.rb` | |
 | `StandardOpaqueMaterial#density` | Yes | `resources/model.rb` | |
 | `StandardOpaqueMaterial#name` | Yes | `resources/model.rb` | |
 | `StandardOpaqueMaterial#roughness` | Yes | `resources/model.rb` | |
@@ -339,6 +344,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Surface#setOutsideBoundaryCondition` | Yes | `resources/geometry.rb`, `resources/epmodel.rb` | |
 | `Surface#setSpace` | Yes | `resources/geometry.rb` | |
 | `Surface#setSunExposure` | Yes | `resources/geometry.rb` | |
+| `Surface#setSurfacePropertyOtherSideCoefficients(other_side_coefficients)` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Class-level shim sets the `Outside Boundary Condition Object` pointer and the `OtherSideCoefficients` boundary condition. |
 | `Surface#setSurfaceType` | Yes | `resources/geometry.rb` | |
 | `Surface#setWindExposure` | Yes | `resources/geometry.rb` | |
 | `Surface#surfaceType` | Yes | `resources/geometry.rb` | |
@@ -353,6 +359,8 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `SurfacePropertyIncidentSolarMultiplier.new(model)` | Yes | `resources/epmodel.rb` | Native constructor used by the subsurface overload. |
 | `SurfacePropertyIncidentSolarMultiplier.new(subsurface)` |  | `resources/constructions.rb` | Constructor overload supplied by the compatibility shim. |
 | `ThermalZone#name` | Yes | `resources/hvac.rb` | |
+| `SurfacePropertyOtherSideCoefficients#setConstantTemperatureSchedule(schedule)` |  | `resources/geometry.rb`, `resources/epmodel.rb` | Class-level shim writes the `Constant Temperature Schedule Name` pointer. |
+| `SurfacePropertyOtherSideCoefficients.new(model)` | Yes | `resources/geometry.rb` | |
 | `ThermalZone#setMultiplier` | Yes | `resources/geometry.rb` | |
 | `ThermalZone#setName` | Yes | `resources/geometry.rb` | |
 | `ThermalZone#spaces` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Shim filters `Model#getSpaces` by the Space's typed ThermalZone reference. |
@@ -389,6 +397,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ZoneHVACBaseboardConvectiveWater#heatingCoil` | Yes | `resources/hvac.rb`, `resources/epmodel.rb` | EPModel stores the baseboard coil as a transient child, so the EPModel branch attaches the baseboard to the zone before adding its child coil to the plant loop. The legacy branch continues attaching the original coil object. |
 | `ZoneHVACDehumidifierDX#setAvailabilitySchedule(schedule)` | Yes | `resources/hvac.rb`, `resources/epmodel.rb` | EPModel's native setter does not preserve the schedule pointer; a class-level override writes the `Availability Schedule Name` pointer directly. |
 
+| `ZoneHVACFourPipeFanCoil.new(model, schedule, fan, cooling_coil, heating_coil)` |  | `resources/hvac.rb`, `resources/epmodel.rb` | Class-level shim calls EPModel's model-only constructor, then sets the availability schedule, supply fan, cooling coil, and heating coil. |
 ## Direct IDF Export Normalization
 
 `EPModelCompatibility.normalize_workspace` in `resources/epmodel.rb` compensates for behavior normally provided by the legacy ForwardTranslator:

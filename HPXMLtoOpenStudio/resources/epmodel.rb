@@ -1298,6 +1298,25 @@ if Version::UseEPModel
     end
   end
 
+  native_zone_hvac_four_pipe_fan_coil_new = OpenStudio::EPModel::ZoneHVACFourPipeFanCoil.method(:new)
+  OpenStudio::EPModel::ZoneHVACFourPipeFanCoil.define_singleton_method(:new) do |*args|
+    if args.length != 5
+      return native_zone_hvac_four_pipe_fan_coil_new.call(*args)
+    end
+
+    model, availability_schedule, fan, cooling_coil, heating_coil = args
+    fan_coil = native_zone_hvac_four_pipe_fan_coil_new.call(model)
+    unless fan_coil.setAvailabilitySchedule(availability_schedule) &&
+           fan_coil.setSupplyAirFan(fan) &&
+           fan_coil.setCoolingCoil(cooling_coil) &&
+           fan_coil.setHeatingCoil(heating_coil)
+      fan_coil.remove
+      raise 'Failed to initialize ZoneHVACFourPipeFanCoil.'
+    end
+
+    return fan_coil
+  end
+
   unless OpenStudio::EPModel::OtherEquipment.method_defined?(:setSpace)
     OpenStudio::EPModel::OtherEquipment.define_method(:setSpace) do |space|
       EPModelCompatibility.set_pointer(self, 'Zone or ZoneList or Space or SpaceList Name', space)
@@ -1329,6 +1348,18 @@ if Version::UseEPModel
     end
   end
 
+  unless OpenStudio::EPModel::WaterUseEquipment.method_defined?(:flowRateFractionSchedule)
+    OpenStudio::EPModel::WaterUseEquipment.define_method(:flowRateFractionSchedule) do
+      EPModelCompatibility.get_schedule(self, 'Flow Rate Fraction Schedule Name')
+    end
+  end
+
+  unless OpenStudio::EPModel::WaterUseEquipment.method_defined?(:targetTemperatureSchedule)
+    OpenStudio::EPModel::WaterUseEquipment.define_method(:targetTemperatureSchedule) do
+      EPModelCompatibility.get_schedule(self, 'Target Temperature Schedule Name')
+    end
+  end
+
   unless OpenStudio::EPModel::WaterUseEquipment.method_defined?(:waterUseEquipmentDefinition)
     OpenStudio::EPModel::WaterUseEquipment.define_method(:waterUseEquipmentDefinition) do
       self
@@ -1348,18 +1379,6 @@ if Version::UseEPModel
   end
 
   unless OpenStudio::EPModel::People.method_defined?(:setSpace)
-  unless OpenStudio::EPModel::WaterUseEquipment.method_defined?(:flowRateFractionSchedule)
-    OpenStudio::EPModel::WaterUseEquipment.define_method(:flowRateFractionSchedule) do
-      EPModelCompatibility.get_schedule(self, 'Flow Rate Fraction Schedule Name')
-    end
-  end
-
-  unless OpenStudio::EPModel::WaterUseEquipment.method_defined?(:targetTemperatureSchedule)
-    OpenStudio::EPModel::WaterUseEquipment.define_method(:targetTemperatureSchedule) do
-      EPModelCompatibility.get_schedule(self, 'Target Temperature Schedule Name')
-    end
-  end
-
     OpenStudio::EPModel::People.define_method(:setSpace) do |space|
       EPModelCompatibility.set_pointer(self, 'Zone or ZoneList or Space or SpaceList Name', space)
     end
@@ -1398,9 +1417,45 @@ if Version::UseEPModel
     end
   end
 
+  unless OpenStudio::EPModel::SpaceInfiltrationEffectiveLeakageArea.method_defined?(:setSpace)
+    OpenStudio::EPModel::SpaceInfiltrationEffectiveLeakageArea.define_method(:setSpace) do |space|
+      EPModelCompatibility.set_pointer(self, 'Zone or Space Name', space)
+    end
+  end
+
+  unless OpenStudio::EPModel::SpaceInfiltrationEffectiveLeakageArea.method_defined?(:setSchedule)
+    OpenStudio::EPModel::SpaceInfiltrationEffectiveLeakageArea.define_method(:setSchedule) do |schedule|
+      EPModelCompatibility.set_pointer(self, 'Schedule Name', schedule)
+    end
+  end
+
   unless OpenStudio::EPModel::SpaceInfiltrationDesignFlowRate.method_defined?(:setSchedule)
     OpenStudio::EPModel::SpaceInfiltrationDesignFlowRate.define_method(:setSchedule) do |schedule|
       EPModelCompatibility.set_pointer(self, 'Schedule Name', schedule)
+    end
+  end
+
+  unless OpenStudio::EPModel::Model.method_defined?(:alwaysOffDiscreteSchedule)
+    OpenStudio::EPModel::Model.define_method(:alwaysOffDiscreteSchedule) do
+      schedule = getScheduleConstantByName('Always Off Discrete')
+      if schedule.is_initialized
+        raise 'Always Off Discrete schedule must have a value of zero.' unless schedule.get.value == 0.0
+        limits = schedule.get.scheduleTypeLimits
+        unless limits.is_initialized && limits.get.numericType.is_initialized && limits.get.numericType.get.casecmp('Discrete').zero?
+          raise 'Always Off Discrete schedule must have discrete type limits.'
+        end
+
+        return schedule.get
+      end
+
+      schedule = OpenStudio::EPModel::ScheduleConstant.new(self)
+      raise 'Could not name Always Off Discrete schedule.' unless schedule.setName('Always Off Discrete')
+      raise 'Could not set Always Off Discrete schedule value.' unless schedule.setValue(0.0)
+      limits = alwaysOnDiscreteSchedule.scheduleTypeLimits
+      raise 'Could not find discrete schedule type limits.' unless limits.is_initialized
+      raise 'Could not set Always Off Discrete schedule type limits.' unless schedule.setScheduleTypeLimits(limits.get)
+
+      return schedule
     end
   end
 
@@ -1784,6 +1839,17 @@ if Version::UseEPModel
     end
   end
 
+  OpenStudio::EPModel::Surface.define_method(:setSurfacePropertyOtherSideCoefficients) do |other_side_coefficients|
+    unless EPModelCompatibility.set_pointer(self, 'Outside Boundary Condition Object', other_side_coefficients)
+      return false
+    end
+
+    field_index = iddObject.getFieldIndex('Outside Boundary Condition')
+    return false unless field_index.is_initialized
+
+    setString(field_index.get, 'OtherSideCoefficients')
+  end
+
   if not OpenStudio::EPModel::Surface.method_defined?(:adjacentFoundation)
     OpenStudio::EPModel::Surface.define_method(:adjacentFoundation) do
       field_index = iddObject.getFieldIndex('Outside Boundary Condition Object')
@@ -1888,6 +1954,12 @@ if Version::UseEPModel
       end
 
       return property
+    end
+  end
+
+  unless OpenStudio::EPModel::SurfacePropertyOtherSideCoefficients.method_defined?(:setConstantTemperatureSchedule)
+    OpenStudio::EPModel::SurfacePropertyOtherSideCoefficients.define_method(:setConstantTemperatureSchedule) do |schedule|
+      EPModelCompatibility.set_pointer(self, 'Constant Temperature Schedule Name', schedule)
     end
   end
 
