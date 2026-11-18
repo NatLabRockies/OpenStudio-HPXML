@@ -353,6 +353,33 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
                     ['WaterHeater:HeatPump:WrappedCondenser', hpwh.name.to_s])
   end
 
+  def test_boiler_load_distribution_export
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    space_heat = OpenStudio::Model::PlantLoop.new(model)
+    dhw = OpenStudio::Model::PlantLoop.new(model)
+    explicit = OpenStudio::Model::PlantLoop.new(model)
+
+    [space_heat, dhw, explicit].each do |loop|
+      assert(loop.addSupplyBranchForComponent(OpenStudio::Model::BoilerHotWater.new(model)))
+    end
+    [space_heat, explicit].each do |loop|
+      coil = OpenStudio::Model::CoilHeatingWater.new(model, model.alwaysOnDiscreteSchedule)
+      assert(loop.addDemandBranchForComponent(coil))
+    end
+    assert(dhw.addDemandBranchForComponent(OpenStudio::Model::WaterHeaterMixed.new(model)))
+    assert(explicit.setLoadDistributionScheme('SequentialLoad'))
+
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    EPModelCompatibility.normalize_boiler_load_distribution(workspace)
+    [space_heat, dhw, explicit].zip(['Optimal', '', 'SequentialLoad']).each do |loop, expected|
+      exported = workspace.getObjectByTypeAndName('PlantLoop'.to_IddObjectType, loop.name.to_s).get
+      index = exported.iddObject.getFieldIndex('Load Distribution Scheme').get
+      assert_equal(expected, exported.getString(index, false).to_s)
+    end
+  end
+
   def test_ground_heat_exchanger_uncontrolled_operation
     return unless Version::UseEPModel
 

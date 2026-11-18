@@ -963,6 +963,7 @@ if Version::UseEPModel
       normalize_people_temperature_type(workspace)
       declare_ems_output_globals(workspace)
       repair_demand_branch_endpoints(workspace)
+      normalize_boiler_load_distribution(workspace)
       add_ground_heat_exchanger_plant_schemes(workspace, model)
       add_default_heating_plant_schemes(workspace, model)
       normalize_wrapped_hpwh_plant_references(workspace)
@@ -1127,6 +1128,32 @@ if Version::UseEPModel
           unless fields_set
             branch.get.eraseExtensibleGroup(group.groupIndex)
           end
+        end
+      end
+    end
+
+    def self.plant_branch_component_types(workspace, plant_loop, branch_list_field)
+      branch_list_name = plant_loop.getString(plant_loop.iddObject.getFieldIndex(branch_list_field).get)
+      return [] unless branch_list_name.is_initialized
+
+      branch_list = workspace.getObjectByTypeAndName('BranchList'.to_IddObjectType, branch_list_name.get).get
+      branch_list.extensibleGroups.flat_map do |group|
+        branch_name = group.getString(0).get
+        branch = workspace.getObjectByTypeAndName('Branch'.to_IddObjectType, branch_name).get
+        branch.extensibleGroups.map { |component| component.getString(0).get.downcase }
+      end
+    end
+
+    def self.normalize_boiler_load_distribution(workspace)
+      space_heating_types = ['coil:heating:water', 'zonehvac:baseboard:convective:water']
+      workspace.getObjectsByType('PlantLoop'.to_IddObjectType).each do |plant_loop|
+        scheme_index = plant_loop.iddObject.getFieldIndex('Load Distribution Scheme').get
+        next unless plant_loop.getString(scheme_index, false).to_s.strip.empty?
+        next unless plant_branch_component_types(workspace, plant_loop, 'Plant Side Branch List Name').include?('boiler:hotwater')
+        next unless plant_branch_component_types(workspace, plant_loop, 'Demand Side Branch List Name').intersect?(space_heating_types)
+
+        unless plant_loop.setString(scheme_index, 'Optimal')
+          fail "Could not set the load distribution scheme for '#{plant_loop.name}'."
         end
       end
     end
