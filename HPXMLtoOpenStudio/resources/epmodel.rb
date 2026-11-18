@@ -1737,6 +1737,121 @@ if Version::UseEPModel
     EPModelCompatibility.get_boiler_hot_waters(self)
   end
 
+  OpenStudio::EPModel::Model.define_method(:getElectricLoadCenterDistributions) do
+    getObjectsByType('ElectricLoadCenter:Distribution'.to_IddObjectType).map do |object|
+      object.to_ElectricLoadCenterDistribution.get
+    end
+  end
+
+  native_generator_pv_watts_new = OpenStudio::EPModel::GeneratorPVWatts.method(:new)
+  OpenStudio::EPModel::GeneratorPVWatts.define_singleton_method(:new) do |*args|
+    if args.length != 2
+      return native_generator_pv_watts_new.call(*args)
+    end
+
+    model, capacity = args
+    generator = native_generator_pv_watts_new.call(model)
+    unless generator.setDCSystemCapacity(capacity)
+      generator.remove
+      raise 'Failed to set GeneratorPVWatts DC system capacity.'
+    end
+
+    return generator
+  end
+
+  { setElectricalPowerFunctionofTemperatureandElevationCurve: 'Electrical Power Function of Temperature and Elevation Curve Name',
+    setElectricalEfficiencyFunctionofTemperatureCurve: 'Electrical Efficiency Function of Temperature Curve Name',
+    setElectricalEfficiencyFunctionofPartLoadRatioCurve: 'Electrical Efficiency Function of Part Load Ratio Curve Name' }.each do |method_name, field_name|
+    next if OpenStudio::EPModel::GeneratorMicroTurbine.method_defined?(method_name)
+
+    OpenStudio::EPModel::GeneratorMicroTurbine.define_method(method_name) do |curve|
+      raise "Could not set #{field_name} for '#{name}'." unless EPModelCompatibility.set_pointer(self, field_name, curve)
+
+      true
+    end
+  end
+
+  { inverter: 'Inverter Name', electricalStorage: 'Electrical Storage Object Name' }.each do |method_name, field_name|
+    next if OpenStudio::EPModel::ElectricLoadCenterDistribution.method_defined?(method_name)
+
+    OpenStudio::EPModel::ElectricLoadCenterDistribution.define_method(method_name) do
+      getTarget(iddObject.getFieldIndex(field_name).get)
+    end
+  end
+
+  unless OpenStudio::EPModel::ElectricLoadCenterDistribution.method_defined?(:setInverter)
+    OpenStudio::EPModel::ElectricLoadCenterDistribution.define_method(:setInverter) do |inverter|
+      raise "Could not attach inverter to '#{name}'." unless EPModelCompatibility.set_pointer(self, 'Inverter Name', inverter)
+
+      # Direct IDF export does not infer a DC bus from the inverter.
+      if isElectricalBussTypeDefaulted && !setElectricalBussType('DirectCurrentWithInverter')
+        raise "Could not set the electrical bus type for '#{name}'."
+      end
+
+      true
+    end
+  end
+
+  unless OpenStudio::EPModel::ElectricLoadCenterDistribution.method_defined?(:setElectricalStorage)
+    OpenStudio::EPModel::ElectricLoadCenterDistribution.define_method(:setElectricalStorage) do |storage|
+      raise "Could not attach electrical storage to '#{name}'." unless EPModelCompatibility.set_pointer(self, 'Electrical Storage Object Name', storage)
+
+      true
+    end
+  end
+
+  unless OpenStudio::EPModel::ElectricLoadCenterDistribution.method_defined?(:generators)
+    OpenStudio::EPModel::ElectricLoadCenterDistribution.define_method(:generators) do
+      list = getTarget(iddObject.getFieldIndex('Generator List Name').get)
+      next [] unless list.is_initialized
+
+      list.get.extensibleGroups.map do |group|
+        group.to_WorkspaceExtensibleGroup.get.getTarget(0).get
+      end
+    end
+  end
+
+  unless OpenStudio::EPModel::ElectricLoadCenterDistribution.method_defined?(:addGenerator)
+    OpenStudio::EPModel::ElectricLoadCenterDistribution.define_method(:addGenerator) do |generator|
+      case generator
+      when OpenStudio::EPModel::GeneratorMicroTurbine
+        rated_power = generator.referenceElectricalPowerOutput
+      when OpenStudio::EPModel::GeneratorPVWatts
+        rated_power = generator.dcSystemCapacity
+      else
+        raise ArgumentError, 'The EPModel addGenerator shim supports only microturbines and PVWatts generators.'
+      end
+
+      if isGeneratorOperationSchemeTypeDefaulted && !setGeneratorOperationSchemeType('Baseload')
+        raise "Could not set the generator operation scheme for '#{name}'."
+      end
+
+      list_index = iddObject.getFieldIndex('Generator List Name').get
+      list = getTarget(list_index)
+      if list.is_initialized
+        generator_list = list.get
+      else
+        idf_object = OpenStudio::IdfObject.new('ElectricLoadCenter:Generators'.to_IddObjectType)
+        idf_object.setName("#{name} Generators")
+        generator_list = model.addObject(idf_object).get
+        unless setPointer(list_index, generator_list.handle)
+          generator_list.remove
+          raise "Could not attach a generator list to '#{name}'."
+        end
+      end
+
+      group = generator_list.pushExtensibleGroup.to_WorkspaceExtensibleGroup.get
+      unless group.setPointer(0, generator.handle) &&
+             group.setString(1, generator.iddObject.name.to_s) &&
+             group.setDouble(2, rated_power)
+        generator_list.eraseExtensibleGroup(group.groupIndex)
+        raise "Could not add generator '#{generator.name}' to '#{name}'."
+      end
+
+      true
+    end
+  end
+
   if not OpenStudio::EPModel::FoundationKiva.method_defined?(:addCustomBlock)
     OpenStudio::EPModel::FoundationKiva.define_method(:addCustomBlock) do |material, depth, x_position, z_position|
       if numExtensibleGroups >= 10
@@ -1782,8 +1897,10 @@ if Version::UseEPModel
     variable_name.is_initialized ? variable_name.get : ''
   end
 
-  unless OpenStudio::EPModel::MeterCustom.method_defined?(:addKeyVarGroup)
-    OpenStudio::EPModel::MeterCustom.define_method(:addKeyVarGroup) do |key, output_variable_or_meter|
+  [OpenStudio::EPModel::MeterCustom, OpenStudio::EPModel::MeterCustomDecrement].each do |meter_class|
+    next if meter_class.method_defined?(:addKeyVarGroup)
+
+    meter_class.define_method(:addKeyVarGroup) do |key, output_variable_or_meter|
       group = pushExtensibleGroup
       fields_set = group.setString(0, key)
       fields_set &&= group.setString(1, output_variable_or_meter)

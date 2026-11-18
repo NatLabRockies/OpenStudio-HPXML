@@ -95,6 +95,12 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ElectricEquipmentDefinition#setFractionRadiant` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Definition façade delegates to the EPModel ElectricEquipment object. |
 | `ElectricEquipmentDefinition#setName` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Definition façade delegates to the EPModel ElectricEquipment object. |
 | `ElectricEquipmentDefinition.new(model)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Creates the underlying EPModel ElectricEquipment object. |
+| `ElectricLoadCenterDistribution#addGenerator(generator)` |  |  | `resources/generator.rb`, `resources/pv.rb`, `resources/epmodel.rb` | Shim attaches microturbines and PVWatts generators through an `ElectricLoadCenter:Generators` list and sets `Baseload` if no operation scheme was specified. |
+| `ElectricLoadCenterDistribution#electricalStorage` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Shim resolves the electrical storage pointer for meter creation. |
+| `ElectricLoadCenterDistribution#generators` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Shim reads generator pointers from the load center's generator list. |
+| `ElectricLoadCenterDistribution#inverter` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Shim resolves the inverter pointer for meter creation. |
+| `ElectricLoadCenterDistribution#setElectricalStorage(storage)` |  |  | `resources/battery.rb`, `resources/epmodel.rb` | Shim writes the `Electrical Storage Object Name` pointer without changing the configured bus type or operating scheme. |
+| `ElectricLoadCenterDistribution#setInverter(inverter)` |  |  | `resources/pv.rb`, `resources/epmodel.rb` | Shim writes the inverter pointer and sets `DirectCurrentWithInverter` if no bus type was specified. |
 | `EnergyManagementSystemActuator.new(model_object, component_type, control_type)` | Yes | Yes | `resources/model.rb` | EPModel path uses the constructor without a SpaceLoadInstance cast; OpenStudio 3.11 retains its SpaceLoadInstance-specific overload. |
 | `EnergyManagementSystemGlobalVariable#name` |  |  | `resources/airflow.rb`, `resources/epmodel.rb` | Shim returns the ERL variable name from the first extensible group; EPModel's inherited ModelObject name is empty. |
 | `EnergyManagementSystemOutputVariable#setEMSProgramOrSubroutineName(program)` |  |  | `resources/model.rb` | Shim writes the `EMS Program or Subroutine Name` pointer; the EPModel wrapper does not expose the typed relationship setter. |
@@ -129,6 +135,13 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `FoundationKivaSettings#setSoilConductivity` | Yes | Yes | `resources/constructions.rb` | |
 | `FoundationKivaSettings#setSoilDensity` | Yes | Yes | `resources/constructions.rb` | |
 | `FoundationKivaSettings#setSoilSpecificHeat` | Yes | Yes | `resources/constructions.rb` | |
+| `GeneratorMicroTurbine#electricalEfficiencyFunctionofPartLoadRatioCurve` |  |  | `resources/generator.rb` | Only used to remove a legacy constructor default; EPModel creates no default curve. |
+| `GeneratorMicroTurbine#electricalEfficiencyFunctionofTemperatureCurve` |  |  | `resources/generator.rb` | Only used to remove a legacy constructor default; EPModel creates no default curve. |
+| `GeneratorMicroTurbine#electricalPowerFunctionofTemperatureandElevationCurve` |  |  | `resources/generator.rb` | Only used to remove a legacy constructor default; EPModel creates no default curve. |
+| `GeneratorMicroTurbine#setElectricalEfficiencyFunctionofPartLoadRatioCurve(curve)` |  |  | `resources/generator.rb`, `resources/epmodel.rb` | Shim writes the typed curve reference through the IDD field. |
+| `GeneratorMicroTurbine#setElectricalEfficiencyFunctionofTemperatureCurve(curve)` |  |  | `resources/generator.rb`, `resources/epmodel.rb` | Shim writes the typed curve reference through the IDD field. |
+| `GeneratorPVWatts.new(model, capacity)` |  |  | `resources/pv.rb`, `resources/epmodel.rb` | Shim calls the native model-only constructor and sets DC system capacity. |
+| `GeneratorMicroTurbine#setElectricalPowerFunctionofTemperatureandElevationCurve(curve)` |  |  | `resources/generator.rb`, `resources/epmodel.rb` | Shim writes the typed curve reference through the IDD field. |
 | `GroundHeatExchangerVertical#addGFunction(lnValue, gValue)` | Yes | Yes | `resources/hvac.rb` | |
 | `GroundHeatExchangerVertical#boreHoleLength` | Yes | Yes | `resources/hvac.rb` | |
 | `GroundHeatExchangerVertical#boreHoleRadius` | Yes | Yes | `resources/hvac.rb` | |
@@ -175,10 +188,12 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `InternalMassDefinition#setSurfaceArea` |  |  | `resources/model.rb` | Delegates to `InteriorPartitionSurface#setSurfaceArea`. |
 | `InternalMassDefinition.new(model)` |  |  | `resources/model.rb` | Creates an `InteriorPartitionSurface` with placeholder vertices, then sets its explicit area. |
 | `MeterCustom#addKeyVarGroup(key, output_variable_or_meter)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Shim appends a group with `Key Name` and `Output Variable or Meter Name` fields. |
+| `MeterCustomDecrement#addKeyVarGroup(key, output_variable_or_meter)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Shares the extensible-group shim used by `MeterCustom`. |
 | `Model#alwaysOffDiscreteSchedule` |  |  | `resources/hvac.rb`, `resources/meta_measure.rb`, `resources/epmodel.rb` | Shim creates or reuses a zero-valued constant schedule with discrete type limits. EPModel removes unreferenced `Schedule:Constant` objects from the translated workspace while preserving schedule names referenced by EMS sensors and actuators. |
 | `Model#getBoilerHotWaters` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's typed collection getter evaluates unset baseboard-coil sizing fields and triggers native assertions. A class-level override filters model objects by IDD type before casting, preserving the shared resource call. |
 | `Model#addObject(idf_object)` | Yes | Yes | `resources/epmodel.rb` | Adds the cloned boiler and pump IDF objects used by the indirect-DHW loop rebuild. |
 | `Model#getConvergenceLimits` | Yes | Yes | `resources/simcontrols.rb` | |
+| `Model#getElectricLoadCenterDistributions` | Yes |  | `resources/output.rb`, `resources/epmodel.rb` | Native collection getter crashes on the generator sample; the override finds load centers by IDD type before casting. |
 | `Model#getFoundationKivas` | Yes | Yes | `resources/epmodel.rb` | Resolves the typed target for `adjacentFoundation`. |
 | `Model#getFoundationKivaSettings` | Yes | Yes | `resources/constructions.rb` | |
 | `Model#getInsideSurfaceConvectionAlgorithm` | Yes | Yes | `resources/simcontrols.rb` | |

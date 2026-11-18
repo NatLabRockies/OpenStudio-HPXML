@@ -148,6 +148,86 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     assert_raises(RuntimeError) { model.alwaysOffDiscreteSchedule }
   end
 
+  def test_microturbine_load_center_and_reporting
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    generator = OpenStudio::Model::GeneratorMicroTurbine.new(model)
+    generator.setReferenceElectricalPowerOutput(250.0)
+    generator.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeGenerator)
+    power_curve = OpenStudio::Model::CurveBiquadratic.new(model)
+    efficiency_curve = OpenStudio::Model::CurveCubic.new(model)
+    generator.setElectricalPowerFunctionofTemperatureandElevationCurve(power_curve)
+    generator.setElectricalEfficiencyFunctionofTemperatureCurve(efficiency_curve)
+    generator.setElectricalEfficiencyFunctionofPartLoadRatioCurve(efficiency_curve)
+    load_center = OpenStudio::Model::ElectricLoadCenterDistribution.new(model)
+    assert(load_center.addGenerator(generator))
+
+    assert_equal([generator.handle], model.getElectricLoadCenterDistributions.fetch(0).generators.map(&:handle))
+    Outputs.create_custom_electricity_meters(model)
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    turbine = workspace.getObjectsByType('Generator:MicroTurbine'.to_IddObjectType).fetch(0)
+    curve_fields = ['Electrical Power Function of Temperature and Elevation Curve Name',
+                    'Electrical Efficiency Function of Temperature Curve Name',
+                    'Electrical Efficiency Function of Part Load Ratio Curve Name']
+    assert_equal([power_curve, efficiency_curve, efficiency_curve].map { |curve| curve.name.to_s },
+                 curve_fields.map { |field| turbine.getString(turbine.iddObject.getFieldIndex(field).get).get })
+    list = workspace.getObjectsByType('ElectricLoadCenter:Generators'.to_IddObjectType).fetch(0)
+    assert_equal(250.0, list.getExtensibleGroup(0).getDouble(2).get)
+    assert(workspace.getObjectsByType('Meter:CustomDecrement'.to_IddObjectType).any? do |meter|
+      meter.extensibleGroups.any? { |group| group.getString(1).get == 'Generator Produced AC Electricity Energy' }
+    end)
+  end
+
+  def test_pv_watts_load_center_and_reporting
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    load_center = OpenStudio::Model::ElectricLoadCenterDistribution.new(model)
+    inverter = OpenStudio::Model::ElectricLoadCenterInverterPVWatts.new(model)
+    generator = OpenStudio::Model::GeneratorPVWatts.new(model, 5000.0)
+    generator.additionalProperties.setFeature('ObjectType', Constants::ObjectTypePhotovoltaics)
+    assert(load_center.setInverter(inverter))
+    assert(load_center.addGenerator(generator))
+
+    Outputs.create_custom_electricity_meters(model)
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    distribution = workspace.getObjectsByType('ElectricLoadCenter:Distribution'.to_IddObjectType).fetch(0)
+    assert_equal('DirectCurrentWithInverter', distribution.getString(distribution.iddObject.getFieldIndex('Electrical Buss Type').get).get)
+    assert_equal('Baseload', distribution.getString(distribution.iddObject.getFieldIndex('Generator Operation Scheme Type').get).get)
+    assert_equal(inverter.name.to_s, distribution.getTarget(distribution.iddObject.getFieldIndex('Inverter Name').get).get.name.to_s)
+
+    list = distribution.getTarget(distribution.iddObject.getFieldIndex('Generator List Name').get).get
+    entry = list.getExtensibleGroup(0).to_WorkspaceExtensibleGroup.get
+    assert_equal(generator.name.to_s, entry.getTarget(0).get.name.to_s)
+    assert_equal('Generator:PVWatts', entry.getString(1).get)
+    assert_equal(5000.0, entry.getDouble(2).get)
+    assert_equal(5000.0, entry.getTarget(0).get.getDouble(generator.iddObject.getFieldIndex('DC System Capacity').get).get)
+
+    meter = workspace.getObjectsByType('Meter:Custom'.to_IddObjectType).find { |object| object.name.to_s == 'Electricity:PV' }
+    refute_nil(meter)
+    assert_equal([[generator.name.to_s.upcase, 'Generator Produced DC Electricity Energy'],
+                  [inverter.name.to_s.upcase, 'Inverter Conversion Loss Decrement Energy']],
+                 meter.extensibleGroups.map { |group| [group.getString(0).get, group.getString(1).get] })
+  end
+
+  def test_electrical_storage_load_center_export
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    load_center = OpenStudio::Model::ElectricLoadCenterDistribution.new(model)
+    load_center.setElectricalBussType('AlternatingCurrentWithStorage')
+    storage = OpenStudio::Model::ElectricLoadCenterStorageLiIonNMCBattery.new(model, 100, 2, 100.0, 1.0)
+    assert(load_center.setElectricalStorage(storage))
+    assert_equal(storage.handle, load_center.electricalStorage.get.handle)
+
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    distribution = workspace.getObjectsByType('ElectricLoadCenter:Distribution'.to_IddObjectType).fetch(0)
+    target = distribution.getTarget(distribution.iddObject.getFieldIndex('Electrical Storage Object Name').get).get
+    assert_equal('ElectricLoadCenter:Storage:LiIonNMCBattery', target.iddObject.name.to_s)
+    assert_equal(storage.name.to_s, target.name.to_s)
+  end
+
   def test_water_use_connection_equipment_and_schedules
     return unless Version::UseEPModel
 

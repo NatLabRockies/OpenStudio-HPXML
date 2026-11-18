@@ -67,9 +67,12 @@ module Generator
     gmt.setFuelLowerHeatingValue(50000)
     gmt.setStandbyPower(0.0)
     gmt.setAncillaryPower(0.0)
-    gmt.electricalPowerFunctionofTemperatureandElevationCurve.remove
-    gmt.electricalEfficiencyFunctionofTemperatureCurve.remove
-    gmt.electricalEfficiencyFunctionofPartLoadRatioCurve.remove
+    # Only the legacy constructor creates default curves that need to be removed.
+    unless Version::UseEPModel
+      gmt.electricalPowerFunctionofTemperatureandElevationCurve.remove
+      gmt.electricalEfficiencyFunctionofTemperatureCurve.remove
+      gmt.electricalEfficiencyFunctionofPartLoadRatioCurve.remove
+    end
     gmt.setElectricalPowerFunctionofTemperatureandElevationCurve(curve_biquadratic_constant)
     gmt.setElectricalEfficiencyFunctionofTemperatureCurve(curve_cubic_constant)
     gmt.setElectricalEfficiencyFunctionofPartLoadRatioCurve(curve_cubic_constant)
