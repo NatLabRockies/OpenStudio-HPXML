@@ -1116,6 +1116,56 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
     assert_in_delta(0.6667, front_back_wall_length / left_right_wall_length, 0.01)
   end
 
+  def test_material_roughnesses
+    # Test roof exterior finishes
+    args_hash = {}
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-enclosure-rooftypes.xml'))
+    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+    hpxml_bldg.roofs.each do |roof|
+      os_surface = model.getSurfaces.find { |s| s.name.to_s.start_with? "#{roof.id}:" }
+      os_construction = os_surface.construction.get.to_LayeredConstruction.get
+      exterior_layer = os_construction.getLayer(0).to_StandardOpaqueMaterial.get
+      case roof.roof_type
+      when HPXML::RoofTypeConcrete
+        assert_equal('VeryRough', exterior_layer.roughness)
+      when HPXML::RoofTypeEPS
+        assert_equal('Rough', exterior_layer.roughness)
+      when HPXML::RoofTypeAsphaltShingles, HPXML::RoofTypeWoodShingles, HPXML::RoofTypeShingles
+        assert_equal('MediumRough', exterior_layer.roughness)
+      when HPXML::RoofTypeClayTile, HPXML::RoofTypePlasticRubber
+        assert_equal('MediumSmooth', exterior_layer.roughness)
+      when HPXML::RoofTypeMetal
+        assert_equal('Smooth', exterior_layer.roughness)
+      else
+        fail "Unexpected roof material: #{roof.roof_type}."
+      end
+    end
+
+    # Test wall exterior finishes
+    args_hash = {}
+    args_hash['hpxml_path'] = File.absolute_path(File.join(@sample_files_path, 'base-enclosure-walltypes.xml'))
+    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+    hpxml_bldg.walls.each do |wall|
+      os_surface = model.getSurfaces.find { |s| s.name.to_s.start_with? "#{wall.id}:" }
+      os_construction = os_surface.construction.get.to_LayeredConstruction.get
+      exterior_layer = os_construction.getLayer(0).to_StandardOpaqueMaterial.get
+      case wall.siding
+      when HPXML::SidingTypeStucco, HPXML::SidingTypeSyntheticStucco
+        assert_equal('VeryRough', exterior_layer.roughness)
+      when HPXML::SidingTypeBrick, HPXML::SidingTypeStone, HPXML::SidingTypeCompositeShingle, HPXML::SidingTypeNotPresent
+        assert_equal('Rough', exterior_layer.roughness)
+      when HPXML::SidingTypeAsbestos, HPXML::SidingTypeFiberCement, HPXML::SidingTypeMasonite
+        assert_equal('MediumRough', exterior_layer.roughness)
+      when HPXML::SidingTypeWood
+        assert_equal('MediumSmooth', exterior_layer.roughness)
+      when HPXML::SidingTypeVinyl, HPXML::SidingTypeAluminum
+        assert_equal('Smooth', exterior_layer.roughness)
+      else
+        fail "Unexpected wall siding: #{wall.siding}."
+      end
+    end
+  end
+
   def _check_surface(hpxml_surface, os_surface, expected_layer_names, radiant_barrier_emittance = nil)
     os_construction = os_surface.construction.get.to_LayeredConstruction.get
 
