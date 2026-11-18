@@ -65,7 +65,8 @@ class Material
   end
 
   # Converts the roughness number to the EnergyPlus roughness string
-  def roughness()
+  # @return [String] The roughness as an EnergyPlus value
+  def roughness
     return ['VeryRough', 'Rough', 'MediumRough', 'MediumSmooth', 'Smooth', 'VerySmooth'][@roughness_num - 1]
   end
 
