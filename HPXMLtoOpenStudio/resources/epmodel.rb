@@ -166,6 +166,32 @@ if Version::UseEPModel
       end
     end
 
+    class WaterToAirHeatPumpSpeed
+      def initialize(group, fields, mode)
+        @group = group.to_WorkspaceExtensibleGroup.get
+        @fields = fields
+        @capacity_curve_field = "Speed Total #{mode} Capacity Function of Air Flow Fraction Curve Name"
+      end
+
+      def referenceUnitRatedWaterFlowRate
+        @group.getDouble(@fields.fetch('Speed Reference Unit Rated Water Flow Rate')).get
+      end
+
+      def referenceUnitRatedAirFlowRate
+        @group.getDouble(@fields.fetch('Speed Reference Unit Rated Air Flow Rate')).get
+      end
+      alias referenceUnitRatedAirFlow referenceUnitRatedAirFlowRate
+
+      def totalHeatingCapacityFunctionofAirFlowFractionCurve
+        @group.getTarget(@fields.fetch(@capacity_curve_field)).get
+      end
+      alias totalCoolingCapacityFunctionofAirFlowFractionCurve totalHeatingCapacityFunctionofAirFlowFractionCurve
+
+      def energyInputRatioFunctionofAirFlowFractionCurve
+        @group.getTarget(@fields.fetch('Speed Energy Input Ratio Function of Air Flow Fraction Curve Name')).get
+      end
+    end
+
     class SupplyAirflowRatioField
       attr_reader :heating_ratio, :cooling_ratio
 
@@ -950,10 +976,7 @@ if Version::UseEPModel
 
     class AirTerminalSingleDuctUncontrolled
       def self.new(model, schedule)
-        terminal = OpenStudio::EPModel::AirTerminalSingleDuctVAVNoReheat.new(model, schedule)
-        terminal.setConstantMinimumAirFlowFraction(0.0)
-        terminal.setFixedMinimumAirFlowRate(0.0)
-        return terminal
+        OpenStudio::EPModel::AirTerminalSingleDuctConstantVolumeNoReheat.new(model, schedule)
       end
     end
 
@@ -966,7 +989,71 @@ if Version::UseEPModel
       normalize_boiler_load_distribution(workspace)
       add_ground_heat_exchanger_plant_schemes(workspace, model)
       add_default_heating_plant_schemes(workspace, model)
+      normalize_desuperheater_tank_outlets(workspace)
       normalize_wrapped_hpwh_plant_references(workspace)
+    end
+
+    def self.normalize_desuperheater_tank_outlets(workspace)
+      targets = {}
+      workspace.getObjectsByType('Coil:WaterHeating:Desuperheater'.to_IddObjectType).each do |coil|
+        type = coil.getString(coil.iddObject.getFieldIndex('Tank Object Type').get).get
+        name = coil.getString(coil.iddObject.getFieldIndex('Tank Name').get).get
+        targets[[type.downcase, name.downcase]] = workspace.getObjectByTypeAndName(type.to_IddObjectType, name).get
+      end
+      return if targets.empty?
+
+      workspace.getObjectsByType('Branch'.to_IddObjectType).each do |branch|
+        branch.extensibleGroups.each_cons(2) do |upstream, downstream|
+          tank = targets[[upstream.getString(0).to_s.downcase, upstream.getString(1).to_s.downcase]]
+          next if tank.nil?
+          next unless ['waterheater:mixed', 'waterheater:stratified'].include?(downstream.getString(0).to_s.downcase)
+
+          # Inserting the main tank updates the branch outlet but not the preheat tank.
+          outlet_index = tank.iddObject.getFieldIndex('Use Side Outlet Node Name').get
+          outlet_node = upstream.to_WorkspaceExtensibleGroup.get.getTarget(3).get
+          unless tank.setPointer(outlet_index, outlet_node.handle)
+            fail "Could not update the use-side outlet for '#{tank.name}'."
+          end
+        end
+      end
+    end
+
+    def self.detach_water_heater_branch_for_move(tank, node)
+      loop = tank.plantLoop
+      return unless loop.is_initialized
+
+      plant_loop = loop.get
+      branch_list = plant_loop.getTarget(plant_loop.iddObject.getFieldIndex('Plant Side Branch List Name').get).get
+      equipment_groups = branch_list.extensibleGroups.to_a[1...-1]
+      return if equipment_groups.nil?
+
+      source_branch = nil
+      destination_branch = nil
+      equipment_groups.each do |group|
+        branch = group.to_WorkspaceExtensibleGroup.get.getTarget(0).get
+        branch.extensibleGroups.each do |component|
+          next unless ['WaterHeater:Mixed', 'WaterHeater:Stratified'].include?(component.getString(0).to_s)
+
+          entry = component.to_WorkspaceExtensibleGroup.get
+          component_target = entry.getTarget(1)
+          next unless component_target.is_initialized
+
+          if component_target.get.handle == tank.handle
+            source_branch = branch
+          else
+            outlet = entry.getTarget(3)
+            destination_branch = branch if outlet.is_initialized && outlet.get.handle == node.handle
+          end
+        end
+      end
+      return if source_branch.nil? || destination_branch.nil? || source_branch.handle == destination_branch.handle
+      return unless source_branch.numExtensibleGroups == 1
+
+      # The native move detaches the tank but leaves the old branch in the loop.
+      unless plant_loop.removeSupplyBranchWithComponent(tank)
+        fail "Could not remove the original supply branch for '#{tank.name}'."
+      end
+      true
     end
 
     def self.normalize_wrapped_hpwh_plant_references(workspace)
@@ -1679,6 +1766,16 @@ if Version::UseEPModel
     return hpwh
   end
 
+  # Native speeds materializes transient SpeedData objects and can crash.
+  # Read the fields used by HPXML directly from the coil's ordered IDF groups.
+  { OpenStudio::EPModel::CoilHeatingWaterToAirHeatPumpVariableSpeedEquationFit => 'Heating',
+    OpenStudio::EPModel::CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFit => 'Cooling' }.each do |coil_class, mode|
+    coil_class.define_method(:speeds) do
+      fields = iddObject.extensibleGroup.map(&:name).each_with_index.to_h
+      extensibleGroups.map { |group| EPModelCompatibility::WaterToAirHeatPumpSpeed.new(group, fields, mode) }
+    end
+  end
+
   native_fan_add_speed = OpenStudio::EPModel::FanSystemModel.instance_method(:addSpeed)
   OpenStudio::EPModel::FanSystemModel.define_method(:addSpeed) do |*args|
     return false unless native_fan_add_speed.bind(self).call(*args)
@@ -1839,6 +1936,58 @@ if Version::UseEPModel
   OpenStudio::EPModel::Model.define_method(:getElectricLoadCenterDistributions) do
     getObjectsByType('ElectricLoadCenter:Distribution'.to_IddObjectType).map do |object|
       object.to_ElectricLoadCenterDistribution.get
+    end
+  end
+
+  [OpenStudio::EPModel::WaterHeaterMixed, OpenStudio::EPModel::WaterHeaterStratified].each do |tank_class|
+    native_add_to_node = tank_class.instance_method(:addToNode)
+    tank_class.define_method(:addToNode) do |node|
+      detached = EPModelCompatibility.detach_water_heater_branch_for_move(self, node)
+      added = native_add_to_node.bind(self).call(node)
+      fail "Could not reattach '#{name}' after removing its original supply branch." if detached && !added
+
+      added
+    end
+  end
+
+  unless OpenStudio::EPModel::CoilWaterHeatingDesuperheater.method_defined?(:addToHeatRejectionTarget)
+    OpenStudio::EPModel::CoilWaterHeatingDesuperheater.define_method(:addToHeatRejectionTarget) do |tank|
+      tank_type = tank.iddObject.name.to_s
+      unless ['WaterHeater:Mixed', 'WaterHeater:Stratified'].include?(tank_type)
+        raise ArgumentError, "Unsupported desuperheater tank type '#{tank_type}'."
+      end
+
+      inlet = OpenStudio::EPModel::Node.new(model)
+      outlet = OpenStudio::EPModel::Node.new(model)
+      unless EPModelCompatibility.set_pointer(self, 'Tank Name', tank) &&
+             setString(iddObject.getFieldIndex('Tank Object Type').get, tank_type) &&
+             EPModelCompatibility.set_pointer(self, 'Water Inlet Node Name', inlet) &&
+             EPModelCompatibility.set_pointer(self, 'Water Outlet Node Name', outlet) &&
+             EPModelCompatibility.set_pointer(tank, 'Source Side Inlet Node Name', outlet) &&
+             EPModelCompatibility.set_pointer(tank, 'Source Side Outlet Node Name', inlet)
+        raise "Could not connect desuperheater '#{name}' to tank '#{tank.name}'."
+      end
+
+      true
+    end
+  end
+
+  native_desuperheater_set_heating_source = OpenStudio::EPModel::CoilWaterHeatingDesuperheater.instance_method(:setHeatingSource)
+  OpenStudio::EPModel::CoilWaterHeatingDesuperheater.define_method(:setHeatingSource) do |coil|
+    unless native_desuperheater_set_heating_source.bind(self).call(coil) &&
+           setString(iddObject.getFieldIndex('Heating Source Object Type').get, coil.iddObject.name.to_s)
+      raise "Could not set the heating source for desuperheater '#{name}'."
+    end
+
+    true
+  end
+
+  { getCoilCoolingDXSingleSpeeds: ['Coil:Cooling:DX:SingleSpeed', :to_CoilCoolingDXSingleSpeed],
+    getCoilCoolingDXMultiSpeeds: ['Coil:Cooling:DX:MultiSpeed', :to_CoilCoolingDXMultiSpeed],
+    getCoilCoolingWaterToAirHeatPumpEquationFits: ['Coil:Cooling:WaterToAirHeatPump:EquationFit', :to_CoilCoolingWaterToAirHeatPumpEquationFit],
+    getCoilCoolingWaterToAirHeatPumpVariableSpeedEquationFits: ['Coil:Cooling:WaterToAirHeatPump:VariableSpeedEquationFit', :to_CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFit] }.each do |method_name, (idd_type, cast)|
+    OpenStudio::EPModel::Model.define_method(method_name) do
+      getObjectsByType(idd_type.to_IddObjectType).map { |object| object.public_send(cast).get }
     end
   end
 

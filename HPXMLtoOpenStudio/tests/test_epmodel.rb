@@ -267,6 +267,65 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     assert_equal([0.75, 1.0], exported_fan.extensibleGroups.map { |group| group.getDouble(0).get })
   end
 
+  def test_variable_speed_water_to_air_coil_speed_reads
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    %w[Heating Cooling].each do |mode|
+      coil_class = OpenStudio::Model.const_get("Coil#{mode}WaterToAirHeatPumpVariableSpeedEquationFit")
+      speed_class = OpenStudio::Model.const_get("#{coil_class.name.split('::').last}SpeedData")
+      coil = coil_class.new(model)
+      assert_empty(coil.speeds)
+
+      cap_curves = []
+      eir_curves = []
+      [0.0002, 0.0006].each_with_index do |water_flow, index|
+        cap_curves << OpenStudio::Model::CurveQuadratic.new(model)
+        eir_curves << OpenStudio::Model::CurveQuadratic.new(model)
+        ft_curve = OpenStudio::Model::CurveBiquadratic.new(model)
+        flow_curve = OpenStudio::Model::CurveQuadratic.new(model)
+        speed = speed_class.new(model, ft_curve, cap_curves.last, flow_curve, ft_curve, eir_curves.last, flow_curve, ft_curve)
+        speed.setReferenceUnitRatedWaterFlowRate(water_flow)
+        speed.public_send(mode == 'Heating' ? :setReferenceUnitRatedAirFlow : :setReferenceUnitRatedAirFlowRate, 0.25 * (index + 1))
+        coil.addSpeed(speed)
+      end
+
+      speeds = coil.speeds
+      assert_equal([0.0002, 0.0006], speeds.map(&:referenceUnitRatedWaterFlowRate))
+      assert_equal([0.25, 0.5], speeds.map { |speed| speed.public_send(mode == 'Heating' ? :referenceUnitRatedAirFlow : :referenceUnitRatedAirFlowRate) })
+      assert_equal(cap_curves.map(&:handle), speeds.map { |speed| speed.public_send("total#{mode}CapacityFunctionofAirFlowFractionCurve").to_CurveQuadratic.get.handle })
+      assert_equal(eir_curves.map(&:handle), speeds.map { |speed| speed.energyInputRatioFunctionofAirFlowFractionCurve.to_CurveQuadratic.get.handle })
+
+      workspace = OpenStudio::Workspace.new(model.toIdfFile)
+      exported = workspace.getObjectsByType("Coil:#{mode}:WaterToAirHeatPump:VariableSpeedEquationFit".to_IddObjectType).fetch(0)
+      water_field = exported.iddObject.extensibleGroup.map(&:name).index('Speed Reference Unit Rated Water Flow Rate')
+      assert_equal(speeds.map(&:referenceUnitRatedWaterFlowRate), exported.extensibleGroups.map { |group| group.getDouble(water_field).get })
+    end
+  end
+
+  def test_uncontrolled_air_terminal_branch_export
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    air_loop = OpenStudio::Model::AirLoopHVAC.new(model)
+    zone = OpenStudio::Model::ThermalZone.new(model)
+    space = OpenStudio::Model::Space.new(model)
+    space.setThermalZone(zone)
+    terminal = OpenStudio::Model::AirTerminalSingleDuctUncontrolled.new(model, model.alwaysOnDiscreteSchedule)
+    terminal.setMaximumAirFlowRate(0.34)
+    assert(air_loop.multiAddBranchForZone(zone, terminal))
+
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    terminal_type = 'AirTerminal:SingleDuct:ConstantVolume:NoReheat'
+    exported = workspace.getObjectsByType(terminal_type.to_IddObjectType).fetch(0)
+    adu = workspace.getObjectsByType('ZoneHVAC:AirDistributionUnit'.to_IddObjectType).fetch(0)
+    assert_equal(terminal_type, adu.getString(adu.iddObject.getFieldIndex('Air Terminal Object Type').get).get)
+    assert_equal(exported.name.get, adu.getString(adu.iddObject.getFieldIndex('Air Terminal Name').get).get)
+    assert_equal(exported.getString(exported.iddObject.getFieldIndex('Air Outlet Node Name').get).get,
+                 adu.getString(adu.iddObject.getFieldIndex('Air Distribution Unit Outlet Node Name').get).get)
+    assert_in_delta(0.34, exported.getDouble(exported.iddObject.getFieldIndex('Maximum Air Flow Rate').get).get)
+  end
+
   def test_zone_hvac_four_pipe_fan_coil_constructor
     return unless Version::UseEPModel
 
@@ -319,6 +378,42 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     assert_equal(1, model.getObjectsByType('FluidProperties_GlycolConcentration'.to_IddObjectType).size)
     assert_equal(1, model.getObjectsByType('FluidProperties_Name'.to_IddObjectType).size)
     assert_raises(ArgumentError) { other_loop.setGlycolFluidType('PropyleneGlycol', 101) }
+  end
+
+  def test_desuperheater_source_and_tank_export
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    source = OpenStudio::Model::CoilCoolingDXSingleSpeed.new(model)
+    tank = OpenStudio::Model::WaterHeaterMixed.new(model)
+    main_tank = OpenStudio::Model::WaterHeaterMixed.new(model)
+    plant_loop = OpenStudio::Model::PlantLoop.new(model)
+    assert(plant_loop.addSupplyBranchForComponent(main_tank))
+    assert(plant_loop.addSupplyBranchForComponent(tank))
+    assert(main_tank.addToNode(tank.supplyOutletModelObject.get.to_Node.get))
+    setpoint = Model.add_schedule_constant(model, name: 'Desuperheater Setpoint', value: 55.0)
+    desuperheater = OpenStudio::Model::CoilWaterHeatingDesuperheater.new(model, setpoint)
+    assert_equal([source.handle], model.getCoilCoolingDXSingleSpeeds.map(&:handle))
+    assert(desuperheater.setHeatingSource(source))
+    assert(desuperheater.addToHeatRejectionTarget(tank))
+
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    EPModelCompatibility.normalize_desuperheater_tank_outlets(workspace)
+    exported_loop = workspace.getObjectsByType('PlantLoop'.to_IddObjectType).fetch(0)
+    supply_branches = exported_loop.getTarget(exported_loop.iddObject.getFieldIndex('Plant Side Branch List Name').get).get
+    assert_equal(3, supply_branches.numExtensibleGroups) # Inlet, single tank branch, outlet.
+    exported_coil = workspace.getObjectsByType('Coil:WaterHeating:Desuperheater'.to_IddObjectType).fetch(0)
+    exported_tank = workspace.getObjectByTypeAndName('WaterHeater:Mixed'.to_IddObjectType, tank.name.to_s).get
+    exported_main_tank = workspace.getObjectByTypeAndName('WaterHeater:Mixed'.to_IddObjectType, main_tank.name.to_s).get
+    field = ->(object, name) { object.getString(object.iddObject.getFieldIndex(name).get).get }
+    assert_equal(field.call(exported_main_tank, 'Use Side Inlet Node Name'), field.call(exported_tank, 'Use Side Outlet Node Name'))
+    assert_equal(['Coil:Cooling:DX:SingleSpeed', source.name.to_s],
+                 ['Heating Source Object Type', 'Heating Source Name'].map { |name| field.call(exported_coil, name) })
+    assert_equal(['WaterHeater:Mixed', tank.name.to_s],
+                 ['Tank Object Type', 'Tank Name'].map { |name| field.call(exported_coil, name) })
+    assert_equal(field.call(exported_tank, 'Source Side Inlet Node Name'), field.call(exported_coil, 'Water Outlet Node Name'))
+    assert_equal(field.call(exported_tank, 'Source Side Outlet Node Name'), field.call(exported_coil, 'Water Inlet Node Name'))
+    refute_equal(field.call(exported_coil, 'Water Inlet Node Name'), field.call(exported_coil, 'Water Outlet Node Name'))
   end
 
   def test_wrapped_hpwh_plant_export
