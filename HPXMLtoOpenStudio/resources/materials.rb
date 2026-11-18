@@ -51,7 +51,6 @@ class Material
     @tAbs = tAbs
     @sAbs = sAbs
     @roughness_num = roughness_num
-    @roughness = ['VeryRough', 'Rough', 'MediumRough', 'MediumSmooth', 'Smooth', 'VerySmooth'][roughness_num - 1]
 
     # Calculate R-value
     if not rvalue.nil?
@@ -63,6 +62,11 @@ class Material
         @rvalue = @thick_in / 10000000.0 # hr-ft2-F/Btu
       end
     end
+  end
+
+  # Converts the roughness number to the EnergyPlus roughness string
+  def roughness()
+    return ['VeryRough', 'Rough', 'MediumRough', 'MediumSmooth', 'Smooth', 'VerySmooth'][@roughness_num - 1]
   end
 
   # Combines two materials into a new single material.
@@ -80,7 +84,7 @@ class Material
     return new(name: new_name, thick_in: thick_in, k_in: thick_in / rvalue, rho: rho, cp: cp, roughness_num: roughness_num)
   end
 
-  attr_accessor :name, :thick, :thick_in, :k, :k_in, :rho, :cp, :rvalue, :tAbs, :sAbs, :roughness_num, :roughness
+  attr_accessor :name, :thick, :thick_in, :k, :k_in, :rho, :cp, :rvalue, :tAbs, :sAbs, :roughness_num
 
   # Creates a material associated with a closed air cavity (e.g.,
   # inside an uninsulated wood stud wall).
@@ -205,8 +209,9 @@ class Material
   #
   # @param type [HPXML::SidingTypeXXX] Type of siding
   # @param thick_in [Double] Thickness of the siding (in)
+  # @param apply_ashrae140_assumptions [Boolean] True if an ASHRAE 140 test case where we want to override our normal assumptions
   # @return [Material] The material object
-  def self.ExteriorFinishMaterial(type, thick_in = nil)
+  def self.ExteriorFinishMaterial(type, thick_in = nil, apply_ashrae140_assumptions = nil)
     if (type == HPXML::SidingTypeNotPresent) || (!thick_in.nil? && thick_in <= 0)
       return
     end
@@ -216,37 +221,43 @@ class Material
     case type
     when HPXML::SidingTypeAsbestos
       thick_in = 0.25 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 4.20, rho: 118.6, cp: 0.24, roughness_num: 3)
+      mat =  new(name: type, thick_in: thick_in, k_in: 4.20, rho: 118.6, cp: 0.24, roughness_num: 3)
     when HPXML::SidingTypeBrick
       thick_in = 4.0 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Brick, roughness_num: 2)
+      mat =  new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Brick, roughness_num: 2)
     when HPXML::SidingTypeStone
       thick_in = 1.0 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Stone, roughness_num: 2)
+      mat =  new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Stone, roughness_num: 2)
     when HPXML::SidingTypeCompositeShingle
       thick_in = 0.25 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 1.128, rho: 70.0, cp: 0.35, roughness_num: 2)
+      mat =  new(name: type, thick_in: thick_in, k_in: 1.128, rho: 70.0, cp: 0.35, roughness_num: 2)
     when HPXML::SidingTypeFiberCement
       thick_in = 0.375 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 1.79, rho: 21.7, cp: 0.24, roughness_num: 3)
+      mat =  new(name: type, thick_in: thick_in, k_in: 1.79, rho: 21.7, cp: 0.24, roughness_num: 3)
     when HPXML::SidingTypeMasonite # Masonite hardboard
       thick_in = 0.5 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 0.69, rho: 46.8, cp: 0.39, roughness_num: 3)
+      mat =  new(name: type, thick_in: thick_in, k_in: 0.69, rho: 46.8, cp: 0.39, roughness_num: 3)
     when HPXML::SidingTypeStucco
       thick_in = 1.0 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Stucco, roughness_num: 1)
+      mat =  new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Stucco, roughness_num: 1)
     when HPXML::SidingTypeSyntheticStucco # EIFS
       thick_in = 1.0 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.InsulationRigid, roughness_num: 1)
+      mat =  new(name: type, thick_in: thick_in, mat_base: BaseMaterial.InsulationRigid, roughness_num: 1)
     when HPXML::SidingTypeVinyl, HPXML::SidingTypeAluminum
       thick_in = 0.375 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Vinyl, roughness_num: 5)
+      mat =  new(name: type, thick_in: thick_in, mat_base: BaseMaterial.Vinyl, roughness_num: 5)
     when HPXML::SidingTypeWood
       thick_in = 0.75 if thick_in.nil?
-      return new(name: type, thick_in: thick_in, k_in: 0.71, rho: 34.0, cp: 0.28, roughness_num: 4)
+      mat =  new(name: type, thick_in: thick_in, k_in: 0.71, rho: 34.0, cp: 0.28, roughness_num: 4)
+    else
+      fail "Unexpected type: #{type}."
     end
 
-    fail "Unexpected type: #{type}."
+    if apply_ashrae140_assumptions
+      mat.roughness_num = 2 # brick/rough plaster roughness assumed per ASHRAE 140
+    end
+
+    return mat
   end
 
   # Creates a material for the foundation wall.
@@ -360,8 +371,9 @@ class Material
   #
   # @param roof_type [HPXML::RoofTypeXXX] Type of roof material
   # @param osb_thick_in [Double] Thickness of the OSB sheathing (in)
+  # @param apply_ashrae140_assumptions [Boolean] True if an ASHRAE 140 test case where we want to override our normal assumptions
   # @return [Material] The material object
-  def self.RoofMaterialAndSheathing(roof_type, osb_thick_in = 0.625)
+  def self.RoofMaterialAndSheathing(roof_type, osb_thick_in = 0.625, apply_ashrae140_assumptions = nil)
     # Note: We include OSB sheathing in the same material layer to prevent possible attic
     # temperature out of bounds errors in E+.
     #
@@ -390,6 +402,10 @@ class Material
       mat_roof = new(name: roof_type, thick_in: 0.25, k_in: 2.78, rho: 110.8, cp: 0.36, roughness_num: 4)
     else
       fail "Unexpected roof type: #{roof_type}."
+    end
+
+    if apply_ashrae140_assumptions
+      mat_roof.roughness_num = 2 # brick/rough plaster roughness assumed per ASHRAE 140
     end
 
     return combine(mat_roof, mat_osb, "#{mat_roof.name} + #{mat_osb.name}")

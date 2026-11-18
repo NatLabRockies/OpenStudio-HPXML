@@ -101,7 +101,7 @@ module Constructions
     interior_film = Material.AirFilmIndoorWall
     if wall.is_exterior
       exterior_film = Material.AirFilmOutside(false, hpxml_header.apply_ashrae140_assumptions)
-      mat_ext_finish = Material.ExteriorFinishMaterial(wall.siding)
+      mat_ext_finish = Material.ExteriorFinishMaterial(wall.siding, nil, hpxml_header.apply_ashrae140_assumptions)
     else
       exterior_film = Material.AirFilmIndoorWall
       mat_ext_finish = nil
