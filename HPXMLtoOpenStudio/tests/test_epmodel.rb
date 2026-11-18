@@ -250,6 +250,23 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     refute(equipment[1].waterUseEquipmentDefinition.targetTemperatureSchedule.is_initialized)
   end
 
+  def test_fan_speed_count_and_export
+    return unless Version::UseEPModel
+
+    model = OpenStudio::Model::Model.new
+    fan = OpenStudio::Model::FanSystemModel.new(model)
+    assert_equal(1, fan.numberofSpeeds)
+    assert(fan.addSpeed(0.75, 0.5))
+    assert_equal(1, fan.numberofSpeeds)
+    assert(fan.addSpeed(1.0, 1.0))
+    assert_equal(2, fan.numberofSpeeds)
+
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    exported_fan = workspace.getObjectsByType('Fan:SystemModel'.to_IddObjectType).fetch(0)
+    assert_equal(2, exported_fan.getInt(exported_fan.iddObject.getFieldIndex('Number of Speeds').get).get)
+    assert_equal([0.75, 1.0], exported_fan.extensibleGroups.map { |group| group.getDouble(0).get })
+  end
+
   def test_zone_hvac_four_pipe_fan_coil_constructor
     return unless Version::UseEPModel
 

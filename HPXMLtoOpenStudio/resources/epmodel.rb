@@ -1591,6 +1591,17 @@ if Version::UseEPModel
     end
   end
 
+  native_fan_add_speed = OpenStudio::EPModel::FanSystemModel.instance_method(:addSpeed)
+  OpenStudio::EPModel::FanSystemModel.define_method(:addSpeed) do |*args|
+    return false unless native_fan_add_speed.bind(self).call(*args)
+
+    # Native addSpeed writes the speed groups but does not update the count.
+    field_index = iddObject.getFieldIndex('Number of Speeds').get
+    raise "Could not set the number of speeds for fan '#{name}'." unless setInt(field_index, numExtensibleGroups)
+
+    true
+  end
+
   OpenStudio::EPModel::FanSystemModel.define_method(:numberofSpeeds) do
     field_index = iddObject.getFieldIndex('Number of Speeds')
     return 1 unless field_index.is_initialized
