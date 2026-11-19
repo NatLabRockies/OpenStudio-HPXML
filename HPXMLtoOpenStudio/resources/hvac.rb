@@ -2551,21 +2551,19 @@ module HVAC
     # coil cycling or absence of a supplemental coil
     fan_power_program.addLine('Set SuppOnlyCyclingRuntimeFraction = -1') # Flag indicating the timestep is not supplemental coil only operation
     if is_ashp
+      fan_power_program.addLine("If #{htg_rtf_sensor.name} <= 0.001 && #{clg_rtf_sensor.name} <= 0.001")
       if htg_supp_coil.nil?
-        fan_power_program.addLine("If #{htg_rtf_sensor.name} <= 0.001 && #{clg_rtf_sensor.name} <= 0.001")
         fan_power_program.addLine('  Set SuppOnlyCyclingRuntimeFraction = 0')
-        fan_power_program.addLine('EndIf')
       else
         # Determine supplemental coil runtime fraction to scale fan power
-        fan_power_program.addLine("If #{htg_rtf_sensor.name} <= 0.001 && #{clg_rtf_sensor.name} <= 0.001 && #{htg_supp_rate_sensor.name} > 0")
         if htg_supp_coil.is_a? OpenStudio::Model::CoilHeatingElectricMultiStage
           # Either cycling between off and first stage, or always on
           fan_power_program.addLine("  Set SuppOnlyCyclingRuntimeFraction = @MIN (#{htg_supp_rate_sensor.name} / #{htg_supp_coil.stages[0].nominalCapacity.get}) 1")
         else
           fan_power_program.addLine("  Set SuppOnlyCyclingRuntimeFraction = #{htg_supp_rate_sensor.name} / #{htg_supp_coil.nominalCapacity.get}")
         end
-        fan_power_program.addLine('EndIf')
       end
+      fan_power_program.addLine('EndIf')
     end
 
     if is_var_speed
