@@ -29,6 +29,7 @@ __Bugfixes__
 - Fixes air conditioner and heat pump fan power for variable-speed systems.
 - Fixes heat pump water heater modeled COP (derived from EF/UEF).
 - Fixes fan energy for variable-speed air conditioners and heat pumps; now uses continuous speed control (except when cycling on/off).
+- Fixes fan energy when only heat pump backup heating is running (i.e., heat pump locked out due to temperature); workaround for E+ bug.
 - Fixes possibility of MaxLoad heat pump sizing methodology producing autosized capacities that were too large.
 - Fixes ERV supply outlet enthalpy calculation used to calculate latent effectiveness.
 - Runs EnergyPlus without an intermediate shell when using run_simulation.rb or meta_measure.rb.
