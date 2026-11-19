@@ -17,16 +17,12 @@ module Constructions
     end
     interior_film = Material.AirFilmIndoorRoof(UnitConversions.convert(surfaces[0].tilt, 'rad', 'deg'), hpxml_header.apply_ashrae140_assumptions)
     exterior_film = Material.AirFilmOutside(false, hpxml_header.apply_ashrae140_assumptions)
-    if hpxml_header.apply_ashrae140_assumptions
-      mat_ext_finish = Material.RoofMaterialAndSheathing(roof.roof_type, 0.5) # Combined roof material + OSB sheathing
-    else
-      mat_ext_finish = Material.RoofMaterialAndSheathing(roof.roof_type) # Combined roof material + OSB sheathing
-    end
-    mat_int_finish = Material.InteriorFinishMaterial(roof.interior_finish_type, roof.interior_finish_thickness)
+    mat_ext_finish = Material.RoofMaterialAndSheathing(roof.roof_type, hpxml_header.apply_ashrae140_assumptions) # Combined roof material + OSB sheathing
+    mat_int_finish = Material.InteriorFinish(roof.interior_finish_type, roof.interior_finish_thickness)
     if mat_int_finish.nil?
       fallback_mat_int_finish = nil
     else
-      fallback_mat_int_finish = Material.InteriorFinishMaterial(mat_int_finish.name, 0.1) # Try thin material
+      fallback_mat_int_finish = Material.InteriorFinish(mat_int_finish.name, 0.1) # Try thin material
     end
 
     install_grade = 1
@@ -101,17 +97,17 @@ module Constructions
     interior_film = Material.AirFilmIndoorWall
     if wall.is_exterior
       exterior_film = Material.AirFilmOutside(false, hpxml_header.apply_ashrae140_assumptions)
-      mat_ext_finish = Material.ExteriorFinishMaterial(wall.siding)
+      mat_ext_finish = Material.ExteriorFinish(wall.siding, nil, hpxml_header.apply_ashrae140_assumptions)
     else
       exterior_film = Material.AirFilmIndoorWall
       mat_ext_finish = nil
     end
-    mat_int_finish = Material.InteriorFinishMaterial(wall.interior_finish_type, wall.interior_finish_thickness)
+    mat_int_finish = Material.InteriorFinish(wall.interior_finish_type, wall.interior_finish_thickness)
 
     apply_wall_construction(runner, model, surfaces, wall.id, wall.wall_type, wall.insulation_assembly_r_value,
                             mat_int_finish, has_radiant_barrier, interior_film, exterior_film,
                             radiant_barrier_grade, mat_ext_finish, wall.solar_absorptance,
-                            wall.emittance)
+                            wall.emittance, hpxml_header)
   end
 
   # Applies a rim joist construction to the OpenStudio surfaces.
@@ -120,12 +116,13 @@ module Constructions
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param rim_joist [HPXML::RimJoist] The HPXML surface that defines the construction
   # @param surfaces [Array<OpenStudio::Model::Surface>] The surfaces to apply the construction to
+  # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @return [nil]
-  def self.apply_rim_joist(runner, model, rim_joist, surfaces)
+  def self.apply_rim_joist(runner, model, rim_joist, surfaces, hpxml_header)
     interior_film = Material.AirFilmIndoorWall
     if rim_joist.is_exterior
       exterior_film = Material.AirFilmOutside
-      mat_ext_finish = Material.ExteriorFinishMaterial(rim_joist.siding)
+      mat_ext_finish = Material.ExteriorFinish(rim_joist.siding, nil, hpxml_header.apply_ashrae140_assumptions)
     else
       exterior_film = Material.AirFilmIndoorWall
       mat_ext_finish = nil
@@ -164,7 +161,7 @@ module Constructions
     if floor.is_ceiling
       interior_film = Material.AirFilmIndoorFloorAverage
       exterior_film = Material.AirFilmIndoorFloorAverage
-      mat_int_finish_or_covering = Material.InteriorFinishMaterial(floor.interior_finish_type, floor.interior_finish_thickness)
+      mat_int_finish_or_covering = Material.InteriorFinish(floor.interior_finish_type, floor.interior_finish_thickness)
       has_radiant_barrier = floor.radiant_barrier
       if has_radiant_barrier
         radiant_barrier_grade = floor.radiant_barrier_grade
@@ -251,8 +248,8 @@ module Constructions
     height_ag = height - foundation_wall.depth_below_grade
 
     assembly_r = foundation_wall.insulation_assembly_r_value
-    mat_int_finish = Material.InteriorFinishMaterial(foundation_wall.interior_finish_type, foundation_wall.interior_finish_thickness)
-    mat_wall = Material.FoundationWallMaterial(foundation_wall.type, foundation_wall.thickness)
+    mat_int_finish = Material.InteriorFinish(foundation_wall.interior_finish_type, foundation_wall.interior_finish_thickness)
+    mat_wall = Material.FoundationWall(foundation_wall.type, foundation_wall.thickness)
     if not assembly_r.nil?
       ext_rigid_height = height
       ext_rigid_offset = 0.0
@@ -301,13 +298,14 @@ module Constructions
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param foundation_wall [HPXML::FoundationWall] The HPXML surface that defines the construction
   # @param surface [OpenStudio::Model::Surface] The surface to apply the construction to
+  # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @return [nil]
-  def self.apply_interzonal_foundation_wall(runner, model, foundation_wall, surface)
+  def self.apply_interzonal_foundation_wall(runner, model, foundation_wall, surface, hpxml_header)
     wall_type = HPXML::WallTypeConcrete
     interior_film = Material.AirFilmIndoorWall
     exterior_film = Material.AirFilmIndoorWall
     assembly_r = foundation_wall.insulation_assembly_r_value
-    mat_int_finish = Material.InteriorFinishMaterial(foundation_wall.interior_finish_type, foundation_wall.interior_finish_thickness)
+    mat_int_finish = Material.InteriorFinish(foundation_wall.interior_finish_type, foundation_wall.interior_finish_thickness)
     if assembly_r.nil?
       concrete_thick_in = foundation_wall.thickness
       int_r = foundation_wall.insulation_interior_r_value
@@ -319,7 +317,7 @@ module Constructions
     mat_ext_finish = nil
 
     apply_wall_construction(runner, model, [surface], foundation_wall.id, wall_type, assembly_r, mat_int_finish,
-                            false, interior_film, exterior_film, nil, mat_ext_finish, nil, nil)
+                            false, interior_film, exterior_film, nil, mat_ext_finish, nil, nil, hpxml_header)
   end
 
   # Creates a wood stud wall construction and applies it to the specified surfaces.
@@ -2405,20 +2403,21 @@ module Constructions
   # @param mat_ext_finish [Material] Material properties for the exterior finish (e.g., siding)
   # @param solar_absorptance [Double] Solar absorptance of the outermost material (frac)
   # @param emittance [Double] Emittance of the outermost material (frac)
+  # @param hpxml_header [HPXML::Header] HPXML Header object (one per HPXML file)
   # @return [nil]
   def self.apply_wall_construction(runner, model, surfaces, wall_id, wall_type, assembly_r, mat_int_finish,
                                    has_radiant_barrier, interior_film, exterior_film, radiant_barrier_grade,
-                                   mat_ext_finish, solar_absorptance, emittance)
+                                   mat_ext_finish, solar_absorptance, emittance, hpxml_header)
 
     if mat_ext_finish.nil?
       fallback_mat_ext_finish = nil
     else
-      fallback_mat_ext_finish = Material.ExteriorFinishMaterial(mat_ext_finish.name, 0.1) # Try thin material
+      fallback_mat_ext_finish = Material.ExteriorFinish(mat_ext_finish.name, 0.1, hpxml_header.apply_ashrae140_assumptions) # Try thin material
     end
     if mat_int_finish.nil?
       fallback_mat_int_finish = nil
     else
-      fallback_mat_int_finish = Material.InteriorFinishMaterial(mat_int_finish.name, 0.1) # Try thin material
+      fallback_mat_int_finish = Material.InteriorFinish(mat_int_finish.name, 0.1) # Try thin material
     end
 
     case wall_type
@@ -2599,7 +2598,7 @@ module Constructions
       fallback_mat_int_finish_or_covering = nil
     else
       if is_ceiling
-        fallback_mat_int_finish_or_covering = Material.InteriorFinishMaterial(mat_int_finish_or_covering.name, 0.1) # Try thin material
+        fallback_mat_int_finish_or_covering = Material.InteriorFinish(mat_int_finish_or_covering.name, 0.1) # Try thin material
       else
         fallback_mat_int_finish_or_covering = Material.CoveringBare(0.8, 0.01) # Try thin material
       end
@@ -2707,8 +2706,8 @@ module Constructions
     return if surfaces.empty?
 
     if type == 'wall'
-      mat_int_finish = Material.InteriorFinishMaterial(HPXML::InteriorFinishGypsumBoard, 0.5)
-      mat_ext_finish = Material.ExteriorFinishMaterial(HPXML::SidingTypeWood)
+      mat_int_finish = Material.InteriorFinish(HPXML::InteriorFinishGypsumBoard, 0.5)
+      mat_ext_finish = Material.ExteriorFinish(HPXML::SidingTypeWood)
       apply_wood_stud_wall(model, surfaces, 'AdiabaticWallConstruction',
                            0, 1, 3.5, true, 0.1, mat_int_finish, 0, 99, mat_ext_finish, false,
                            Material.AirFilmIndoorWall, Material.AirFilmIndoorWall, nil)
@@ -3337,7 +3336,8 @@ class Construction
         density: UnitConversions.convert(material.rho, 'lbm/ft^3', 'kg/m^3'),
         specific_heat: UnitConversions.convert(material.cp, 'Btu/(lbm*R)', 'J/(kg*K)'),
         thermal_abs: material.tAbs,
-        solar_abs: material.sAbs
+        solar_abs: material.sAbs,
+        roughness: material.roughness
       )
     end
     return mat

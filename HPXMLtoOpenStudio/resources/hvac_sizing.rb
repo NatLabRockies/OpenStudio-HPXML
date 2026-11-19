@@ -4786,7 +4786,7 @@ module HVACSizing
       return 1.0 / foundation_wall.insulation_assembly_r_value
     end
 
-    assembly_r = Material.FoundationWallMaterial(foundation_wall.type, foundation_wall.thickness).rvalue
+    assembly_r = Material.FoundationWall(foundation_wall.type, foundation_wall.thickness).rvalue
     assembly_r += Material.AirFilmIndoorWall.rvalue + Material.AirFilmOutside.rvalue
     if not include_insulation_layers
       return 1.0 / assembly_r

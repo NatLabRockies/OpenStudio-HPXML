@@ -182,7 +182,7 @@ module Geometry
         surface.additionalProperties.setFeature('adjacentSpaceType', rim_joist.additional_properties.adjacent_space_type)
       end
 
-      Constructions.apply_rim_joist(runner, model, rim_joist, surfaces)
+      Constructions.apply_rim_joist(runner, model, rim_joist, surfaces, hpxml_header)
     end
   end
 
@@ -351,7 +351,7 @@ module Geometry
           surface.additionalProperties.setFeature('adjacentSpaceType', fnd_wall.additional_properties.adjacent_space_type)
         end
 
-        Constructions.apply_interzonal_foundation_wall(runner, model, fnd_wall, surface)
+        Constructions.apply_interzonal_foundation_wall(runner, model, fnd_wall, surface, hpxml_header)
       end
     end
   end
@@ -802,11 +802,11 @@ module Geometry
   def self.apply_thermal_mass(model, spaces, hpxml_bldg, hpxml_header)
     if hpxml_header.apply_ashrae140_assumptions
       # 1024 ft2 of interior partition wall mass, no furniture mass
-      mat_int_finish = Material.InteriorFinishMaterial(HPXML::InteriorFinishGypsumBoard, 0.5)
+      mat_int_finish = Material.InteriorFinish(HPXML::InteriorFinishGypsumBoard, 0.5)
       partition_wall_area = 1024.0 * 2 # Exposed partition wall area (both sides)
       Constructions.apply_partition_walls(model, 'PartitionWallConstruction', mat_int_finish, partition_wall_area, spaces)
     else
-      mat_int_finish = Material.InteriorFinishMaterial(hpxml_bldg.partition_wall_mass.interior_finish_type, hpxml_bldg.partition_wall_mass.interior_finish_thickness)
+      mat_int_finish = Material.InteriorFinish(hpxml_bldg.partition_wall_mass.interior_finish_type, hpxml_bldg.partition_wall_mass.interior_finish_thickness)
       partition_wall_area = hpxml_bldg.partition_wall_mass.area_fraction * hpxml_bldg.building_construction.conditioned_floor_area # Exposed partition wall area (both sides)
       Constructions.apply_partition_walls(model, 'PartitionWallConstruction', mat_int_finish, partition_wall_area, spaces)
 
