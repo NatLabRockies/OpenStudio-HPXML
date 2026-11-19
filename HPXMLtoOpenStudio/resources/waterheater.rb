@@ -218,7 +218,8 @@ module Waterheater
       name: "#{obj_name} fan",
       end_use: 'Domestic Hot Water',
       power_per_flow: fan_power / UnitConversions.convert(1.0, 'cfm', 'm^3/s'),
-      max_flow_rate: UnitConversions.convert(airflow_rate * unit_multiplier, 'ft^3/min', 'm^3/s')
+      max_flow_rate: UnitConversions.convert(airflow_rate * unit_multiplier, 'ft^3/min', 'm^3/s'),
+      control_method: EPlus::FanSpeedControlDiscrete
     )
     fan.additionalProperties.setFeature('HPXML_ID', water_heating_system.id) # Used by reporting measure
     fan.additionalProperties.setFeature('ObjectType', Constants::ObjectTypeWaterHeater) # Used by reporting measure
