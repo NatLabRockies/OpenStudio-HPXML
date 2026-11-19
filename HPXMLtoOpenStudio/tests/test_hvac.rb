@@ -1723,6 +1723,35 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
       end
       assert_in_epsilon(loop_flow, coils.sum { |coil| coil.ratedWaterFlowRate.get }, 0.01)
     end
+
+    # Test experimental variable-speed model too
+    hpxml.header.ground_to_air_heat_pump_model_type = HPXML::GroundToAirHeatPumpModelTypeExperimental
+    hpxml_bldg.heat_pumps.each do |heat_pump|
+      heat_pump.compressor_type = HPXML::HVACCompressorTypeVariableSpeed
+    end
+    XMLHelper.write_file(hpxml.to_doc, @tmp_hpxml_path)
+    model, _hpxml, hpxml_bldg = _test_measure(args_hash)
+
+    loop_flow = UnitConversions.convert(hpxml_bldg.geothermal_loops[0].loop_flow, 'gal/min', 'm^3/s')
+    total_capacity = hpxml_bldg.heat_pumps.sum { |hp| [hp.heating_capacity, hp.cooling_capacity].max }
+    [[model.getCoilCoolingWaterToAirHeatPumpVariableSpeedEquationFits, :cool_capacity_ratios],
+     [model.getCoilHeatingWaterToAirHeatPumpVariableSpeedEquationFits, :heat_capacity_ratios]].each do |coils, capacity_ratios_name|
+      assert_equal(2, coils.size)
+      coils.each do |coil|
+        hp_id = coil.additionalProperties.getFeatureAsString('HPXML_ID').get
+        heat_pump = hpxml_bldg.heat_pumps.find { |hp| hp.id == hp_id }
+        capacity = [heat_pump.heating_capacity, heat_pump.cooling_capacity].max
+        hp_flow = loop_flow * capacity / total_capacity
+        assert_in_epsilon(hp_flow, coil.ratedWaterFlowRateAtSelectedNominalSpeedLevel.get, 0.01)
+
+        capacity_ratios = heat_pump.additional_properties.public_send(capacity_ratios_name)
+        assert_equal(capacity_ratios.size, coil.speeds.size)
+        coil.speeds.each_with_index do |speed, i|
+          assert_in_epsilon(hp_flow * capacity_ratios[i], speed.referenceUnitRatedWaterFlowRate, 0.01)
+        end
+      end
+      assert_in_epsilon(loop_flow, coils.sum { |coil| coil.ratedWaterFlowRateAtSelectedNominalSpeedLevel.get }, 0.01)
+    end
   end
 
   def test_shared_chiller_baseboard

@@ -2107,7 +2107,7 @@ module HVAC
     pump_program.addLine('  Set estimated_plr = @Max estimated_plr 0.1') # Avoid small water flow rate, which causes E+ failures
     pump_program.addLine("  Set max_vfr_clg = #{clg_coil.ratedWaterFlowRateAtSelectedNominalSpeedLevel.get * clg_flow_scale}")
     pump_program.addLine('  Set estimated_vfr = estimated_plr * max_vfr_clg')
-    pump_program.addLine("  If estimated_vfr < #{clg_coil.speeds[0].referenceUnitRatedWaterFlowRate * htg_flow_scale}") # Actuate the water flow rate below first stage
+    pump_program.addLine("  If estimated_vfr < #{clg_coil.speeds[0].referenceUnitRatedWaterFlowRate * clg_flow_scale}") # Actuate the water flow rate below first stage
     pump_program.addLine("    Set #{pump_mfr_act.name} = estimated_vfr * 1000.0")
     pump_program.addLine('  Else')
     pump_program.addLine("    Set #{pump_mfr_act.name} = NULL")
