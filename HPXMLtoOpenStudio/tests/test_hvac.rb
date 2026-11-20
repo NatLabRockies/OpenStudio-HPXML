@@ -1618,8 +1618,9 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
     # Get HPXML values
     heat_pump = hpxml_bldg.heat_pumps[0]
     backup_efficiency = heat_pump.backup_heating_efficiency_percent
-    clg_capacity = UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'W')
-    htg_capacity = UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'W')
+    fan_fraction = UnitConversions.convert(0.5 * heat_pump.fan_watts_per_cfm * 400.0 / 12000.0, 'Wh', 'Btu')
+    clg_capacity = UnitConversions.convert(heat_pump.cooling_capacity / (1.0 - fan_fraction), 'Btu/hr', 'W')
+    htg_capacity = UnitConversions.convert(heat_pump.heating_capacity / (1.0 + fan_fraction), 'Btu/hr', 'W')
     backup_capacity = UnitConversions.convert(heat_pump.backup_heating_capacity, 'Btu/hr', 'W')
 
     # Check cooling coil
@@ -1895,8 +1896,9 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
 
     # Get HPXML values
     heat_pump = hpxml_bldg.heat_pumps[0]
-    clg_capacity = UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'W')
-    htg_capacity = UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'W')
+    fan_fraction = UnitConversions.convert(0.5 * heat_pump.fan_watts_per_cfm * 400.0 / 12000.0, 'Wh', 'Btu')
+    clg_capacity = UnitConversions.convert(heat_pump.cooling_capacity / (1.0 - fan_fraction), 'Btu/hr', 'W')
+    htg_capacity = UnitConversions.convert(heat_pump.heating_capacity / (1.0 + fan_fraction), 'Btu/hr', 'W')
     pump_w = heat_pump.pump_watts_per_ton * UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'ton')
     shared_pump_w = heat_pump.shared_loop_watts
     shared_pump_n_units = heat_pump.number_of_units_served
@@ -2511,8 +2513,9 @@ class HPXMLtoOpenStudioHVACTest < Minitest::Test
   end
 
   def _check_ghp_standard(model, heat_pump, clg_cop, htg_cop, soil_density, soil_surface_temp_amps, phase_shift_temp_amps)
-    clg_capacity = UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'W')
-    htg_capacity = UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'W')
+    fan_fraction = UnitConversions.convert(0.5 * heat_pump.fan_watts_per_cfm * 400.0 / 12000.0, 'Wh', 'Btu')
+    clg_capacity = UnitConversions.convert(heat_pump.cooling_capacity / (1.0 - fan_fraction), 'Btu/hr', 'W')
+    htg_capacity = UnitConversions.convert(heat_pump.heating_capacity / (1.0 + fan_fraction), 'Btu/hr', 'W')
 
     # Check cooling coil
     assert_equal(1, model.getCoilCoolingWaterToAirHeatPumpEquationFits.size)

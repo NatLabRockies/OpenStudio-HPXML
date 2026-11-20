@@ -558,6 +558,33 @@ module HVAC
     return air_loop
   end
 
+  # Converts net ISO capacity (Btu/hr) and efficiency to gross coil capacity and COP.
+  # Capacity may be nil during sizing, when the gross COP is still needed.
+  #
+  # @param heat_pump [HPXML::HeatPump] The heat pump of interest
+  # @param mode [Symbol] Heating (:htg) or cooling (:clg)
+  # @param net_capacity [Double] Net capacity (Btu/hr), if available
+  # @return [Double, Double] Gross capacity (Btu/hr), if available, and gross COP (W/W)
+  def self.convert_ground_source_net_to_gross_capacity_cop(heat_pump, mode, net_capacity = nil)
+    # The rating fan allowance excludes the assumed 50% of fan power used for ductwork.
+    power_f = 0.5 * heat_pump.fan_watts_per_cfm * RatedCFMPerTonDX / UnitConversions.convert(1.0, 'ton', 'Btu/hr')
+    power_p = 30.0 / UnitConversions.convert(1.0, 'ton', 'Btu/hr') # ANSI/RESNET/ICC 301 rating pump power, W per Btu/hr of gross capacity.
+    fan_fraction = UnitConversions.convert(power_f, 'Wh', 'Btu')
+    case mode
+    when :clg
+      fail 'Ground-source rating fan heat must be less than gross cooling capacity.' if fan_fraction >= 1.0
+
+      gross_capacity = net_capacity / (1.0 - fan_fraction) unless net_capacity.nil?
+      eir = UnitConversions.convert(((1.0 - fan_fraction) / heat_pump.cooling_efficiency_eer - power_f - power_p), 'Wh', 'Btu')
+    when :htg
+      gross_capacity = net_capacity / (1.0 + fan_fraction) unless net_capacity.nil?
+      eir = (1.0 + fan_fraction) / heat_pump.heating_efficiency_cop - UnitConversions.convert(power_f + power_p, 'Wh', 'Btu')
+    else
+      fail "Unexpected ground-source heat pump mode: #{mode}."
+    end
+    return gross_capacity, 1.0 / eir
+  end
+
   # Adds the HPXML ground-source heat pump system to the OpenStudio model.
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
@@ -645,9 +672,9 @@ module HVAC
       # clg_coil.setRatedEnteringWaterTemperature(UnitConversions.convert(77, 'F', 'C'))
       clg_coil.setRatedEnteringAirDryBulbTemperature(UnitConversions.convert(80, 'F', 'C'))
       clg_coil.setRatedEnteringAirWetBulbTemperature(UnitConversions.convert(67, 'F', 'C'))
-      # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
-      clg_coil.setRatedTotalCoolingCapacity(UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'W'))
-      clg_coil.setRatedSensibleCoolingCapacity(UnitConversions.convert(heat_pump.cooling_capacity * hp_ap.cool_rated_shr_gross, 'Btu/hr', 'W'))
+      clg_gross_capacity, = convert_ground_source_net_to_gross_capacity_cop(heat_pump, :clg, heat_pump.cooling_capacity)
+      clg_coil.setRatedTotalCoolingCapacity(UnitConversions.convert(clg_gross_capacity, 'Btu/hr', 'W'))
+      clg_coil.setRatedSensibleCoolingCapacity(UnitConversions.convert(clg_gross_capacity * hp_ap.cool_rated_shr_gross, 'Btu/hr', 'W'))
       # Heating Coil
       htg_cap_curve = Model.add_curve_quad_linear(
         model,
@@ -675,8 +702,8 @@ module HVAC
       # RatedEnteringWaterTemperature is not impacting results, only used in E+ sizing
       # htg_coil.setRatedEnteringWaterTemperature(UnitConversions.convert(32, 'F', 'C'))
       htg_coil.setRatedEnteringAirDryBulbTemperature(UnitConversions.convert(70, 'F', 'C'))
-      # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
-      htg_coil.setRatedHeatingCapacity(UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'W'))
+      htg_gross_capacity, = convert_ground_source_net_to_gross_capacity_cop(heat_pump, :htg, heat_pump.heating_capacity)
+      htg_coil.setRatedHeatingCapacity(UnitConversions.convert(htg_gross_capacity, 'Btu/hr', 'W'))
     elsif [HPXML::GroundToAirHeatPumpModelTypeExperimental].include? hpxml_header.ground_to_air_heat_pump_model_type
       num_speeds = hp_ap.cool_capacity_ratios.size
       if heat_pump.compressor_type == HPXML::HVACCompressorTypeVariableSpeed
