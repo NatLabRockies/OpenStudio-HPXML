@@ -1899,9 +1899,7 @@ module Airflow
     vent_mech_fans.each do |vent_mech|
       infil_program.addLine('Set fan_rtf_hvac = 0')
       object = cfis_data[:airloop][vent_mech.id]
-      fan_data[:rtf_sensor][object].each do |rtf_sensor|
-        infil_program.addLine("Set fan_rtf_hvac = fan_rtf_hvac + #{rtf_sensor.name}")
-      end
+      infil_program.addLine("Set fan_rtf_hvac = #{fan_data[:rtf_sensor][object].name}")
 
       # If a heat pump, work around an EnergyPlus bug where the fan RTF=1 even if
       # there's no supplemental coil or the supplemental coil is cycling. TODO: Remove
