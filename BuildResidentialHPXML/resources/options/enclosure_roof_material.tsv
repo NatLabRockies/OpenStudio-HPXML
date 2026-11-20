@@ -41,20 +41,13 @@ Option Name	Type	Color	Solar Absorptance	Emittance
 "Synthetic Sheeting, Light"	plastic/rubber/synthetic sheeting	light		
 "Synthetic Sheeting, White"	plastic/rubber/synthetic sheeting	white		
 "Synthetic Sheeting, Reflective"	plastic/rubber/synthetic sheeting	reflective		
-"EPS Sheathing, Dark"	expanded polystyrene sheathing	dark		
-"EPS Sheathing, Medium Dark"	expanded polystyrene sheathing	medium dark		
-"EPS Sheathing, Medium"	expanded polystyrene sheathing	medium		
-"EPS Sheathing, Medium Light"	expanded polystyrene sheathing	medium light		
-"EPS Sheathing, Light"	expanded polystyrene sheathing	light		
-"EPS Sheathing, White"	expanded polystyrene sheathing	white		
-"EPS Sheathing, Reflective"	expanded polystyrene sheathing	reflective		
-"Concrete, Dark"	concrete	dark		
-"Concrete, Medium Dark"	concrete	medium dark		
-"Concrete, Medium"	concrete	medium		
-"Concrete, Medium Light"	concrete	medium light		
-"Concrete, Light"	concrete	light		
-"Concrete, White"	concrete	white		
-"Concrete, Reflective"	concrete	reflective		
+"Concrete Tiles, Dark"	concrete tiles	dark		
+"Concrete Tiles, Medium Dark"	concrete tiles	medium dark		
+"Concrete Tiles, Medium"	concrete tiles	medium		
+"Concrete Tiles, Medium Light"	concrete tiles	medium light		
+"Concrete Tiles, Light"	concrete tiles	light		
+"Concrete Tiles, White"	concrete tiles	white		
+"Concrete Tiles, Reflective"	concrete tiles	reflective		
 				
 # Type: The type of roof material.				
 # Color: The color of the roof.				
