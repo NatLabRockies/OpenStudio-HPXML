@@ -1513,28 +1513,16 @@ module Airflow
     if not supply_fan.nil?
       global_var_supp_only_cyc_rtf = model.getEnergyManagementSystemGlobalVariables.find { |var| var.name.get.include? Model.ems_friendly_name("#{supply_fan.name} supp only cycl rtf global") }
       if not global_var_supp_only_cyc_rtf.nil?
-        ah_tin_sensor = Model.add_ems_sensor(
-          model,
-          name: "#{object_name_idx} AH Tin s",
-          output_var_or_meter_name: 'System Node Temperature',
-          key_name: object.supplyInletNode.name
-        )
-        ah_win_sensor = Model.add_ems_sensor(
-          model,
-          name: "#{object_name_idx} AH Win s",
-          output_var_or_meter_name: 'System Node Humidity Ratio',
-          key_name: object.supplyInletNode.name
-        )
         # Need to adjust E+ fan RTF, flow rates, and supply temperature to account for supplemental coil fan cycling
         duct_program.addLine("If (#{global_var_supp_only_cyc_rtf.name} >= 0) && (#{global_var_supp_only_cyc_rtf.name} < 1)")
         duct_program.addLine("  Set #{fan_data[:rtf_var][object].name} = #{global_var_supp_only_cyc_rtf.name}")
         duct_program.addLine("  Set #{ah_mfr_var.name} = #{ah_mfr_var.name} * #{global_var_supp_only_cyc_rtf.name}")
         duct_program.addLine("  Set #{ah_vfr_var.name} = #{ah_vfr_var.name} * #{global_var_supp_only_cyc_rtf.name}")
         duct_program.addLine("  If #{global_var_supp_only_cyc_rtf.name} > 0")
-        duct_program.addLine("    Set AH_in_h = @HFnTdbW #{ah_tin_sensor.name} #{ah_win_sensor.name}")
+        duct_program.addLine("    Set AH_ref_h = @HFnTdbW #{ra_t_var.name} #{ra_w_var.name}")
         duct_program.addLine("    Set AH_out_h = @HFnTdbW #{ah_tout_var.name} #{ah_wout_var.name}")
-        duct_program.addLine("    Set AH_on_h = AH_in_h + (AH_out_h - AH_in_h) / #{global_var_supp_only_cyc_rtf.name}")
-        duct_program.addLine("    Set #{ah_wout_var.name} = #{ah_win_sensor.name} + (#{ah_wout_var.name} - #{ah_win_sensor.name}) / #{global_var_supp_only_cyc_rtf.name}")
+        duct_program.addLine("    Set AH_on_h = AH_ref_h + (AH_out_h - AH_ref_h) / #{global_var_supp_only_cyc_rtf.name}")
+        duct_program.addLine("    Set #{ah_wout_var.name} = #{ra_w_var.name} + (#{ah_wout_var.name} - #{ra_w_var.name}) / #{global_var_supp_only_cyc_rtf.name}")
         duct_program.addLine("    Set #{ah_tout_var.name} = @TdbFnHW AH_on_h #{ah_wout_var.name}")
         duct_program.addLine('  EndIf')
         duct_program.addLine('EndIf')
