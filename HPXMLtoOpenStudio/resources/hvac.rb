@@ -558,6 +558,33 @@ module HVAC
     return air_loop
   end
 
+  # Converts net ISO capacity (Btu/hr) and efficiency to gross coil capacity and COP.
+  # Capacity may be nil during sizing, when the gross COP is still needed.
+  #
+  # @param heat_pump [HPXML::HeatPump] The heat pump of interest
+  # @param mode [Symbol] Heating (:htg) or cooling (:clg)
+  # @param net_capacity [Double] Net capacity (Btu/hr), if available
+  # @return [Double, Double] Gross capacity (Btu/hr), if available, and gross COP (W/W)
+  def self.convert_ground_source_net_to_gross_capacity_cop(heat_pump, mode, net_capacity = nil)
+    # The rating fan allowance excludes the assumed 50% of fan power used for ductwork.
+    power_f = 0.5 * heat_pump.fan_watts_per_cfm * RatedCFMPerTonDX / UnitConversions.convert(1.0, 'ton', 'Btu/hr')
+    power_p = 30.0 / UnitConversions.convert(1.0, 'ton', 'Btu/hr') # ANSI/RESNET/ICC 301 rating pump power, W per Btu/hr of gross capacity.
+    fan_fraction = UnitConversions.convert(power_f, 'Wh', 'Btu')
+    case mode
+    when :clg
+      fail 'Ground-source rating fan heat must be less than gross cooling capacity.' if fan_fraction >= 1.0
+
+      gross_capacity = net_capacity / (1.0 - fan_fraction) unless net_capacity.nil?
+      eir = UnitConversions.convert(((1.0 - fan_fraction) / heat_pump.cooling_efficiency_eer - power_f - power_p), 'Wh', 'Btu')
+    when :htg
+      gross_capacity = net_capacity / (1.0 + fan_fraction) unless net_capacity.nil?
+      eir = (1.0 + fan_fraction) / heat_pump.heating_efficiency_cop - UnitConversions.convert(power_f + power_p, 'Wh', 'Btu')
+    else
+      fail "Unexpected ground-source heat pump mode: #{mode}."
+    end
+    return gross_capacity, 1.0 / eir
+  end
+
   # Adds the HPXML ground-source heat pump system to the OpenStudio model.
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
@@ -677,7 +704,8 @@ module HVAC
         )
       end
       # convert GLHP rated capacities to E+ rated
-      clg_capacity_rated_eplus = UnitConversions.convert(heat_pump.cooling_capacity, 'Btu/hr', 'W') / get_experimental_ghp_rated_condition_conversion(:clg, hp_ap.cool_cap_ft_spec[-1], hp_ap.cool_cap_fflow_spec[-1], hp_ap.cool_cap_fwf_spec[-1])
+      clg_gross_capacity, = convert_ground_source_net_to_gross_capacity_cop(heat_pump, :clg, heat_pump.cooling_capacity)
+      clg_capacity_rated_eplus = UnitConversions.convert(clg_gross_capacity, 'Btu/hr', 'W') / get_experimental_ghp_rated_condition_conversion(:clg, hp_ap.cool_cap_ft_spec[-1], hp_ap.cool_cap_fflow_spec[-1], hp_ap.cool_cap_fwf_spec[-1])
       clg_coil = OpenStudio::Model::CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFit.new(model, plf_fplr_curve)
       clg_coil.setName(obj_name + ' clg coil')
       clg_coil.setNominalTimeforCondensatetoBeginLeavingtheCoil(1000)
@@ -685,7 +713,6 @@ module HVAC
       clg_coil.setNominalSpeedLevel(num_speeds)
       clg_coil.setRatedAirFlowRateAtSelectedNominalSpeedLevel(clg_air_flow_rated)
       clg_coil.setRatedWaterFlowRateAtSelectedNominalSpeedLevel(hp_loop_vfr)
-      # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
       clg_coil.setGrossRatedTotalCoolingCapacityAtSelectedNominalSpeedLevel(clg_capacity_rated_eplus)
       for i in 0..(num_speeds - 1)
         cap_ft_curve = Model.add_curve_biquadratic(
@@ -733,7 +760,6 @@ module HVAC
         speed = OpenStudio::Model::CoilCoolingWaterToAirHeatPumpVariableSpeedEquationFitSpeedData.new(model, cap_ft_curve, cap_faf_curve, cap_fwf_curve, eir_ft_curve, eir_faf_curve, eir_fwf_curve, waste_heat_ft)
         # convert GLHP rated COPs to E+ rated
         rated_cop_eplus = hp_ap.cool_rated_cops[i] * get_experimental_ghp_rated_condition_conversion(:clg, hp_ap.cool_eir_ft_spec[i], hp_ap.cool_eir_fflow_spec[i], hp_ap.cool_eir_fwf_spec[i])
-        # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
         speed.setReferenceUnitGrossRatedTotalCoolingCapacity(clg_capacity_rated_eplus * hp_ap.cool_capacity_ratios[i])
         speed.setReferenceUnitGrossRatedSensibleHeatRatio(hp_ap.cool_rated_shr_gross)
         speed.setReferenceUnitGrossRatedCoolingCOP(rated_cop_eplus)
@@ -761,10 +787,10 @@ module HVAC
       htg_coil.setName(obj_name + ' htg coil')
       htg_coil.setNominalSpeedLevel(num_speeds)
       # convert GLHP rated capacities to E+ rated
-      htg_capacity_rated_eplus = UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'W') / get_experimental_ghp_rated_condition_conversion(:htg, hp_ap.heat_cap_ft_spec[-1], hp_ap.heat_cap_fflow_spec[-1], hp_ap.heat_cap_fwf_spec[-1])
+      htg_gross_capacity, = convert_ground_source_net_to_gross_capacity_cop(heat_pump, :htg, heat_pump.heating_capacity)
+      htg_capacity_rated_eplus = UnitConversions.convert(htg_gross_capacity, 'Btu/hr', 'W') / get_experimental_ghp_rated_condition_conversion(:htg, hp_ap.heat_cap_ft_spec[-1], hp_ap.heat_cap_fflow_spec[-1], hp_ap.heat_cap_fwf_spec[-1])
       htg_coil.setRatedAirFlowRateAtSelectedNominalSpeedLevel(htg_air_flow_rated)
       htg_coil.setRatedWaterFlowRateAtSelectedNominalSpeedLevel(hp_loop_vfr)
-      # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
       htg_coil.setRatedHeatingCapacityAtSelectedNominalSpeedLevel(htg_capacity_rated_eplus)
       for i in 0..(num_speeds - 1)
         cap_ft_curve = Model.add_curve_biquadratic(
@@ -812,7 +838,6 @@ module HVAC
         speed = OpenStudio::Model::CoilHeatingWaterToAirHeatPumpVariableSpeedEquationFitSpeedData.new(model, cap_ft_curve, cap_faf_curve, cap_fwf_curve, eir_ft_curve, eir_faf_curve, eir_fwf_curve, waste_heat_ft)
         # convert GLHP rated COPs to E+ rated
         rated_cop_eplus = hp_ap.heat_rated_cops[i] * get_experimental_ghp_rated_condition_conversion(:htg, hp_ap.heat_eir_ft_spec[i], hp_ap.heat_eir_fflow_spec[i], hp_ap.heat_eir_fwf_spec[i])
-        # TODO: Add net to gross conversion after RESNET PR: https://github.com/NatLabRockies/OpenStudio-HPXML/pull/1879
         speed.setReferenceUnitGrossRatedHeatingCapacity(htg_capacity_rated_eplus * hp_ap.heat_capacity_ratios[i])
         speed.setReferenceUnitGrossRatedHeatingCOP(rated_cop_eplus)
         speed.setReferenceUnitRatedAirFlow(UnitConversions.convert(UnitConversions.convert(heat_pump.heating_capacity, 'Btu/hr', 'ton') * hp_ap.heat_capacity_ratios[i] * hp_ap.heat_rated_cfm_per_ton, 'cfm', 'm^3/s'))

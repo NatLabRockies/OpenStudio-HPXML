@@ -7952,24 +7952,11 @@ module Defaults
   # @return [nil]
   def self.set_ground_to_air_heat_pump_cops(heat_pump, cop_ratios, mode)
     hp_ap = heat_pump.additional_properties
-    # Fan/pump adjustments calculations
-    # Fan power to overcome the static pressure adjustment
-    rated_fan_watts_per_cfm = 0.5 * heat_pump.fan_watts_per_cfm # Calculate rated fan power by assuming the power to overcome the ductwork is approximately 50% of the total fan power (ANSI/RESNET/ICC 301 says 0.2 W/cfm is the fan power associated with ductwork, but we don't know if that was a PSC or BPM fan)
-    power_f = rated_fan_watts_per_cfm * HVAC::RatedCFMPerTonDX / UnitConversions.convert(1.0, 'ton', 'Btu/hr') # W per Btu/hr of capacity
-    rated_pump_watts_per_ton = 30.0 # ANSI/RESNET/ICC 301, estimated pump power required to overcome the internal resistance of the ground-water heat exchanger under AHRI test conditions for a closed loop system
-    power_p = rated_pump_watts_per_ton / UnitConversions.convert(1.0, 'ton', 'Btu/hr') # result is in W per Btu/hr of capacity
+    _, gross_cop = HVAC.convert_ground_source_net_to_gross_capacity_cop(heat_pump, mode)
     if mode == :clg
-      eir_rated = UnitConversions.convert(((1 - UnitConversions.convert(power_f, 'Wh', 'Btu')) / heat_pump.cooling_efficiency_eer - power_f - power_p), 'Wh', 'Btu')
-      hp_ap.cool_rated_cops = []
-      for i in 0..(cop_ratios.size - 1)
-        hp_ap.cool_rated_cops << 1.0 / eir_rated * cop_ratios[i]
-      end
+      hp_ap.cool_rated_cops = cop_ratios.map { |ratio| gross_cop * ratio }
     elsif mode == :htg
-      eir_rated = (1 + UnitConversions.convert(power_f, 'Wh', 'Btu')) / heat_pump.heating_efficiency_cop - UnitConversions.convert(power_f + power_p, 'Wh', 'Btu')
-      hp_ap.heat_rated_cops = []
-      for i in 0..(cop_ratios.size - 1)
-        hp_ap.heat_rated_cops << 1.0 / eir_rated * cop_ratios[i]
-      end
+      hp_ap.heat_rated_cops = cop_ratios.map { |ratio| gross_cop * ratio }
     end
   end
 
