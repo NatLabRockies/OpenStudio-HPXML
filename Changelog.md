@@ -43,6 +43,7 @@ __Bugfixes__
 - Removes `Location` input for "instantaneous water heater" and "space-heating boiler with tankless coil" water heater types.
 - Fixes possibility of iteration limit error when providing detailed HVAC performance data.
 - Fixes requested EnergyPlus timeseries output variables/meters not displayed in DView if they don't have units (for csv, not csv_dview output format).
+- Fixes ground-source heat pump water flow rates when multiple attached to a shared geothermal loop.
 
 ## OpenStudio-HPXML v1.12.0
 
