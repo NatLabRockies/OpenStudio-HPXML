@@ -8046,10 +8046,9 @@ module Defaults
           # E+ Capacity and EIR as function of temperature curves(bi-quadratic) generated using E+ HVACCurveFitTool
           # See: https://bigladdersoftware.com/epx/docs/24-2/auxiliary-programs/hvac-performance-curve-fit-tool.html#hvac-performance-curve-fit-tool
           # Catalog data from : https://www.climatemaster.com/download/18.274be999165850ccd5b5b73/1535543867815/lc377-climatemaster-commercial-tranquility-20-single-stage-ts-series-water-source-heat-pump-submittal-set.pdf
-          # Using E+ rated conditions:
-          # Cooling: Indoor air at 67F WB, 80F DB; Entering water temperature: 85F
-          clg_ap.cool_cap_ft_spec = [[0.3926140238, 0.0297981297, 0.0000000582, 0.0123906803, -0.0003014284, -0.0001113698]]
-          clg_ap.cool_eir_ft_spec = [[1.1828664909, -0.0450835550, 0.0009273315, 0.0056194113, 0.0006683467, -0.0007256237]]
+          # EnergyPlus coil fit reference: Indoor air at 67F WB; entering water at 85F.
+          clg_ap.cool_cap_ft_spec = [[0.3871402114, 0.0294333554, 0.0000000522, 0.0123528922, -0.0003001441, -0.0001100058]]
+          clg_ap.cool_eir_ft_spec = [[1.1926132203, -0.0452672478, 0.0009309315, 0.0060109597, 0.0006700087, -0.0007375317]]
           clg_ap.cool_cap_fflow_spec = [[0.5068, 0.8099, -0.3165]]
           clg_ap.cool_eir_fflow_spec = [[1.4249, -0.8767, 0.4518]]
           clg_ap.cool_cap_fwf_spec = [[1.0, 0.0, 0.0]]
@@ -8266,10 +8265,9 @@ module Defaults
           # E+ Capacity and EIR as function of temperature curves(bi-quadratic) generated using E+ HVACCurveFitTool
           # See: https://bigladdersoftware.com/epx/docs/24-2/auxiliary-programs/hvac-performance-curve-fit-tool.html#hvac-performance-curve-fit-tool
           # Catalog data from : https://www.climatemaster.com/download/18.274be999165850ccd5b5b73/1535543867815/lc377-climatemaster-commercial-tranquility-20-single-stage-ts-series-water-source-heat-pump-submittal-set.pdf
-          # Using E+ rated conditions:
-          # Heating: Indoor air at 70F DB; Entering water temperature: 70F
-          htg_ap.heat_cap_ft_spec = [[0.6861258801, -0.0015088361, -0.0000281246, 0.0190127379, -0.0000316042, -0.0000651429]]
-          htg_ap.heat_eir_ft_spec = [[0.9370179410, 0.0156894433, 0.0004180439, -0.0225952385, 0.0004411331, -0.0003907433]]
+          # EnergyPlus coil fit reference: Indoor air at 70F DB; entering water at 70F.
+          htg_ap.heat_cap_ft_spec = [[0.6538643371, 0.0017014037, -0.0001057722, 0.0186463779, -0.0000314502, -0.0000499720]]
+          htg_ap.heat_eir_ft_spec = [[0.9622989286, 0.0151464632, 0.0003894717, -0.0230340402, 0.0004410355, -0.0003722927]]
           htg_ap.heat_cap_fflow_spec = [[0.7594, 0.3642, -0.1234]]
           htg_ap.heat_eir_fflow_spec = [[2.3403, -2.3479, 1.0068]]
           htg_ap.heat_cap_fwf_spec = [[1.0, 0.0, 0.0]]
