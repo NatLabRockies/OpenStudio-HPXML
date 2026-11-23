@@ -21,7 +21,7 @@ module EPlus
   EMSActuatorUnitarySystemCoilSpeedLevel = 'Coil Speed Control', 'Unitary System DX Coil Speed Value'
   EMSActuatorUnitarySystemSuppCoilSpeedLevel = 'Coil Speed Control', 'Unitary System Supplemental Coil Stage Level'
   EMSActuatorScheduleConstantValue = 'Schedule:Constant', 'Schedule Value'
-  EMSActuatorScheduleYearValue = 'Schedule:Year', 'Schedule Value'
+  EMSActuatorScheduleYearRulesValue = 'Schedule:Year:Rules', 'Schedule Value'
   EMSActuatorScheduleFileValue = 'Schedule:File', 'Schedule Value'
   EMSActuatorZoneInfiltrationFlowRate = 'Zone Infiltration', 'Air Exchange Flow Rate'
   EMSActuatorZoneMixingFlowRate = 'ZoneMixing', 'Air Exchange Flow Rate'
