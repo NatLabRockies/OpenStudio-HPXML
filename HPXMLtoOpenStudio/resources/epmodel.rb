@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'date'
 require_relative 'version'
 
@@ -49,7 +51,7 @@ if Version::UseEPModel
     end
 
     class MultiSpeedCoilStageData
-      def initialize(model, *curves)
+      def initialize(_model, *curves)
         raise 'Expected 6 performance curves for multi-speed coil stage.' unless curves.size == 6
 
         @curve_names = curves.map { |curve| curve.name.to_s }
@@ -250,6 +252,7 @@ if Version::UseEPModel
 
       number_of_speeds_field = coil.iddObject.getFieldIndex('Number of Speeds')
       raise "Could not find Number of Speeds field for coil '#{coil.name}'." unless number_of_speeds_field.is_initialized
+
       number_of_speeds = coil.numExtensibleGroups
       if number_of_speeds > 1
         unless coil.setInt(number_of_speeds_field.get, number_of_speeds)
@@ -430,7 +433,7 @@ if Version::UseEPModel
 
     def self.workspace_field_string(object, field_name)
       field_index = object.iddObject.getFieldIndex(field_name)
-      return nil unless field_index.is_initialized
+      return unless field_index.is_initialized
 
       value = object.getString(field_index.get)
       value.is_initialized ? value.get : nil
@@ -443,13 +446,13 @@ if Version::UseEPModel
         'EnergyManagementSystem:Actuator' => 'Actuated Component Unique Name'
       }.each do |object_type, field_name|
         workspace.getObjectsByType(object_type.to_IddObjectType).each do |object|
-          schedule_name = self.workspace_field_string(object, field_name)
+          schedule_name = workspace_field_string(object, field_name)
           ems_schedule_names << schedule_name.downcase unless schedule_name.nil?
         end
       end
 
       workspace.getObjectsByType('Schedule_Constant'.to_IddObjectType).each do |schedule|
-        schedule_name = self.workspace_field_string(schedule, 'Name')
+        schedule_name = workspace_field_string(schedule, 'Name')
         next unless schedule.sources.empty?
         next if schedule_name.nil?
         next if ems_schedule_names.include?(schedule_name.downcase)
@@ -467,12 +470,15 @@ if Version::UseEPModel
     def self.build_boiler_plant_loop_copy(model, plant_loop)
       boiler = plant_loop.supplyComponents.find { |component| component.to_BoilerHotWater.is_initialized }
       raise "Could not find BoilerHotWater on PlantLoop '#{plant_loop.name}'." if boiler.nil?
+
       boiler = clone_model_object(boiler.to_BoilerHotWater.get, model).to_BoilerHotWater
       raise "Could not clone BoilerHotWater on PlantLoop '#{plant_loop.name}'." unless boiler.is_initialized
+
       boiler = boiler.get
 
       plant_loop_copy = OpenStudio::Model::PlantLoop.new(model)
       raise "Could not name copied boiler PlantLoop '#{plant_loop.name}'." unless plant_loop_copy.setName("#{plant_loop.name} DHW")
+
       copy_boiler_plant_loop_properties(plant_loop, plant_loop_copy)
 
       pump = plant_loop.supplyComponents.find { |component| component.to_PumpVariableSpeed.is_initialized }
@@ -480,6 +486,7 @@ if Version::UseEPModel
         source_pump = pump.to_PumpVariableSpeed.get
         pump = clone_model_object(source_pump, model).to_PumpVariableSpeed
         raise "Could not clone pump on PlantLoop '#{plant_loop.name}'." unless pump.is_initialized
+
         pump = pump.get
         pump_name_number = 1
         pump_name = "#{source_pump.name} #{pump_name_number}"
@@ -494,12 +501,16 @@ if Version::UseEPModel
 
       supply_bypass = Model.add_pipe_adiabatic(model)
       raise "Could not add supply bypass to PlantLoop '#{plant_loop_copy.name}'." unless plant_loop_copy.addSupplyBranchForComponent(supply_bypass)
+
       supply_outlet_pipe = Model.add_pipe_adiabatic(model)
       raise "Could not add supply outlet pipe to PlantLoop '#{plant_loop_copy.name}'." unless supply_outlet_pipe.addToNode(plant_loop_copy.supplyOutletNode)
+
       demand_bypass = Model.add_pipe_adiabatic(model)
       raise "Could not add demand bypass to PlantLoop '#{plant_loop_copy.name}'." unless plant_loop_copy.addDemandBranchForComponent(demand_bypass)
+
       demand_inlet_pipe = Model.add_pipe_adiabatic(model)
       raise "Could not add demand inlet pipe to PlantLoop '#{plant_loop_copy.name}'." unless demand_inlet_pipe.addToNode(plant_loop_copy.demandInletNode)
+
       demand_outlet_pipe = Model.add_pipe_adiabatic(model)
       raise "Could not add demand outlet pipe to PlantLoop '#{plant_loop_copy.name}'." unless demand_outlet_pipe.addToNode(plant_loop_copy.demandOutletNode)
 
@@ -574,6 +585,7 @@ if Version::UseEPModel
         limits = OpenStudio::EPModel::ScheduleTypeLimits.new(schedule.model)
         raise "Could not name schedule type limits '#{limits_name}'." unless limits.setName(limits_name)
         raise "Could not set lower limit for '#{limits_name}'." unless limits.setLowerLimitValue(0)
+
         if limits_name == 'Fractional'
           raise "Could not set upper limit for '#{limits_name}'." unless limits.setUpperLimitValue(1)
         elsif limits_name == 'ActivityLevel'
@@ -1053,6 +1065,7 @@ if Version::UseEPModel
       unless plant_loop.removeSupplyBranchWithComponent(tank)
         fail "Could not remove the original supply branch for '#{tank.name}'."
       end
+
       true
     end
 
@@ -1315,6 +1328,7 @@ if Version::UseEPModel
 
         scheme = workspace.getObjectByTypeAndName(operation_scheme_type, scheme_name.get)
         next unless scheme.is_initialized
+
         if scheme.get.numExtensibleGroups != 0
           uncontrolled_name = "#{plant_loop.name} Uncontrolled Operation Scheme"
           has_ground_scheme = scheme.get.extensibleGroups.any? do |group|
@@ -1543,16 +1557,16 @@ if Version::UseEPModel
   end
 
   [OpenStudio::EPModel::Lights, OpenStudio::EPModel::ElectricEquipment, OpenStudio::EPModel::OtherEquipment].each do |space_load_class|
-    unless space_load_class.method_defined?(:space)
-      space_load_class.define_method(:space) do
-        field_index = iddObject.getFieldIndex('Zone or ZoneList or Space or SpaceList Name')
-        return OpenStudio::EPModel::OptionalSpace.new unless field_index.is_initialized
+    next if space_load_class.method_defined?(:space)
 
-        target = getTarget(field_index.get)
-        return OpenStudio::EPModel::OptionalSpace.new unless target.is_initialized
+    space_load_class.define_method(:space) do
+      field_index = iddObject.getFieldIndex('Zone or ZoneList or Space or SpaceList Name')
+      return OpenStudio::EPModel::OptionalSpace.new unless field_index.is_initialized
 
-        target.get.to_Space
-      end
+      target = getTarget(field_index.get)
+      return OpenStudio::EPModel::OptionalSpace.new unless target.is_initialized
+
+      target.get.to_Space
     end
   end
 
@@ -1585,6 +1599,7 @@ if Version::UseEPModel
       schedule = getScheduleConstantByName('Always Off Discrete')
       if schedule.is_initialized
         raise 'Always Off Discrete schedule must have a value of zero.' unless schedule.get.value == 0.0
+
         limits = schedule.get.scheduleTypeLimits
         unless limits.is_initialized && limits.get.numericType.is_initialized && limits.get.numericType.get.casecmp('Discrete').zero?
           raise 'Always Off Discrete schedule must have discrete type limits.'
@@ -1596,6 +1611,7 @@ if Version::UseEPModel
       schedule = OpenStudio::EPModel::ScheduleConstant.new(self)
       raise 'Could not name Always Off Discrete schedule.' unless schedule.setName('Always Off Discrete')
       raise 'Could not set Always Off Discrete schedule value.' unless schedule.setValue(0.0)
+
       limits = alwaysOnDiscreteSchedule.scheduleTypeLimits
       raise 'Could not find discrete schedule type limits.' unless limits.is_initialized
       raise 'Could not set Always Off Discrete schedule type limits.' unless schedule.setScheduleTypeLimits(limits.get)
@@ -1647,6 +1663,7 @@ if Version::UseEPModel
     if limits.is_initialized && !rule.daySchedule.setScheduleTypeLimits(limits.get)
       raise "Could not set schedule type limits on '#{rule.daySchedule.name}'."
     end
+
     rule
   end
 
@@ -2339,17 +2356,17 @@ if Version::UseEPModel
       end
     end
 
-    if not ground_temperature_class.method_defined?(:setAllMonthlyTemperatures)
-      ground_temperature_class.define_method(:setAllMonthlyTemperatures) do |temperatures|
-        if temperatures.size != 12
-          return false
-        end
+    next unless not ground_temperature_class.method_defined?(:setAllMonthlyTemperatures)
 
-        Date::MONTHNAMES[1..12].each_with_index do |month, index|
-          public_send("set#{month}#{field_suffix}", temperatures[index])
-        end
-        true
+    ground_temperature_class.define_method(:setAllMonthlyTemperatures) do |temperatures|
+      if temperatures.size != 12
+        return false
       end
+
+      Date::MONTHNAMES[1..12].each_with_index do |month, index|
+        public_send("set#{month}#{field_suffix}", temperatures[index])
+      end
+      true
     end
   end
 

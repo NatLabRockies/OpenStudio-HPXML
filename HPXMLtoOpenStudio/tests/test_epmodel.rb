@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative '../resources/minitest_helper'
 require 'openstudio'
 require_relative '../measure.rb'
@@ -238,9 +240,9 @@ class HPXMLtoOpenStudioEPModelTest < Minitest::Test
     target_temp = Model.add_schedule_constant(model, name: 'Fixture Target Temperature', value: 40.0)
 
     fixture = Model.add_water_use_equipment(model, name: 'Fixture', end_use: nil, peak_flow_rate: 1.0e-6,
-                                           flow_rate_schedule: fixture_flow, water_use_connections: connection, target_temperature_schedule: target_temp)
+                                                   flow_rate_schedule: fixture_flow, water_use_connections: connection, target_temperature_schedule: target_temp)
     washer = Model.add_water_use_equipment(model, name: 'Washer', end_use: nil, peak_flow_rate: 2.0e-6,
-                                          flow_rate_schedule: washer_flow, water_use_connections: connection, target_temperature_schedule: nil)
+                                                  flow_rate_schedule: washer_flow, water_use_connections: connection, target_temperature_schedule: nil)
 
     equipment = connection.waterUseEquipment
     assert_equal([fixture.handle, washer.handle], equipment.map(&:handle))

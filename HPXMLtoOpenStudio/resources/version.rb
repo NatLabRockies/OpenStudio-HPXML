@@ -7,7 +7,7 @@ module Version
   if UseEPModel
     OS_Version = '4.0.0' # Required version of OpenStudio (can be 'X.X' or 'X.X.X')
   else
-    OS_Version = '3.11.0'
+    OS_Version = '3.12.0'
   end
   HPXML_Version = '5.0' # HPXML schemaVersion
 
