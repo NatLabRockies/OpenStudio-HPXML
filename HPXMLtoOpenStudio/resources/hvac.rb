@@ -4754,7 +4754,7 @@ module HVAC
       if heating_sch.is_a? OpenStudio::Model::ScheduleConstant
         comp_type_and_control = EPlus::EMSActuatorScheduleConstantValue
       elsif heating_sch.is_a? OpenStudio::Model::ScheduleRuleset
-        comp_type_and_control = EPlus::EMSActuatorScheduleYearValue
+        comp_type_and_control = EPlus::EMSActuatorScheduleYearRulesValue
       else
         fail "Unexpected heating schedule type: #{heating_sch.class}."
       end
