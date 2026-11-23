@@ -9,9 +9,9 @@ class Material
   # @param k_in [Double] Conductivity (Btu-in/h-ft2-F)
   # @param rho [Double] Density (lb/ft3)
   # @param cp [Double] Specific heat (Btu/lb-F)
-  # @param tAbs [Double] Thermal absorptance (emittance); 0.9 is EnergyPlus default
-  # @param sAbs [Double] Solar absorptance; 0.7 is EnergyPlus default
-  def initialize(name: nil, thick_in: nil, mat_base: nil, k_in: nil, rho: nil, cp: nil, tAbs: 0.9, sAbs: 0.7)
+  # @param tAbsOutside [Double] Outside face thermal absorptance (emittance); 0.9 is EnergyPlus default
+  # @param sAbsOutside [Double] Outside face solar absorptance; 0.7 is EnergyPlus default
+  def initialize(name: nil, thick_in: nil, mat_base: nil, k_in: nil, rho: nil, cp: nil, tAbsOutside: 0.9, sAbsOutside: 0.7)
     @name = name
 
     if not thick_in.nil?
@@ -47,8 +47,10 @@ class Material
       @cp = cp # Btu/lb*F
     end
 
-    @tAbs = tAbs
-    @sAbs = sAbs
+    @tAbsOutside = tAbsOutside
+    @sAbsOutside = sAbsOutside
+    @tAbsInside = nil
+    @sAbsInside = nil
 
     # Calculate R-value
     if not rvalue.nil?
@@ -77,7 +79,7 @@ class Material
     return new(name: new_name, thick_in: thick_in, k_in: thick_in / rvalue, rho: rho, cp: cp)
   end
 
-  attr_accessor :name, :thick, :thick_in, :k, :k_in, :rho, :cp, :rvalue, :tAbs, :sAbs
+  attr_accessor :name, :thick, :thick_in, :k, :k_in, :rho, :cp, :rvalue, :tAbsOutside, :sAbsOutside, :tAbsInside, :sAbsInside
 
   # Creates a material associated with a closed air cavity (e.g.,
   # inside an uninsulated wood stud wall).
@@ -187,7 +189,7 @@ class Material
   # @return [Material] The material object
   def self.CoveringBare(floor_fraction = 0.8, rvalue = 2.08)
     thick_in = 0.5 # in
-    return new(name: 'floor covering', thick_in: thick_in, k_in: thick_in / (rvalue * floor_fraction), rho: 3.4, cp: 0.32, tAbs: 0.9, sAbs: 0.9)
+    return new(name: 'floor covering', thick_in: thick_in, k_in: thick_in / (rvalue * floor_fraction), rho: 3.4, cp: 0.32, tAbsOutside: 0.9, sAbsOutside: 0.9)
   end
 
   # Creates a material for a given thickness of concrete.
@@ -195,7 +197,7 @@ class Material
   # @param thick_in [Double] Thickness of the concrete (in)
   # @return [Material] The material object
   def self.Concrete(thick_in)
-    return new(name: "concrete #{thick_in} in.", thick_in: thick_in, mat_base: BaseMaterial.Concrete, tAbs: 0.9)
+    return new(name: "concrete #{thick_in} in.", thick_in: thick_in, mat_base: BaseMaterial.Concrete, tAbsOutside: 0.9)
   end
 
   # Creates a material for the wall exterior finish (siding) material.
@@ -254,23 +256,23 @@ class Material
     when HPXML::FoundationWallTypeSolidConcrete
       return Material.Concrete(thick_in)
     when HPXML::FoundationWallTypeDoubleBrick
-      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, mat_base: BaseMaterial.Brick, tAbs: 0.9)
+      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, mat_base: BaseMaterial.Brick, tAbsOutside: 0.9)
     when HPXML::FoundationWallTypeWood
       # Open wood cavity wall, so just assume 0.5" of sheathing
-      return new(name: "#{type} #{thick_in} in.", thick_in: 0.5, mat_base: BaseMaterial.Wood, tAbs: 0.9)
+      return new(name: "#{type} #{thick_in} in.", thick_in: 0.5, mat_base: BaseMaterial.Wood, tAbsOutside: 0.9)
     # Concrete block conductivity values below derived from Table 2 of
     # https://ncma.org/resource/rvalues-ufactors-of-single-wythe-concrete-masonry-walls/. Values
     # for 6-in thickness and 115 pcf, with interior/exterior films removed (R-0.68/R-0.17).
     when HPXML::FoundationWallTypeConcreteBlockSolidCore
-      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 8.5, rho: 115.0, cp: 0.2, tAbs: 0.9)
+      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 8.5, rho: 115.0, cp: 0.2, tAbsOutside: 0.9)
     when HPXML::FoundationWallTypeConcreteBlock
-      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 5.0, rho: 45.0, cp: 0.2, tAbs: 0.9)
+      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 5.0, rho: 45.0, cp: 0.2, tAbsOutside: 0.9)
     when HPXML::FoundationWallTypeConcreteBlockPerliteCore
-      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 2.0, rho: 67.0, cp: 0.2, tAbs: 0.9)
+      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 2.0, rho: 67.0, cp: 0.2, tAbsOutside: 0.9)
     when HPXML::FoundationWallTypeConcreteBlockFoamCore
-      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 1.8, rho: 67.0, cp: 0.2, tAbs: 0.9)
+      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 1.8, rho: 67.0, cp: 0.2, tAbsOutside: 0.9)
     when HPXML::FoundationWallTypeConcreteBlockVermiculiteCore
-      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 2.1, rho: 67.0, cp: 0.2, tAbs: 0.9)
+      return new(name: "#{type} #{thick_in} in.", thick_in: thick_in, k_in: 2.1, rho: 67.0, cp: 0.2, tAbsOutside: 0.9)
     end
 
     fail "Unexpected type: #{type}."
@@ -348,7 +350,7 @@ class Material
     end
     non_rb_emittance = 0.90
     emittance = rb_emittance * (1.0 - gap_frac) + non_rb_emittance * gap_frac
-    return new(name: 'radiant barrier', thick_in: 0.0084, k_in: 1629.6, rho: 168.6, cp: 0.22, tAbs: emittance, sAbs: 0.05)
+    return new(name: 'radiant barrier', thick_in: 0.0084, k_in: 1629.6, rho: 168.6, cp: 0.22, tAbsOutside: emittance, sAbsOutside: 0.05)
   end
 
   # Creates a material for the roof exterior layers (e.g. shingles + osb sheathing).

@@ -42,11 +42,13 @@ module Model
   # @param conductivity [Double] Thermal conductivity (W/m-K)
   # @param density [Double] Density (kg/m^3)
   # @param specific_heat [Double] Specific heat (J/kg-K)
-  # @param thermal_abs [Double] Thermal absorptance (emittance)
-  # @param solar_abs [Double] Solar absorptance
+  # @param thermal_abs_outside [Double] Outside face thermal absorptance (emittance)
+  # @param solar_abs_outside [Double] Outside face solar absorptance
+  # @param thermal_abs_inside [Double] Inside face thermal absorptance (emittance)
+  # @param solar_abs_inside [Double] Inside face solar absorptance
   # @param roughness [String] Roughness for convection (Rough, Smooth, etc.)
   # @return [OpenStudio::Model::StandardOpaqueMaterial] The model object
-  def self.add_opaque_material(model, name:, thickness:, conductivity:, density:, specific_heat:, thermal_abs: nil, solar_abs: nil, roughness: 'Rough')
+  def self.add_opaque_material(model, name:, thickness:, conductivity:, density:, specific_heat:, thermal_abs_outside: nil, solar_abs_outside: nil, thermal_abs_inside: nil, solar_abs_inside: nil, roughness: 'Rough')
     # Material already exists?
     tolerance = 0.0001
     model.getStandardOpaqueMaterials.each do |mat|
@@ -56,8 +58,11 @@ module Model
       next if (mat.conductivity - conductivity).abs > tolerance
       next if (mat.density - density).abs > tolerance
       next if (mat.specificHeat - specific_heat).abs > tolerance
-      next if (mat.thermalAbsorptance - thermal_abs.to_f).abs > tolerance
-      next if (mat.solarAbsorptance - solar_abs.to_f).abs > tolerance
+      next if (mat.thermalAbsorptance - thermal_abs_outside.to_f).abs > tolerance
+      next if (mat.solarAbsorptance - solar_abs_outside.to_f).abs > tolerance
+      # Inside face values inherit the outside values when no override is provided.
+      next if (mat.thermalAbsorptanceInsideFace - (thermal_abs_inside || thermal_abs_outside).to_f).abs > tolerance
+      next if (mat.solarAbsorptanceInsideFace - (solar_abs_inside || solar_abs_outside).to_f).abs > tolerance
 
       return mat
     end
@@ -70,12 +75,19 @@ module Model
     mat.setConductivity(conductivity)
     mat.setDensity(density)
     mat.setSpecificHeat(specific_heat)
-    if not thermal_abs.nil?
-      mat.setThermalAbsorptance(thermal_abs)
+    if not thermal_abs_outside.nil?
+      mat.setThermalAbsorptance(thermal_abs_outside)
     end
-    if not solar_abs.nil?
-      mat.setSolarAbsorptance(solar_abs)
-      mat.setVisibleAbsorptance(solar_abs)
+    if not thermal_abs_inside.nil?
+      mat.setThermalAbsorptanceInsideFace(thermal_abs_inside)
+    end
+    if not solar_abs_outside.nil?
+      mat.setSolarAbsorptance(solar_abs_outside)
+      mat.setVisibleAbsorptance(solar_abs_outside)
+    end
+    if not solar_abs_inside.nil?
+      mat.setSolarAbsorptanceInsideFace(solar_abs_inside)
+      mat.setVisibleAbsorptanceInsideFace(solar_abs_inside)
     end
     return mat
   end
@@ -88,19 +100,19 @@ module Model
   # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param name [String] Name for the OpenStudio object
   # @param rvalue [Double] Thermal resistance (m^2-K/W)
-  # @param thermal_abs [Double] Thermal absorptance (emittance)
-  # @param solar_abs [Double] Solar absorptance
+  # @param thermal_abs_outside [Double] Outside face thermal absorptance (emittance)
+  # @param solar_abs_outside [Double] Outside face solar absorptance
   # @param roughness [String] Roughness for convection (Rough, Smooth, etc.)
   # @return [OpenStudio::Model::MasslessOpaqueMaterial] The model object
-  def self.add_massless_material(model, name:, rvalue:, thermal_abs: nil, solar_abs: nil, roughness: 'Rough')
+  def self.add_massless_material(model, name:, rvalue:, thermal_abs_outside: nil, solar_abs_outside: nil, roughness: 'Rough')
     # Material already exists?
     tolerance = 0.0001
     model.getStandardOpaqueMaterials.each do |mat|
       next unless mat.name.to_s.start_with? name
       next if mat.roughness.downcase.to_s != roughness.downcase
       next if (mat.thermalResistance - rvalue).abs > tolerance
-      next if (mat.thermalAbsorptance - thermal_abs.to_f).abs > tolerance
-      next if (mat.solarAbsorptance - solar_abs.to_f).abs > tolerance
+      next if (mat.thermalAbsorptance - thermal_abs_outside.to_f).abs > tolerance
+      next if (mat.solarAbsorptance - solar_abs_outside.to_f).abs > tolerance
 
       return mat
     end
@@ -108,12 +120,12 @@ module Model
     # New material
     mat = OpenStudio::Model::MasslessOpaqueMaterial.new(model, roughness, rvalue)
     mat.setName(name)
-    if not thermal_abs.nil?
-      mat.setThermalAbsorptance(thermal_abs)
+    if not thermal_abs_outside.nil?
+      mat.setThermalAbsorptance(thermal_abs_outside)
     end
-    if not solar_abs.nil?
-      mat.setSolarAbsorptance(solar_abs)
-      mat.setVisibleAbsorptance(solar_abs)
+    if not solar_abs_outside.nil?
+      mat.setSolarAbsorptance(solar_abs_outside)
+      mat.setVisibleAbsorptance(solar_abs_outside)
     end
     return mat
   end
