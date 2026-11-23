@@ -152,6 +152,99 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
     end
   end
 
+  def test_single_layer_interior_exterior_absorptance
+    # Ensures one opaque layer retains separate outside and inside face absorptances.
+    model = OpenStudio::Model::Model.new
+    construction = Construction.new('single-layer construction', [1.0])
+    construction.add_layer(Material.AirFilmOutside)
+    construction.add_layer(Material.new(name: 'single opaque layer', thick_in: 1.0, mat_base: BaseMaterial.Wood))
+    construction.add_layer(Material.AirFilmIndoorWall)
+    construction.set_exterior_material_properties(0.7, 0.8)
+    construction.set_interior_material_properties(0.4, 0.5)
+
+    construction.create_and_assign_constructions([], model)
+    material = model.getStandardOpaqueMaterials.first
+    assert_equal(0.8, material.thermalAbsorptance)
+    assert_equal(0.7, material.solarAbsorptance)
+    assert_equal(0.7, material.visibleAbsorptance)
+    assert_equal(0.5, material.thermalAbsorptanceInsideFace)
+    assert_equal(0.4, material.solarAbsorptanceInsideFace)
+    assert_equal(0.4, material.visibleAbsorptanceInsideFace)
+  end
+
+  def test_reversed_construction_inside_face_inherits_outside_absorptance
+    # Ensures the reversed inside face inherits outside values when no inside override is specified.
+    model = OpenStudio::Model::Model.new
+    construction = Construction.new('adjacent construction', [1.0])
+    exterior_material = Material.new(name: 'exterior layer', thick_in: 1.0, mat_base: BaseMaterial.Wood)
+    interior_material = Material.new(name: 'interior layer', thick_in: 1.0, mat_base: BaseMaterial.Gypsum)
+    construction.add_layer(Material.AirFilmOutside)
+    construction.add_layer(exterior_material)
+    construction.add_layer(interior_material)
+    construction.add_layer(Material.AirFilmIndoorWall)
+    construction.set_exterior_material_properties(0.7, 0.8)
+    construction.set_interior_material_properties(0.4, 0.5)
+
+    points = OpenStudio::Point3dVector.new
+    points << OpenStudio::Point3d.new(0, 0, 0)
+    points << OpenStudio::Point3d.new(0, 0, 3)
+    points << OpenStudio::Point3d.new(0, 3, 3)
+    points << OpenStudio::Point3d.new(0, 3, 0)
+    surface = OpenStudio::Model::Surface.new(points, model)
+    adjacent_surface = OpenStudio::Model::Surface.new(OpenStudio::Point3dVector.new(points.to_a.reverse), model)
+    assert(surface.setAdjacentSurface(adjacent_surface))
+
+    construction.create_and_assign_constructions([surface], model)
+
+    original_construction = surface.construction.get.to_Construction.get
+    original_inside_material = original_construction.getLayer(original_construction.numLayers - 1).to_StandardOpaqueMaterial.get
+    assert_equal('interior layer', original_inside_material.name.to_s)
+    assert_equal(0.5, original_inside_material.thermalAbsorptanceInsideFace)
+    assert_equal(0.4, original_inside_material.solarAbsorptanceInsideFace)
+
+    reversed_construction = adjacent_surface.construction.get.to_Construction.get
+    reversed_inside_material = reversed_construction.getLayer(reversed_construction.numLayers - 1).to_StandardOpaqueMaterial.get
+    assert_equal('exterior layer', reversed_inside_material.name.to_s)
+    assert_equal(0.8, reversed_inside_material.thermalAbsorptanceInsideFace)
+    assert_equal(0.7, reversed_inside_material.solarAbsorptanceInsideFace)
+    assert_equal(0.7, reversed_inside_material.visibleAbsorptanceInsideFace)
+  end
+
+  def test_parallel_layer_rejects_different_face_absorptances
+    # Ensures parallel materials with inconsistent face absorptances fail validation.
+    material = lambda do |name|
+      Material.new(name: name, thick_in: 1.0, mat_base: BaseMaterial.Wood)
+    end
+    cases = []
+
+    materials = [material.call('outside solar 1'), material.call('outside solar 2')]
+    materials[0].sAbsOutside = 0.6
+    materials[1].sAbsOutside = 0.7
+    cases << [materials, 'Invalid construction: Materials in a layer have different outside face solar absorptances.']
+
+    materials = [material.call('outside thermal 1'), material.call('outside thermal 2')]
+    materials[0].tAbsOutside = 0.8
+    materials[1].tAbsOutside = 0.9
+    cases << [materials, 'Invalid construction: Materials in a layer have different outside face thermal absorptances.']
+
+    materials = [material.call('inside solar 1'), material.call('inside solar 2')]
+    materials[0].sAbsInside = 0.6
+    materials[1].sAbsInside = 0.7
+    cases << [materials, 'Invalid construction: Materials in a layer have different inside face solar absorptances.']
+
+    materials = [material.call('inside thermal 1'), material.call('inside thermal 2')]
+    materials[0].tAbsInside = 0.8
+    materials[1].tAbsInside = 0.9
+    cases << [materials, 'Invalid construction: Materials in a layer have different inside face thermal absorptances.']
+
+    cases.each do |materials, expected_message|
+      construction = Construction.new('parallel construction', [0.5, 0.5])
+      construction.add_layer(materials)
+      error = assert_raises(RuntimeError) { construction.assembly_rvalue }
+      assert_equal(expected_message, error.message)
+    end
+  end
+
   def test_rim_joists
     args_hash = {}
     args_hash['hpxml_path'] = File.absolute_path(@tmp_hpxml_path)
@@ -1150,9 +1243,9 @@ class HPXMLtoOpenStudioEnclosureTest < Minitest::Test
 
     # Check interior finish solar absorptance and emittance
     if hpxml_surface.respond_to?(:interior_finish_type) && hpxml_surface.interior_finish_type != HPXML::InteriorFinishNotPresent && !has_radiant_barrier
-      interior_layer = os_construction.getLayer(os_construction.numLayers - 1).to_OpaqueMaterial.get
-      assert_equal(0.6, interior_layer.solarAbsorptance)
-      assert_equal(0.9, interior_layer.thermalAbsorptance)
+      interior_layer = os_construction.getLayer(os_construction.numLayers - 1).to_StandardOpaqueMaterial.get
+      assert_equal(0.6, interior_layer.solarAbsorptanceInsideFace)
+      assert_equal(0.9, interior_layer.thermalAbsorptanceInsideFace)
     end
 
     # Check for appropriate construction layers (including Kiva insulation/custom blocks)
