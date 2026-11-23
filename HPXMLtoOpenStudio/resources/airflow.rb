@@ -60,7 +60,7 @@ module Airflow
 
     # Initialization
     cfis_data = initialize_cfis(model, vent_fans, airloop_map, hpxml_header.unavailable_periods)
-    fan_data = { rtf_var: {}, max_airflow_m3s: {}, rtf_sensor: {} }
+    fan_data = { rtf_var: {}, max_airflow_m3s: {}, rtf_sensor: {}, supply_fan: {} }
     model.getAirLoopHVACs.each do |air_loop|
       initialize_fan(model, air_loop, fan_data)
     end
@@ -761,6 +761,8 @@ module Airflow
       fail 'Unexpected object type.'
     end
 
+    fan_data[:supply_fan][object] = supply_fan
+
     fan_data[:rtf_var][object] = Model.add_ems_global_var(
       model,
       var_name: "#{object.name} Fan RTF"
@@ -772,7 +774,8 @@ module Airflow
 
     if supply_fan.to_FanSystemModel.is_initialized
       fan_data[:rtf_sensor][object] = []
-      num_speeds = supply_fan.to_FanSystemModel.get.numberofSpeeds
+      # TODO: Switch to the single RTF output variable when https://github.com/NatLabRockies/EnergyPlus/issues/11577 is available
+      num_speeds = supply_fan.numberofSpeeds
       for i in 1..num_speeds
         if num_speeds == 1
           var_name = 'Fan Runtime Fraction'
@@ -1519,6 +1522,30 @@ module Airflow
     duct_program.addLine("Set #{ra_w_var.name} = #{ra_w_sensor.name}")
     duct_program.addLine("Set #{dz_t_var.name} = #{dz_t_sensor.name}")
     duct_program.addLine("Set #{dz_w_var.name} = #{dz_w}")
+
+    # If a heat pump, work around an EnergyPlus bug where the fan RTF=1 even if
+    # there's no supplemental coil or the supplemental coil is cycling. TODO: Remove
+    # this when https://github.com/NatLabRockies/EnergyPlus/issues/11903 is fixed.
+    supply_fan = fan_data[:supply_fan][object]
+    if not supply_fan.nil?
+      global_var_supp_only_cyc_rtf = model.getEnergyManagementSystemGlobalVariables.find { |var| var.name.get.include? Model.ems_friendly_name("#{supply_fan.name} supp only cycl rtf global") }
+      if not global_var_supp_only_cyc_rtf.nil?
+        # Need to adjust E+ fan RTF, flow rates, and supply temperature to account for supplemental coil fan cycling
+        duct_program.addLine("If (#{global_var_supp_only_cyc_rtf.name} >= 0) && (#{global_var_supp_only_cyc_rtf.name} < 1)")
+        duct_program.addLine("  Set #{fan_data[:rtf_var][object].name} = #{global_var_supp_only_cyc_rtf.name}")
+        duct_program.addLine("  Set #{ah_mfr_var.name} = #{ah_mfr_var.name} * #{global_var_supp_only_cyc_rtf.name}")
+        duct_program.addLine("  Set #{ah_vfr_var.name} = #{ah_vfr_var.name} * #{global_var_supp_only_cyc_rtf.name}")
+        duct_program.addLine("  If #{global_var_supp_only_cyc_rtf.name} > 0")
+        duct_program.addLine("    Set AH_ref_h = @HFnTdbW #{ra_t_var.name} #{ra_w_var.name}")
+        duct_program.addLine("    Set AH_out_h = @HFnTdbW #{ah_tout_var.name} #{ah_wout_var.name}")
+        duct_program.addLine("    Set AH_on_h = AH_ref_h + (AH_out_h - AH_ref_h) / #{global_var_supp_only_cyc_rtf.name}")
+        duct_program.addLine("    Set #{ah_wout_var.name} = #{ra_w_var.name} + (#{ah_wout_var.name} - #{ra_w_var.name}) / #{global_var_supp_only_cyc_rtf.name}")
+        duct_program.addLine("    Set #{ah_tout_var.name} = @TdbFnHW AH_on_h #{ah_wout_var.name}")
+        duct_program.addLine('  EndIf')
+        duct_program.addLine('EndIf')
+      end
+    end
+
     duct_program.addLine("Run #{duct_subroutine.name}")
     duct_program.addLine("Set #{duct_actuators['supply_sens_lk_to_cond'].name} = #{duct_vars['supply_sens_lk_to_cond'].name}")
     duct_program.addLine("Set #{duct_actuators['supply_lat_lk_to_cond'].name} = #{duct_vars['supply_lat_lk_to_cond'].name}")
@@ -1911,6 +1938,7 @@ module Airflow
   # Updates the EMS program to add CFIS airflow and fan energy calculations.
   #
   # @param runner [OpenStudio::Measure::OSRunner] Object typically used to display warnings
+  # @param model [OpenStudio::Model::Model] OpenStudio Model object
   # @param infil_program [OpenStudio::Model::EnergyManagementSystemProgram] EMS program for the infiltration calculations
   # @param vent_mech_fans [Array<HPXML::VentilationFan>] List of HPXML Mechanical VentilationFans
   # @param cfis_data [Hash] Map with various CFIS-relative OpenStudio model objects
@@ -1918,7 +1946,7 @@ module Airflow
   # @param cfis_suppl_fan_actuator [OpenStudio::Model::EnergyManagementSystemActuator] EMS actuator to the CFIS supplemental fan's ElectricEquipment object
   # @param fan_data [Hash] Map of HVAC blower fan properties => values
   # @return [nil]
-  def self.apply_cfis(runner, infil_program, vent_mech_fans, cfis_data, cfis_fan_actuator, cfis_suppl_fan_actuator, fan_data)
+  def self.apply_cfis(runner, model, infil_program, vent_mech_fans, cfis_data, cfis_fan_actuator, cfis_suppl_fan_actuator, fan_data)
     infil_program.addLine("Set #{cfis_fan_actuator.name} = 0.0")
     infil_program.addLine("Set #{cfis_suppl_fan_actuator.name} = 0.0") unless cfis_suppl_fan_actuator.nil?
     infil_program.addLine('Set QWHV_cfis_sup = 0.0') # CFIS supply outdoor airflow rate
@@ -1930,6 +1958,20 @@ module Airflow
       object = cfis_data[:airloop][vent_mech.id]
       fan_data[:rtf_sensor][object].each do |rtf_sensor|
         infil_program.addLine("Set fan_rtf_hvac = fan_rtf_hvac + #{rtf_sensor.name}")
+      end
+
+      # If a heat pump, work around an EnergyPlus bug where the fan RTF=1 even if
+      # there's no supplemental coil or the supplemental coil is cycling. TODO: Remove
+      # this when https://github.com/NatLabRockies/EnergyPlus/issues/11903 is fixed.
+      supply_fan = fan_data[:supply_fan][object]
+      if not supply_fan.nil?
+        global_var_supp_only_cyc_rtf = model.getEnergyManagementSystemGlobalVariables.find { |var| var.name.get.include? Model.ems_friendly_name("#{supply_fan.name} supp only cycl rtf global") }
+        if not global_var_supp_only_cyc_rtf.nil?
+          # Need to adjust E+ fan RTF to account for supplemental coil fan cycling
+          infil_program.addLine("If (#{global_var_supp_only_cyc_rtf.name} >= 0) && (#{global_var_supp_only_cyc_rtf.name} < 1)")
+          infil_program.addLine("  Set fan_rtf_hvac = #{global_var_supp_only_cyc_rtf.name}")
+          infil_program.addLine('EndIf')
+        end
       end
 
       sum_oa_cfm_var = cfis_data[:sum_oa_cfm_var][vent_mech.id]
@@ -2592,7 +2634,7 @@ module Airflow
     fan_sens_load_actuator, fan_lat_load_actuator = initialize_mech_vent(model, spaces, infil_program)
 
     # Apply CFIS
-    apply_cfis(runner, infil_program, vent_fans[:mech_cfis], cfis_data, cfis_fan_actuator, cfis_suppl_fan_actuator, fan_data)
+    apply_cfis(runner, model, infil_program, vent_fans[:mech_cfis], cfis_data, cfis_fan_actuator, cfis_suppl_fan_actuator, fan_data)
 
     # Calculate adjusted infiltration (infiltration adjusted by mechanical ventilation)
     apply_infiltration_adjustment_to_conditioned(runner, model, spaces, hpxml_bldg, hpxml_header, infil_program, vent_fans, duct_lk_imbals, schedules_file)
