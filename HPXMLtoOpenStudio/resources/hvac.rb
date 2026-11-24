@@ -618,6 +618,14 @@ module HVAC
     htg_air_flow_rated = calc_rated_airflow(heat_pump.heating_capacity, hp_ap.heat_rated_cfm_per_ton, 'm^3/s')
     clg_air_flow_rated = calc_rated_airflow(heat_pump.cooling_capacity, hp_ap.cool_rated_cfm_per_ton, 'm^3/s')
 
+    if (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental) &&
+       [HPXML::HVACCompressorTypeSingleStage, HPXML::HVACCompressorTypeTwoStage].include?(heat_pump.compressor_type)
+      runner.registerWarning('Experimental single- and two-speed GSHP flow workarounds use an unvalidated pump-flow approximation; they do not simulate physical pump cycling.')
+      if geothermal_loop.heat_pumps.size > 1
+        runner.registerWarning('Experimental shared-loop pump flow is estimated using the first heat pump, not the combined demand of all heat pumps.')
+      end
+    end
+
     if gl_ap.frac_glycol == 0
       gl_ap.fluid_type = EPlus::FluidWater
       runner.registerWarning("Specified #{gl_ap.fluid_type} fluid type and 0 fraction of glycol, so assuming #{EPlus::FluidWater} fluid type.")
@@ -1008,8 +1016,7 @@ module HVAC
       )
       pump.addToNode(plant_loop.supplyInletNode)
 
-      # For all of these pump EMS programs, it's fine to just look at the first GSHP on the
-      # geothermal loop:
+      # These pump EMS programs use the first GSHP on the geothermal loop:
       #
       # fan_pump_disaggregation_ems_program: The program only cares if the GSHP is in heating
       #     or cooling mode, and all GSHPs will be in the same mode.
@@ -1017,11 +1024,11 @@ module HVAC
       # pump_power_ems_program: The program ultimately calculates the system PLR; the PLR for
       #     the first GSHP should be a reasonably approximate the average PLR across all GSHPs.
       #
-      # ghp_pump_mass_flow_rate: The program compares the estimated water flow rate to the
-      #     1st speed rated flow rate; using only the first GSHP should be fine.
+      # ghp_pump_mass_flow_rate: The first GSHP's estimated load is scaled to the loop flow;
+      #     this approximation does not account for the combined demand of all GSHPs.
       add_fan_pump_disaggregation_ems_program(model, pump, htg_coil, clg_coil, htg_supp_coil, heat_pump)
       add_pump_power_ems_program(model, pump, air_loop_unitary, heat_pump)
-      if (heat_pump.compressor_type == HPXML::HVACCompressorTypeVariableSpeed) && (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental)
+      if hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental
         add_ghp_pump_mass_flow_rate_ems_program(model, pump, control_zone, htg_coil, clg_coil, ground_heat_exch_vert.designFlowRate.get)
       end
 
