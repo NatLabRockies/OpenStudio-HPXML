@@ -1933,7 +1933,7 @@ module Constructions
       furnThickness = UnitConversions.convert(furnMass / (furnDensity * furnAreaFraction), 'ft', 'in')
 
       # Define materials
-      mat_fm = Material.new(name: "furniture material #{space.name}", thick_in: furnThickness, k_in: furnConductivity, rho: furnDensity, cp: furnSpecHeat, tAbs: 0.9, sAbs: furnSolarAbsorptance)
+      mat_fm = Material.new(name: "furniture material #{space.name}", thick_in: furnThickness, k_in: furnConductivity, rho: furnDensity, cp: furnSpecHeat, tAbsOutside: 0.9, sAbsOutside: furnSolarAbsorptance)
 
       # Define construction
       constr = Construction.new("furniture construction #{space.name}", [1])
@@ -3098,7 +3098,7 @@ class Construction
     end
   end
 
-  # Sets solar absorptance and emittance for the outermost construction material.
+  # Sets solar absorptance and emittance for the outside face of the outermost construction material.
   #
   # @param solar_absorptance [Double] Material solar absorptance (frac)
   # @param emittance [Double] Material emittance (frac)
@@ -3106,31 +3106,21 @@ class Construction
   def set_exterior_material_properties(solar_absorptance = 0.75, emittance = 0.9)
     # We use index 1 because 0 is the exterior air film
     @layers_materials[1].each do |exterior_material|
-      exterior_material.sAbs = solar_absorptance
-      exterior_material.tAbs = emittance
+      exterior_material.sAbsOutside = solar_absorptance
+      exterior_material.tAbsOutside = emittance
     end
   end
 
-  # Sets solar absorptance and emittance for the innermost construction material.
+  # Sets solar absorptance and emittance for the inside face of the innermost construction material.
   #
   # @param solar_absorptance [Double] Material solar absorptance (frac)
   # @param emittance [Double] Material emittance (frac)
   # @return [nil]
   def set_interior_material_properties(solar_absorptance = 0.6, emittance = 0.9)
-    # If there is only a single opaque material (i.e., excluding the two
-    # air film layers), EnergyPlus currently only supports a single solar
-    # absorptance/emittance, so it is not possible to assign different values
-    # to the two sides.
-    # FUTURE: Improve this when https://github.com/NatLabRockies/EnergyPlus/pull/11750
-    # is available.
-    if @layers_materials.size <= 3
-      return
-    end
-
     # We use index -2 because -1 is the interior air film
     @layers_materials[-2].each do |interior_material|
-      interior_material.sAbs = solar_absorptance
-      interior_material.tAbs = emittance
+      interior_material.sAbsInside = solar_absorptance
+      interior_material.tAbsInside = emittance
     end
   end
 
@@ -3192,10 +3182,12 @@ class Construction
     end
 
     # Material solar absorptance
-    mat.sAbs = curr_layer_materials[0].sAbs # All paths have equal solar absorptance
+    mat.sAbsOutside = curr_layer_materials[0].sAbsOutside # All paths have equal outside face solar absorptance
+    mat.sAbsInside = curr_layer_materials[0].sAbsInside # All paths have equal inside face solar absorptance
 
     # Material thermal absorptance
-    mat.tAbs = curr_layer_materials[0].tAbs # All paths have equal thermal absorptance
+    mat.tAbsOutside = curr_layer_materials[0].tAbsOutside # All paths have equal outside face thermal absorptance
+    mat.tAbsInside = curr_layer_materials[0].tAbsInside # All paths have equal inside face thermal absorptance
 
     return mat
   end
@@ -3279,23 +3271,35 @@ class Construction
       next unless layer_materials.size > 1
 
       thick_in = nil
-      solar_abs = nil
-      emitt = nil
+      solar_abs_outside = nil
+      emitt_outside = nil
+      solar_abs_inside = nil
+      emitt_inside = nil
       layer_materials.each do |mat|
         if thick_in.nil?
           thick_in = mat.thick_in
         elsif thick_in != mat.thick_in
           fail 'Invalid construction: Materials in a layer have different thicknesses.'
         end
-        if solar_abs.nil?
-          solar_abs = mat.sAbs
-        elsif solar_abs != mat.sAbs
-          fail 'Invalid construction: Materials in a layer have different solar absorptances.'
+        if solar_abs_outside.nil?
+          solar_abs_outside = mat.sAbsOutside
+        elsif solar_abs_outside != mat.sAbsOutside
+          fail 'Invalid construction: Materials in a layer have different outside face solar absorptances.'
         end
-        if emitt.nil?
-          emitt = mat.tAbs
-        elsif emitt != mat.tAbs
-          fail 'Invalid construction: Materials in a layer have different thermal absorptances.'
+        if emitt_outside.nil?
+          emitt_outside = mat.tAbsOutside
+        elsif emitt_outside != mat.tAbsOutside
+          fail 'Invalid construction: Materials in a layer have different outside face thermal absorptances.'
+        end
+        if solar_abs_inside.nil?
+          solar_abs_inside = mat.sAbsInside || mat.sAbsOutside
+        elsif solar_abs_inside != (mat.sAbsInside || mat.sAbsOutside)
+          fail 'Invalid construction: Materials in a layer have different inside face solar absorptances.'
+        end
+        if emitt_inside.nil?
+          emitt_inside = mat.tAbsInside || mat.tAbsOutside
+        elsif emitt_inside != (mat.tAbsInside || mat.tAbsOutside)
+          fail 'Invalid construction: Materials in a layer have different inside face thermal absorptances.'
         end
       end
     end
@@ -3336,8 +3340,10 @@ class Construction
         conductivity: UnitConversions.convert(material.k, 'Btu/(hr*ft*R)', 'W/(m*K)'),
         density: UnitConversions.convert(material.rho, 'lbm/ft^3', 'kg/m^3'),
         specific_heat: UnitConversions.convert(material.cp, 'Btu/(lbm*R)', 'J/(kg*K)'),
-        thermal_abs: material.tAbs,
-        solar_abs: material.sAbs
+        thermal_abs_outside: material.tAbsOutside,
+        solar_abs_outside: material.sAbsOutside,
+        thermal_abs_inside: material.tAbsInside,
+        solar_abs_inside: material.sAbsInside
       )
     end
     return mat
