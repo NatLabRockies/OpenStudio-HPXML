@@ -618,14 +618,6 @@ module HVAC
     htg_air_flow_rated = calc_rated_airflow(heat_pump.heating_capacity, hp_ap.heat_rated_cfm_per_ton, 'm^3/s')
     clg_air_flow_rated = calc_rated_airflow(heat_pump.cooling_capacity, hp_ap.cool_rated_cfm_per_ton, 'm^3/s')
 
-    if (hpxml_header.ground_to_air_heat_pump_model_type == HPXML::GroundToAirHeatPumpModelTypeExperimental) &&
-       [HPXML::HVACCompressorTypeSingleStage, HPXML::HVACCompressorTypeTwoStage].include?(heat_pump.compressor_type)
-      runner.registerWarning('Experimental single- and two-speed GSHP flow workarounds use an unvalidated pump-flow approximation; they do not simulate physical pump cycling.')
-      if geothermal_loop.heat_pumps.size > 1
-        runner.registerWarning('Experimental shared-loop pump flow is estimated using the first heat pump, not the combined demand of all heat pumps.')
-      end
-    end
-
     if gl_ap.frac_glycol == 0
       gl_ap.fluid_type = EPlus::FluidWater
       runner.registerWarning("Specified #{gl_ap.fluid_type} fluid type and 0 fraction of glycol, so assuming #{EPlus::FluidWater} fluid type.")
