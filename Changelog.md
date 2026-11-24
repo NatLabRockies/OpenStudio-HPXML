@@ -1,6 +1,7 @@
 ## OpenStudio-HPXML v1.13.0
 
 __Features__
+- Updates to OpenStudio 3.12/EnergyPlus 26.2.
 - Updates to HPXML v5.0.
   - **Breaking change**: `Roof/RoofType="cool roof"` replaced by `Roof/CoolRoof="true"`.
   - `Roof/RoofColor` now has an additional option of "white".

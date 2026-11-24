@@ -8,7 +8,7 @@ Setup
 
 To get started:
 
-#. Download `OpenStudio 3.11.0 <https://github.com/NatLabRockies/OpenStudio/releases/tag/v3.11.0>`_ and install the Command Line Interface/EnergyPlus components, or use the `nrel/openstudio docker image <https://hub.docker.com/r/nrel/openstudio>`_.
+#. Download `OpenStudio 3.12.0 <https://github.com/NatLabRockies/OpenStudio/releases/tag/v3.12.0>`_ and install the Command Line Interface/EnergyPlus components, or use the `nrel/openstudio docker image <https://hub.docker.com/r/nrel/openstudio>`_.
 #. Download the `latest release <https://github.com/NatLabRockies/OpenStudio-HPXML/releases>`_.
 
 Running
