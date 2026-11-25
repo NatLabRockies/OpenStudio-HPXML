@@ -5,6 +5,7 @@ When false, retain the OpenStudio 3.11 workflow.
 A shim is Ruby compatibility code that lets existing resource code work around an EPModel API gap using available EPModel APIs.
 Record each EPModel API gap and its current workaround in the relevant section of this TODO.
 Keep shims in `resources/epmodel.rb` and preserve existing resource calls whenever possible. When EPModel lacks a constructor, provide a compatible class-level `.new` implementation under the expected namespace; if the returned object needs downstream behavior EPModel also lacks, override that method there as well. Do not add a resource-level `Version::UseEPModel` switch merely to work around a missing API. Use resource-level switches only when EPModel requires a genuinely different algorithm or call sequence.
+`resources/epmodel.rb` is excluded from the `Style/Documentation` and `Style/DocumentationMethod` RuboCop cops and from `workflow/tests/test_docs.rb`; document shims in this TODO instead of YARD comments.
 A workaround does not resolve the underlying SDK gap; track current handling separately from remaining work.
 
 ## Baseline Checks

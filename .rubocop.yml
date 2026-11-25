@@ -40,11 +40,13 @@ Style/Documentation:
     - '**/tests/*.rb'
     - 'workflow/**/*.rb'
     - 'tasks.rb'
+    - 'HPXMLtoOpenStudio/resources/epmodel.rb'
 Style/DocumentationMethod:
   Exclude:
     - '**/tests/*.rb'
     - 'workflow/**/*.rb'
     - 'tasks.rb'
+    - 'HPXMLtoOpenStudio/resources/epmodel.rb'
 Style/FrozenStringLiteralComment:
   Enabled: true
 Style/HashSyntax:
