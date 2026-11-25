@@ -49,6 +49,8 @@ Successful EPModel base runs emit these nonfatal OpenStudio messages:
 `EPModelCompatibility.normalize_workspace` in `resources/epmodel.rb` compensates for behavior normally provided by the legacy ForwardTranslator:
 
 - Adds `GlobalGeometryRules` with the legacy defaults when the object is missing.
+- Adds `Output:SQLite` (`SimpleAndTabular`) when `OutputControl:Files` requests SQLite output; otherwise EnergyPlus writes an empty `eplusout.sql`.
+- Adds `Output:Table:SummaryReports` (`AllSummary`) and `OutputControl:Table:Style` (`HTML`) when missing, matching the legacy ForwardTranslator defaults that tests query from `eplusout.sql`.
 - Maps `RoofCeiling` to EnergyPlus `Roof` or `Ceiling` based on envelope boundary conditions.
 - Maps `ZoneAveraged` to EnergyPlus `EnclosureAveraged` for People objects.
 - Adds missing EMS global declarations referenced by `EnergyManagementSystem:OutputVariable`, except when the name already belongs to a global variable or actuator.
@@ -211,7 +213,9 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `InternalMassDefinition.new(model)` |  |  | `resources/model.rb` | Creates an `InteriorPartitionSurface` with placeholder vertices, then sets its explicit area. |
 | `Lights#setSchedule(schedule)` |  |  | `resources/lighting.rb`, `resources/epmodel.rb` | Shim writes the `Schedule Name` object reference and supplies the legacy `Fractional` type limits when the schedule has none, as OpenStudio 3.11's schedule type registry does (needed for detailed `ScheduleFile` schedules created without limits). |
 | `MeterCustom#addKeyVarGroup(key, output_variable_or_meter)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Shim appends a group with `Key Name` and `Output Variable or Meter Name` fields. |
+| `MeterCustom#keyVarGroups` |  |  | `resources/output.rb`, `resources/model.rb`, `resources/epmodel.rb` | Used by multi-unit custom meters. Shim returns `[key, variable]` pairs from the extensible groups, matching OpenStudio 3.x. |
 | `MeterCustomDecrement#addKeyVarGroup(key, output_variable_or_meter)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Shares the extensible-group shim used by `MeterCustom`. |
+| `MeterCustomDecrement#keyVarGroups` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Shares the `MeterCustom#keyVarGroups` shim. |
 | `Model#alwaysOffDiscreteSchedule` |  |  | `resources/hvac.rb`, `resources/meta_measure.rb`, `resources/epmodel.rb` | Shim creates or reuses a zero-valued constant schedule with discrete type limits. EPModel removes unreferenced `Schedule:Constant` objects from the translated workspace while preserving schedule names referenced by EMS sensors and actuators. |
 | `Model#getBoilerHotWaters` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's typed collection getter evaluates unset baseboard-coil sizing fields and triggers native assertions. A class-level override filters model objects by IDD type before casting, preserving the shared resource call. |
 | `Model#addObject(idf_object)` | Yes | Yes | `resources/epmodel.rb` | Adds the cloned boiler and pump IDF objects used by the indirect-DHW loop rebuild. |
@@ -364,6 +368,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Space#setName` | Yes | Yes | `resources/geometry.rb` | |
 | `Space#setThermalZone` | Yes | Yes | `resources/geometry.rb` | |
 | `Space#setVolume` | Yes | Yes | `resources/geometry.rb` | |
+| `Space#setYOrigin` |  |  | `resources/geometry.rb` | Missing EPModel API; `Geometry.shift_surfaces` uses it when `merge_unit_models` combines unit models (e.g., the unit-multiplier `-10x` simulation tests). Not yet shimmed. |
 | `Space#thermalZone` | Yes | Yes | `resources/constructions.rb`, `resources/geometry.rb`, `resources/hvac.rb` | |
 | `Space.new(model)` | Yes | Yes | `resources/geometry.rb` | |
 | `SpaceInfiltrationDesignFlowRate#space` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Used by `--add-component-loads`. Shares the space-load `space` shim that resolves `Zone or ZoneList or Space or SpaceList Name`. |

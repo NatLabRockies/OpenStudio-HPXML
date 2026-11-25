@@ -994,6 +994,8 @@ if Version::UseEPModel
 
     def self.normalize_workspace(workspace, model)
       add_global_geometry_rules(workspace)
+      add_output_sqlite(workspace)
+      add_output_table_defaults(workspace)
       normalize_surface_types(workspace)
       normalize_people_temperature_type(workspace)
       declare_ems_output_globals(workspace)
@@ -1113,6 +1115,40 @@ if Version::UseEPModel
         geometry_rules.setString(field_index.get, value) if field_index.is_initialized
       end
       workspace.addObject(geometry_rules)
+    end
+
+    # The legacy ForwardTranslator adds Output:SQLite when OutputControl:Files requests SQLite output;
+    # without it, EnergyPlus writes an empty eplusout.sql.
+    def self.add_output_sqlite(workspace)
+      sqlite_type = OpenStudio::IddObjectType.new('Output:SQLite')
+      return unless workspace.getObjectsByType(sqlite_type).empty?
+
+      control_files = workspace.getObjectsByType(OpenStudio::IddObjectType.new('OutputControl:Files')).first
+      return if control_files.nil?
+
+      field_index = control_files.iddObject.getFieldIndex('Output SQLite')
+      return unless field_index.is_initialized && control_files.getString(field_index.get).to_s.casecmp('Yes').zero?
+
+      sqlite = OpenStudio::IdfObject.new(sqlite_type)
+      sqlite.setString(sqlite.iddObject.getFieldIndex('Option Type').get, 'SimpleAndTabular')
+      workspace.addObject(sqlite)
+    end
+
+    # The legacy ForwardTranslator adds AllSummary tabular reports and HTML table style by default.
+    def self.add_output_table_defaults(workspace)
+      summary_type = OpenStudio::IddObjectType.new('Output:Table:SummaryReports')
+      if workspace.getObjectsByType(summary_type).empty?
+        summary = OpenStudio::IdfObject.new(summary_type)
+        summary.setString(0, 'AllSummary')
+        workspace.addObject(summary)
+      end
+
+      style_type = OpenStudio::IddObjectType.new('OutputControl:Table:Style')
+      return unless workspace.getObjectsByType(style_type).empty?
+
+      style = OpenStudio::IdfObject.new(style_type)
+      style.setString(style.iddObject.getFieldIndex('Column Separator').get, 'HTML')
+      workspace.addObject(style)
     end
 
     def self.normalize_surface_types(workspace)
@@ -2219,6 +2255,12 @@ if Version::UseEPModel
   end
 
   [OpenStudio::EPModel::MeterCustom, OpenStudio::EPModel::MeterCustomDecrement].each do |meter_class|
+    unless meter_class.method_defined?(:keyVarGroups)
+      meter_class.define_method(:keyVarGroups) do
+        extensibleGroups.map { |group| [group.getString(0).to_s, group.getString(1).to_s] }
+      end
+    end
+
     next if meter_class.method_defined?(:addKeyVarGroup)
 
     meter_class.define_method(:addKeyVarGroup) do |key, output_variable_or_meter|
