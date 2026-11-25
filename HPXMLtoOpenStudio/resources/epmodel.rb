@@ -604,6 +604,15 @@ if Version::UseEPModel
         return new(@features_by_handle[object.handle.to_s] ||= {})
       end
 
+      # Copies features to an object added to another model (handles change when objects are copied).
+      def self.copy_features(from_object, to_object)
+        @features_by_handle ||= {}
+        features = @features_by_handle[from_object.handle.to_s]
+        return if features.nil? || features.empty?
+
+        @features_by_handle[to_object.handle.to_s] = features.dup
+      end
+
       def initialize(features)
         @features = features
       end
@@ -977,6 +986,16 @@ if Version::UseEPModel
         end
       end
 
+      def space
+        field_index = @object.iddObject.getFieldIndex('Space Name')
+        return OpenStudio::EPModel::OptionalSpace.new unless field_index.is_initialized
+
+        target = @object.getTarget(field_index.get)
+        return OpenStudio::EPModel::OptionalSpace.new unless target.is_initialized
+
+        target.get.to_Space
+      end
+
       def shadesSubSurface?(subsurface)
         field_index = @object.iddObject.getFieldIndex('Shaded Object Name')
         return false unless field_index.is_initialized
@@ -1152,32 +1171,38 @@ if Version::UseEPModel
     end
 
     def self.normalize_surface_types(workspace)
+      surface_type = OpenStudio::IddObjectType.new('BuildingSurface_Detailed')
+      workspace.getObjectsByType(surface_type).each { |surface| normalize_surface_type(surface) }
+    end
+
+    # Maps the legacy OpenStudio RoofCeiling surface type to EnergyPlus Roof or Ceiling.
+    def self.normalize_surface_type(surface)
       ground_boundary_conditions = ['Ground', 'GroundFCfactorMethod', 'GroundSlabPreprocessorAverage',
                                     'GroundSlabPreprocessorCore', 'GroundSlabPreprocessorPerimeter',
                                     'GroundBasementPreprocessorAverageWall', 'GroundBasementPreprocessorAverageFloor',
                                     'GroundBasementPreprocessorUpperWall', 'GroundBasementPreprocessorLowerWall', 'Foundation']
-      surface_type = OpenStudio::IddObjectType.new('BuildingSurface_Detailed')
-      workspace.getObjectsByType(surface_type).each do |surface|
-        surface_type_index = surface.iddObject.getFieldIndex('Surface Type')
-        boundary_condition_index = surface.iddObject.getFieldIndex('Outside Boundary Condition')
-        next unless surface_type_index.is_initialized && boundary_condition_index.is_initialized
-        next unless surface.getString(surface_type_index.get).get == 'RoofCeiling'
+      surface_type_index = surface.iddObject.getFieldIndex('Surface Type')
+      boundary_condition_index = surface.iddObject.getFieldIndex('Outside Boundary Condition')
+      return unless surface_type_index.is_initialized && boundary_condition_index.is_initialized
+      return unless surface.getString(surface_type_index.get).to_s == 'RoofCeiling'
 
-        boundary_condition = surface.getString(boundary_condition_index.get).get
-        is_envelope = boundary_condition.casecmp('Outdoors').zero? || ground_boundary_conditions.include?(boundary_condition)
-        surface.setString(surface_type_index.get, is_envelope ? 'Roof' : 'Ceiling')
-      end
+      boundary_condition = surface.getString(boundary_condition_index.get).to_s
+      is_envelope = boundary_condition.casecmp('Outdoors').zero? || ground_boundary_conditions.include?(boundary_condition)
+      surface.setString(surface_type_index.get, is_envelope ? 'Roof' : 'Ceiling')
     end
 
     def self.normalize_people_temperature_type(workspace)
       people_type = OpenStudio::IddObjectType.new('People')
-      workspace.getObjectsByType(people_type).each do |people|
-        field_index = people.iddObject.getFieldIndex('Mean Radiant Temperature Calculation Type')
-        next unless field_index.is_initialized
-        next unless people.getString(field_index.get).get == 'ZoneAveraged'
+      workspace.getObjectsByType(people_type).each { |people| normalize_people_temperature(people) }
+    end
 
-        people.setString(field_index.get, 'EnclosureAveraged')
-      end
+    # Maps the legacy OpenStudio ZoneAveraged mean radiant temperature type to EnergyPlus EnclosureAveraged.
+    def self.normalize_people_temperature(people)
+      field_index = people.iddObject.getFieldIndex('Mean Radiant Temperature Calculation Type')
+      return unless field_index.is_initialized
+      return unless people.getString(field_index.get).to_s == 'ZoneAveraged'
+
+      people.setString(field_index.get, 'EnclosureAveraged')
     end
 
     def self.declare_ems_output_globals(workspace)
@@ -1779,6 +1804,77 @@ if Version::UseEPModel
     end
   end
 
+  # EPModel spaces have no origin and Space#setTransformation is not exported, so translate the vertices of the
+  # space's surfaces, subsurfaces, and interior partition surfaces instead. The applied origin is tracked per
+  # space handle so the argument remains an absolute origin, as in OpenStudio 3.x.
+  unless OpenStudio::EPModel::Space.method_defined?(:setYOrigin)
+    EPModelCompatibility.const_set(:SpaceYOriginsByHandle, {})
+    OpenStudio::EPModel::Space.define_method(:setYOrigin) do |y_origin|
+      space_handle = handle.to_s
+      dy = y_origin - (EPModelCompatibility::SpaceYOriginsByHandle[space_handle] || 0.0)
+      return true if dy == 0
+
+      in_space = lambda do |object|
+        object_space = object.space
+        object_space.is_initialized && object_space.get.handle.to_s == space_handle
+      end
+      surfaces = model.getSurfaces.select { |surface| in_space.call(surface) }
+      planar_surfaces = surfaces + surfaces.flat_map { |surface| surface.subSurfaces.to_a }
+      planar_surfaces += model.getInteriorPartitionSurfaces.select { |surface| in_space.call(surface) }
+      planar_surfaces.each do |planar_surface|
+        next if planar_surface.vertices.size < 3 # e.g., internal mass defined by area only
+
+        shifted = OpenStudio::Point3dVector.new
+        planar_surface.vertices.each { |vertex| shifted << OpenStudio::Point3d.new(vertex.x, vertex.y + dy, vertex.z) }
+        return false unless planar_surface.setVertices(shifted)
+      end
+
+      EPModelCompatibility::SpaceYOriginsByHandle[space_handle] = y_origin
+      return true
+    end
+  end
+
+  # EPModel actuators store the actuated component's name as text, so renaming the component (e.g., in
+  # prefix_object_names) breaks the reference. Record the component handle to refresh the name later.
+  EPModelCompatibility.const_set(:ActuatedComponentHandles, {})
+  OpenStudio::EPModel::EnergyManagementSystemActuator.singleton_class.prepend(Module.new do
+    def new(*args)
+      actuator = super
+      component = args.first
+      if component.respond_to?(:handle) && component.respond_to?(:iddObject)
+        EPModelCompatibility::ActuatedComponentHandles[actuator.handle.to_s] = component.handle.to_s
+      end
+      actuator
+    end
+  end)
+
+  # EPModel setters accept legacy OpenStudio values (RoofCeiling surfaces, ZoneAveraged People) that addObjects
+  # rejects against the EnergyPlus IDD, so map them first (e.g., when merge_unit_models combines unit models).
+  # Also refresh actuated component names, and carry the process-local additionalProperties features over
+  # to the copies, which get new handles.
+  native_add_objects = OpenStudio::EPModel::Model.instance_method(:addObjects)
+  OpenStudio::EPModel::Model.define_method(:addObjects) do |objects, *args|
+    objects.each do |object|
+      case object.iddObject.name
+      when 'BuildingSurface:Detailed' then EPModelCompatibility.normalize_surface_type(object)
+      when 'People' then EPModelCompatibility.normalize_people_temperature(object)
+      when 'EnergyManagementSystem:Actuator'
+        component_handle = EPModelCompatibility::ActuatedComponentHandles[object.handle.to_s]
+        next if component_handle.nil?
+
+        component = object.workspace.getObject(OpenStudio.toUUID(component_handle))
+        next unless component.is_initialized
+
+        object.setString(object.iddObject.getFieldIndex('Actuated Component Unique Name').get, component.get.nameString)
+      end
+    end
+    added_objects = native_add_objects.bind(self).call(objects, *args)
+    if added_objects.size == objects.size
+      objects.zip(added_objects) { |from, to| EPModelCompatibility::AdditionalProperties.copy_features(from, to) }
+    end
+    added_objects
+  end
+
   # Like OpenStudio 3.x, return ZoneMixing objects that use this zone as either the receiving or source zone.
   unless OpenStudio::EPModel::ThermalZone.method_defined?(:zoneMixing)
     OpenStudio::EPModel::ThermalZone.define_method(:zoneMixing) do
@@ -2254,10 +2350,31 @@ if Version::UseEPModel
     variable_name.is_initialized ? variable_name.get : ''
   end
 
+  OpenStudio::EPModel::EnergyManagementSystemGlobalVariable.define_method(:setName) do |new_name|
+    group = extensibleGroups.first || pushExtensibleGroup
+    next OpenStudio::OptionalString.new unless group.setString(0, new_name.to_s)
+
+    OpenStudio::OptionalString.new(new_name.to_s)
+  end
+
+  # Model#objects returns untyped WorkspaceObjects, which bypass the GlobalVariable name/setName shims
+  # (e.g., when prefix_object_names renames unit model objects), so return the typed objects instead.
+  native_objects = OpenStudio::EPModel::Model.instance_method(:objects)
+  OpenStudio::EPModel::Model.define_method(:objects) do |*args|
+    global_variables = getEnergyManagementSystemGlobalVariables.to_h { |global_variable| [global_variable.handle.to_s, global_variable] }
+    native_objects.bind(self).call(*args).map { |object| global_variables.fetch(object.handle.to_s, object) }
+  end
+
   [OpenStudio::EPModel::MeterCustom, OpenStudio::EPModel::MeterCustomDecrement].each do |meter_class|
     unless meter_class.method_defined?(:keyVarGroups)
       meter_class.define_method(:keyVarGroups) do
         extensibleGroups.map { |group| [group.getString(0).to_s, group.getString(1).to_s] }
+      end
+    end
+
+    unless meter_class.method_defined?(:removeAllKeyVarGroups)
+      meter_class.define_method(:removeAllKeyVarGroups) do
+        clearExtensibleGroups
       end
     end
 
@@ -2310,6 +2427,37 @@ if Version::UseEPModel
 
       group.setFieldComment(0, comments.join(', ')) unless comments.empty?
       return true
+    end
+  end
+
+  # Like OpenStudio 3.x, lines are returned newline-terminated (with any field comment) and setLines replaces them.
+  [OpenStudio::EPModel::EnergyManagementSystemProgram, OpenStudio::EPModel::EnergyManagementSystemSubroutine].each do |program_class|
+    unless program_class.method_defined?(:lines)
+      program_class.define_method(:lines) do
+        extensibleGroups.map do |group|
+          comment = group.fieldComment(0).to_s
+          "#{group.getString(0)}#{comment.empty? ? '' : " #{comment}"}\n"
+        end
+      end
+    end
+
+    next if program_class.method_defined?(:setLines)
+
+    program_class.define_method(:setLines) do |lines|
+      clearExtensibleGroups
+      lines.all? { |line| addLine(line) }
+    end
+  end
+
+  # EPModel returns the sensor key name as an OptionalString; OpenStudio 3.x returns a String.
+  OpenStudio::EPModel::EnergyManagementSystemSensor.define_method(:keyName) do
+    getString(iddObject.getFieldIndex('Output:Variable or Output:Meter Index Key Name').get).to_s
+  end
+
+  # EPModel EMS output variables reference EMS variables by name only.
+  unless OpenStudio::EPModel::EnergyManagementSystemOutputVariable.method_defined?(:emsVariableObject)
+    OpenStudio::EPModel::EnergyManagementSystemOutputVariable.define_method(:emsVariableObject) do
+      OpenStudio::EPModel::OptionalModelObject.new
     end
   end
 
