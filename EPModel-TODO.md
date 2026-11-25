@@ -10,8 +10,8 @@ A workaround does not resolve the underlying SDK gap; track current handling sep
 ## Baseline Checks
 
 ```bash
-/c/openstudio-3.11.0/bin/openstudio.exe workflow/run_simulation.rb -x workflow/sample_files/base.xml -d -o 1
-../OS-build-release-dev-4-312/Products/openstudio.exe workflow/run_simulation.rb -x workflow/sample_files/base.xml -d -o 2
+../OS-build-release/Products/openstudio.exe workflow/run_simulation.rb -x workflow/sample_files/base.xml -d -o 1
+../OS-build-release-dev-4/Products/openstudio.exe workflow/run_simulation.rb -x workflow/sample_files/base.xml -d -o 2
 ```
 
 Compare the EnergyPlus error files from both runs; a successful simulation alone is not sufficient validation:
