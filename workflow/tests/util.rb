@@ -262,6 +262,12 @@ def _verify_outputs(rundir, hpxml_path, results, hpxml, unit_multiplier)
     if hpxml.buildings.any? { |hpxml_bldg| hpxml_bldg.vehicles.any? { |vehicle| vehicle.vehicle_type != HPXML::VehicleTypeBEV } }
       next if message.include?('Vehicle type') && message.include?('is not currently handled, the vehicle will not be modeled')
     end
+    if Version::UseEPModel
+      # Known EPModel console messages; see "Observed EPModel Messages" in EPModel-TODO.md
+      next if message.include? 'OS Message: ZoneHVAC:EquipmentConnections object has no name and automatic name assignment failed.'
+      next if message.start_with?('OS Message:') && message.include?('BranchList for PlantLoop') && message.include?('only had one branch.')
+      next if message.start_with?('OS Message:') && message.include?('connector port count mismatch for PlantLoop')
+    end
     if hpxml_path.include? 'base-location-capetown-zaf.xml'
       next if message.include? 'OS Message: Minutes field (60) on line 9 of EPW file'
       next if message.include? 'Could not find a marginal Electricity rate.'

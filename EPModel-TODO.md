@@ -44,6 +44,8 @@ Successful EPModel base runs emit these nonfatal OpenStudio messages:
 - Plant-side and demand-side branch lists have one branch; EPModel treats it as the equipment branch and adds inlet/outlet branches.
 - PlantLoop connector port counts differ from the branch lists; EPModel rebuilds the ports from branch order.
 
+The `ZoneHVAC:EquipmentConnections`, one-branch BranchList, and connector port count messages are ignored by the run.log check in `workflow/tests/util.rb` when `Version::UseEPModel` is true. Remove those exceptions as the underlying causes are fixed.
+
 ## Direct IDF Export Normalization
 
 `EPModelCompatibility.normalize_workspace` in `resources/epmodel.rb` compensates for behavior normally provided by the legacy ForwardTranslator:
