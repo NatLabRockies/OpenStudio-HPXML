@@ -1033,9 +1033,11 @@ module Outputs
     return unless debug
 
     # Write OSM file to run dir
-    osm_output_path = File.join(output_dir, 'in.osm')
-    File.write(osm_output_path, model.to_s)
-    runner.registerInfo("Wrote file: #{osm_output_path}")
+    if not Version::UseEPModel
+      osm_output_path = File.join(output_dir, 'in.osm')
+      File.write(osm_output_path, model.to_s)
+      runner.registerInfo("Wrote file: #{osm_output_path}")
+    end
 
     # Copy EPW file to run dir
     epw_output_path = File.join(output_dir, 'in.epw')

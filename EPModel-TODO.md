@@ -57,6 +57,15 @@ Successful EPModel base runs emit these nonfatal OpenStudio messages:
 - Synchronizes the desuperheater preheat tank's use-side outlet with its plant branch after the main tank is inserted downstream.
 - Replaces a wrapped heat-pump water heater's tank reference with the wrapper in plant branches and equipment lists, preserving the tank's plant node connections.
 
+## Debug Output
+
+With `-d`, `Outputs.write_debug_files` in `resources/output.rb` writes `in.osm` only when `Version::UseEPModel` is false. Under EPModel, `model.to_s` produces EnergyPlus IDF text rather than an OSM, so it is not written; use `in.idf` instead.
+
+That text is not identical to `in.idf`. It is a snapshot at the end of `HPXMLtoOpenStudio`, so `in.idf` additionally reflects `ReportSimulationOutput` output requests and the direct IDF export normalization above. For `base.xml`, `in.idf` adds 54 objects and modifies 8; it also omits 3 objects present in the EPModel snapshot:
+
+- Two unnamed always-on `Schedule:Constant` objects (`Schedule Constant 1`/`2`, `OnOff` limits), apparently unreferenced.
+- The air loop's `Sizing:System`. Remaining work: confirm what drops it and whether that matters when autosizing; OpenStudio 3.x writes one per air loop.
+
 ## EPModel API Calls
 
 Unique API calls observed in EPModel input-creation paths for `workflow/sample_files/base*.xml`.
