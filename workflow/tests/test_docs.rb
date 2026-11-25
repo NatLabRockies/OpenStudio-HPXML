@@ -15,6 +15,7 @@ class DocumentationTest < Minitest::Test
       next if rb_path.split(File::SEPARATOR).include?('tests') || rb_name == 'minitest_helper.rb'
       next if rb_name == 'tasks.rb'
       next if rb_name == 'run_simulation.rb'
+      next if rb_name == 'epmodel.rb'
 
       rel_path = Pathname.new(rb_path).relative_path_from root_path
 

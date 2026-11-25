@@ -1033,9 +1033,11 @@ module Outputs
     return unless debug
 
     # Write OSM file to run dir
-    osm_output_path = File.join(output_dir, 'in.osm')
-    File.write(osm_output_path, model.to_s)
-    runner.registerInfo("Wrote file: #{osm_output_path}")
+    if not Version::UseEPModel
+      osm_output_path = File.join(output_dir, 'in.osm')
+      File.write(osm_output_path, model.to_s)
+      runner.registerInfo("Wrote file: #{osm_output_path}")
+    end
 
     # Copy EPW file to run dir
     epw_output_path = File.join(output_dir, 'in.epw')
@@ -1561,7 +1563,7 @@ module Outputs
     FT_to_EPlus_fuel_map.values.each do |fuel_type|
       key_vars = []
       model.getModelObjects.sort.each do |object|
-        next if object.to_AdditionalProperties.is_initialized
+        next if !Version::UseEPModel && object.to_AdditionalProperties.is_initialized
 
         vars_by_key = get_object_outputs_by_key(object, EUT)
         vars_by_key.each do |key, output_vars|
@@ -1616,7 +1618,7 @@ module Outputs
   def self.get_object_outputs_for_hpxml_system(model, sys_id, eut_filter = nil)
     vars = {}
     model.getModelObjects.sort.each do |object|
-      next if object.to_AdditionalProperties.is_initialized
+      next if !Version::UseEPModel && object.to_AdditionalProperties.is_initialized
 
       obj_id = object.additionalProperties.getFeatureAsString('HPXML_ID')
       next unless obj_id.is_initialized

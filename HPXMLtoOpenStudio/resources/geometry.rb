@@ -867,7 +867,9 @@ module Geometry
       spaces[location] = space
 
       if not HPXML::conditioned_locations_this_unit.include? location
-        space.setPartofTotalFloorArea(false)
+        if not Version::UseEPModel
+          space.setPartofTotalFloorArea(false)
+        end
       end
     end
   end

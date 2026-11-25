@@ -527,7 +527,12 @@ module Waterheater
           comp_type_and_control: EPlus::EMSActuatorPumpMassFlowRate
         )
       end
-      dhw_source_loop.supplyOutletNode.setpointManagers.each do |setpoint_manager|
+      if Version::UseEPModel
+        setpoint_managers = EPModelCompatibility.get_scheduled_setpoint_managers(dhw_source_loop.supplyOutletNode)
+      else
+        setpoint_managers = dhw_source_loop.supplyOutletNode.setpointManagers
+      end
+      setpoint_managers.each do |setpoint_manager|
         if setpoint_manager.to_SetpointManagerScheduled.is_initialized
           tank_source_temp = setpoint_manager.to_SetpointManagerScheduled.get.schedule.to_ScheduleConstant.get.value
         end
@@ -662,7 +667,12 @@ module Waterheater
     end
 
     dhw_setpoint_manager = nil
-    dhw_loop.supplyOutletNode.setpointManagers.each do |setpoint_manager|
+    if Version::UseEPModel
+      setpoint_managers = EPModelCompatibility.get_scheduled_setpoint_managers(dhw_loop.supplyOutletNode)
+    else
+      setpoint_managers = dhw_loop.supplyOutletNode.setpointManagers
+    end
+    setpoint_managers.each do |setpoint_manager|
       if setpoint_manager.to_SetpointManagerScheduled.is_initialized
         dhw_setpoint_manager = setpoint_manager.to_SetpointManagerScheduled.get
       end
@@ -1465,8 +1475,13 @@ module Waterheater
       sys_id = bhw.additionalProperties.getFeatureAsString('HPXML_ID')
       next unless sys_id.is_initialized && sys_id.get == heating_source_id
 
-      plant_loop = bhw.plantLoop.get
-      plant_loop_hw = plant_loop.clone(model).to_PlantLoop.get
+      if Version::UseEPModel
+        plant_loop = EPModelCompatibility.get_boiler_plant_loop(model, bhw)
+        plant_loop_hw = EPModelCompatibility.build_boiler_plant_loop_copy(model, plant_loop)
+      else
+        plant_loop = bhw.plantLoop.get
+        plant_loop_hw = plant_loop.clone(model).to_PlantLoop.get
+      end
 
       # set pump power for water heating to zero
       plant_loop_hw.supplyComponents.each do |comp|

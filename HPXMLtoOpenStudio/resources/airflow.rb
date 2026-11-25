@@ -71,6 +71,21 @@ module Airflow
     # Apply ducts
     duct_lk_imbals = []
     apply_ducts(runner, model, spaces, hpxml_bldg, airloop_map, vent_fans, cfis_data, fan_data, duct_lk_imbals)
+    unless duct_lk_imbals.empty?
+      duct_imbalance_init_program = Model.add_ems_program(
+        model,
+        name: 'duct leakage imbalance initialization program'
+      )
+      duct_lk_imbals.flat_map { |values| values[1..2] }.uniq { |variable| variable.handle.to_s }.each do |variable|
+        duct_imbalance_init_program.addLine("Set #{variable.name} = 0")
+      end
+      Model.add_ems_program_calling_manager(
+        model,
+        name: 'duct leakage imbalance initialization manager',
+        calling_point: 'BeginNewEnvironment',
+        ems_programs: [duct_imbalance_init_program]
+      )
+    end
 
     # Warmup workaround, see https://github.com/NatLabRockies/EnergyPlus/pull/11551
     unless duct_lk_imbals.empty?
@@ -1529,7 +1544,7 @@ module Airflow
     # this when https://github.com/NatLabRockies/EnergyPlus/issues/11903 is fixed.
     supply_fan = fan_data[:supply_fan][object]
     if not supply_fan.nil?
-      global_var_supp_only_cyc_rtf = model.getEnergyManagementSystemGlobalVariables.find { |var| var.name.get.include? Model.ems_friendly_name("#{supply_fan.name} supp only cycl rtf global") }
+      global_var_supp_only_cyc_rtf = model.getEnergyManagementSystemGlobalVariables.find { |var| var.name.to_s.include? Model.ems_friendly_name("#{supply_fan.name} supp only cycl rtf global") }
       if not global_var_supp_only_cyc_rtf.nil?
         # Need to adjust E+ fan RTF, flow rates, and supply temperature to account for supplemental coil fan cycling
         duct_program.addLine("If (#{global_var_supp_only_cyc_rtf.name} >= 0) && (#{global_var_supp_only_cyc_rtf.name} < 1)")

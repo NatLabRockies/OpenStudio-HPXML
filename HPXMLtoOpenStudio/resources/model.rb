@@ -429,9 +429,13 @@ module Model
   def self.add_plant_loop(model, name:, fluid_type: EPlus::FluidWater, glycol_concentration: 50, volume: nil, min_temp: nil, max_temp: nil, max_flow_rate: nil)
     plant_loop = OpenStudio::Model::PlantLoop.new(model)
     plant_loop.setName(name)
-    plant_loop.setFluidType(fluid_type)
-    if fluid_type == EPlus::FluidPropyleneGlycol
-      plant_loop.setGlycolConcentration(glycol_concentration)
+    if Version::UseEPModel && fluid_type == EPlus::FluidPropyleneGlycol
+      plant_loop.setGlycolFluidType(fluid_type, glycol_concentration)
+    else
+      plant_loop.setFluidType(fluid_type)
+      if fluid_type == EPlus::FluidPropyleneGlycol
+        plant_loop.setGlycolConcentration(glycol_concentration)
+      end
     end
     plant_loop.setMinimumLoopTemperature(min_temp) unless min_temp.nil?
     plant_loop.setMaximumLoopTemperature(max_temp) unless max_temp.nil?
@@ -911,7 +915,12 @@ module Model
   # @param key_name [OpenStudio::Model::XXX] Model object name or 'Environment' or nil
   # @return [OpenStudio::Model::EnergyManagementSystemSensor] The model object
   def self.add_ems_sensor(model, name:, output_var_or_meter_name:, key_name:)
-    sensor = OpenStudio::Model::EnergyManagementSystemSensor.new(model, output_var_or_meter_name)
+    if Version::UseEPModel
+      sensor = OpenStudio::Model::EnergyManagementSystemSensor.new(model)
+      sensor.setOutputVariableOrMeterName(output_var_or_meter_name)
+    else
+      sensor = OpenStudio::Model::EnergyManagementSystemSensor.new(model, output_var_or_meter_name)
+    end
     sensor.setName(ems_friendly_name(name))
     sensor.setKeyName(key_name.to_s) unless key_name.nil?
     return sensor
@@ -972,7 +981,9 @@ module Model
   # @param comp_type_and_control [Array<String, String>] The type of component and its control type
   # @return [OpenStudio::Model::EnergyManagementSystemActuator] The model object
   def self.add_ems_actuator(name:, model_object:, comp_type_and_control:)
-    if model_object.to_SpaceLoadInstance.is_initialized
+    if Version::UseEPModel
+      act = OpenStudio::Model::EnergyManagementSystemActuator.new(model_object, *comp_type_and_control)
+    elsif model_object.to_SpaceLoadInstance.is_initialized
       act = OpenStudio::Model::EnergyManagementSystemActuator.new(model_object, *comp_type_and_control, model_object.space.get)
     else
       act = OpenStudio::Model::EnergyManagementSystemActuator.new(model_object, *comp_type_and_control)
@@ -1231,7 +1242,7 @@ module Model
     unique_object_map.each do |idd_obj, osm_class|
       first_model_object_by_type = nil
       hpxml_osm_map.values.each do |unit_model|
-        next if unit_model.getObjectsByType(idd_obj.to_IddObjectType).empty?
+        next if unit_model.getObjectsByType(OpenStudio::Model.const_get(osm_class).iddObjectType).empty?
 
         model_object = unit_model.send("get#{osm_class}")
 

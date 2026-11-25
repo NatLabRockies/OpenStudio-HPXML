@@ -1277,12 +1277,18 @@ module HVAC
         ua_value: bb_ua,
         max_flow_rate: max_water_flow
       )
-      plant_loop.addDemandBranchForComponent(htg_coil)
+      unless Version::UseEPModel
+        plant_loop.addDemandBranchForComponent(htg_coil)
+      end
 
       # Baseboard
       zone_hvac = OpenStudio::Model::ZoneHVACBaseboardConvectiveWater.new(model, model.alwaysOnDiscreteSchedule, htg_coil)
       zone_hvac.setName(obj_name + ' baseboard')
-      zone_hvac.addToThermalZone(control_zone)
+      if Version::UseEPModel
+        EPModelCompatibility.add_baseboard_coil_to_plant_loop(plant_loop, zone_hvac, control_zone)
+      else
+        zone_hvac.addToThermalZone(control_zone)
+      end
       zone_hvac.additionalProperties.setFeature('IsHeatPumpBackup', heating_system.is_heat_pump_backup_system) # Used by reporting measure
       if heating_system.is_heat_pump_backup_system
         add_fan_pump_disaggregation_ems_program(model, pump, nil, nil, zone_hvac, heating_system)
@@ -4481,9 +4487,17 @@ module HVAC
       key_name: fan.name
     )
 
-    # No way to retrieve this node name from the model, it's
-    # created automatically during FT
-    clg_coil_inlet_node_name = "#{air_loop_unitary.name} Fan - Cooling Coil Node"
+    if Version::UseEPModel
+      fan_outlet_node = fan.outletModelObject
+      raise "Could not find outlet node for fan '#{fan.name}'." unless fan_outlet_node.is_initialized
+
+      fan_outlet_node = fan_outlet_node.get.to_Node
+      raise "Could not find outlet node for fan '#{fan.name}'." unless fan_outlet_node.is_initialized
+
+      clg_coil_inlet_node_name = fan_outlet_node.get.name.to_s
+    else
+      clg_coil_inlet_node_name = "#{air_loop_unitary.name} Fan - Cooling Coil Node"
+    end
 
     vfr_sensor = Model.add_ems_sensor(
       model,

@@ -130,7 +130,12 @@ class HourlyByMonthSchedule
   # @param unavailable_periods [HPXML::UnavailablePeriods] Object that defines periods for, e.g., power outages or vacancies
   # @return [OpenStudio::Model::Ruleset] the OpenStudio Schedule object with rules
   def create_schedule(model, sch_name, schedule_type_limits_name, unavailable_periods)
-    year = model.getYearDescription.assumedYear
+    if Version::UseEPModel
+      run_period = model.getRunPeriod
+      year = run_period.getInt(run_period.iddObject.getFieldIndex('Begin Year').get).get
+    else
+      year = model.getYearDescription.assumedYear
+    end
     day_startm = Calendar.day_start_months(year)
     day_endm = Calendar.day_end_months(year)
 
@@ -202,7 +207,13 @@ class HourlyByDaySchedule
   # @param unavailable_periods [HPXML::UnavailablePeriods] Object that defines periods for, e.g., power outages or vacancies
   def initialize(model, sch_name, weekday_day_by_hour_values, weekend_day_by_hour_values,
                  schedule_type_limits_name = nil, normalize_values = true, unavailable_periods: nil)
-    num_days = Calendar.num_days_in_year(model.getYearDescription.assumedYear)
+    if Version::UseEPModel
+      run_period = model.getRunPeriod
+      year = run_period.getInt(run_period.iddObject.getFieldIndex('Begin Year').get).get
+    else
+      year = model.getYearDescription.assumedYear
+    end
+    num_days = Calendar.num_days_in_year(year)
     @weekday_day_by_hour_values = validate_values(weekday_day_by_hour_values, num_days, 24)
     @weekend_day_by_hour_values = validate_values(weekend_day_by_hour_values, num_days, 24)
     if normalize_values
@@ -274,7 +285,12 @@ class HourlyByDaySchedule
       limits: schedule_type_limits_name
     )
 
-    year = model.getYearDescription.assumedYear
+    if Version::UseEPModel
+      run_period = model.getRunPeriod
+      year = run_period.getInt(run_period.iddObject.getFieldIndex('Begin Year').get).get
+    else
+      year = model.getYearDescription.assumedYear
+    end
 
     prev_wkdy_vals, prev_wkdy_rule = nil, nil
     prev_wknd_vals, prev_wknd_rule = nil, nil
@@ -464,7 +480,12 @@ class MonthWeekdayWeekendSchedule
   # @return [OpenStudio::Model::ScheduleRuleset] the OpenStudio Schedule object with rules
   def create_schedule(model, sch_name, begin_month, begin_day, end_month, end_day,
                       schedule_type_limits_name, unavailable_periods)
-    year = model.getYearDescription.assumedYear
+    if Version::UseEPModel
+      run_period = model.getRunPeriod
+      year = run_period.getInt(run_period.iddObject.getFieldIndex('Begin Year').get).get
+    else
+      year = model.getYearDescription.assumedYear
+    end
     month_num_days = Calendar.num_days_in_months(year)
     month_num_days[end_month - 1] = end_day
 
@@ -545,15 +566,9 @@ module Schedule
   # Get the total number of full load hours for this schedule.
   #
   # @param modelYear [Integer] the calendar year
-  # @param schedule [OpenStudio::Model::ScheduleInterval or OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] the OpenStudio Schedule object
+  # @param schedule [OpenStudio::Model::ScheduleConstant or OpenStudio::Model::ScheduleRuleset] the OpenStudio Schedule object
   # @return [Double] annual equivalent full load hours
   def self.annual_equivalent_full_load_hrs(modelYear, schedule)
-    if schedule.to_ScheduleInterval.is_initialized
-      timeSeries = schedule.to_ScheduleInterval.get.timeSeries
-      annual_flh = timeSeries.averageValue * 8760
-      return annual_flh
-    end
-
     if schedule.to_ScheduleConstant.is_initialized
       annual_flh = schedule.to_ScheduleConstant.get.value * Calendar.num_hours_in_year(modelYear)
       return annual_flh
@@ -663,7 +678,12 @@ module Schedule
   def self.set_unavailable_periods(model, schedule, sch_name, unavailable_periods)
     return if unavailable_periods.nil?
 
-    year = model.getYearDescription.assumedYear
+    if Version::UseEPModel
+      run_period = model.getRunPeriod
+      year = run_period.getInt(run_period.iddObject.getFieldIndex('Begin Year').get).get
+    else
+      year = model.getYearDescription.assumedYear
+    end
 
     # Add off rule(s), will override previous rules
     unavailable_periods.each do |period|
@@ -749,7 +769,12 @@ module Schedule
       name: sch_name,
       limits: EPlus::ScheduleTypeLimitsFraction
     )
-    year = model.getYearDescription.assumedYear
+    if Version::UseEPModel
+      run_period = model.getRunPeriod
+      year = run_period.getInt(run_period.iddObject.getFieldIndex('Begin Year').get).get
+    else
+      year = model.getYearDescription.assumedYear
+    end
     start_value = values[0]
     start_date = OpenStudio::Date::fromDayOfYear(1, year)
     values.each_with_index do |value, i|

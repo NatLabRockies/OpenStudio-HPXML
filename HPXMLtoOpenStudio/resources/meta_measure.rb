@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require_relative 'epmodel'
 
 # Initialize OpenStudio objects (log, model, runner, etc.).
 # Call run methods of OpenStudio Model measures.
@@ -37,6 +38,10 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
 
   # Apply measures
   success = apply_measures(measures_dir, measures, runner, model, false, 'OpenStudio::Measure::ModelMeasure')
+  epw_path = nil
+  if Version::UseEPModel && runner.lastEpwFilePath.is_initialized
+    epw_path = runner.lastEpwFilePath.get.to_s
+  end
   report_measure_errors_warnings(runner, rundir, debug)
   report_os_warnings(os_log, rundir)
 
@@ -54,18 +59,28 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
   apply_model_output_requests(measures_dir, measures, runner, model)
 
   # Translate model to workspace
-  forward_translator = OpenStudio::EnergyPlus::ForwardTranslator.new
-  forward_translator.setExcludeLCCObjects(true)
-  workspace = forward_translator.translateModel(model)
-  success = report_ft_errors_warnings(forward_translator, rundir)
+  if Version::UseEPModel
+    workspace = OpenStudio::Workspace.new(model.toIdfFile)
+    EPModelCompatibility.normalize_workspace(workspace, model)
+    success = true
+  else
+    forward_translator = OpenStudio::EnergyPlus::ForwardTranslator.new
+    forward_translator.setExcludeLCCObjects(true)
+    workspace = forward_translator.translateModel(model)
+    success = report_ft_errors_warnings(forward_translator, rundir)
+  end
 
   # Remove unused objects automatically added by OpenStudio?
-  [model.alwaysOnContinuousSchedule,
-   model.alwaysOnDiscreteSchedule,
-   model.alwaysOffDiscreteSchedule].each do |sch|
-    # Don't know why we need to check for AdditionalProperties too, but it works
-    if sch.directUseCount == 0 || sch.sources.all? { |s| s.to_AdditionalProperties.is_initialized }
-      workspace.getObjectByTypeAndName('Schedule:Constant'.to_IddObjectType, sch.name.to_s).get.remove
+  if Version::UseEPModel
+    EPModelCompatibility.remove_unused_schedule_constants(workspace)
+  else
+    [model.alwaysOnContinuousSchedule,
+     model.alwaysOnDiscreteSchedule,
+     model.alwaysOffDiscreteSchedule].each do |sch|
+      # Don't know why we need to check for AdditionalProperties too, but it works
+      if sch.directUseCount == 0 || sch.sources.all? { |source| source.to_AdditionalProperties.is_initialized }
+        workspace.getObjectByTypeAndName('Schedule:Constant'.to_IddObjectType, sch.name.to_s).get.remove
+      end
     end
   end
 
@@ -94,7 +109,13 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
     return { success: success, runner: runner }
   end
 
-  if not model.getWeatherFile.path.is_initialized
+  if not Version::UseEPModel
+    if model.getWeatherFile.path.is_initialized
+      epw_path = model.getWeatherFile.path.get.to_s
+    end
+  end
+
+  if epw_path.nil?
     print "Creating input unsuccessful.\n"
     print "See #{File.join(rundir, 'run.log')} for details.\n"
     return { success: false, runner: runner }
@@ -103,13 +124,13 @@ def run_hpxml_workflow(rundir, measures, measures_dir, debug: false, run_measure
   # Run simulation
   print "Running simulation...\n" unless suppress_print
   ep_path = File.absolute_path(File.join(OpenStudio.getOpenStudioCLI.to_s, '..', '..', 'EnergyPlus', 'energyplus')) # getEnergyPlusDirectory can be unreliable, using getOpenStudioCLI instead
-  # Support OpenStudio development builds that use a versioned EnergyPlus directory.
-  unless File.exist?(ep_path) || File.exist?("#{ep_path}.exe")
+  if not File.exist?(ep_path) && OpenStudio.respond_to?(:getEnergyPlusDirectory)
     ep_path = File.join(OpenStudio.getEnergyPlusDirectory.to_s, 'energyplus')
+    ep_path += '.exe' if Gem.win_platform? && File.exist?("#{ep_path}.exe")
   end
   simulation_start = Time.now
   # Passed to system() in argv form below, so the path is not shell-interpreted
-  command = [ep_path, '-w', model.getWeatherFile.path.get.to_s, ep_input_filename]
+  command = [ep_path, '-w', epw_path, ep_input_filename]
   if debug
     File.open(File.join(rundir, 'run.log'), 'a') do |f|
       f << "Executing command '#{command.join(' ')}' from working directory '#{rundir}'.\n"
@@ -465,6 +486,10 @@ def run_measure(model, measure, argument_map, runner)
       measure.run(model, runner_child, argument_map)
     end
     result_child = runner_child.result
+
+    if Version::UseEPModel && runner_child.lastEpwFilePath.is_initialized
+      runner.setLastEpwFilePath(runner_child.lastEpwFilePath.get)
+    end
 
     # get initial and final condition
     if result_child.initialCondition.is_initialized
