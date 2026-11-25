@@ -1543,7 +1543,7 @@ module Airflow
     # this when https://github.com/NatLabRockies/EnergyPlus/issues/11903 is fixed.
     supply_fan = fan_data[:supply_fan][object]
     if not supply_fan.nil?
-      global_var_supp_only_cyc_rtf = model.getEnergyManagementSystemGlobalVariables.find { |var| var.name.get.include? Model.ems_friendly_name("#{supply_fan.name} supp only cycl rtf global") }
+      global_var_supp_only_cyc_rtf = model.getEnergyManagementSystemGlobalVariables.find { |var| var.name.to_s.include? Model.ems_friendly_name("#{supply_fan.name} supp only cycl rtf global") }
       if not global_var_supp_only_cyc_rtf.nil?
         # Need to adjust E+ fan RTF, flow rates, and supply temperature to account for supplemental coil fan cycling
         duct_program.addLine("If (#{global_var_supp_only_cyc_rtf.name} >= 0) && (#{global_var_supp_only_cyc_rtf.name} < 1)")
