@@ -151,6 +151,7 @@ jobs:
           Invoke-WebRequest -OutFile Windows.tar.gz -URI "${env:OS_URL}/v${env:OS_VERSION}/OpenStudio-${env:OS_VERSION}+${env:OS_SHA}-Windows.tar.gz"
           tar -xzf Windows.tar.gz
           & .\OpenStudio-${env:OS_VERSION}+${env:OS_SHA}-Windows\bin\openstudio.exe workflow\run_simulation.rb -x workflow\sample_files\base.xml --hourly ALL --add-component-loads --add-stochastic-schedules
+          if ($LASTEXITCODE -ne 0) { Get-Content workflow\sample_files\run\run.log -TotalCount 40; exit 1 }
 
   merge-results:
     runs-on: ubuntu-24.04
