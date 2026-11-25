@@ -1558,7 +1558,8 @@ if Version::UseEPModel
     end
   end
 
-  [OpenStudio::EPModel::Lights, OpenStudio::EPModel::ElectricEquipment, OpenStudio::EPModel::OtherEquipment].each do |space_load_class|
+  [OpenStudio::EPModel::Lights, OpenStudio::EPModel::ElectricEquipment, OpenStudio::EPModel::OtherEquipment,
+   OpenStudio::EPModel::People, OpenStudio::EPModel::SpaceInfiltrationDesignFlowRate].each do |space_load_class|
     next if space_load_class.method_defined?(:space)
 
     space_load_class.define_method(:space) do
@@ -1738,6 +1739,29 @@ if Version::UseEPModel
 
   unless OpenStudio::EPModel::Model.method_defined?(:getInternalMassDefinitions)
     OpenStudio::EPModel::Model.define_method(:getInternalMassDefinitions) do
+      getInteriorPartitionSurfaces
+    end
+  end
+
+  # Like OpenStudio 3.x, return ZoneMixing objects that use this zone as either the receiving or source zone.
+  unless OpenStudio::EPModel::ThermalZone.method_defined?(:zoneMixing)
+    OpenStudio::EPModel::ThermalZone.define_method(:zoneMixing) do
+      zone_handle = handle.to_s
+      model.getZoneMixings.select do |zone_mixing|
+        ['Zone or Space Name', 'Source Zone or Space Name'].any? do |field_name|
+          field_index = zone_mixing.iddObject.getFieldIndex(field_name)
+          next false unless field_index.is_initialized
+
+          target = zone_mixing.getTarget(field_index.get)
+          target.is_initialized && target.get.handle.to_s == zone_handle
+        end
+      end
+    end
+  end
+
+  # EPModel InteriorPartitionSurface objects are exported as EnergyPlus InternalMass objects.
+  unless OpenStudio::EPModel::Model.method_defined?(:getInternalMasss)
+    OpenStudio::EPModel::Model.define_method(:getInternalMasss) do
       getInteriorPartitionSurfaces
     end
   end
@@ -2203,6 +2227,26 @@ if Version::UseEPModel
       fields_set &&= group.setString(1, output_variable_or_meter)
 
       if not fields_set
+        eraseExtensibleGroup(group.groupIndex)
+        return false
+      end
+
+      return true
+    end
+  end
+
+  # EPModel's PlanarSurface#netArea returns the gross area for surfaces; subtract subsurfaces like OpenStudio 3.x.
+  OpenStudio::EPModel::Surface.define_method(:netArea) do
+    subSurfaces.inject(grossArea) { |area, sub_surface| area - sub_surface.multiplier * sub_surface.grossArea }
+  end
+
+  unless OpenStudio::EPModel::OutputDiagnostics.method_defined?(:addKey)
+    OpenStudio::EPModel::OutputDiagnostics.define_method(:addKey) do |key|
+      existing_keys = extensibleGroups.map { |group| group.getString(0) }.select(&:is_initialized).map(&:get)
+      return true if existing_keys.any? { |existing_key| existing_key.casecmp(key).zero? }
+
+      group = pushExtensibleGroup
+      if not group.setString(0, key)
         eraseExtensibleGroup(group.groupIndex)
         return false
       end

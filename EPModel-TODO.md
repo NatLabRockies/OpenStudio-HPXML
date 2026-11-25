@@ -224,6 +224,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Model#getFoundationKivas` | Yes | Yes | `resources/epmodel.rb` | Resolves the typed target for `adjacentFoundation`. |
 | `Model#getFoundationKivaSettings` | Yes | Yes | `resources/constructions.rb` | |
 | `Model#getInsideSurfaceConvectionAlgorithm` | Yes | Yes | `resources/simcontrols.rb` | |
+| `Model#getInternalMasss` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Used by `--add-component-loads`. Shim returns `getInteriorPartitionSurfaces`, which EPModel exports as EnergyPlus `InternalMass` objects. |
 | `Model#getObjectsByType` | Yes | Yes | `resources/epmodel.rb` | Enumerates generic shading IDD objects for the shading-group shim. |
 | `Model#getOutsideSurfaceConvectionAlgorithm` | Yes | Yes | `resources/simcontrols.rb` | |
 | `Model#getModelObjects` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Shim delegates to EPModel's `Model#objects`, which returns an Array. |
@@ -253,7 +254,9 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ModelObject#to_AdditionalProperties` |  |  | `resources/output.rb`, `resources/meta_measure.rb`, `ReportSimulationOutput/measure.rb` | Cast is used only on the OpenStudio 3.11 path; EPModel uses a process-local `additionalProperties` adapter instead of model objects. |
 | `ModelObject#to_SpaceLoadInstance` |  |  | `resources/model.rb` | Used only by the OpenStudio 3.11 actuator path; EPModel exposes no SpaceLoadInstance type or cast. |
 | `Node#setpointManagers` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel returns a vector that is not iterable from Ruby; the EPModel resource branch finds scheduled setpoint managers by their target node. The helper is intentionally narrower than the general getter, so a class-level override would change its semantics. |
+| `OutputDiagnostics#addKey(key)` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Used by `--add-component-loads`. EPModel exposes no OutputDiagnostics methods; shim appends a `Key` extensible group, skipping duplicates like OpenStudio 3.x. |
 | `People#setNumberofPeopleSchedule(schedule)` |  |  | `resources/internal_gains.rb`, `resources/epmodel.rb` | Shim writes the number-of-people schedule pointer and supplies the legacy `Fractional` type limits when the schedule has none (needed for detailed `ScheduleFile` schedules created without limits). |
+| `People#space` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Used by `--add-component-loads`. Shares the space-load `space` shim that resolves `Zone or ZoneList or Space or SpaceList Name`. |
 | `PlantLoop#clone(model)` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's `Loop::clone` currently returns an empty Catchall object. The indirect-DHW path rebuilds a dedicated boiler loop in the EPModel compatibility layer by copying loop/sizing settings and recreating boiler-side components; general loop cloning remains an SDK gap. |
 | `PlantLoop#setGlycolConcentration` | Yes |  | `resources/model.rb`, `resources/epmodel.rb` | EPModel's native implementation does not successfully preserve the legacy concentration on the EnergyPlus PlantLoop. The EPModel path instead uses `setGlycolFluidType` to create glycol property objects and set `UserDefinedFluidType`, preserving the requested concentration. |
 | `PlantLoop#setGlycolFluidType(glycol_type, concentration)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Compatibility helper creates `FluidProperties:GlycolConcentration` and `FluidProperties:Name` and links the PlantLoop to them. The 3.11 path retains its native fluid type and concentration setters. |
@@ -363,6 +366,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Space#setVolume` | Yes | Yes | `resources/geometry.rb` | |
 | `Space#thermalZone` | Yes | Yes | `resources/constructions.rb`, `resources/geometry.rb`, `resources/hvac.rb` | |
 | `Space.new(model)` | Yes | Yes | `resources/geometry.rb` | |
+| `SpaceInfiltrationDesignFlowRate#space` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Used by `--add-component-loads`. Shares the space-load `space` shim that resolves `Zone or ZoneList or Space or SpaceList Name`. |
 | `SpaceInfiltrationEffectiveLeakageArea#setSchedule(schedule)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Class-level shim writes the `Schedule Name` pointer. |
 | `SpaceInfiltrationEffectiveLeakageArea#setSpace(space)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Class-level shim writes the space pointer to the `Zone or Space Name` field. |
 | `SpaceInfiltrationEffectiveLeakageArea.new(model)` | Yes | Yes | `resources/model.rb` | |
@@ -397,6 +401,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Surface#adjacentSurface` | Yes | Yes | `resources/constructions.rb` | |
 | `Surface#createAdjacentSurface` | Yes | Yes | `resources/geometry.rb` | |
 | `Surface#createSurfacePropertyExposedFoundationPerimeter` |  |  | `resources/constructions.rb` | Shim creates and links the property through `Surface Name`. |
+| `Surface#netArea` | Yes |  | `resources/output.rb`, `resources/epmodel.rb` | Used by `--add-component-loads`. Native `PlanarSurface#netArea` returns the gross area without subtracting subsurfaces; shim subtracts each subsurface's `multiplier * grossArea`, matching OpenStudio 3.x. |
 | `Surface#outsideBoundaryCondition` | Yes | Yes | `resources/geometry.rb` | |
 | `Surface#setAdjacentFoundation(foundation)` |  |  | `resources/constructions.rb` | Shim sets the Kiva pointer and `OutsideBoundaryCondition`. |
 | `Surface#setConstruction` | Yes | Yes | `resources/constructions.rb` | |
@@ -431,6 +436,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ThermalZone#setThermostatSetpointDualSetpoint` | Yes | Yes | `resources/hvac.rb` | |
 | `ThermalZone#setVolume` | Yes | Yes | `resources/geometry.rb` | |
 | `ThermalZone#thermostatSetpointDualSetpoint` | Yes | Yes | `resources/constructions.rb` | |
+| `ThermalZone#zoneMixing` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Used by `--add-component-loads`. Shim selects `Model#getZoneMixings` whose receiving or source zone reference is this zone, matching OpenStudio 3.x. |
 | `ThermalZone.new(model)` | Yes | Yes | `resources/geometry.rb` | |
 | `ThermostatSetpointDualSetpoint#coolingSetpointTemperatureSchedule` | Yes | Yes | `resources/constructions.rb` | |
 | `ThermostatSetpointDualSetpoint#heatingSetpointTemperatureSchedule` | Yes | Yes | `resources/constructions.rb` | |
