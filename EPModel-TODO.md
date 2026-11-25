@@ -282,7 +282,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `RunPeriod#setString` | Yes | Yes | `resources/location.rb` | Generic field-index write for Day of Week for Start Day. |
 | `RunPeriodControlDaylightSavingTime#setEndDate` | Yes | Yes | `resources/location.rb` | |
 | `RunPeriodControlDaylightSavingTime#setStartDate` | Yes | Yes | `resources/location.rb` | |
-| `Schedule#to_ScheduleInterval` |  |  | `resources/schedules.rb` | Used only when `Version::UseEPModel` is false; EPModel exposes no `ScheduleInterval` type. |
+| `Schedule#to_ScheduleInterval` |  |  | `resources/schedules.rb` | No longer called: the unreachable `ScheduleInterval` branch was removed from `Schedule.annual_equivalent_full_load_hrs` (no resource code creates interval schedules; detailed schedules use `ScheduleFile`). Kept for reference: EPModel exposes no `ScheduleInterval` type; the cast is inherited from `IdfObject` and returns an empty `OpenStudio::Model::OptionalScheduleInterval`. EPModel `ScheduleFile#timeSeries` is native and reads the CSV (OpenStudio 3.11 returns an empty `TimeSeries`). |
 | `Schedule#to_ScheduleRuleset` | Yes | Yes | `resources/constructions.rb` | |
 | `ScheduleConstant#setName` | Yes | Yes | `resources/model.rb` | |
 | `ScheduleConstant#setScheduleTypeLimits` | Yes | Yes | `resources/model.rb` | |
