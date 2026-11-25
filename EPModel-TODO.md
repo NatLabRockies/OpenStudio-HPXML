@@ -53,7 +53,7 @@ The `ZoneHVAC:EquipmentConnections`, one-branch BranchList, and connector port c
 - Adds `GlobalGeometryRules` with the legacy defaults when the object is missing.
 - Adds `Output:SQLite` (`SimpleAndTabular`) when `OutputControl:Files` requests SQLite output; otherwise EnergyPlus writes an empty `eplusout.sql`.
 - Adds `Output:Table:SummaryReports` (`AllSummary`) and `OutputControl:Table:Style` (`HTML`) when missing, matching the legacy ForwardTranslator defaults that tests query from `eplusout.sql`.
-- Maps `RoofCeiling` to EnergyPlus `Roof` or `Ceiling` based on envelope boundary conditions.
+- Maps `RoofCeiling`, and EPModel `Roof`/`Ceiling`, to EnergyPlus `Roof` or `Ceiling` based on envelope boundary conditions, matching the legacy ForwardTranslator.
 - Maps `ZoneAveraged` to EnergyPlus `EnclosureAveraged` for People objects.
 - Adds missing EMS global declarations referenced by `EnergyManagementSystem:OutputVariable`, except when the name already belongs to a global variable or actuator.
 - Fills empty `PlantEquipmentOperationSchemes` with an uncontrolled scheme for vertical ground heat exchangers using the corresponding `GroundHeatExchanger:System` objects, matching the legacy ForwardTranslator; it also adds a default heating-load scheme for heating supply components.
@@ -255,11 +255,12 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Model#getSurfacePropertyExposedFoundationPerimeters` | Yes | Yes | `resources/epmodel.rb` | Checks for an existing property before creating one. |
 | `Model#getSurfaces` | Yes | Yes | `resources/geometry.rb` | |
 | `Model#getTimestep` | Yes | Yes | `resources/simcontrols.rb` | |
-| `Model#toIdfFile` | Yes | Yes | `resources/epmodel.rb`, `resources/meta_measure.rb` | Used for direct EPModel export because the legacy ForwardTranslator accepts only OpenStudio Model. See [Direct IDF Export Normalization](#direct-idf-export-normalization). |
+| `Model#toIdfFile` | Yes |  | `resources/epmodel.rb`, `resources/meta_measure.rb` | Used for direct EPModel export because the legacy ForwardTranslator accepts only OpenStudio Model. See [Direct IDF Export Normalization](#direct-idf-export-normalization). Shim first applies the virtual space transformations to the vertices, as the legacy ForwardTranslator does. |
 | `Model#workflowJSON` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Shim keeps a per-model-wrapper `OpenStudio::WorkflowJSON` so `add_schedule_file` can register schedule-file directories with `filePaths`/`addFilePath`; the `ScheduleFile.new` shim resolves file names against it. State lives on the Ruby wrapper, so it is lost if the model is re-fetched as a new wrapper (e.g., `object.model`). |
 | `Model#getYearDescription` |  |  | `resources/location.rb`, `resources/schedules.rb` | Called only when `Version::UseEPModel` is false; EPModel reads/writes year fields through `RunPeriod`. |
 | `Model#getZoneCapacitanceMultiplierResearchSpecial` | Yes | Yes | `resources/simcontrols.rb` | |
 | `Model#objects` | Yes |  | `resources/model.rb`, `resources/meta_measure.rb`, `resources/epmodel.rb` | Native method returns untyped `WorkspaceObject`s; shim substitutes typed `EnergyManagementSystemGlobalVariable` objects so their `name`/`setName` shims apply when `prefix_object_names` renames objects. |
+| `Model.intersectSurfaces(spaces)` / `Model.matchSurfaces(spaces)` | Yes |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Part of the virtual space transformation shims: EPModel spaces have no transformation, so a per-space-handle transformation is kept with vertices relative to it, as in OpenStudio 3.x. Shim converts each space's vertices to building coordinates, calls the native function, then converts them back. |
 | `Model.new` | Yes | Yes | `resources/meta_measure.rb` | |
 | `ModelObject class .iddObjectType` | Yes | Yes | `resources/model.rb` | `merge_unit_models` finds unique objects by `OpenStudio::Model.const_get(osm_class).iddObjectType`, which returns `OS:` types in OpenStudio 3.x and EnergyPlus types in EPModel. |
 | `ModelObject#additionalProperties` |  |  | `resources/epmodel.rb` | Returns the process-local compatibility adapter. |
@@ -375,18 +376,25 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Site#setTimeZone` | Yes | Yes | `resources/location.rb` | |
 | `SiteGroundTemperatureShallow#resetAllMonths` |  |  | `resources/location.rb` | Compatibility helper delegates to native monthly reset methods. |
 | `SiteGroundTemperatureShallow#setAllMonthlyTemperatures` |  |  | `resources/location.rb` | Compatibility helper delegates to native monthly setters. |
+| `Space#changeTransformation(transformation)` | Yes |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Native method returns false. Part of the virtual space transformation shims: EPModel spaces have no transformation, so a per-space-handle transformation is kept with vertices relative to it, as in OpenStudio 3.x. Shim keeps building-coordinate geometry unchanged by re-expressing the relative vertices in the new transformation. |
+| `Space#clone` | Yes |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Native method (inherited from `IdfObject`) copies only the Space and does not add it to the model. Shim clones the space with its surfaces and subsurfaces into the model, plus features and the virtual transformation; adjacent-surface references are not remapped. |
 | `Space#floorArea` | Yes | Yes | `resources/constructions.rb` | |
 | `Space#name` | Yes | Yes | `resources/constructions.rb` | |
+| `Space#remove` / `Surface#remove` | Yes |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Native methods remove only the object; shims also remove children like OpenStudio 3.x (a space's surfaces and interior partitions, a surface's subsurfaces). |
 | `Space#setName` | Yes | Yes | `resources/geometry.rb` | |
+| `Space#setSpaceType(space_type)` / `Space#spaceType` |  |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | EPModel Space has no SpaceType reference, and EPModel SpaceType objects (IDD `SpaceList`) are not found by `Model#getSpaceType`; shim keeps the SpaceType handle as a process-local feature and the objects by handle. |
 | `Space#setThermalZone` | Yes | Yes | `resources/geometry.rb` | |
+| `Space#setTransformation(transformation)` / `Space#transformation` | Yes |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Native setter returns false and the getter is always identity. Part of the virtual space transformation shims: EPModel spaces have no transformation, so a per-space-handle transformation is kept with vertices relative to it, as in OpenStudio 3.x. |
 | `Space#setVolume` | Yes | Yes | `resources/geometry.rb` | |
-| `Space#setYOrigin` |  |  | `resources/geometry.rb`, `resources/epmodel.rb` | Used when `merge_unit_models` combines unit models (e.g., the unit-multiplier `-10x` simulation tests). EPModel spaces have no origin and `Space#setTransformation` is not exported, so the shim translates the vertices of the space's surfaces, subsurfaces, and interior partition surfaces (skipping area-only internal mass); the applied origin is tracked per space handle so the argument stays absolute. |
+| `Space#setXOrigin` / `#setYOrigin` / `#setZOrigin` |  |  | `resources/geometry.rb`, `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Part of the virtual space transformation shims: EPModel spaces have no transformation, so a per-space-handle transformation is kept with vertices relative to it, as in OpenStudio 3.x. Setting an origin changes the translation without moving the relative vertices; used by `merge_unit_models` and BuildResidentialHPXML. |
 | `Space#thermalZone` | Yes | Yes | `resources/constructions.rb`, `resources/geometry.rb`, `resources/hvac.rb` | |
+| `Space#xOrigin` / `#yOrigin` / `#zOrigin` |  |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Part of the virtual space transformation shims: EPModel spaces have no transformation, so a per-space-handle transformation is kept with vertices relative to it, as in OpenStudio 3.x. Returns the virtual transformation's translation. |
 | `Space.new(model)` | Yes | Yes | `resources/geometry.rb` | |
 | `SpaceInfiltrationDesignFlowRate#space` |  |  | `resources/output.rb`, `resources/epmodel.rb` | Used by `--add-component-loads`. Shares the space-load `space` shim that resolves `Zone or ZoneList or Space or SpaceList Name`. |
 | `SpaceInfiltrationEffectiveLeakageArea#setSchedule(schedule)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Class-level shim writes the `Schedule Name` pointer. |
 | `SpaceInfiltrationEffectiveLeakageArea#setSpace(space)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Class-level shim writes the space pointer to the `Zone or Space Name` field. |
 | `SpaceInfiltrationEffectiveLeakageArea.new(model)` | Yes | Yes | `resources/model.rb` | |
+| `SpaceType#setStandardsSpaceType` / `SpaceType#standardsSpaceType` |  |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Shim keeps the standards space type as a process-local feature. |
 | `StandardOpaqueMaterial#conductivity` | Yes | Yes | `resources/model.rb` | |
 | `StandardOpaqueMaterial#density` | Yes | Yes | `resources/model.rb` | |
 | `StandardOpaqueMaterial#name` | Yes | Yes | `resources/model.rb` | |
@@ -411,7 +419,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `SubSurface#setSurface` | Yes | Yes | `resources/geometry.rb` | |
 | `SubSurface#shadingSurfaceGroups` |  |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim finds groups whose shaded-object pointer matches this subsurface. |
 | `SubSurface#subSurfaceType` | Yes | Yes | `resources/epmodel.rb` | Validates allowed types in the incident-solar multiplier constructor shim. |
-| `SubSurface.new(vertices, model)` | Yes | Yes | `resources/geometry.rb` | |
+| `SubSurface.new(vertices, model)` | Yes |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/geometry.rb`, `resources/epmodel.rb` | EPModel defaults the subsurface type to `Window`; constructor shim applies the OpenStudio 3.x default (`Skylight` below 60 or at least 179 degrees tilt, otherwise `FixedWindow`), which BuildResidentialHPXML relies on to identify skylights. |
 | `SubSurfaceVector#to_ary` |  |  | `resources/epmodel.rb` | Converts the native vector to an Array for existing `Array#+` use in `geometry.rb`. |
 | `Surface#<=>` | Yes | Yes | `resources/geometry.rb` | |
 | `Surface#adjacentFoundation` |  |  | `resources/geometry.rb`, `resources/epmodel.rb` | Shim resolves the stored Kiva handle to a typed optional. |
@@ -427,9 +435,10 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Surface#setSpace` | Yes | Yes | `resources/geometry.rb` | |
 | `Surface#setSurfacePropertyOtherSideCoefficients(other_side_coefficients)` |  |  | `resources/geometry.rb`, `resources/epmodel.rb` | Class-level shim sets the `Outside Boundary Condition Object` pointer and the `OtherSideCoefficients` boundary condition. |
 | `Surface#setSunExposure` | Yes | Yes | `resources/geometry.rb` | |
-| `Surface#setSurfaceType` | Yes | Yes | `resources/geometry.rb` | |
+| `Surface#setSurfaceType` | Yes |  | `resources/geometry.rb`, `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | EPModel's IDD has no `RoofCeiling` key (only Floor, Wall, Ceiling, Roof) and rejects it; shim stores `RoofCeiling` as `Roof`, and the IDF export derives Roof or Ceiling from the boundary condition. |
 | `Surface#setWindExposure` | Yes | Yes | `resources/geometry.rb` | |
-| `Surface#surfaceType` | Yes | Yes | `resources/geometry.rb` | |
+| `Surface#splitSurfaceForSubSurfaces` |  |  | `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Missing EPModel API; shim ports the OpenStudio 3.x C++ algorithm using `Transformation.alignFace`, `joinAll`, `intersect`, `getArea`, and `pointInPolygon`. Vertex lists of the split surfaces can start at a different vertex than OpenStudio 3.x (same polygons). |
+| `Surface#surfaceType` | Yes |  | `resources/geometry.rb`, `BuildResidentialHPXML/resources/geometry.rb`, `resources/epmodel.rb` | Shim reports EPModel `Roof` and `Ceiling` as the legacy `RoofCeiling` type that resource code compares against. |
 | `Surface#tilt` | Yes | Yes | `resources/constructions.rb` | |
 | `Surface.new(vertices, model)` | Yes | Yes | `resources/geometry.rb` | |
 | `SurfacePropertyExposedFoundationPerimeter#setExposedPerimeterCalculationMethod` | Yes | Yes | `resources/epmodel.rb` | |
@@ -476,7 +485,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `WaterUseConnections#waterUseEquipment` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | The native vector is not iterable from Ruby. The override resolves each equipment reference at group-local field index 0, not the parent field index, so the combi source-pump EMS includes water draws. |
 | `WaterUseEquipment#flowRateFractionSchedule` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim resolves the flow-rate fraction schedule pointer and returns an optional schedule. |
 | `WaterUseEquipment#targetTemperatureSchedule` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | Shim resolves the target-temperature schedule pointer. An unset pointer returns an empty optional, preserving the combi EMS fallback to the heater setpoint schedule. |
-| `WeatherFile.setWeatherFile(model, epw_file)` |  |  | `resources/location.rb` | Called only when `Version::UseEPModel` is false. For EPModel, `meta_measure.rb` retains the EPW path through runner reset and passes it to EnergyPlus with `-w`. |
+| `WeatherFile.setWeatherFile(model, epw_file)` |  |  | `resources/location.rb`, `BuildResidentialHPXML/measure.rb` | Called only when `Version::UseEPModel` is false. For EPModel, `meta_measure.rb` retains the EPW path through runner reset and passes it to EnergyPlus with `-w`. |
 | `YearDescription#assumedYear` |  |  | `resources/schedules.rb` | Used only on the OpenStudio 3.11 branch; EPModel reads RunPeriod Begin Year instead. |
 | `YearDescription#setCalendarYear` |  |  | `resources/location.rb` | Used only on the OpenStudio 3.11 branch; EPModel writes RunPeriod year fields instead. |
 | `ZoneCapacitanceMultiplierResearchSpecial#setHumidityCapacityMultiplier` | Yes | Yes | `resources/simcontrols.rb` | |

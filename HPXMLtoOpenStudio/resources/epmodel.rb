@@ -1175,7 +1175,9 @@ if Version::UseEPModel
       workspace.getObjectsByType(surface_type).each { |surface| normalize_surface_type(surface) }
     end
 
-    # Maps the legacy OpenStudio RoofCeiling surface type to EnergyPlus Roof or Ceiling.
+    # Maps the legacy OpenStudio RoofCeiling surface type to EnergyPlus Roof or Ceiling based on the boundary
+    # condition, like the legacy ForwardTranslator. EPModel Roof/Ceiling types (which the Surface#surfaceType shim
+    # reports as RoofCeiling) are re-derived the same way.
     def self.normalize_surface_type(surface)
       ground_boundary_conditions = ['Ground', 'GroundFCfactorMethod', 'GroundSlabPreprocessorAverage',
                                     'GroundSlabPreprocessorCore', 'GroundSlabPreprocessorPerimeter',
@@ -1184,7 +1186,7 @@ if Version::UseEPModel
       surface_type_index = surface.iddObject.getFieldIndex('Surface Type')
       boundary_condition_index = surface.iddObject.getFieldIndex('Outside Boundary Condition')
       return unless surface_type_index.is_initialized && boundary_condition_index.is_initialized
-      return unless surface.getString(surface_type_index.get).to_s == 'RoofCeiling'
+      return unless ['RoofCeiling', 'Roof', 'Ceiling'].include?(surface.getString(surface_type_index.get).to_s)
 
       boundary_condition = surface.getString(boundary_condition_index.get).to_s
       is_envelope = boundary_condition.casecmp('Outdoors').zero? || ground_boundary_conditions.include?(boundary_condition)
@@ -1804,34 +1806,303 @@ if Version::UseEPModel
     end
   end
 
-  # EPModel spaces have no origin and Space#setTransformation is not exported, so translate the vertices of the
-  # space's surfaces, subsurfaces, and interior partition surfaces instead. The applied origin is tracked per
-  # space handle so the argument remains an absolute origin, as in OpenStudio 3.x.
-  unless OpenStudio::EPModel::Space.method_defined?(:setYOrigin)
-    EPModelCompatibility.const_set(:SpaceYOriginsByHandle, {})
-    OpenStudio::EPModel::Space.define_method(:setYOrigin) do |y_origin|
-      space_handle = handle.to_s
-      dy = y_origin - (EPModelCompatibility::SpaceYOriginsByHandle[space_handle] || 0.0)
-      return true if dy == 0
+  # EPModel spaces have no transformation (origin), and Space#setTransformation/changeTransformation return false.
+  # Emulate OpenStudio 3.x: keep a virtual transformation per space handle, with surface vertices relative to it.
+  # Model.intersectSurfaces/matchSurfaces work in building coordinates, and Model#toIdfFile applies the
+  # transformations to the vertices first, as the legacy ForwardTranslator does.
+  module EPModelCompatibility
+    SpaceTransformations = {}
 
+    def self.space_transformation(space)
+      SpaceTransformations[space.handle.to_s] || OpenStudio::Transformation.new
+    end
+
+    def self.set_space_transformation(space_or_handle, transformation)
+      handle = space_or_handle.respond_to?(:handle) ? space_or_handle.handle.to_s : space_or_handle.to_s
+      SpaceTransformations[handle] = transformation
+    end
+
+    def self.identity_transformation?(transformation)
+      matrix = transformation.matrix
+      (0..3).all? { |i| (0..3).all? { |j| (matrix[i, j] - (i == j ? 1.0 : 0.0)).abs < 1e-12 } }
+    end
+
+    # Surfaces, subsurfaces, and interior partition surfaces (except area-only internal mass) in the space.
+    def self.space_planar_surfaces(space)
+      space_handle = space.handle.to_s
       in_space = lambda do |object|
         object_space = object.space
         object_space.is_initialized && object_space.get.handle.to_s == space_handle
       end
+      model = space.model
       surfaces = model.getSurfaces.select { |surface| in_space.call(surface) }
       planar_surfaces = surfaces + surfaces.flat_map { |surface| surface.subSurfaces.to_a }
       planar_surfaces += model.getInteriorPartitionSurfaces.select { |surface| in_space.call(surface) }
-      planar_surfaces.each do |planar_surface|
-        next if planar_surface.vertices.size < 3 # e.g., internal mass defined by area only
+      planar_surfaces.select { |planar_surface| planar_surface.vertices.size >= 3 }
+    end
 
-        shifted = OpenStudio::Point3dVector.new
-        planar_surface.vertices.each { |vertex| shifted << OpenStudio::Point3d.new(vertex.x, vertex.y + dy, vertex.z) }
-        return false unless planar_surface.setVertices(shifted)
+    def self.transform_space_vertices(space, transformation)
+      return true if identity_transformation?(transformation)
+
+      space_planar_surfaces(space).all? { |planar_surface| planar_surface.setVertices(transformation * planar_surface.vertices) }
+    end
+
+    def self.apply_space_transformations(model)
+      model.getSpaces.each do |space|
+        transformation = space_transformation(space)
+        next if identity_transformation?(transformation)
+
+        raise "Could not apply transformation to space '#{space.name}'." unless transform_space_vertices(space, transformation)
+
+        set_space_transformation(space, OpenStudio::Transformation.new)
+      end
+    end
+  end
+
+  OpenStudio::EPModel::Space.define_method(:transformation) do
+    EPModelCompatibility.space_transformation(self)
+  end
+
+  OpenStudio::EPModel::Space.define_method(:setTransformation) do |transformation|
+    EPModelCompatibility.set_space_transformation(self, transformation)
+    true
+  end
+
+  # Keeps building-coordinate geometry unchanged: relative vertices become new_transformation^-1 * old * vertices.
+  OpenStudio::EPModel::Space.define_method(:changeTransformation) do |transformation|
+    old_transformation = EPModelCompatibility.space_transformation(self)
+    return false unless EPModelCompatibility.transform_space_vertices(self, transformation.inverse * old_transformation)
+
+    EPModelCompatibility.set_space_transformation(self, transformation)
+    true
+  end
+
+  { xOrigin: 0, yOrigin: 1, zOrigin: 2 }.each do |getter, row|
+    OpenStudio::EPModel::Space.define_method(getter) do
+      EPModelCompatibility.space_transformation(self).matrix[row, 3]
+    end
+
+    OpenStudio::EPModel::Space.define_method("set#{getter.to_s[0].upcase}#{getter.to_s[1..]}") do |value|
+      matrix = EPModelCompatibility.space_transformation(self).matrix
+      new_matrix = OpenStudio::Matrix.new(4, 4, 0)
+      (0..3).each { |i| (0..3).each { |j| new_matrix[i, j] = matrix[i, j] } }
+      new_matrix[row, 3] = value
+      EPModelCompatibility.set_space_transformation(self, OpenStudio::Transformation.new(new_matrix))
+      true
+    end
+  end
+
+  # EPModel defaults new subsurfaces to Window. Like OpenStudio 3.x (SubSurface::defaultSubSurfaceType without a parent
+  # surface), default to Skylight for tilts below 60 or at least 179 degrees, otherwise FixedWindow.
+  OpenStudio::EPModel::SubSurface.singleton_class.prepend(Module.new do
+    def new(*args)
+      sub_surface = super
+      if (args.size == 2) && args[0].respond_to?(:each) && sub_surface.subSurfaceType.casecmp('Window').zero?
+        tilt_deg = sub_surface.tilt * 180.0 / Math::PI
+        sub_surface.setSubSurfaceType(((tilt_deg < 60) || (tilt_deg >= 179)) ? 'Skylight' : 'FixedWindow')
+      end
+      sub_surface
+    end
+  end)
+
+  # EPModel removes only the object itself; like OpenStudio 3.x, also remove the children: a surface's subsurfaces,
+  # and a space's surfaces (with their subsurfaces) and interior partition surfaces.
+  native_surface_remove = OpenStudio::EPModel::Surface.instance_method(:remove)
+  OpenStudio::EPModel::Surface.define_method(:remove) do
+    subSurfaces.each(&:remove)
+    native_surface_remove.bind(self).call
+  end
+
+  native_space_remove = OpenStudio::EPModel::Space.instance_method(:remove)
+  OpenStudio::EPModel::Space.define_method(:remove) do
+    space_handle = handle.to_s
+    in_space = lambda do |object|
+      object_space = object.space
+      object_space.is_initialized && object_space.get.handle.to_s == space_handle
+    end
+    model.getSurfaces.select { |surface| in_space.call(surface) }.each(&:remove)
+    model.getInteriorPartitionSurfaces.select { |surface| in_space.call(surface) }.each(&:remove)
+    EPModelCompatibility::SpaceTransformations.delete(space_handle)
+    native_space_remove.bind(self).call
+  end
+
+  # EPModel replaces the legacy OpenStudio RoofCeiling surface type with EnergyPlus Roof and Ceiling. Report both as
+  # RoofCeiling and store RoofCeiling as Roof; the IDF export derives Roof or Ceiling from the boundary condition.
+  native_surface_type = OpenStudio::EPModel::Surface.instance_method(:surfaceType)
+  OpenStudio::EPModel::Surface.define_method(:surfaceType) do
+    surface_type = native_surface_type.bind(self).call
+    ['Roof', 'Ceiling'].include?(surface_type) ? 'RoofCeiling' : surface_type
+  end
+
+  native_set_surface_type = OpenStudio::EPModel::Surface.instance_method(:setSurfaceType)
+  OpenStudio::EPModel::Surface.define_method(:setSurfaceType) do |surface_type|
+    next native_set_surface_type.bind(self).call(surface_type) unless surface_type.to_s.casecmp('RoofCeiling').zero?
+    next true if ['Roof', 'Ceiling'].include?(native_surface_type.bind(self).call)
+
+    native_set_surface_type.bind(self).call('Roof') || native_set_surface_type.bind(self).call('Ceiling')
+  end
+
+  # EPModel Space has no SpaceType reference, and EPModel SpaceType objects (IDD SpaceList) are not found by
+  # Model#getSpaceType, so keep the SpaceType handle as a process-local feature and the objects by handle.
+  unless OpenStudio::EPModel::Space.method_defined?(:setSpaceType)
+    EPModelCompatibility.const_set(:SpaceTypesByHandle, {})
+    OpenStudio::EPModel::Space.define_method(:setSpaceType) do |space_type|
+      EPModelCompatibility::SpaceTypesByHandle[space_type.handle.to_s] = space_type
+      EPModelCompatibility::AdditionalProperties.for_object(self).setFeature('EPModelCompatibility:SpaceTypeHandle', space_type.handle.to_s)
+    end
+  end
+
+  unless OpenStudio::EPModel::Space.method_defined?(:spaceType)
+    OpenStudio::EPModel::Space.define_method(:spaceType) do
+      space_type_handle = EPModelCompatibility::AdditionalProperties.for_object(self).getFeatureAsString('EPModelCompatibility:SpaceTypeHandle')
+      space_type = space_type_handle.is_initialized ? EPModelCompatibility::SpaceTypesByHandle[space_type_handle.get] : nil
+      space_type.nil? ? OpenStudio::EPModel::OptionalSpaceType.new : OpenStudio::EPModel::OptionalSpaceType.new(space_type)
+    end
+  end
+
+  # Port of OpenStudio 3.x Surface::splitSurfaceForSubSurfaces: splits a wall so that each group of overlapping
+  # subsurfaces (expanded to full wall height) is on its own surface. Returns the newly created surfaces.
+  unless OpenStudio::EPModel::Surface.method_defined?(:splitSurfaceForSubSurfaces)
+    OpenStudio::EPModel::Surface.define_method(:splitSurfaceForSubSurfaces) do
+      result = []
+      expand = 0.0254
+      tol = 0.01 # should be less than expand
+      next result unless surfaceType.casecmp('Wall').zero?
+      next result if adjacentSurface.is_initialized
+
+      sub_surfaces = subSurfaces.to_a
+      next result if sub_surfaces.empty?
+
+      transformation = OpenStudio::Transformation.alignFace(vertices)
+      inverse_transformation = transformation.inverse
+      face_vertices = (inverse_transformation * vertices).to_a.reverse
+      next result if face_vertices.size < 3
+
+      ymin = Float::MAX
+      ymax = Float::MIN # matches std::numeric_limits<double>::min()
+      face_vertices.each do |face_vertex|
+        ymin = [ymin, face_vertex.y].min
+        ymax = [ymax, face_vertex.y].max
+      end
+      next result if ymin > ymax
+
+      masks = []
+      handle_to_face_vertices = {}
+      sub_surfaces.each do |sub_surface|
+        sub_surface_face_vertices = (inverse_transformation * sub_surface.vertices).to_a.reverse
+        next if sub_surface_face_vertices.size < 3
+
+        handle_to_face_vertices[sub_surface.handle.to_s] = sub_surface_face_vertices
+        xmin = Float::MAX
+        xmax = Float::MIN
+        sub_surface_face_vertices.each do |face_vertex|
+          xmin = [xmin, face_vertex.x].min
+          xmax = [xmax, face_vertex.x].max
+        end
+        next if xmin > xmax
+
+        mask = OpenStudio::Point3dVector.new
+        [[xmax + expand, ymax + expand], [xmax + expand, ymin - expand],
+         [xmin - expand, ymin - expand], [xmin - expand, ymax + expand]].each { |x, y| mask << OpenStudio::Point3d.new(x, y, 0) }
+        masks << mask
       end
 
-      EPModelCompatibility::SpaceYOriginsByHandle[space_handle] = y_origin
-      return true
+      new_faces = [face_vertices]
+      OpenStudio.joinAll(masks, tol).each do |mask|
+        tmp_faces = []
+        new_faces.each do |new_face|
+          new_face_vector = OpenStudio::Point3dVector.new
+          new_face.each { |point| new_face_vector << point }
+          intersection = OpenStudio.intersect(new_face_vector, mask, tol)
+          if intersection.is_initialized
+            tmp_faces << intersection.get.polygon1.to_a
+            intersection.get.newPolygons1.each { |polygon| tmp_faces << polygon.to_a }
+          else
+            tmp_faces << new_face
+          end
+        end
+        new_faces = tmp_faces
+      end
+
+      to_vector = lambda do |points|
+        vector = OpenStudio::Point3dVector.new
+        points.each { |point| vector << point }
+        vector
+      end
+      new_faces = new_faces.sort_by { |new_face| -OpenStudio.getArea(to_vector.call(new_face)).get }
+
+      new_faces.each_with_index do |new_face, i|
+        if i == 0
+          surface = self # Re-use the original surface
+        else
+          surface = model.getSurface(EPModelCompatibility.clone_model_object(self, model).handle).get
+          EPModelCompatibility::AdditionalProperties.copy_features(self, surface)
+          result << surface
+        end
+        surface.setVertices(transformation * to_vector.call(new_face.reverse))
+
+        handle_to_face_vertices.each do |sub_surface_handle, sub_surface_face_vertices|
+          next unless OpenStudio.pointInPolygon(sub_surface_face_vertices[0], to_vector.call(new_face), tol)
+
+          sub_surface = model.getSubSurface(OpenStudio.toUUID(sub_surface_handle))
+          sub_surface.get.setSurface(surface) if sub_surface.is_initialized
+        end
+      end
+
+      result
     end
+  end
+
+  # EPModel SpaceType has no standards space type; keep it as a process-local feature.
+  unless OpenStudio::EPModel::SpaceType.method_defined?(:setStandardsSpaceType)
+    OpenStudio::EPModel::SpaceType.define_method(:setStandardsSpaceType) do |standards_space_type|
+      EPModelCompatibility::AdditionalProperties.for_object(self).setFeature('EPModelCompatibility:StandardsSpaceType', standards_space_type.to_s)
+    end
+  end
+
+  unless OpenStudio::EPModel::SpaceType.method_defined?(:standardsSpaceType)
+    OpenStudio::EPModel::SpaceType.define_method(:standardsSpaceType) do
+      EPModelCompatibility::AdditionalProperties.for_object(self).getFeatureAsString('EPModelCompatibility:StandardsSpaceType')
+    end
+  end
+
+  # EPModel Space inherits IdfObject#clone, which copies only the Space object and does not add it to the model.
+  # Like OpenStudio 3.x, clone the space with its surfaces and subsurfaces (adjacent-surface references are not
+  # remapped), plus process-local additionalProperties features and the virtual transformation.
+  OpenStudio::EPModel::Space.define_method(:clone) do |target_model = model|
+    new_space = target_model.getSpace(EPModelCompatibility.clone_model_object(self, target_model).handle).get
+    EPModelCompatibility::AdditionalProperties.copy_features(self, new_space)
+    EPModelCompatibility.set_space_transformation(new_space, EPModelCompatibility.space_transformation(self))
+    surfaces.each do |surface|
+      new_surface = target_model.getSurface(EPModelCompatibility.clone_model_object(surface, target_model).handle).get
+      raise "Could not assign cloned surface '#{new_surface.name}' to space '#{new_space.name}'." unless new_surface.setSpace(new_space)
+
+      EPModelCompatibility::AdditionalProperties.copy_features(surface, new_surface)
+      surface.subSurfaces.each do |sub_surface|
+        new_sub_surface = target_model.getSubSurface(EPModelCompatibility.clone_model_object(sub_surface, target_model).handle).get
+        raise "Could not assign cloned subsurface '#{new_sub_surface.name}'." unless new_sub_surface.setSurface(new_surface)
+
+        EPModelCompatibility::AdditionalProperties.copy_features(sub_surface, new_sub_surface)
+      end
+    end
+    new_space
+  end
+
+  [:intersectSurfaces, :matchSurfaces].each do |function_name|
+    native_function = OpenStudio::EPModel.method(function_name)
+    OpenStudio::EPModel.define_singleton_method(function_name) do |spaces, *args|
+      transformations = spaces.map { |space| [space, EPModelCompatibility.space_transformation(space)] }
+      transformations.each { |space, transformation| EPModelCompatibility.transform_space_vertices(space, transformation) }
+      result = native_function.call(spaces, *args)
+      transformations.each { |space, transformation| EPModelCompatibility.transform_space_vertices(space, transformation.inverse) }
+      result
+    end
+  end
+
+  native_to_idf_file = OpenStudio::EPModel::Model.instance_method(:toIdfFile)
+  OpenStudio::EPModel::Model.define_method(:toIdfFile) do |*args|
+    EPModelCompatibility.apply_space_transformations(self)
+    native_to_idf_file.bind(self).call(*args)
   end
 
   # EPModel actuators store the actuated component's name as text, so renaming the component (e.g., in
@@ -1870,7 +2141,11 @@ if Version::UseEPModel
     end
     added_objects = native_add_objects.bind(self).call(objects, *args)
     if added_objects.size == objects.size
-      objects.zip(added_objects) { |from, to| EPModelCompatibility::AdditionalProperties.copy_features(from, to) }
+      objects.zip(added_objects) do |from, to|
+        EPModelCompatibility::AdditionalProperties.copy_features(from, to)
+        transformation = EPModelCompatibility::SpaceTransformations[from.handle.to_s]
+        EPModelCompatibility.set_space_transformation(to, transformation) unless transformation.nil?
+      end
     end
     added_objects
   end

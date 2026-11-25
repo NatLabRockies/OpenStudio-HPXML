@@ -1165,8 +1165,10 @@ class BuildResidentialHPXML < OpenStudio::Measure::ModelMeasure
     end
 
     # Suppress log messages ("'UseWeatherFile' is selected in YearDescription, but there are no weather file set for the model.")
-    epw_file = OpenStudio::EpwFile.new(epw_path, false)
-    OpenStudio::Model::WeatherFile.setWeatherFile(model, epw_file)
+    if not Version::UseEPModel
+      epw_file = OpenStudio::EpwFile.new(epw_path, false)
+      OpenStudio::Model::WeatherFile.setWeatherFile(model, epw_file)
+    end
 
     if (args[:hvac_control_heating_season_period].to_s == Constants::BuildingAmerica) ||
        (args[:hvac_control_cooling_season_period].to_s == Constants::BuildingAmerica) ||
