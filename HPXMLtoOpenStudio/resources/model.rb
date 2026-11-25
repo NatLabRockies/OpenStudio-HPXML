@@ -1242,7 +1242,7 @@ module Model
     unique_object_map.each do |idd_obj, osm_class|
       first_model_object_by_type = nil
       hpxml_osm_map.values.each do |unit_model|
-        next if unit_model.getObjectsByType(idd_obj.to_IddObjectType).empty?
+        next if unit_model.getObjectsByType(OpenStudio::Model.const_get(osm_class).iddObjectType).empty?
 
         model_object = unit_model.send("get#{osm_class}")
 
