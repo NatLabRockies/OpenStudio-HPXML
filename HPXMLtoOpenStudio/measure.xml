@@ -3,8 +3,8 @@
   <schema_version>3.1</schema_version>
   <name>hpxml_to_openstudio</name>
   <uid>b1543b30-9465-45ff-ba04-1d1f85e763bc</uid>
-  <version_id>061bf0a9-258d-4944-b75d-5933660b11a1</version_id>
-  <version_modified>2026-11-23T16:21:06Z</version_modified>
+  <version_id>d557c766-e12f-42fc-bca5-3a07536256c9</version_id>
+  <version_modified>2026-11-25T18:20:54Z</version_modified>
   <xml_checksum>D8922A73</xml_checksum>
   <class_name>HPXMLToOpenStudio</class_name>
   <display_name>HPXML to OpenStudio Translator</display_name>
@@ -217,7 +217,7 @@
       <filename>airflow.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>45BC3E1D</checksum>
+      <checksum>184B9454</checksum>
     </file>
     <file>
       <filename>battery.rb</filename>
@@ -379,13 +379,13 @@
       <filename>energyplus.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>F8A84C95</checksum>
+      <checksum>C8F6877C</checksum>
     </file>
     <file>
       <filename>epmodel.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>9FF704DF</checksum>
+      <checksum>C725F600</checksum>
     </file>
     <file>
       <filename>generator.rb</filename>
@@ -439,7 +439,7 @@
       <filename>hvac.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>F9899380</checksum>
+      <checksum>491CB80F</checksum>
     </file>
     <file>
       <filename>hvac_sizing.rb</filename>
@@ -505,7 +505,7 @@
       <filename>output.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>D8367B9E</checksum>
+      <checksum>C36F1C14</checksum>
     </file>
     <file>
       <filename>psychrometrics.rb</filename>
@@ -679,7 +679,7 @@
       <filename>schedules.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>29708C01</checksum>
+      <checksum>B06892D9</checksum>
     </file>
     <file>
       <filename>simcontrols.rb</filename>
@@ -721,7 +721,7 @@
       <filename>waterheater.rb</filename>
       <filetype>rb</filetype>
       <usage_type>resource</usage_type>
-      <checksum>1D25A838</checksum>
+      <checksum>FA046DD7</checksum>
     </file>
     <file>
       <filename>weather.rb</filename>

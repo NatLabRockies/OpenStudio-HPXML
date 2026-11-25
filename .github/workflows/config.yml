@@ -15,9 +15,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  OS_VERSION: "3.11.0"
-  OS_SHA: 241b8abb4d
-  OS_URL: https://github.com/NatLabRockies/OpenStudio/releases/download
+  OS_VERSION: "4.0.0-alpha"
+  OS_SHA: dd61316dfa
+  OS_URL: https://github.com/joseph-robertson/OpenStudio/releases/download
 
 jobs:
   run-unit-tests:

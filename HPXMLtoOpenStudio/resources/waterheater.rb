@@ -1336,7 +1336,7 @@ module Waterheater
     if control_setpoint_schedule.to_ScheduleConstant.is_initialized
       comp_type_and_control = EPlus::EMSActuatorScheduleConstantValue
     elsif control_setpoint_schedule.to_ScheduleRuleset.is_initialized
-      comp_type_and_control = EPlus::EMSActuatorScheduleYearValue
+      comp_type_and_control = EPlus::EMSActuatorScheduleYearRulesValue
     end
     hpwhschedoverride_actuator = Model.add_ems_actuator(
       name: "#{obj_name} HPWHSchedOverride",

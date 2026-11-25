@@ -694,7 +694,7 @@ module Airflow
   # @param unavailable_periods [HPXML::UnavailablePeriods] Object that defines periods for, e.g., power outages or vacancies
   # @return [Hash] Map with various CFIS-relative OpenStudio model objects
   def self.initialize_cfis(model, vent_fans, airloop_map, unavailable_periods)
-    cfis_data = { airloop: {}, sum_oa_cfm_var: {}, f_vent_only_mode_var: {} }
+    cfis_data = { airloop: {}, sum_oa_cfm_var: {}, f_vent_only_mode_var: {}, init_program: {} }
     return cfis_data if vent_fans[:mech].empty?
 
     index = 0
@@ -727,6 +727,7 @@ module Airflow
       )
       cfis_program.addLine("Set #{cfis_data[:sum_oa_cfm_var][vent_mech.id].name} = 0")
       cfis_program.addLine("Set #{cfis_data[:f_vent_only_mode_var][vent_mech.id].name} = 0")
+      cfis_data[:init_program][vent_mech.id] = cfis_program
 
       Model.add_ems_program_calling_manager(
         model,
@@ -1982,6 +1983,8 @@ module Airflow
       if not supply_fan.nil?
         global_var_supp_only_cyc_rtf = model.getEnergyManagementSystemGlobalVariables.find { |var| var.name.get.include? Model.ems_friendly_name("#{supply_fan.name} supp only cycl rtf global") }
         if not global_var_supp_only_cyc_rtf.nil?
+          # Infiltration runs before the fan power override program.
+          cfis_data[:init_program][vent_mech.id].addLine("Set #{global_var_supp_only_cyc_rtf.name} = -1")
           # Need to adjust E+ fan RTF to account for supplemental coil fan cycling
           infil_program.addLine("If (#{global_var_supp_only_cyc_rtf.name} >= 0) && (#{global_var_supp_only_cyc_rtf.name} < 1)")
           infil_program.addLine("  Set fan_rtf_hvac = #{global_var_supp_only_cyc_rtf.name}")
