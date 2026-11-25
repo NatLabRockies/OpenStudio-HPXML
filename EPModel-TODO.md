@@ -199,6 +199,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `InternalMassDefinition#setSpace` |  |  | `resources/model.rb` | Writes the EnergyPlus Space reference. |
 | `InternalMassDefinition#setSurfaceArea` |  |  | `resources/model.rb` | Delegates to `InteriorPartitionSurface#setSurfaceArea`. |
 | `InternalMassDefinition.new(model)` |  |  | `resources/model.rb` | Creates an `InteriorPartitionSurface` with placeholder vertices, then sets its explicit area. |
+| `Lights#setSchedule(schedule)` |  |  | `resources/lighting.rb`, `resources/epmodel.rb` | Shim writes the `Schedule Name` object reference and supplies the legacy `Fractional` type limits when the schedule has none, as OpenStudio 3.11's schedule type registry does (needed for detailed `ScheduleFile` schedules created without limits). |
 | `MeterCustom#addKeyVarGroup(key, output_variable_or_meter)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Shim appends a group with `Key Name` and `Output Variable or Meter Name` fields. |
 | `MeterCustomDecrement#addKeyVarGroup(key, output_variable_or_meter)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Shares the extensible-group shim used by `MeterCustom`. |
 | `Model#alwaysOffDiscreteSchedule` |  |  | `resources/hvac.rb`, `resources/meta_measure.rb`, `resources/epmodel.rb` | Shim creates or reuses a zero-valued constant schedule with discrete type limits. EPModel removes unreferenced `Schedule:Constant` objects from the translated workspace while preserving schedule names referenced by EMS sensors and actuators. |
@@ -230,7 +231,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `Model#getSurfaces` | Yes | Yes | `resources/geometry.rb` | |
 | `Model#getTimestep` | Yes | Yes | `resources/simcontrols.rb` | |
 | `Model#toIdfFile` | Yes | Yes | `resources/epmodel.rb`, `resources/meta_measure.rb` | Used for direct EPModel export because the legacy ForwardTranslator accepts only OpenStudio Model. See [Direct IDF Export Normalization](#direct-idf-export-normalization). |
-| `Model#workflowJSON` |  |  | `resources/model.rb` | Missing EPModel API; `add_schedule_file` uses `workflowJSON.filePaths` and `addFilePath` to register schedule-file directories. |
+| `Model#workflowJSON` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Shim keeps a per-model-wrapper `OpenStudio::WorkflowJSON` so `add_schedule_file` can register schedule-file directories with `filePaths`/`addFilePath`; the `ScheduleFile.new` shim resolves file names against it. State lives on the Ruby wrapper, so it is lost if the model is re-fetched as a new wrapper (e.g., `object.model`). |
 | `Model#getYearDescription` |  |  | `resources/location.rb`, `resources/schedules.rb` | Called only when `Version::UseEPModel` is false; EPModel reads/writes year fields through `RunPeriod`. |
 | `Model#getZoneCapacitanceMultiplierResearchSpecial` | Yes | Yes | `resources/simcontrols.rb` | |
 | `Model#objects` | Yes | Yes | `resources/model.rb`, `resources/meta_measure.rb` | |
@@ -242,6 +243,7 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ModelObject#to_AdditionalProperties` |  |  | `resources/output.rb`, `resources/meta_measure.rb`, `ReportSimulationOutput/measure.rb` | Cast is used only on the OpenStudio 3.11 path; EPModel uses a process-local `additionalProperties` adapter instead of model objects. |
 | `ModelObject#to_SpaceLoadInstance` |  |  | `resources/model.rb` | Used only by the OpenStudio 3.11 actuator path; EPModel exposes no SpaceLoadInstance type or cast. |
 | `Node#setpointManagers` | Yes |  | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel returns a vector that is not iterable from Ruby; the EPModel resource branch finds scheduled setpoint managers by their target node. The helper is intentionally narrower than the general getter, so a class-level override would change its semantics. |
+| `People#setNumberofPeopleSchedule(schedule)` |  |  | `resources/internal_gains.rb`, `resources/epmodel.rb` | Shim writes the number-of-people schedule pointer and supplies the legacy `Fractional` type limits when the schedule has none (needed for detailed `ScheduleFile` schedules created without limits). |
 | `PlantLoop#clone(model)` |  |  | `resources/waterheater.rb`, `resources/epmodel.rb` | EPModel's `Loop::clone` currently returns an empty Catchall object. The indirect-DHW path rebuilds a dedicated boiler loop in the EPModel compatibility layer by copying loop/sizing settings and recreating boiler-side components; general loop cloning remains an SDK gap. |
 | `PlantLoop#setGlycolConcentration` | Yes |  | `resources/model.rb`, `resources/epmodel.rb` | EPModel's native implementation does not successfully preserve the legacy concentration on the EnergyPlus PlantLoop. The EPModel path instead uses `setGlycolFluidType` to create glycol property objects and set `UserDefinedFluidType`, preserving the requested concentration. |
 | `PlantLoop#setGlycolFluidType(glycol_type, concentration)` |  |  | `resources/model.rb`, `resources/epmodel.rb` | Compatibility helper creates `FluidProperties:GlycolConcentration` and `FluidProperties:Name` and links the PlantLoop to them. The 3.11 path retains its native fluid type and concentration setters. |
@@ -291,6 +293,8 @@ This is an observed-call list, not a complete EPModel API inventory. Ruby core m
 | `ScheduleDay#addValue` | Yes | Yes | `resources/model.rb` | |
 | `ScheduleDay#setName` | Yes | Yes | `resources/model.rb` | |
 | `ScheduleDay#values` | Yes | Yes | `resources/constructions.rb` | |
+| `ScheduleFile#setTranslateFileWithRelativePath` | Yes |  | `resources/model.rb` | Deprecated no-op as of 4.0.0 (Schedule:File is no longer translated); logs a deprecation message per schedule. |
+| `ScheduleFile.new(model, file_path)` | Yes |  | `resources/model.rb`, `resources/epmodel.rb` | Native constructor raises unless it can find `file_path` directly. Constructor shim resolves a relative name through the `Model#workflowJSON` shim's `findFile`, matching OpenStudio 3.11, then restores the relative name with `setFileName` (which does not check existence) so the IDF references the CSV relative to the run directory, as the legacy ForwardTranslator does with `setTranslateFileWithRelativePath(true)`. |
 | `ScheduleRule#daySchedule` | Yes | Yes | `resources/model.rb` | |
 | `ScheduleRule#setApplyFriday` | Yes | Yes | `resources/model.rb` | |
 | `ScheduleRule#setApplyMonday` | Yes | Yes | `resources/model.rb` | |

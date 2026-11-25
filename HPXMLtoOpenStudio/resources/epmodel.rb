@@ -1533,6 +1533,7 @@ if Version::UseEPModel
 
   unless OpenStudio::EPModel::Lights.method_defined?(:setSchedule)
     OpenStudio::EPModel::Lights.define_method(:setSchedule) do |schedule|
+      EPModelCompatibility.set_default_schedule_type_limits(schedule, 'Fractional')
       EPModelCompatibility.set_pointer(self, 'Schedule Name', schedule)
     end
   end
@@ -1552,6 +1553,7 @@ if Version::UseEPModel
 
   unless OpenStudio::EPModel::People.method_defined?(:setNumberofPeopleSchedule)
     OpenStudio::EPModel::People.define_method(:setNumberofPeopleSchedule) do |schedule|
+      EPModelCompatibility.set_default_schedule_type_limits(schedule, 'Fractional')
       EPModelCompatibility.set_pointer(self, 'Number of People Schedule Name', schedule)
     end
   end
@@ -1752,6 +1754,36 @@ if Version::UseEPModel
       getObjectsByType(meter_type).map { |object| EPModelCompatibility::OutputMeter.new(object) }
     end
   end
+
+  # EPModel models have no workflow. Keep a WorkflowJSON on the Ruby model wrapper so callers can
+  # register file search paths; ScheduleFile.new below resolves relative file names against them.
+  unless OpenStudio::EPModel::Model.method_defined?(:workflowJSON)
+    OpenStudio::EPModel::Model.define_method(:workflowJSON) do
+      @workflow_json ||= OpenStudio::WorkflowJSON.new
+    end
+  end
+
+  # EPModel's ScheduleFile constructor requires a path it can find directly. Like OpenStudio 3.x,
+  # resolve a relative file name against the model's workflow file paths first, then restore the
+  # relative name so the IDF references it relative to the run directory.
+  OpenStudio::EPModel::ScheduleFile.singleton_class.prepend(Module.new do
+    def new(model, file_path, *args)
+      relative_path = nil
+      if (not File.absolute_path?(file_path.to_s)) && model.respond_to?(:workflowJSON)
+        found_path = model.workflowJSON.findFile(file_path.to_s)
+        if found_path.is_initialized
+          relative_path = file_path.to_s
+          file_path = found_path.get.to_s
+        end
+      end
+      schedule_file = super(model, file_path, *args)
+      if (not relative_path.nil?) && (not schedule_file.setFileName(relative_path))
+        raise "Could not set relative file name '#{relative_path}' on ScheduleFile."
+      end
+
+      schedule_file
+    end
+  end)
 
   [:heater1SetpointTemperatureSchedule, :heater2SetpointTemperatureSchedule].each do |method_name|
     native_getter = OpenStudio::EPModel::WaterHeaterStratified.instance_method(method_name)
